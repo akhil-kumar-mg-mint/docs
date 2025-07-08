@@ -1658,13 +1658,50 @@
               },
               "example": {
                 "company_details": {
-                  "website": "https://updated-website.com",
-                  "monthly_avg_transaction_value": "75000.00",
-                  "description_of_products_and_services": "Updated description of services"
+                  "legal_name": "Shakti Logistics & Exports Pvt Ltd",
+                  "brand_name": "ShaktiXpress",
+                  "registration_number": "IN09DEL2021PTC987654",
+                  "international_org_type": "PRIVATE_LIMITED",
+                  "tax_id": "29AABCT1234D1Z9",
+                  "website": "https://www.shaktiexpress.in",
+                  "monthly_avg_transaction_value": "780000.00",
+                  "monthly_avg_transaction_volume": "120",
+                  "business_category": "MANUFACTURING",
+                  "business_mode": "B2B",
+                  "commodity": "Textile Machinery and Automotive Components",
+                  "payment_terms": "NET_30",
+                  "category": "Logistics & Manufacturing Support",
+                  "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
+                  "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
+                  "communication_address": "Plot No. 56, Electronic City Phase 1",
+                  "communication_city": "Bengaluru",
+                  "communication_state": "Karnataka",
+                  "communication_country": "India",
+                  "communication_pincode": "560100",
+                  "same_as_registered_address": false,
+                  "registered_address": "7th Floor, Sagar Tech Plaza, Andheri-Kurla Road",
+                  "registered_city": "Mumbai",
+                  "registered_state": "Maharashtra",
+                  "registered_country": "India",
+                  "registered_pincode": "400072",
+                  "purpose_code": "P0101",
+                  "hs_codes": [
+                    "85234910",
+                    "84715000"
+                  ]
                 },
                 "settlement_details": {
-                  "bank_account_number": "9876543210",
-                  "bank_account_name": "Updated Company Ltd"
+                  "bank_account_number": "5087654321123456",
+                  "bank_account_name": "Shakti Logistics & Exports Pvt Ltd",
+                  "bank_swift_code": "HDFCINBBXXX",
+                  "bank_name": "HDFC Bank Ltd.",
+                  "bank_branch_name": "Andheri East Branch",
+                  "bank_address": "Unit 3A, Ground Floor, Hiranandani Business Park, Powai",
+                  "bank_city": "Mumbai",
+                  "bank_state": "Maharashtra",
+                  "bank_country": "India",
+                  "bank_pincode": "400076",
+                  "routing_number": "HDFC0000001"
                 }
               }
             }
@@ -3301,6 +3338,34 @@
             "type": "object",
             "description": "Company details to update",
             "properties": {
+              "legal_name": {
+                "type": "string",
+                "description": "Updated legal name of the company"
+              },
+              "brand_name": {
+                "type": "string",
+                "description": "Updated brand/trading name of the company"
+              },
+              "registration_number": {
+                "type": "string",
+                "description": "Updated company registration number"
+              },
+              "international_org_type": {
+                "type": "string",
+                "description": "Updated type of international organization",
+                "enum": [
+                  "PRIVATE_LIMITED",
+                  "PUBLIC_LIMITED",
+                  "PARTNERSHIP",
+                  "SOLE_PROPRIETORSHIP",
+                  "LLC",
+                  "CORPORATION"
+                ]
+              },
+              "tax_id": {
+                "type": "string",
+                "description": "Updated tax identification number"
+              },
               "website": {
                 "type": "string",
                 "format": "uri",
@@ -3310,9 +3375,113 @@
                 "type": "string",
                 "description": "Updated average monthly transaction value"
               },
+              "monthly_avg_transaction_volume": {
+                "type": "string",
+                "description": "Updated average monthly transaction volume"
+              },
+              "communication_address": {
+                "type": "string",
+                "description": "Updated communication address"
+              },
+              "communication_city": {
+                "type": "string",
+                "description": "Updated communication city"
+              },
+              "communication_state": {
+                "type": "string",
+                "description": "Updated communication state"
+              },
+              "communication_country": {
+                "type": "string",
+                "description": "Updated communication country"
+              },
+              "communication_pincode": {
+                "type": "string",
+                "description": "Updated communication pincode/postal code"
+              },
+              "same_as_registered_address": {
+                "type": "boolean",
+                "description": "Updated flag for same as registered address"
+              },
+              "registered_address": {
+                "type": "string",
+                "description": "Updated registered address"
+              },
+              "registered_city": {
+                "type": "string",
+                "description": "Updated registered city"
+              },
+              "registered_state": {
+                "type": "string",
+                "description": "Updated registered state"
+              },
+              "registered_country": {
+                "type": "string",
+                "description": "Updated registered country"
+              },
+              "registered_pincode": {
+                "type": "string",
+                "description": "Updated registered pincode/postal code"
+              },
+              "business_category": {
+                "type": "string",
+                "description": "Updated business category",
+                "enum": [
+                  "TECHNOLOGY",
+                  "HEALTHCARE",
+                  "FINANCE",
+                  "RETAIL",
+                  "MANUFACTURING",
+                  "EDUCATION",
+                  "ENTERTAINMENT",
+                  "OTHER"
+                ]
+              },
+              "business_mode": {
+                "type": "string",
+                "description": "Updated business mode",
+                "enum": [
+                  "B2B",
+                  "B2C",
+                  "B2B2C"
+                ]
+              },
+              "commodity": {
+                "type": "string",
+                "description": "Updated primary commodity or service"
+              },
+              "payment_terms": {
+                "type": "string",
+                "description": "Updated payment terms",
+                "enum": [
+                  "NET_30",
+                  "NET_60",
+                  "NET_90",
+                  "IMMEDIATE"
+                ]
+              },
+              "hs_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Updated Harmonized System codes for products/services"
+              },
+              "category": {
+                "type": "string",
+                "description": "Updated business category description"
+              },
               "description_of_products_and_services": {
                 "type": "string",
                 "description": "Updated description of products and services"
+              },
+              "agreement_details": {
+                "type": "string",
+                "description": "Updated agreement details"
+              },
+              "purpose_code": {
+                "type": "string",
+                "description": "Updated purpose code for international transactions"
               }
             }
           },
@@ -3327,6 +3496,42 @@
               "bank_account_name": {
                 "type": "string",
                 "description": "Updated bank account name"
+              },
+              "bank_swift_code": {
+                "type": "string",
+                "description": "Updated bank SWIFT/BIC code"
+              },
+              "bank_name": {
+                "type": "string",
+                "description": "Updated name of the bank"
+              },
+              "bank_branch_name": {
+                "type": "string",
+                "description": "Updated bank branch name"
+              },
+              "bank_address": {
+                "type": "string",
+                "description": "Updated bank address"
+              },
+              "bank_city": {
+                "type": "string",
+                "description": "Updated bank city"
+              },
+              "bank_state": {
+                "type": "string",
+                "description": "Updated bank state"
+              },
+              "bank_country": {
+                "type": "string",
+                "description": "Updated bank country"
+              },
+              "bank_pincode": {
+                "type": "string",
+                "description": "Updated bank pincode/postal code"
+              },
+              "routing_number": {
+                "type": "string",
+                "description": "Updated bank routing number"
               }
             }
           }
