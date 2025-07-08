@@ -1,9 +1,9 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "EximPe Docs",
   "colors": {
-    "primary": "#16A34A",
+    "primary": "#26a887",
     "light": "#07C983",
     "dark": "#15803D"
   },
@@ -11,25 +11,27 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Integration Guide",
         "groups": [
           {
             "group": "Get Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "integration-guide/getting-started/introduction",
+              "integration-guide/getting-started/steps-to-integrate",
+              "integration-guide/getting-started/register-merchant",
+              "integration-guide/getting-started/test-credentials",
+              "integration-guide/getting-started/account-activation",
+              "integration-guide/getting-started/adding-merchants",
+              "integration-guide/getting-started/faqs"
+
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Web Integration",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "integration-guide/web-integration/hosted-checkout",
+              "integration-guide/web-integration/webhooks",
+              "integration-guide/web-integration/test-data"
             ]
           }
         ]
@@ -38,65 +40,85 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "API Documentation",
+            "group": "Order",
             "pages": [
-              "api-reference/introduction"
+              "api-reference/order/create",
+              "api-reference/order/get",
+              "api-reference/order/update_order",
+              "api-reference/order/invoice_upload"
             ]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "Payment",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api-reference/payment/list",
+              "api-reference/payment/get"  
+            ]
+          },
+          {
+            "group": "Merchant",
+            "pages": [
+              "api-reference/merchant/create",
+              "api-reference/merchant/list",
+              "api-reference/merchant/get",
+              "api-reference/merchant/update",
+              "api-reference/merchant/upload"
+            ]
+          },
+          {
+            "group": "Settlement",
+            "pages": [
+              "api-reference/settlement/list",
+              "api-reference/settlement/get"
+            ]
+          },
+           {
+            "group": "Refund",
+            "pages": [
+              "api-reference/refunds/create",
+              "api-reference/refunds/list",
+              "api-reference/refunds/get"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/merchant-approved",
+              "api-reference/webhooks/payment-successful",
+              "api-reference/webhooks/payment-failed",
+              "api-reference/webhooks/payment-refunded",
+              "api-reference/webhooks/payment-settled"
             ]
           }
         ]
       }
     ],
     "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
     }
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/Black.svg",
+    "dark": "/logo/White.svg"
   },
   "navbar": {
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:engineering@eximpe.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://merchant.eximpe.com"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "facebook":"https://www.facebook.com/eximpe/",
+      "twitter":"https://x.com/eximpe",
+      "instagram" : "https://www.instagram.com/exim.pe/?hl=en",
+      "linkedin": "https://www.linkedin.com/company/eximpe/?viewAsMember=true"
     }
   }
 }

@@ -1,0 +1,12 @@
+---
+title: 'Upload Invoice'
+description: 'Upload an invoice or other document for an existing order.'
+openapi: '/openapi.json POST /pg/orders/{order_id}/documents/'
+---
+
+## Overview
+
+The Upload Invoice endpoint is used to attach required documents to an order after it has been created. This is crucial for compliance and record-keeping. The request must be sent as `multipart/form-data`.
+
+This endpoint allows you to upload a document (like an invoice or air waybill), associated with an existing order.
+  

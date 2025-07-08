@@ -1,0 +1,449 @@
+---
+title: 'Hosted Checkout'
+description: 'Integrate EximPe Hosted Checkout to accept payments with minimal effort'
+---
+
+<Note>
+  EximPe Hosted Checkout is a pre-built payment page that provides an optimal payment experience. Accept payments securely with minimal integration effort while maintaining full control over your checkout flow.
+</Note>
+
+<CardGroup cols={3}>
+  <Card
+    title="Simplified Checkout"
+    icon="credit-card"
+    href="#step-1-creating-an-order"
+  >
+    Redirect your customers to EximPe's secure payment page to complete their payment
+  </Card>
+  <Card
+    title="Secure & PCI Compliant"
+    icon="shield-check"
+    href="#security-notes"
+  >
+    We handle all sensitive payment data, so you don't need to worry about PCI compliance
+  </Card>
+  <Card
+    title="Customizable"
+    icon="palette"
+    href="#opening-the-checkout-page"
+  >
+    Personalize the checkout experience with your branding and preferred payment methods
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before integrating EximPe Hosted Checkout, ensure you have:
+
+- **Merchant Account**: An active EximPe merchant account
+- **Credentials**: Your Client ID and Client Secret
+- **Test Environment**: Test environment credentials (for development)
+- **Domain Whitelist**: Whitelisted your website domain for integration
+
+## Integration Steps
+
+The integration process consists of three essential steps:
+
+### Step 1: Creating an Order
+
+Create an order from your backend server before initiating payment:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.eximpe.com/pg/orders/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -d '{
+    "amount": "1000.00",
+    "currency": "INR",
+    "reference_id": "OD-12345",
+    "return_url": "https://your-website.com/payment/callback",
+    "mop_type": "UPI",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210"
+    }
+}'
+```
+
+```json Response
+{
+    "success": true,
+    "message": "Checkout session created successfully",
+    "data": {
+        "session_id": "b4db5e1c82db8636094f54e3293218172ae2ab87dee6ce4e97c82db6c63f243a",
+        "order_id": "OD5916184980"
+    }
+}
+```
+
+<Warning>
+  **Session ID Validity**: The session ID generated from the order creation is valid for **15 minutes** only. Ensure that customers complete their payment within this timeframe. If the session expires, you'll need to create a new order and generate a fresh session ID.
+</Warning>
+
+</CodeGroup>
+
+<Card title="📚 API Reference" href="/api-reference/order/#create">
+  **Create Order API** - View complete documentation including all parameters, request/response formats, error codes, and examples.
+</Card>
+
+<Warning>
+  **Session ID Validity**: The session ID generated from the order creation is valid for **15 minutes** only. Ensure that customers complete their payment within this timeframe. If the session expires, you'll need to create a new order and generate a fresh session ID.
+</Warning>
+
+### Step 2: Opening the Checkout Page
+
+<Steps>
+  <Step title="Include JS SDK">
+    To integrate the EximPe Checkout, include our JavaScript SDK in your HTML:
+    
+    ```html
+    <script src="https://cdn.eximpe.com/sdk/eximpe-sdk.min.js"></script>
+    ```
+  </Step>
+  
+  <Step title="Initialize the SDK">
+    Initialize the SDK with your environment mode:
+    
+    ```javascript
+    const eximpe = EximPe({
+        mode: "sandbox" // or "production"
+    });
+    ```
+  </Step>
+  
+  <Step title="Open EximPe Checkout">
+    To open the checkout, you can use the **eximpe.checkout()** method:
+    
+    ```javascript
+    eximpe.checkout({
+      sessionId: "your-session-id",
+    });
+    ```
+  </Step>
+</Steps>
+
+#### Error Handling
+
+If you attempt to use an invalid or expired session ID, you'll receive the following error response:
+
+```json
+{
+    "success": false,
+    "error": {
+        "code": "ERR_AUTH_000",
+        "message": "Missing credentials",
+        "details": {
+            "session_id": "Invalid or expired session"
+        }
+    }
+}
+```
+
+<Note>
+  **Common Causes**: This error typically occurs when:
+  - The session ID has expired (after 15 minutes)
+  - The session ID is malformed or invalid
+  - The session has already been used for a completed payment
+</Note>
+
+#### Complete Example
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EximPe Checkout Integration</title>
+  <!-- EximPe SDK -->
+  <script src="https://cdn.eximpe.com/sdk/eximpe-sdk.min.js"></script>
+</head>
+<body>
+  <div>
+    <button id="payButton">Pay Now</button>
+  </div>
+
+  <script>
+    window.onload = function () {
+
+      const eximpe = new Eximpe({
+        mode: "sandbox"
+      });
+
+      document.getElementById("payButton").addEventListener("click", () => {
+        const checkoutOptions = {
+          paymentSessionId:
+            "session-id", // Replace with actual session ID
+        };
+
+        eximpe.checkout(checkoutOptions).catch((error) => {
+          console.error("Checkout error:", error);
+        });
+      });
+      
+    };
+  </script>
+</body>
+</html>
+```
+
+### Step 3: Payment Status Verification
+
+After the customer completes or cancels the payment, EximPe will redirect them to the `return_url` you specified when creating the order. This redirection happens regardless of whether the payment was successful or failed.
+
+<Note>
+  **Post-Payment Flow**: 
+  - **Success**: Customer completes payment → Redirected to return_url
+  - **Failure/Cancellation**: Customer cancels or payment fails → Redirected to return_url
+  - **Verification Required**: Always verify payment status on your backend, regardless of the redirect
+</Note>
+
+#### Payment Verification Process
+
+1. **Customer completes payment** → EximPe redirects to your `return_url`
+2. **On your return_url page** → Call the payment verification API from your backend
+3. **Verify payment status** → Use the `order_id` to check actual payment status
+4. **Process accordingly** → Deliver services only after confirming successful payment
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET"
+```
+
+```json Response
+{
+    "success": true,
+    "data": {
+        "order_id": "OD5916184980",
+        "status": "payment_successful",
+        "amount": "1000.00",
+        "currency": "INR",
+        "reference_id": "OD-12345",
+        "payment_details": {
+            "transaction_id": "TXN123456789",
+            "payment_method": "UPI",
+            "upi_id": "john.doe@upi"
+        }
+    }
+}
+```
+
+</CodeGroup>
+
+<Warning>
+  **Critical Security Note**: Never rely solely on the redirect to determine payment success. Always verify the payment status using the verification API before delivering any services or products. A payment is considered successful only when the status is "payment_successful".
+</Warning>
+
+<Note>
+  **Important**: Use the `order_id` returned from the order creation response, not the session ID. This endpoint provides the most accurate payment status confirmation.
+</Note>
+
+<Card title="📚 API Reference" href="/api-reference/order/#get">
+  **Get Order API** - View complete documentation including request/response formats, error codes, and examples for verifying payment status.
+</Card>
+
+#### Handling Different Payment Statuses
+
+Based on the verification API response, handle different payment statuses appropriately:
+
+- **`payment_successful`**: Payment completed successfully → Deliver services/products
+- **`payment_failed`**: Payment failed → Show failure message, offer retry
+- **`payment_pending`**: Payment is being processed → Show pending status
+- **`payment_cancelled`**: Customer cancelled payment → Show cancellation message
+
+<Note>
+  **Status Flow**: The payment status may change from `payment_pending` to `payment_successful` or `payment_failed` depending on the final processing result. Always check the latest status before taking action.
+</Note>
+
+#### Callback Verification
+
+When EximPe redirects to your `return_url`, it sends payment details via POST request. You must verify the authenticity of this callback using the hash value provided.
+
+**Sample Callback Request:**
+
+```bash
+curl '{return_url}' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'order_id=OD6567064038&payment_id=PR2352113376&status=payment_successful&message=Payment+captured+successfully&mop_type=UPI&bank_ref_num=OD6567064038-PR2352113376&payment_completed_at=2025-06-25+12%3A15%3A48%2B00%3A00&hash=078692abdb83a5873a5e17d416f326a4589ed6ac02aed36739a5900fd8b5650f'
+```
+
+**Callback Parameters:**
+- `order_id`: Your order identifier
+- `payment_id`: EximPe's payment transaction ID
+- `status`: Payment status (payment_successful, payment_failed, etc.)
+- `message`: Human-readable status message
+- `mop_type`: Method of payment (UPI, CARD, etc.)
+- `bank_ref_num`: Bank reference number
+- `payment_completed_at`: Payment completion timestamp
+- `hash`: Security hash for verification
+
+<Warning>
+  **Hash Verification Required**: Always verify the hash value in the callback to ensure the request is authentic and hasn't been tampered with. Never process payment data without proper hash verification.
+</Warning>
+
+<Note>
+  **Security Best Practice**: Implement hash verification on your return_url endpoint before processing any payment data. This prevents unauthorized access and ensures data integrity.
+</Note>
+
+#### Hash Verification Implementation
+
+To verify the authenticity of the callback, you need to generate an HMAC signature using your encryption key and compare it with the hash received from EximPe.
+
+**Python Implementation:**
+
+```python
+import hashlib
+import hmac
+
+@staticmethod
+def generate_hmac_signature(
+    secret: str,
+    message_parts: list[str],
+    separator: str = "|",
+    algorithm: str = "sha256",
+) -> str:
+    """
+    Generate HMAC signature for given message parts
+
+    Args:
+        secret: The secret key for HMAC
+        message_parts: List of strings to join and sign
+        separator: String to join message parts
+        algorithm: Hash algorithm to use (sha256, sha512)
+
+    Returns:
+        Hex-encoded HMAC signature
+    """
+    if not secret:
+        raise ValueError("Secret key cannot be empty")
+    if not message_parts:
+        raise ValueError("Message parts cannot be empty")
+
+    # Join message parts
+    message = separator.join(str(part) for part in message_parts)
+
+    # Select hash algorithm
+    hash_func = getattr(hashlib, algorithm, hashlib.sha256)
+
+    # Generate HMAC
+    signature = hmac.new(
+        secret.encode("utf-8"), message.encode("utf-8"), hash_func
+    ).hexdigest()
+
+    return signature
+
+def verify_callback_hash(form_data: dict, encryption_key: str) -> bool:
+    """
+    Verify the hash signature from EximPe callback
+    
+    Args:
+        form_data: The form data received from EximPe
+        encryption_key: Your encryption key from EximPe
+        
+    Returns:
+        True if hash is valid, False otherwise
+    """
+    # Extract hash from callback data
+    received_hash = form_data.get("hash")
+    if not received_hash:
+        return False
+    
+    # Define the keys to include in hash generation (in order)
+    hash_keys = [
+        "order_id",
+        "payment_id", 
+        "status",
+        "mop_type",
+        "bank_ref_num",
+        "payment_completed_at",
+    ]
+    
+    # Extract values in the same order as hash_keys
+    message_parts = [form_data.get(key, "") for key in hash_keys]
+    
+    # Generate expected hash
+    expected_hash = generate_hmac_signature(
+        secret=encryption_key,
+        message_parts=message_parts,
+        separator="|",
+        algorithm="sha256"
+    )
+    
+    # Compare hashes
+    return hmac.compare_digest(received_hash, expected_hash)
+```
+
+**Usage Example:**
+
+```python
+# In your return_url endpoint
+def handle_payment_callback(request):
+    form_data = request.POST.dict()
+    
+    # Verify hash before processing
+    if not verify_callback_hash(form_data, YOUR_ENCRYPTION_KEY):
+        return HttpResponse("Hash verification failed", status=400)
+    
+    # Process payment data
+    order_id = form_data.get("order_id")
+    status = form_data.get("status")
+    
+    if status == "payment_successful":
+        # Deliver services/products
+        pass
+    else:
+        # Handle failed/cancelled payment
+        pass
+```
+
+<Warning>
+  **Critical**: Always use `hmac.compare_digest()` for hash comparison to prevent timing attacks. Never use direct string comparison (`==`) for security-sensitive operations.
+</Warning>
+
+<Note>
+  **Hash Generation Order**: The hash is generated using specific fields in a specific order. Ensure you use the exact same order and fields as shown in the `hash_keys` list.
+</Note>
+
+## Security Notes
+
+<CardGroup cols={2}>
+  <Card title="Transaction Validation">
+    After receiving a response from EximPe, you must validate the transaction by verifying the hash or signature (if applicable) against what you sent in the request. This ensures the transaction is secure and untampered.
+  </Card>
+  <Card title="Additional Security">
+    EximPe recommends implementing transaction details APIs and webhooks/callbacks as an extra security measure. For more information, refer to the [Verify Payment API](/api-reference/hosted-checkout) and Webhooks documentation.
+  </Card>
+  <Card title="Record Reconciliation">
+    Always reconcile your records with EximPe's database after you receive the response. Use the verification APIs to confirm transaction details.
+  </Card>
+  <Card title="Sensitive Information">
+    **Never include sensitive information** (such as salt values or plain text hash strings) in the payment request to EximPe. Sensitive information should always be kept secure and never transmitted to the client or as part of the payment request.
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card
+    title="Contact Support"
+    icon="mail"
+    href="mailto:support@eximpe.com"
+  >
+    📩 Email: support@eximpe.com  
+    ⏰ Support Hours: 24/7 | Response within 1 business day
+  </Card>
+  <Card
+    title="Developer Resources"
+    icon="book-open"
+    href="/api-reference/hosted-checkout"
+  >
+    📚 Web Hosted API Reference
+    💻 Developer Resources
+  </Card>
+</CardGroup>

@@ -1,0 +1,13 @@
+---
+title: 'Update Order'
+description: 'Update specific fields of an existing order.'
+openapi: '/openapi.json PATCH /pg/orders/{order_id}'
+---
+
+## Overview
+
+The Update Order endpoint enables you to modify specific information of an existing order, such as buyer details (PAN number, date of birth) and invoice information. This is useful for correcting or updating order details after creation.
+
+You can update the following fields:
+- **Buyer Information**: PAN number, date of birth
+- **Invoice Information**: Invoice number, invoice date

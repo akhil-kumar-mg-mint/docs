@@ -1,0 +1,49 @@
+---
+title: "Test Data"
+description: "Use test data on this page to test payments across various payment modes."
+---
+
+## Test Cards
+
+The following table provides details of some of the test cards that you can use to test your integration in the sandbox (Test environment).
+
+<Warning>
+  These test cards, UPI, and Wallet credentials must only be used in the sandbox environment. Using these test cards in production environment may cause validation error 
+</Warning>
+
+<Tip>
+  Any value can be used for the name parameter in Test environment.
+</Tip>
+
+### 💳 Credit Card
+
+| **Card Number**  | **Network** | **Expiry** | **CVV** | **OTP** |
+| ---------------- | ----------- | ---------- | ------- | ------- |
+|  5123456789012346 | Mastercard  | 05/30      | 123     | 123456  |
+| 4012001037141112 | VISA        | 05/30      | 123     | 123456  |
+|  5497774415170603 | Mastercard  | 05/30      | 412     | 123456  |
+|  6082015309577308 | RUPAY       | 05/30      | 123     | 123456  |
+
+### 🏦 Debit Card
+
+| **Card Number**     | **Network** | **Expiry** | **CVV** | **OTP** |
+| ------------------- | ----------- | ---------- | ------- | ------- |
+| 5118-7000-0000-0003 | Mastercard  | 05/30      | 123     | 123456  |
+| 4594-5380-5063-9999 | VISA        | 05/30      | 123     | 123456  |
+
+
+## Test UPI ID
+
+You can use **anything@payu** or **9999999999@payu** as VPA to test your UPI-related integration in the sandbox (Test environment) 
+
+<Note>
+Only `anything@payu` is supported for UPI transactions in the **sandbox** or **API Playground**. Other VPAs will not work in the test environment.
+</Note>
+
+
+## Test Net Banking credentials
+Use the following credentials to test Net Banking transactions in the **sandbox environment**:  
+
+**Username:** `payu`  
+**Password:** `payu`  
+**OTP:** `123456`

@@ -1,0 +1,97 @@
+---
+title: "MERCHANT APPROVED"
+description: "Technical reference for the MERCHANT_APPROVED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `MERCHANT_APPROVED`  
+**Category**: Onboarding  
+**Description**: Merchant account has been approved and activated
+
+This webhook is triggered when a merchant account is approved and can start collecting payments through EximPe.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "event_type": "MERCHANT_APPROVED",
+    "event_time": "2024-12-15 14:32:18",
+    "version": "1.0",
+    "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
+    "data": {
+        "approved_at": "2024-12-15T14:32:18.456789Z",
+        "merchant_id": "1380229823",
+        "legal_name": "TechStore Solutions Private Limited",
+        "trade_name": "TechStore Online"
+    }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"MERCHANT_APPROVED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      
+      **Example**: `"2024-12-15 14:32:18"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "1.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"a3791670-7c5d-4a86-aa7a-fe35e58a9dbb"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing merchant approval details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.approved_at" type="string" required>
+      ISO 8601 timestamp when the merchant was approved
+      
+      **Example**: `"2024-12-15T14:32:18.456789Z"`
+    </ParamField>
+
+    <ParamField path="data.merchant_id" type="string" required>
+      Unique identifier for the approved merchant
+      
+      **Example**: `"1380229823"`
+    </ParamField>
+
+    <ParamField path="data.legal_name" type="string" required>
+      Legal business name of the merchant as registered with authorities
+      
+      **Example**: `"TechStore Solutions Private Limited"`
+    </ParamField>
+
+    <ParamField path="data.trade_name" type="string" required>
+      Trading or brand name of the merchant used for customer-facing operations
+      
+      **Example**: `"TechStore Online"`
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---

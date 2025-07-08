@@ -1,0 +1,297 @@
+---
+title: "Webhooks"
+description: "Learn how to set up and configure webhooks to receive real-time payment notifications from EximPe. This guide covers webhook setup, testing, and best practices for integration."
+---
+
+---
+
+## What are Webhooks?
+
+Webhooks are **real-time server-to-server (S2S) notifications** that EximPe sends to your backend when important events occur. Unlike browser redirects that can be interrupted, webhooks ensure reliable delivery of payment status updates directly to your server.
+
+<CardGroup cols={2}>
+  <Card title="Reliable Delivery" icon="shield-check">
+    Notifications sent directly to your server with automatic retries
+  </Card>
+  <Card title="Real-time Updates" icon="clock">
+    Instant notification of payment events as they happen
+  </Card>
+  <Card title="No User Dependency" icon="user-check">
+    Works even if customer closes the browser or loses connection
+  </Card>
+  <Card title="Secure Communication" icon="lock">
+    Encrypted and signed for authenticity and data integrity
+  </Card>
+</CardGroup>
+
+---
+
+## Supported Events
+
+EximPe sends webhooks for these key events:
+
+<CardGroup cols={2}>
+  <Card title="Payment Successful" icon="check">
+    **When:** Customer completes payment<br/>
+    **Use Case:** Update order status, send confirmation
+  </Card>
+  <Card title="Payment Failed" icon="x">
+    **When:** Payment attempt fails<br/>
+    **Use Case:** Retry payment, notify customer
+  </Card>
+  <Card title="Payment Refunded" icon="rotate-left">
+    **When:** Refund is processed<br/>
+    **Use Case:** Update inventory, notify customer
+  </Card>
+  <Card title="Merchant Approved" icon="user-check">
+    **When:** Merchant account activated<br/>
+    **Use Case:** Enable payment collection
+  </Card>
+  <Card title="Settlement Completed" icon="money-bill">
+    **When:** Funds transferred to merchant<br/>
+    **Use Case:** Update accounting records
+  </Card>
+</CardGroup>
+
+---
+
+## 🛠️ Setup Guide
+
+### Step 1: Prepare Your Endpoint
+
+<Info>
+  Ensure your server has a **public HTTPS URL** accessible from the internet, a **POST endpoint** that can receive webhook data, **200 OK response** capability, and support for `application/json`.
+</Info>
+
+### Step 2: Configure Webhook URL
+
+<Steps>
+  <Step title="Dashboard Configuration (Recommended)">
+    <ol>
+      <li>Log into your **EximPe Dashboard**</li>
+      <li>Navigate to **Developer Section**</li>
+      <li>Enter your webhook URL</li>
+      <li>Save configuration</li>
+      <li><strong>Whitelist EximPe IP addresses</strong> - Configure your firewall to only accept webhooks from EximPe's IP ranges (found in Developer Section)</li>
+    </ol>
+  </Step>
+  
+  <Step title="Manual Setup">
+    <ol>
+      <li>Contact EximPe Support with your webhook URL</li>
+      <li>Provide your server's IP address</li>
+      <li>EximPe will whitelist your endpoint</li>
+      <li>You'll receive EximPe's IP range for firewall configuration</li>
+      <li><strong>Whitelist EximPe IP addresses</strong> - Configure your firewall to only accept webhooks from EximPe's IP ranges</li>
+    </ol>
+  </Step>
+</Steps>
+
+### Step 3: Test Your Integration
+
+<CardGroup cols={2}>
+  <Card title="Log Requests" icon="file">
+    Log all incoming requests on your server to monitor webhook delivery
+  </Card>
+  <Card title="Test Payment" icon="credit-card">
+    Make a test payment in sandbox environment to trigger webhooks
+  </Card>
+  <Card title="Verify Receipt" icon="check">
+    Verify webhook receipt and processing in your logs
+  </Card>
+  <Card title="Check Response" icon="server">
+    Ensure your endpoint returns 200 OK response codes
+  </Card>
+</CardGroup>
+
+---
+
+## 🔐 Security & Verification
+
+EximPe signs each webhook with an HMAC signature to ensure authenticity:
+
+### Verification Steps
+
+<Steps>
+  <Step title="Extract the signature">
+    Extract the signature from the X-Webhook-Signature header in the request
+  </Step>
+  <Step title="Get your API key">
+    Get your Encryption key 
+    <Frame>
+      <img src="/images/encryption-key.png" alt="Get your API key from Developer Section" />
+    </Frame>
+  </Step>
+  <Step title="Recreate the signature">
+    Recreate the signature using HMAC-SHA256:
+    <ul>
+      <li>Use your API key as the secret</li>
+      <li>Use the raw JSON body as the message</li>
+      <li>**Important:** If reconstructing from JSON object, ensure consistent serialization using `json.dumps()` with `sort_keys=True` and `separators=(",", ":")` to match EximPe's format</li>
+      <li>Generate HMAC-SHA256 hash</li>
+      <li>Convert to hexadecimal string</li>
+    </ul>
+  </Step>
+  <Step title="Compare signatures">
+    Compare signatures - they should match exactly
+  </Step>
+</Steps>
+
+### Code Examples
+
+<CodeGroup>
+
+```javascript Node.js
+const crypto = require('crypto');
+
+function verifyWebhookSignature(payload, signature, apiKey) {
+  // Create HMAC using your API key
+  const hmac = crypto.createHmac('sha256', apiKey);
+  
+  // Update with the raw JSON body
+  hmac.update(payload, 'utf8');
+  
+  // Generate the expected signature
+  const expectedSignature = hmac.digest('hex');
+  
+  // Compare signatures
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSignature, 'hex')
+  );
+}
+
+function generateSignatureFromObject(webhookData, apiKey) {
+  // If you need to recreate signature from a JSON object
+  // Use the same serialization as EximPe
+  const payloadJson = JSON.stringify(webhookData, Object.keys(webhookData).sort());
+  
+  const hmac = crypto.createHmac('sha256', apiKey);
+  hmac.update(payloadJson, 'utf8');
+  return hmac.digest('hex');
+}
+
+// Usage in Express.js
+app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const payload = req.body.toString();
+  
+  if (!verifyWebhookSignature(payload, signature, process.env.API_KEY)) {
+    return res.status(401).send('Invalid signature');
+  }
+  
+  // Process webhook
+  const webhookData = JSON.parse(payload);
+  console.log('Webhook verified:', webhookData);
+  
+  res.status(200).send('OK');
+});
+```
+
+```python Python
+import hmac
+import hashlib
+import json
+
+def verify_webhook_signature(payload, signature, api_key):
+    # Create HMAC using your API key
+    expected_signature = hmac.new(
+        api_key.encode('utf-8'),
+        payload.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    
+    # Compare signatures securely
+    return hmac.compare_digest(signature, expected_signature)
+
+def generate_signature_from_object(webhook_data, api_key):
+    # If you need to recreate signature from a JSON object
+    # Use the same serialization as EximPe
+    payload_json = json.dumps(
+        webhook_data, sort_keys=True, separators=(",", ":")
+    )
+    signature = hmac.new(
+        api_key.encode(), payload_json.encode(), hashlib.sha256
+    ).hexdigest()
+    return signature
+
+# Usage in Flask
+from flask import Flask, request
+
+app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    signature = request.headers.get('X-Webhook-Signature')
+    payload = request.get_data(as_text=True)
+    
+    if not verify_webhook_signature(payload, signature, app.config['API_KEY']):
+        return 'Invalid signature', 401
+    
+    # Process webhook
+    webhook_data = json.loads(payload)
+    print('Webhook verified:', webhook_data)
+    
+    return 'OK', 200
+```
+
+```php PHP
+function verifyWebhookSignature($payload, $signature, $apiKey) {
+    // Create HMAC using your API key
+    $expectedSignature = hash_hmac('sha256', $payload, $apiKey);
+    
+    // Compare signatures securely
+    return hash_equals($expectedSignature, $signature);
+}
+
+function generateSignatureFromObject($webhookData, $apiKey) {
+    // If you need to recreate signature from a JSON object
+    // Use the same serialization as EximPe
+    ksort($webhookData); // Sort keys for consistency
+    $payloadJson = json_encode($webhookData, JSON_UNESCAPED_SLASHES);
+    
+    return hash_hmac('sha256', $payloadJson, $apiKey);
+}
+
+// Usage in Laravel/Symfony
+public function webhook(Request $request) {
+    $signature = $request->header('X-Webhook-Signature');
+    $payload = $request->getContent();
+    
+    if (!verifyWebhookSignature($payload, $signature, config('app.api_key'))) {
+        return response('Invalid signature', 401);
+    }
+    
+    // Process webhook
+    $webhookData = json_decode($payload, true);
+    Log::info('Webhook verified:', $webhookData);
+    
+    return response('OK', 200);
+}
+```
+
+</CodeGroup>
+
+## ⏰ Retry Logic & Delivery
+
+EximPe implements an automatic retry mechanism to ensure reliable webhook delivery. If your endpoint doesn't respond with a `200 OK` status code, we'll retry the webhook delivery according to the following schedule:
+
+<Info>
+  **Retry Schedule:** 1st attempt is **immediate**, followed by retries at **1 minute**, **5 minutes**, **15 minutes**, and finally **1 hour**. After 5 failed attempts, EximPe will stop retrying.
+</Info>
+---
+
+<Warning>
+  **Security Best Practices:**
+  - 🔐 Never expose your encryption key publicly
+  - 📝 Always verify webhook signatures
+  - 🛡️ Use HTTPS endpoints only
+  - 📊 Log webhook events for audit trails
+</Warning>
+
+<Note>
+  **Next Steps:**
+  - Review the [API Reference](/api-reference/webhooks) for detailed webhook payload specifications
+  - Test your webhook integration in the sandbox environment
+  - Monitor webhook delivery in your EximPe dashboard
+</Note>

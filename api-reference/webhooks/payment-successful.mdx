@@ -1,0 +1,118 @@
+---
+title: "PAYMENT SUCCESSFUL"
+description: "Technical reference for the PAYMENT_SUCCESSFUL webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `PAYMENT_SUCCESSFUL`  
+**Category**: Payment  
+**Description**: Payment transaction was successful
+
+This webhook is triggered when a customer successfully completes a payment transaction through EximPe.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "event_type": "PAYMENT_SUCCESSFUL",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
+    "data": {
+        "status": "CAPTURED",
+        "message": "Payment successful",
+        "mop_type": "UPI",
+        "order_id": "OD3376378679",
+        "payment_id": "PR6938527534",
+        "bank_ref_num": "OD3376378679-PR6938527534",
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+    }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"PAYMENT_SUCCESSFUL"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      
+      **Example**: `"2024-02-15 16:53:15"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "1.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"e40552bf-ed12-4f35-9a97-162d97e6fa34"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing payment transaction details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.status" type="string" required>
+      Payment status (CAPTURED for successful payments)
+      
+      **Example**: `"CAPTURED"`
+    </ParamField>
+
+    <ParamField path="data.message" type="string" required>
+      Additional message or note
+      
+      **Example**: `"Payment successful"`
+    </ParamField>
+
+    <ParamField path="data.mop_type" type="string" required>
+      Method of payment type
+      
+      **Example**: `"UPI"`
+    </ParamField>
+
+    <ParamField path="data.order_id" type="string" required>
+      Order ID
+      
+      **Example**: `"OD3376378679"`
+    </ParamField>
+
+    <ParamField path="data.payment_id" type="string" required>
+      Payment ID
+      
+      **Example**: `"PR6938527534"`
+    </ParamField>
+
+    <ParamField path="data.bank_ref_num" type="string" required>
+      Bank reference number
+      
+      **Example**: `"OD3376378679-PR6938527534"`
+    </ParamField>
+
+    <ParamField path="data.payment_completed_at" type="string" required>
+      ISO 8601 payment completion timestamp
+      
+      **Example**: `"2025-06-24T12:30:44.000000Z"`
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---

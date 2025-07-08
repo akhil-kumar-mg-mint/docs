@@ -1,0 +1,3608 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Eximpe Payment Gateway API",
+    "description": "API for payment processing and order management through Eximpe payment gateway",
+    "license": {
+      "name": "Proprietary"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-staging.eximpe.com",
+      "description": "Staging server"
+    },
+    {
+      "url": "https://api.eximpe.com",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "clientAuth": [],
+      "clientSecretAuth": []
+    }
+  ],
+  "paths": {
+    "/pg/orders/": {
+      "post": {
+        "summary": "Create Order",
+        "tags": ["Orders"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Order creation request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "currency": "INR",
+                "reference_id": "ORDER_123456",
+                "return_url": "https://yourdomain.com/payment/callback",
+                "mop_type": "UPI",
+                "buyer": {
+                  "name": "Alice Smith",
+                  "email": "alice.smith@example.com",
+                  "phone": "+919812345678",
+                  "address": {
+                    "line_1": "221B Baker Street",
+                    "line_2": "Near Central Park",
+                    "city": "Mumbai",
+                    "state": "Maharashtra",
+                    "postal_code": "400001"
+                  }
+                },
+                "product": {
+                  "name": "Wireless Headphones",
+                  "description": "Noise-cancelling over-ear headphones",
+                  "hs_code": "85183000",
+                  "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
+                  "type_of_goods": "goods"
+                },
+                "invoice": {
+                  "number": "INV_20240621",
+                  "date": "2024-06-21"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateOrderResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Order created successfully",
+                  "data": {
+                    "session_id": "session_abc123def456",
+                    "order_id": "order_xyz789uvw012"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Invalid request parameters",
+                  "error": {
+                    "code": "ERR_ORDER_002",
+                    "message": "Required field 'amount' is missing",
+                    "details": {
+                      "field": "amount",
+                      "reason": "Field is required but not provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/orders/{order_id}": {
+      "patch": {
+        "summary": "Update Order",
+        "description": "Update specific fields of an existing order.",
+        "tags": ["Orders"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "description": "Unique identifier of the order",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "OD3451762252"
+          }
+        ],
+        "requestBody": {
+          "description": "Order update request - only include fields to update",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderRequest"
+              },
+              "example": {
+                "buyer": {
+                  "pan_number": "BNYPG9212K",
+                  "dob": "2010-01-23"
+                },
+                "invoice": {
+                  "number": "INV_2TIO9F",
+                  "date": "2025-06-22"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Order updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateOrderResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Order updated successfully",
+                  "data": {
+                    "success": true,
+                    "message": "Order updated successfully",
+                    "data": {
+                      "order_id": "{Order_ID}",
+                      "buyer": {
+                        "pan_number": "BNYPG9212K",
+                        "dob": "2010-01-23"
+                      },
+                      "invoice": {
+                        "number": "INV_2TIO9F",
+                        "date": "2025-06-22"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Order not found",
+                  "error": {
+                    "code": "ERR_ORDER_404",
+                    "message": "Order with ID 'OD3451762252' not found"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get Order",
+        "description": "Retrieve order details by order ID.",
+        "tags": ["Orders"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "description": "Unique identifier of the order",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "OD3451762252"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOrderResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Order fetched successfully",
+                  "data": {
+                    "order_id": "OD9411897512",
+                    "reference_id": "TEST_FOB46D",
+                    "amount": 1000.0,
+                    "currency": "INR",
+                    "mop_type": "UPI",
+                    "buyer": {
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+919876543210",
+                      "address": {
+                        "line_1": "123 Main Street",
+                        "line_2": "Apt 4B",
+                        "city": "City",
+                        "state": "State",
+                        "postal_code": "123456"
+                      },
+                      "pan_number": "BNYPG9212K",
+                      "dob": "2010-01-23"
+                    },
+                    "product": {
+                      "name": "Sample Product",
+                      "description": "This is a sample product description",
+                      "hs_code": "98051000",
+                      "hs_code_description": "Portable automatic data processing machines",
+                      "type_of_goods": "goods"
+                    },
+                    "invoice": {
+                      "number": "IN1123213",
+                      "date": "2025-06-22",
+                      "file": "https://eximpe.com/inv-12312312.pdf"
+                    },
+                    "air_waybills": [
+                      {
+                        "number": "AWB-23343",
+                        "file": "https://eximpe.com/awb-8F3F51D2.pdf"
+                      },
+                      {
+                        "number": "IN1123213",
+                        "file": "https://eximpe.com/awb-12312312.pdf"
+                      }
+                    ],
+                    "payments": [
+                      {
+                        "payment_id": "PR1469384681",
+                        "mop_type": "UPI",
+                        "status": "captured",
+                        "status_message": null,
+                        "settlement": {
+                          "status": "ready_for_settlement",
+                          "message": null,
+                          "settlement_details": null
+                        },
+                        "created_at": "2025-06-23T10:44:14.344135Z"
+                      }
+                    ],
+                    "status": "payment_successful",
+                    "status_message": "Payment captured successfully",
+                    "created_at": "2025-06-23T10:44:11.702363Z",
+                    "is_testing": true
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Order not found",
+                  "error": {
+                    "code": "ERR_ORDER_404",
+                    "message": "Order with ID 'OD3451762252' not found"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/orders/{order_id}/documents/": {
+      "post": {
+        "summary": "Upload Document",
+        "description": "Upload an invoice or other document for an existing order.",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "description": "Unique identifier of the order",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "OD3451762252"
+          }
+        ],
+        "requestBody": {
+          "description": "Document upload request. The body must be `multipart/form-data`.",
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadDocumentRequest"
+              },
+              "examples": {
+                "invoiceUpload": {
+                  "summary": "Invoice Upload Example",
+                  "value": {
+                    "identifier": "IN1123213",
+                    "document_type": "invoice",
+                    "file": "your-invoice.pdf"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadDocumentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Documents uploaded successfully",
+                  "data": {
+                    "order_id": "OD9411897512",
+                    "reference_id": "TEST_FOB46D",
+                    "amount": 1000.0,
+                    "currency": "INR",
+                    "mop_type": "UPI",
+                    "buyer": {
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+919876543210",
+                      "address": {
+                        "line_1": "123 Main Street",
+                        "line_2": "Apt 4B",
+                        "city": "City",
+                        "state": "State",
+                        "postal_code": "123456"
+                      },
+                      "pan_number": "BNYPG9212K",
+                      "dob": "2010-01-23"
+                    },
+                    "product": {
+                      "name": "Sample Product",
+                      "description": "This is a sample product description",
+                      "hs_code": "98051000",
+                      "hs_code_description": "Portable automatic data processing machines",
+                      "type_of_goods": "goods"
+                    },
+                    "invoice": {
+                      "number": "IN1123213",
+                      "date": "2025-06-22",
+                      "file": "https://eximpe.com/inv-12312312.pdf"
+                    },
+                    "air_waybills": [
+                      {
+                        "number": "AWB-23343",
+                        "file": "https://eximpe.com/awb-8F3F51D2.pdf"
+                      }
+                    ],
+                    "payments": [
+                      {
+                        "payment_id": "PR1469384681",
+                        "mop_type": "UPI",
+                        "status": "captured",
+                        "status_message": null,
+                        "settlement": {
+                          "status": "ready_for_settlement",
+                          "message": null,
+                          "settlement_details": null
+                        },
+                        "created_at": "2025-06-23T10:44:14.344135Z"
+                      }
+                    ],
+                    "status": "payment_successful",
+                    "status_message": "Payment captured successfully",
+                    "created_at": "2025-06-23T10:44:11.702363Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid parameters or file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/": {
+      "get": {
+        "summary": "List Payments",
+        "description": "Retrieve a list of payments with optional filtering.",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "Filter by 3-letter ISO currency code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "merchant_id",
+            "in": "query",
+            "description": "Filter by merchant ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "query",
+            "description": "Filter by payment ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "query",
+            "description": "Filter by order reference ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buyer_name",
+            "in": "query",
+            "description": "Filter by buyer's name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mop_type",
+            "in": "query",
+            "description": "Filter by payment mode.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UPI",
+                "CREDIT_CARD",
+                "DEBIT_CARD",
+                "NET_BANKING",
+                "QR"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by payment status.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "CAPTURED",
+                "FAILED"
+              ]
+            }
+          },
+          {
+            "name": "from_created_date",
+            "in": "query",
+            "description": "Filter by creation date (from).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_created_date",
+            "in": "query",
+            "description": "Filter by creation date (to).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of payments.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPaymentsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Domestic payment requests retrieved successfully",
+                  "data": {
+                    "count": 15,
+                    "page": 1,
+                    "page_size": 10,
+                    "next": "https://api.eximpe.com/pg/payments/?page=2&page_size=10",
+                    "previous": null,
+                    "results": [
+                      {
+                        "id": "PR1469384681",
+                        "merchant": {
+                          "id": "4455704961",
+                          "name": "Acme Corp"
+                        },
+                        "reference_id": "ACME_ORD_1001",
+                        "buyer": {
+                          "name": "Rahul Mehta",
+                          "email": "rahul.mehta@acme.com",
+                          "phone": "+919812345678"
+                        },
+                        "payment_id": "OD9411897512",
+                        "amount": {
+                          "amount": "1000",
+                          "total_amount": "1000",
+                          "currency": "INR"
+                        },
+                        "created_at": "2025-06-23T10:44:14.344135Z",
+                        "comment": null,
+                        "mop_type": "UPI",
+                        "status": "CAPTURED"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/": {
+      "get": {
+        "summary": "Get Payment",
+        "description": "Retrieve the details of a specific payment by its ID.",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "description": "The ID of the payment to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The details of the payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetPaymentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Domestic payment request details retrieved successfully",
+                  "data": {
+                    "payment_id": "PR3828502708",
+                    "order": {
+                      "order_id": "OD6530655496",
+                      "reference_id": "TEST_9P81ZL",
+                      "amount": 1000.0,
+                      "currency": "INR",
+                      "mop_type": "UPI",
+                      "buyer": {
+                        "name": "John Doe",
+                        "email": "john.doe@example.com",
+                        "phone": "+919876543210",
+                        "address": {
+                          "line_1": "123 Main Street",
+                          "line_2": "Apt 4B",
+                          "city": "City",
+                          "state": "State",
+                          "postal_code": "123456"
+                        },
+                        "pan_number": "BNYPG1231L",
+                        "dob": "2025-06-19"
+                      },
+                      "product": {
+                        "name": "Sample Product",
+                        "description": "This is a sample product description",
+                        "hs_code": "98051000",
+                        "hs_code_description": "Portable automatic data processing machines",
+                        "type_of_goods": "goods"
+                      },
+                      "status": "payment_successful",
+                      "status_message": "Payment captured successfully",
+                      "created_at": "2025-06-19T09:17:56.338741Z"
+                    },
+                    "settlement": {
+                      "id": "ST4353980017",
+                      "settlement_id": "d42eda3f-41b6-4d82-add5-2665181f9eea",
+                      "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
+                      "settlement_amount": 1000.0,
+                      "settlement_currency": "USD",
+                      "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
+                      "number_of_transactions": 1,
+                      "created_date": "2025-06-20T08:06:59.307056Z"
+                    },
+                    "refund": [
+                      {
+                        "refund_id": "RF8370660295",
+                        "refund_amount": 12.0,
+                        "refund_status": "INITIATED",
+                        "refunded_at": null,
+                        "message": "No action status found",
+                        "payment_id": "PR3828502708"
+                      }
+                    ],
+                    "collection_mode": "HOSTED_PAYMENT",
+                    "mop_type": "UPI",
+                    "bank_ref_num": "OD6530655496-PR3828502708",
+                    "mop_detail": {
+                      "upi_id": "pay@payu"
+                    },
+                    "payment_completed_at": "2025-06-19T14:48:11.000000Z",
+                    "status": "CAPTURED",
+                    "status_message": "Invoice and AWB file missing",
+                    "created_date": "2025-06-19T09:18:10.637579Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/refunds": {
+      "post": {
+        "summary": "Create Refund",
+        "description": "Create a new refund for a previously successful payment.",
+        "tags": [
+          "Refunds"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Refund creation request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRefundRequest"
+              },
+              "example": {
+                "payment_id": "PR8867819681",
+                "refund_amount": "11"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refund created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRefundResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Refund request processed successfully",
+                  "data": {
+                    "refund_id": "RF8380989720",
+                    "payment_id": "PR8867819681",
+                    "refund_status": "INITIATED",
+                    "message": "Refund Request Queued",
+                    "transaction_id": "138287318",
+                    "bank_ref_num": null,
+                    "refund_amount": "11"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Refunds",
+        "description": "Retrieve a list of refunds with optional filtering.",
+        "tags": [
+          "Refunds"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "query",
+            "description": "Filter by payment ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "query",
+            "description": "Filter by order reference ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Filter refunds created from this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Filter refunds created up to this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "merchant_id",
+            "in": "query",
+            "description": "Filter refunds by merchant ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of refunds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRefundsResponse"
+                },
+                "example": {
+                  "count": 4,
+                  "page": 1,
+                  "page_size": 250,
+                  "next": null,
+                  "previous": null,
+                  "results": [
+                    {
+                      "refund_id": "RF8380989720",
+                      "refund_amount": 11,
+                      "refund_status": "INITIATED",
+                      "refunded_at": null,
+                      "message": "Refund Request Queued",
+                      "payment_id": "PR8867819681"
+                    },
+                    {
+                      "refund_id": "RF8370660295",
+                      "refund_amount": 12,
+                      "refund_status": "INITIATED",
+                      "refunded_at": null,
+                      "message": "No action status found",
+                      "payment_id": "PR3828502708"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/refunds/{refund_id}": {
+      "get": {
+        "summary": "Get Refund",
+        "description": "Retrieve the details of a specific refund by its ID.",
+        "tags": [
+          "Refunds"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "refund_id",
+            "in": "path",
+            "description": "The ID of the refund to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The details of the refund.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRefundResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Refund details retrieved successfully",
+                  "data": {
+                    "refund_id": "RF1481534012",
+                    "refund_amount": 12,
+                    "refund_status": "INITIATED",
+                    "refunded_at": null,
+                    "message": "No action status found",
+                    "payment_id": "PR3828502708"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Refund not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Refund not found",
+                  "error": {
+                    "code": "ERR_REFUND_404",
+                    "message": "Refund with ID 'RF1481534012' not found"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/settlements": {
+      "get": {
+        "summary": "List Settlements",
+        "description": "Retrieve a list of settlements with optional filtering.",
+        "tags": [
+          "Settlements"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Filter settlements from this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Filter settlements up to this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of settlements.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSettlementsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Settlements fetched successfully",
+                  "data": {
+                    "settlement_id": "ST4353980017",
+                    "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
+                    "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
+                    "forex_rate_cents": 8600,
+                    "settlement_amount_cents": 100000,
+                    "settlement_currency": "USD",
+                    "transactions": [
+                      {
+                        "settlement_type": "capture",
+                        "transaction_id": "PR3828502708",
+                        "transaction_amount": 1000.0,
+                        "merchant_service_fee": 0.0,
+                        "merchant_service_tax": 0.0,
+                        "merchant_net_amount": 1000.0,
+                        "mop_type": "UPI",
+                        "transaction_currency": "INR",
+                        "forex_rate": 86.0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/settlements/{settlement_id}": {
+      "get": {
+        "summary": "Get Settlement",
+        "description": "Retrieve the details of a specific settlement by its ID.",
+        "tags": [
+          "Settlements"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "settlement_id",
+            "in": "path",
+            "description": "The ID of the settlement to retrieve.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The details of the settlement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSettlementResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Settlements fetched successfully",
+                  "data": {
+                    "settlement_id": "ST4353980017",
+                    "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
+                    "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
+                    "forex_rate_cents": 8600,
+                    "settlement_amount_cents": 100000,
+                    "settlement_currency": "USD",
+                    "transactions": [
+                      {
+                        "settlement_type": "capture",
+                        "transaction_id": "PR3828502708",
+                        "transaction_amount": 1000.0,
+                        "merchant_service_fee": 0.0,
+                        "merchant_service_tax": 0.0,
+                        "merchant_net_amount": 1000.0,
+                        "mop_type": "UPI",
+                        "transaction_currency": "INR",
+                        "forex_rate": 86.0
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Settlement not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Settlement not found",
+                  "error": {
+                    "code": "ERR_SETTLEMENT_404",
+                    "message": "Settlement with ID 'ST4353980017' not found"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/merchants/": {
+      "get": {
+        "summary": "List Merchants",
+        "description": "Retrieve a list of merchants with pagination.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of merchants.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMerchantsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchants retrieved successfully",
+                  "data": {
+                    "count": 4,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "id": "3604346598",
+                        "brand_name": "TechSubshrine",
+                        "kyc_status": "PENDING",
+                        "created_date": "2025-06-19T18:06:05.523720Z"
+                      },
+                      {
+                        "id": "8319446548",
+                        "brand_name": "TechSubshrine",
+                        "kyc_status": "PENDING",
+                        "created_date": "2025-06-19T17:43:25.467834Z"
+                      },
+                      {
+                        "id": "2343915596",
+                        "brand_name": "TechSubshrine",
+                        "kyc_status": "PENDING",
+                        "created_date": "2025-06-19T16:43:53.317062Z"
+                      },
+                      {
+                        "id": "4455704961",
+                        "brand_name": "Test Name",
+                        "kyc_status": "PENDING",
+                        "created_date": "2025-06-19T08:53:22.411374Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Merchant",
+        "description": "Create a new merchant with settlement and company details.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Merchant details to create",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMerchantRequest"
+              },
+              "example": {
+                "settlement_details": {
+                  "bank_account_number": "1234567890",
+                  "bank_account_name": "Example Company Ltd",
+                  "bank_swift_code": "ABCDUS33",
+                  "bank_name": "Example Bank",
+                  "bank_branch_name": "Main Branch",
+                  "bank_address": "456 Bank St",
+                  "bank_city": "New York",
+                  "bank_state": "NY",
+                  "bank_country": "United States",
+                  "bank_pincode": "10002",
+                  "routing_number": "021000021"
+                },
+                "company_details": {
+                  "legal_name": "shrine",
+                  "brand_name": "TechSubshrine",
+                  "registration_number": "REG123456",
+                  "international_org_type": "PRIVATE_LIMITED",
+                  "tax_id": "TAX789012",
+                  "website": "https://techsub.example.com",
+                  "monthly_avg_transaction_value": "50000.00",
+                  "monthly_avg_transaction_volume": "100",
+                  "communication_address": "123 Tech Street",
+                  "communication_city": "San Francisco",
+                  "communication_state": "CA",
+                  "communication_country": "United States",
+                  "communication_pincode": "94105",
+                  "same_as_registered_address": true,
+                  "registered_address": "123 Tech Street",
+                  "registered_city": "San Francisco",
+                  "registered_state": "CA",
+                  "registered_country": "United States",
+                  "registered_pincode": "94105",
+                  "business_category": "TECHNOLOGY",
+                  "business_mode": "B2B",
+                  "commodity": "Software Services",
+                  "payment_terms": "NET_30",
+                  "hs_codes": [
+                    "84713010",
+                    "85423100"
+                  ],
+                  "category": "E-commerce",
+                  "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
+                  "agreement_details": "global_company aggrement",
+                  "purpose_code": "P0101"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Merchant created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMerchantResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchant created successfully",
+                  "data": {
+                    "id": "6182929449",
+                    "settlement_details": {
+                      "bank_account_number": "9876543210",
+                      "bank_account_name": "GlobalTech Solutions Inc.",
+                      "bank_swift_code": "CHASUS33XXX",
+                      "bank_name": "JPMorgan Chase Bank",
+                      "bank_branch_name": "Corporate Banking Division",
+                      "bank_address": "270 Park Avenue",
+                      "bank_city": "New York",
+                      "bank_state": "NY",
+                      "bank_country": "United States",
+                      "bank_pincode": "10017",
+                      "routing_number": "021000021",
+                      "settlement_currency": "USD"
+                    },
+                    "created_at": "2025-01-15T10:30:00.000000Z",
+                    "updated_at": "2025-01-15T10:30:00.000000Z",
+                    "invoice_file": null,
+                    "company_details": {
+                      "legal_name": "GlobalTech Solutions Inc.",
+                      "brand_name": "GlobalTech",
+                      "registration_number": "US-CORP-99887766",
+                      "international_org_type": "PRIVATE_LIMITED",
+                      "tax_id": "94-1234567",
+                      "website": "https://www.globaltech.io",
+                      "monthly_avg_transaction_value": "150000.00",
+                      "monthly_avg_transaction_volume": "300",
+                      "communication_address": "500 Mission Street, Suite 2400",
+                      "communication_city": "San Francisco",
+                      "communication_state": "CA",
+                      "communication_country": "United States",
+                      "communication_pincode": "94105",
+                      "same_as_registered_address": false,
+                      "registered_address": "1600 Amphitheatre Parkway",
+                      "registered_city": "Mountain View",
+                      "registered_state": "CA",
+                      "registered_country": "United States",
+                      "registered_pincode": "94043",
+                      "business_category": "TECHNOLOGY",
+                      "business_mode": "B2B",
+                      "commodity": "Enterprise Software Solutions",
+                      "payment_terms": "NET_30",
+                      "hs_codes": [
+                        "85234910",
+                        "84715000"
+                      ],
+                      "category": "Enterprise SaaS",
+                      "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
+                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
+                      "purpose_code": "P0101"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/merchants/{merchant_id}/": {
+      "get": {
+        "summary": "Get Merchant",
+        "description": "Retrieve the details of a specific merchant by its ID.",
+        "tags": ["Merchants"],
+        "security": [
+          { "clientAuth": [], "clientSecretAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "description": "The ID of the merchant to retrieve.",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Merchant details retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetMerchantResponse" },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchant details retrieved successfully",
+                  "data": {
+                    "id": "3604346598",
+                    "settlement_details": {
+                      "bank_account_number": "1234567890",
+                      "bank_account_name": "Example Company Ltd",
+                      "bank_swift_code": "ABCDUS33",
+                      "bank_name": "Example Bank",
+                      "bank_branch_name": "Main Branch",
+                      "bank_address": "456 Bank St",
+                      "bank_city": "New York",
+                      "bank_state": "NY",
+                      "bank_country": "United States",
+                      "bank_pincode": "10002",
+                      "routing_number": "021000021",
+                      "settlement_currency": "USD"
+                    },
+                    "created_at": "2025-06-19T18:06:05.523720Z",
+                    "updated_at": "2025-06-19T18:06:05.523752Z",
+                    "invoice_file": null,
+                    "company_details": {
+                      "legal_name": "shrine",
+                      "brand_name": "TechSubshrine",
+                      "registration_number": "REG123456",
+                      "international_org_type": "PRIVATE_LIMITED",
+                      "tax_id": "TAX789012",
+                      "website": "https://techsub.example.com",
+                      "monthly_avg_transaction_value": "50000.00",
+                      "monthly_avg_transaction_volume": "100",
+                      "communication_address": "123 Tech Street",
+                      "communication_city": "San Francisco",
+                      "communication_state": "CA",
+                      "communication_country": "United States",
+                      "communication_pincode": "94105",
+                      "same_as_registered_address": true,
+                      "registered_address": "123 Tech Street",
+                      "registered_city": "San Francisco",
+                      "registered_state": "CA",
+                      "registered_country": "United States",
+                      "registered_pincode": "94105",
+                      "business_category": "TECHNOLOGY",
+                      "business_mode": "B2B",
+                      "commodity": "Software Services",
+                      "payment_terms": "NET_30",
+                      "hs_codes": [
+                        "84713010",
+                        "85423100"
+                      ],
+                      "category": "E-commerce",
+                      "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
+                      "agreement_details": "global_company aggrement",
+                      "purpose_code": "P0101"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Merchant not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Merchant",
+        "description": "Update specific fields of an existing merchant.",
+        "tags": ["Merchants"],
+        "security": [
+          { "clientAuth": [], "clientSecretAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "description": "The ID of the merchant to update.",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "description": "Merchant update request - only include fields to update",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMerchantRequest"
+              },
+              "example": {
+                "company_details": {
+                  "website": "https://updated-website.com",
+                  "monthly_avg_transaction_value": "75000.00",
+                  "description_of_products_and_services": "Updated description of services"
+                },
+                "settlement_details": {
+                  "bank_account_number": "9876543210",
+                  "bank_account_name": "Updated Company Ltd"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Merchant updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateMerchantResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Merchant updated successfully",
+                  "data": {
+                    "merchant_id": "3604346598",
+                    "updated_fields": ["company_details", "settlement_details"]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid parameters.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "404": {
+            "description": "Merchant not found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partners/merchants/{merchant_id}/documents/": {
+      "patch": {
+        "summary": "Upload Merchant Document",
+        "description": "Upload a document for a merchant.",
+        "tags": ["Merchants"],
+        "security": [
+          { "clientAuth": [], "clientSecretAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "description": "The ID of the merchant to upload the document for.",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "description": "Document upload request. The body must be multipart/form-data.",
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The file to upload."
+                  },
+                  "document_type": {
+                    "type": "string",
+                    "description": "Type of document (INVOICE). Only invoice is supported currently."
+                  }
+                },
+                "required": ["file", "document_type"]
+              },
+              "example": {
+                "document_type": "INVOICE",
+                "file": "Screenshot 2025-05-21 at 2.44.41 PM.png"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "detail": { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Invoice uploaded successfully",
+                  "data": {
+                    "detail": "Invoice uploaded successfully"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency",
+          "reference_id",
+          "buyer",
+          "product"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO currency code (e.g., INR, USD)",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique identifier for the order"
+          },
+          "return_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to redirect after payment"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type (e.g., UPI)",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "NETBANKING",
+              "DEBIT_CARD",
+              "QR"
+            ]
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/Buyer"
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/Invoice"
+          }
+        }
+      },
+      "Buyer": {
+        "type": "object",
+        "required": [
+          "name",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Buyer's full name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Buyer's email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Buyer's phone number with country code",
+            "pattern": "^\\+[1-9]\\d{1,14}$"
+          },
+          "address": {
+            "$ref": "#/components/schemas/Address"
+          }
+        }
+      },
+      "Address": {
+        "type": "object",
+        "required": [
+          "line_1",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "properties": {
+          "line_1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "line_2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name"
+          },
+          "state": {
+            "type": "string",
+            "description": "State name"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal/ZIP code"
+          }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "required": [
+          "name",
+          "type_of_goods"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description"
+          },
+          "hs_code": {
+            "type": "string",
+            "description": "Harmonized System code"
+          },
+          "hs_code_description": {
+            "type": "string",
+            "description": "Description of the HS code"
+          },
+          "type_of_goods": {
+            "type": "string",
+            "description": "Type of goods (e.g., goods)",
+            "enum": [
+              "goods",
+              "services"
+            ]
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Invoice number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Invoice date in YYYY-MM-DD format"
+          }
+        }
+      },
+      "CreateOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OrderData"
+          }
+        }
+      },
+      "OrderData": {
+        "type": "object",
+        "required": [
+          "session_id",
+          "order_id"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Unique session identifier for payment processing"
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Unique order identifier"
+          }
+        }
+      },
+      "OrderDetails": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "reference_id",
+          "amount",
+          "currency",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique order identifier"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique reference identifier for the order"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Order amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO currency code"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "NETBANKING",
+              "DEBIT_CARD",
+              "QR"
+            ]
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "address"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer's phone number with country code"
+              },
+              "address": {
+                "$ref": "#/components/schemas/Address"
+              },
+              "pan_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's PAN number"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Buyer's date of birth"
+              }
+            }
+          },
+          "product": {
+            "$ref": "#/components/schemas/Product"
+          },
+          "invoice": {
+            "type": "object",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date in YYYY-MM-DD format"
+              },
+              "file": {
+                "type": "string",
+                "nullable": true,
+                "description": "Invoice file URL"
+              }
+            }
+          },
+          "air_waybills": {
+            "type": "array",
+            "description": "Array of air waybill information",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "string",
+                  "description": "Air waybill number"
+                },
+                "file": {
+                  "type": "string",
+                  "description": "Air waybill file URL"
+                }
+              }
+            }
+          },
+          "payments": {
+            "type": "array",
+            "description": "Array of payment request information",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRequest"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Order status",
+            "enum": [
+              "PAYMENT_PENDING",
+              "PAYMENT_SUCCESSFUL",
+              "FAILED"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Order status message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Order creation timestamp"
+          },
+          "is_testing": {
+            "type": "boolean",
+            "description": "Whether this is a test order"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetails"
+          }
+        }
+      },
+      "ErrorDetails": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code (e.g., ERR_ORDER_002)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "object",
+            "description": "Detailed error information",
+            "properties": {
+              "field": {
+                "type": "string",
+                "description": "Field that caused the error"
+              },
+              "reason": {
+                "type": "string",
+                "description": "Reason for the error"
+              }
+            }
+          }
+        }
+      },
+      "GetOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OrderDetails"
+          }
+        }
+      },
+    "UpdateOrderRequest": {
+        "type": "object",
+        "description": "Request body for updating order - only include fields to update",
+        "properties": {
+          "buyer": {
+            "type": "object",
+            "description": "Buyer information to update",
+            "properties": {
+              "pan_number": {
+                "type": "string",
+                "description": "Buyer's PAN number"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "description": "Buyer's date of birth (YYYY-MM-DD)"
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "description": "Invoice information to update",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date (YYYY-MM-DD)"
+              }
+            }
+          }
+        }
+      },
+      "UpdateOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Nested response data",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Indicates if the order update was successful"
+              },
+              "message": {
+                "type": "string",
+                "description": "Success message for the order update"
+              },
+              "data": {
+                "type": "object",
+                "description": "Contains the updated order fields",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The ID of the updated order"
+                  },
+                  "buyer": {
+                    "type": "object",
+                    "description": "Updated buyer information",
+                    "properties": {
+                      "pan_number": {
+                        "type": "string",
+                        "description": "Updated PAN number"
+                      },
+                      "dob": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Updated date of birth"
+                      }
+                    }
+                  },
+                  "invoice": {
+                    "type": "object",
+                    "description": "Updated invoice information",
+                    "properties": {
+                      "number": {
+                        "type": "string",
+                        "description": "Updated invoice number"
+                      },
+                      "date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Updated invoice date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UploadDocumentRequest": {
+        "type": "object",
+        "required": [
+          "identifier",
+          "document_type",
+          "file"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Identifier for the document (e.g., order ID)"
+          },
+          "document_type": {
+            "type": "string",
+            "description": "Type of document invoice or awb"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "The file to upload"
+          }
+        }
+      },
+      "UploadDocumentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the document upload was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/OrderDetails"
+          }
+        }
+      },
+      "ListPaymentsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "count",
+              "page",
+              "page_size",
+              "next",
+              "previous",
+              "results"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total number of payments"
+              },
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "Number of payments per page"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the next page of results"
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the previous page of results"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PaymentInList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentInList": {
+        "type": "object",
+        "required": [
+          "id",
+          "merchant",
+          "reference_id",
+          "buyer",
+          "payment_id",
+          "amount",
+          "created_at",
+          "mop_type",
+          "status"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Unique payment request identifier"
+          },
+          "merchant": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Merchant ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant name"
+              }
+            }
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Order reference identifier"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "email",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer's phone number with country code"
+              }
+            }
+          },
+          "amount": {
+            "type": "object",
+            "required": [
+              "amount",
+              "total_amount",
+              "currency"
+            ],
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Payment amount"
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "Total payment amount"
+              },
+              "currency": {
+                "type": "string",
+                "description": "3-letter ISO currency code"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment creation timestamp"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional comment or status message"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "NET_BANKING",
+              "QR"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "PENDING",
+              "CAPTURED",
+              "FAILED"
+            ]
+          }
+        }
+      },
+      "GetPaymentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Payment"
+          }
+        }
+      },
+      "CreateRefundRequest": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "refund_amount"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment to refund."
+          },
+          "refund_amount": {
+            "type": "string",
+            "description": "The amount to be refunded. Can be a partial amount."
+          }
+        }
+      },
+      "GetRefundResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Refund"
+          }
+        }
+      },
+      "Refund": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "description": "Unique identifier for the refund."
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment that was refunded."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "The status of the refund."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "A message providing more detail about the refund status."
+          },
+          "bank_ref_num": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bank reference number for the refund."
+          },
+          "refund_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "The refunded amount."
+          },
+          "refunded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the refund was completed."
+          }
+        }
+      },
+      "ListRefundsResponse": {
+        "type": "object",
+        "required": [
+          "count",
+          "page",
+          "page_size",
+          "next",
+          "previous",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of refunds"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of refunds per page"
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL for the next page of results"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL for the previous page of results"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundInList"
+            }
+          }
+        }
+      },
+      "RefundInList": {
+        "type": "object",
+        "required": [
+          "refund_id",
+          "refund_amount",
+          "refund_status",
+          "refunded_at",
+          "message",
+          "payment_id"
+        ],
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "description": "Unique identifier for the refund."
+          },
+          "refund_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "The refunded amount."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "The status of the refund."
+          },
+          "refunded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the refund was completed."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "A message providing more detail about the refund status."
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment that was refunded."
+          }
+        }
+      },
+      "Settlement": {
+        "type": "object",
+        "properties": {
+          "settlement_id": {
+            "type": "string",
+            "description": "Unique identifier for the settlement."
+          },
+          "utr_number": {
+            "type": "string",
+            "description": "UTR (Unique Transaction Reference) number for the settlement."
+          },
+          "settlement_completed_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp of when the settlement was completed."
+          },
+          "forex_rate_cents": {
+            "type": "integer",
+            "description": "Forex rate in cents (e.g., 8600 represents 86.00)."
+          },
+          "settlement_amount_cents": {
+            "type": "integer",
+            "description": "Settlement amount in cents (e.g., 100000 represents 1000.00)."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "description": "Currency code for the settlement amount."
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementTransaction"
+            }
+          }
+        }
+      },
+      "SettlementTransaction": {
+        "type": "object",
+        "properties": {
+          "settlement_type": {
+            "type": "string",
+            "description": "Type of settlement transaction (e.g., capture, refund)"
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "Unique identifier for the transaction"
+          },
+          "transaction_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Transaction amount"
+          },
+          "merchant_service_fee": {
+            "type": "number",
+            "format": "float",
+            "description": "Merchant service fee"
+          },
+          "merchant_service_tax": {
+            "type": "number",
+            "format": "float",
+            "description": "Merchant service tax"
+          },
+          "merchant_net_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Net amount for merchant"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "NET_BANKING",
+              "QR"
+            ]
+          },
+          "transaction_currency": {
+            "type": "string",
+            "description": "Currency of the transaction"
+          },
+          "forex_rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Forex rate applied to the transaction"
+          }
+        }
+      },
+      "SettlementInList": {
+        "type": "object",
+        "properties": {
+          "settlement_id": {
+            "type": "string"
+          },
+          "utr_number": {
+            "type": "string"
+          },
+          "settlement_completed_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "forex_rate": {
+            "type": "number",
+            "format": "float"
+          },
+          "settlement_amount": {
+            "type": "number",
+            "format": "float"
+          },
+          "settlement_currency": {
+            "type": "string"
+          }
+        }
+      },
+      "GetSettlementResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Settlement"
+          }
+        }
+      },
+      "ListSettlementsResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_size": {
+            "type": "integer"
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementInList"
+            }
+          }
+        }
+      },
+      "CreateMerchantRequest": {
+        "type": "object",
+        "required": [
+          "settlement_details",
+          "company_details"
+        ],
+        "properties": {
+          "settlement_details": {
+            "$ref": "#/components/schemas/SettlementDetails"
+          },
+          "company_details": {
+            "$ref": "#/components/schemas/CompanyDetails"
+          }
+        }
+      },
+      "SettlementDetails": {
+        "type": "object",
+        "required": [
+          "bank_account_number",
+          "bank_account_name",
+          "bank_swift_code",
+          "bank_name",
+          "bank_branch_name",
+          "bank_address",
+          "bank_city",
+          "bank_state",
+          "bank_country",
+          "bank_pincode",
+          "routing_number"
+        ],
+        "properties": {
+          "bank_account_number": {
+            "type": "string",
+            "description": "Bank account number"
+          },
+          "bank_account_name": {
+            "type": "string",
+            "description": "Name on the bank account"
+          },
+          "bank_swift_code": {
+            "type": "string",
+            "description": "Bank SWIFT/BIC code"
+          },
+          "bank_name": {
+            "type": "string",
+            "description": "Name of the bank"
+          },
+          "bank_branch_name": {
+            "type": "string",
+            "description": "Bank branch name"
+          },
+          "bank_address": {
+            "type": "string",
+            "description": "Bank address"
+          },
+          "bank_city": {
+            "type": "string",
+            "description": "Bank city"
+          },
+          "bank_state": {
+            "type": "string",
+            "description": "Bank state"
+          },
+          "bank_country": {
+            "type": "string",
+            "description": "Bank country"
+          },
+          "bank_pincode": {
+            "type": "string",
+            "description": "Bank pincode/postal code"
+          },
+          "routing_number": {
+            "type": "string",
+            "description": "Bank routing number"
+          }
+        }
+      },
+      "CompanyDetails": {
+        "type": "object",
+        "required": [
+          "legal_name",
+          "brand_name",
+          "registration_number",
+          "international_org_type",
+          "tax_id",
+          "website",
+          "monthly_avg_transaction_value",
+          "monthly_avg_transaction_volume",
+          "communication_address",
+          "communication_city",
+          "communication_state",
+          "communication_country",
+          "communication_pincode",
+          "same_as_registered_address",
+          "registered_address",
+          "registered_city",
+          "registered_state",
+          "registered_country",
+          "registered_pincode",
+          "business_category",
+          "business_mode",
+          "commodity",
+          "payment_terms",
+          "hs_codes",
+          "category",
+          "description_of_products_and_services",
+          "agreement_details",
+          "purpose_code"
+        ],
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "Legal name of the company"
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand/trading name of the company"
+          },
+          "registration_number": {
+            "type": "string",
+            "description": "Company registration number"
+          },
+          "international_org_type": {
+            "type": "string",
+            "description": "Type of international organization",
+            "enum": [
+              "PRIVATE_LIMITED",
+              "PUBLIC_LIMITED",
+              "PARTNERSHIP",
+              "SOLE_PROPRIETORSHIP",
+              "LLC",
+              "CORPORATION"
+            ]
+          },
+          "tax_id": {
+            "type": "string",
+            "description": "Tax identification number"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "Company website URL"
+          },
+          "monthly_avg_transaction_value": {
+            "type": "string",
+            "description": "Average monthly transaction value"
+          },
+          "monthly_avg_transaction_volume": {
+            "type": "string",
+            "description": "Average monthly transaction volume"
+          },
+          "communication_address": {
+            "type": "string",
+            "description": "Communication address"
+          },
+          "communication_city": {
+            "type": "string",
+            "description": "Communication city"
+          },
+          "communication_state": {
+            "type": "string",
+            "description": "Communication state"
+          },
+          "communication_country": {
+            "type": "string",
+            "description": "Communication country"
+          },
+          "communication_pincode": {
+            "type": "string",
+            "description": "Communication pincode/postal code"
+          },
+          "same_as_registered_address": {
+            "type": "boolean",
+            "description": "Whether communication address is same as registered address"
+          },
+          "registered_address": {
+            "type": "string",
+            "description": "Registered address"
+          },
+          "registered_city": {
+            "type": "string",
+            "description": "Registered city"
+          },
+          "registered_state": {
+            "type": "string",
+            "description": "Registered state"
+          },
+          "registered_country": {
+            "type": "string",
+            "description": "Registered country"
+          },
+          "registered_pincode": {
+            "type": "string",
+            "description": "Registered pincode/postal code"
+          },
+          "business_category": {
+            "type": "string",
+            "description": "Business category",
+            "enum": [
+              "TECHNOLOGY",
+              "HEALTHCARE",
+              "FINANCE",
+              "RETAIL",
+              "MANUFACTURING",
+              "EDUCATION",
+              "ENTERTAINMENT",
+              "OTHER"
+            ]
+          },
+          "business_mode": {
+            "type": "string",
+            "description": "Business mode",
+            "enum": [
+              "B2B",
+              "B2C",
+              "B2B2C"
+            ]
+          },
+          "commodity": {
+            "type": "string",
+            "description": "Primary commodity or service"
+          },
+          "payment_terms": {
+            "type": "string",
+            "description": "Payment terms",
+            "enum": [
+              "NET_30",
+              "NET_60",
+              "NET_90",
+              "IMMEDIATE"
+            ]
+          },
+          "hs_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Harmonized System codes for products/services"
+          },
+          "category": {
+            "type": "string",
+            "description": "Business category description"
+          },
+          "description_of_products_and_services": {
+            "type": "string",
+            "description": "Detailed description of products and services"
+          },
+          "agreement_details": {
+            "type": "string",
+            "description": "Agreement details"
+          },
+          "purpose_code": {
+            "type": "string",
+            "description": "Purpose code for international transactions"
+          }
+        }
+      },
+      "CreateMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MerchantDetails"
+          }
+        }
+      },
+      "ListMerchantsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MerchantInList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "MerchantInList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique merchant identifier"
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand/trading name of the merchant"
+          },
+          "kyc_status": {
+            "type": "string",
+            "description": "KYC verification status",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "created_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant creation timestamp"
+          }
+        }
+      },
+      "GetMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MerchantDetails"
+          }
+        }
+      },
+      "MerchantDetails": {
+        "type": "object",
+        "required": [
+          "id",
+          "settlement_details",
+          "created_at",
+          "updated_at",
+          "invoice_file",
+          "company_details"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique merchant identifier"
+          },
+          "settlement_details": {
+            "$ref": "#/components/schemas/SettlementDetails"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant update timestamp"
+          },
+          "invoice_file": {
+            "type": "string",
+            "description": "Invoice file URL"
+          },
+          "company_details": {
+            "$ref": "#/components/schemas/CompanyDetails"
+          }
+        }
+      },
+      "UpdateMerchantRequest": {
+        "type": "object",
+        "description": "Request body for updating merchant - only include fields to update",
+        "properties": {
+          "company_details": {
+            "type": "object",
+            "description": "Company details to update",
+            "properties": {
+              "website": {
+                "type": "string",
+                "format": "uri",
+                "description": "Updated company website URL"
+              },
+              "monthly_avg_transaction_value": {
+                "type": "string",
+                "description": "Updated average monthly transaction value"
+              },
+              "description_of_products_and_services": {
+                "type": "string",
+                "description": "Updated description of products and services"
+              }
+            }
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Settlement details to update",
+            "properties": {
+              "bank_account_number": {
+                "type": "string",
+                "description": "Updated bank account number"
+              },
+              "bank_account_name": {
+                "type": "string",
+                "description": "Updated bank account name"
+              }
+            }
+          }
+        }
+      },
+      "UpdateMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Contains the updated merchant fields",
+            "properties": {
+              "merchant_id": {
+                "type": "string",
+                "description": "The ID of the updated merchant"
+              },
+              "updated_fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentRequest": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "mop_type",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Payment request ID"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "NETBANKING",
+              "DEBIT_CARD",
+              "QR"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "pending",
+              "captured",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment status message"
+          },
+          "settlement": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Settlement status",
+                "enum": [
+                  "pending",
+                  "ready_for_settlement",
+                  "settled",
+                  "failed"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Settlement message"
+              },
+              "settlement_details": {
+                "type": "object",
+                "nullable": true,
+                "description": "Settlement details"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment request creation timestamp"
+          }
+        }
+      },
+      "Payment": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "order",
+          "settlement",
+          "refund",
+          "collection_mode",
+          "mop_type",
+          "status",
+          "created_date"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Unique payment request identifier"
+          },
+          "order": {
+            "type": "object",
+            "required": [
+              "order_id",
+              "reference_id",
+              "amount",
+              "currency",
+              "status",
+              "created_at"
+            ],
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "Unique order identifier"
+              },
+              "reference_id": {
+                "type": "string",
+                "description": "Order reference identifier"
+              },
+              "amount": {
+                "type": "number",
+                "format": "float",
+                "description": "Order amount"
+              },
+              "currency": {
+                "type": "string",
+                "description": "3-letter ISO currency code"
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment type",
+                "enum": [
+                  "UPI",
+                  "CREDIT_CARD",
+                  "NETBANKING",
+                  "DEBIT_CARD",
+                  "QR"
+                ]
+              },
+              "buyer": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "address"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Buyer's full name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Buyer's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Buyer's phone number with country code"
+                  },
+                  "address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "pan_number": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Buyer's PAN number"
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "Buyer's date of birth"
+                  }
+                }
+              },
+              "product": {
+                "$ref": "#/components/schemas/Product"
+              },
+              "status": {
+                "type": "string",
+                "description": "Order status",
+                "enum": [
+                  "PAYMENT_PENDING",
+                  "PAYMENT_SUCCESSFUL",
+                  "FAILED"
+                ]
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Order status message"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Order creation timestamp"
+              }
+            }
+          },
+          "settlement": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Settlement ID"
+              },
+              "settlement_id": {
+                "type": "string",
+                "description": "Unique settlement identifier"
+              },
+              "settlement_completed_date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement completion timestamp"
+              },
+              "settlement_amount": {
+                "type": "number",
+                "format": "float",
+                "description": "Settlement amount"
+              },
+              "settlement_currency": {
+                "type": "string",
+                "description": "Settlement currency"
+              },
+              "utr_number": {
+                "type": "string",
+                "description": "UTR number for the settlement"
+              },
+              "number_of_transactions": {
+                "type": "integer",
+                "description": "Number of transactions in settlement"
+              },
+              "created_date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement creation timestamp"
+              }
+            }
+          },
+          "refund": {
+            "type": "array",
+            "description": "Array of refunds associated with this payment",
+            "items": {
+              "$ref": "#/components/schemas/Refund"
+            }
+          },
+          "collection_mode": {
+            "type": "string",
+            "description": "Payment collection mode",
+            "enum": [
+              "HOSTED_PAYMENT",
+              "DIRECT_PAYMENT"
+            ]
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment",
+            "enum": [
+              "UPI",
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "NET_BANKING",
+              "QR"
+            ]
+          },
+          "bank_ref_num": {
+            "type": "string",
+            "nullable": true,
+            "description": "Bank reference number"
+          },
+          "mop_detail": {
+            "type": "object",
+            "nullable": true,
+            "description": "Method of payment specific details - structure varies based on mop_type",
+            "oneOf": [
+              {
+                "title": "UPI Details",
+                "type": "object",
+                "properties": {
+                  "upi_id": {
+                    "type": "string",
+                    "description": "UPI ID for UPI payments"
+                  }
+                },
+                "required": ["upi_id"]
+              },
+              {
+                "title": "Card Details",
+                "type": "object",
+                "properties": {
+                  "card_mask": {
+                    "type": "string",
+                    "description": "Masked card number"
+                  },
+                  "card_holder_name": {
+                    "type": "string",
+                    "description": "Name of the card holder"
+                  },
+                  "card_issuer_country": {
+                    "type": "string",
+                    "description": "Country of the card issuer"
+                  },
+                  "card_issuer_bank": {
+                    "type": "string",
+                    "description": "Bank that issued the card"
+                  }
+                },
+                "required": ["card_mask", "card_holder_name", "card_issuer_country", "card_issuer_bank"]
+              },
+              {
+                "title": "Net Banking Details",
+                "type": "object",
+                "properties": {
+                  "bank_ref_num": {
+                    "type": "string",
+                    "description": "Bank reference number"
+                  },
+                  "acq_id": {
+                    "type": "string",
+                    "description": "Acquirer ID"
+                  }
+                },
+                "required": ["bank_ref_num", "acq_id"]
+              }
+            ]
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Payment completion timestamp"
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "PENDING",
+              "CAPTURED",
+              "FAILED"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment status message"
+          },
+          "created_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment creation timestamp"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+  "clientAuth": {
+    "type": "apiKey",
+    "name": "X-Client-ID",
+    "in": "header",
+    "description": "Client app ID. You can find your app id in the merchant dashboard."
+  },
+  "clientSecretAuth": {
+    "type": "apiKey",
+    "name": "X-Client-Secret",
+    "in": "header",
+    "description": "Client secret key. You can find your secret in the merchant dashboard."
+  },
+  "merchantAuth": {
+    "type": "apiKey",
+    "name": "X-Merchant-ID",
+    "in": "header",
+    "description": "Merchant ID. You can find your merchant ID in the merchant section of the merchant dashboard."
+  }
+}
+  }
+}

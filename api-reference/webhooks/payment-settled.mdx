@@ -1,0 +1,104 @@
+---
+title: "PAYMENT SETTLED"
+description: "Technical reference for the PAYMENT_SETTLED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+## Event Overview
+
+**Event Type**: `PAYMENT_SETTLED`  
+**Category**: Settlement  
+**Description**: Settlement to merchant has been completed
+
+This webhook is triggered when funds are successfully transferred to the merchant's account.
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "event_type": "PAYMENT_SETTLED",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
+    "data": {
+        "settlements": [
+            {
+                "settlement_id": "ST8174378817",
+                "settlement_utr": "ST8174378817",
+                "settlement_done_at": "2025-06-20T19:22:54.734256Z",
+                "forex_rate": 86,
+                "settlement_amount": 1952.8
+            }
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"PAYMENT_SETTLED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      
+      **Example**: `"2024-02-15 16:53:15"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "1.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"a3791670-7c5d-4a86-aa7a-fe35e58a9dbb"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing settlement details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.settlements" type="array" required>
+      Array of settlement objects containing the settlement information
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_id" type="string" required>
+      Unique settlement identifier
+      
+      **Example**: `"ST8174378817"`
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_utr" type="string" required>
+      UTR (Unique Transaction Reference) for the settlement
+      
+      **Example**: `"ST8174378817"`
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_done_at" type="string" required>
+      ISO 8601 timestamp when the settlement was completed
+      
+      **Example**: `"2025-06-20T19:22:54.734256Z"`
+    </ParamField>
+
+    <ParamField path="data.settlements[].forex_rate" type="number" required>
+      Foreign exchange rate applied to the settlement
+      
+      **Example**: `86`
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_amount" type="number" required>
+      Final settlement amount transferred to the merchant
+      
+      **Example**: `1952.8`
+    </ParamField>
+  </Tab>
+</Tabs>
