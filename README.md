@@ -27,6 +27,3 @@ mintlify dev
 - **Integration Guide**: Step-by-step guides for integrating EximPe
 - **API Reference**: Complete API documentation with examples
 - **Getting Started**: Quick setup and configuration guides
-# eximpe-doc
-# eximpe-doc
-# eximpe-doc

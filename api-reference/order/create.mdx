@@ -7,5 +7,184 @@ openapi: '/openapi.json POST /pg/orders/'
 
 The Create Order endpoint is the first step in the payment flow. It creates a new order with all the necessary details including buyer information, product details, and payment preferences.
 
-
 After creating an order successfully, you'll receive a `session_id` and `order_id`. Use the `session_id` to redirect the customer to the payment gateway for completing the transaction.
+
+## Payment Collection Modes
+
+EximPe supports multiple payment collection modes:
+
+### 1. Hosted Payment (Default)
+The standard hosted payment flow where customers are redirected to EximPe's secure payment page.
+
+### 2. S2S UPI Intent
+Server-to-server UPI intent flow that generates a UPI intent link for direct app-to-app payments.
+
+### 3. S2S UPI Collection
+Server-to-server UPI collection flow that sends a payment request directly to the customer's VPA (Virtual Payment Address).
+
+## Request Parameters
+
+### Required Parameters
+- `amount`: Payment amount in decimal format
+- `currency`: 3-letter ISO currency code (e.g., INR)
+- `reference_id`: Unique identifier for the order
+- `buyer`: Buyer details object
+- `product`: Product details object
+
+### Optional Parameters
+- `collection_mode`: Payment collection mode (`hosted_payment` or `s2s`)
+- `mop_type`: Method of payment (`UPI`, `CREDIT_CARD`, `DEBIT_CARD`, `NET_BANKING`, `QR`)
+- `upi_flow_type`: UPI flow type (`intent` or `collection`) - required when using S2S with UPI
+- `vpa`: Virtual Payment Address - required when `upi_flow_type` is `collection`
+- `upi_app_name`: Preferred UPI app - optional, defaults to `others`
+- `return_url`: URL to redirect after payment completion
+- `invoice`: Invoice details object
+
+## Response
+
+### Hosted Payment Response
+For hosted payment mode, the response includes:
+- `session_id`: Use this to redirect customers to the payment page
+- `order_id`: Unique order identifier
+
+### S2S UPI Intent Response
+For S2S UPI Intent mode, the response includes:
+- `order_id`: Unique order identifier
+- `intent_uri`: UPI intent link that can be used to open UPI apps directly
+
+### S2S UPI Collection Response
+For S2S UPI Collection mode, the response includes:
+- `order_id`: Unique order identifier
+- `message`: Confirmation message about the collection request sent to the VPA
+
+## Examples
+
+<CodeGroup>
+
+```json Hosted Payment
+{
+  "amount": "1000.00",
+  "currency": "INR", 
+  "reference_id": "ORDER_123456",
+  "collection_mode": "hosted_payment",
+  "return_url": "https://yourdomain.com/payment/callback",
+  "mop_type": "UPI",
+  "buyer": {
+    "name": "Alice Smith",
+    "email": "alice.smith@example.com",
+    "phone": "+919812345678",
+    "address": {
+      "line_1": "221B Baker Street",
+      "city": "Mumbai",
+      "state": "Maharashtra", 
+      "postal_code": "400001"
+    }
+  },
+  "product": {
+    "name": "Wireless Headphones",
+    "type_of_goods": "goods"
+  }
+}
+```
+
+```json S2S UPI Intent
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "ORDER_123457", 
+  "collection_mode": "s2s",
+  "mop_type": "UPI",
+  "upi_flow_type": "intent",
+  "upi_app_name": "google_pay",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "city": "Delhi",
+      "state": "Delhi",
+      "postal_code": "110001"
+    }
+  },
+  "product": {
+    "name": "Smartphone", 
+    "type_of_goods": "goods"
+  }
+}
+```
+
+```json S2S UPI Collection
+{
+  "amount": "1500.00",
+  "currency": "INR",
+  "reference_id": "ORDER_123458",
+  "collection_mode": "s2s", 
+  "mop_type": "UPI",
+  "upi_flow_type": "collection",
+  "vpa": "customer@paytm",
+  "buyer": {
+    "name": "Sarah Wilson",
+    "email": "sarah.wilson@example.com", 
+    "phone": "+919123456789",
+    "address": {
+      "line_1": "456 Park Avenue",
+      "city": "Bangalore",
+      "state": "Karnataka",
+      "postal_code": "560001"
+    }
+  },
+  "product": {
+    "name": "Laptop",
+    "type_of_goods": "goods"
+  }
+}
+```
+
+</CodeGroup>
+
+## Response Examples
+
+<CodeGroup>
+
+```json Hosted Payment Response
+{
+  "success": true,
+  "message": "Checkout session created successfully",
+  "data": {
+    "session_id": "session_abc123def456",
+    "order_id": "OD2000992103"
+  }
+}
+```
+
+```json S2S UPI Intent Response
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "order_id": "OD2000992103"
+  }
+}
+```
+
+```json S2S UPI Collection Response
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully", 
+  "data": {
+    "order_id": "OD1927283599",
+    "message": "UPI Collection request sent to john.doe@payu"
+  }
+}
+```
+
+</CodeGroup>
+
+## Notes
+
+- For S2S UPI Intent: The response will include a UPI intent link that can be used to open UPI apps directly
+- For S2S UPI Collection: A payment request will be sent to the provided VPA, and the customer will receive a notification
+- The `upi_app_name` parameter helps optimize the intent link for specific UPI applications
+- VPA format must follow the pattern: `username@bank` (e.g., `user@paytm`, `9876543210@ybl`)

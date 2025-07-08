@@ -43,34 +43,99 @@
               "schema": {
                 "$ref": "#/components/schemas/CreateOrderRequest"
               },
-              "example": {
-                "amount": "1000.00",
-                "currency": "INR",
-                "reference_id": "ORDER_123456",
-                "return_url": "https://yourdomain.com/payment/callback",
-                "mop_type": "UPI",
-                "buyer": {
-                  "name": "Alice Smith",
-                  "email": "alice.smith@example.com",
-                  "phone": "+919812345678",
-                  "address": {
-                    "line_1": "221B Baker Street",
-                    "line_2": "Near Central Park",
-                    "city": "Mumbai",
-                    "state": "Maharashtra",
-                    "postal_code": "400001"
+              "examples": {
+                "hosted_payment": {
+                  "summary": "Hosted Payment",
+                  "description": "Standard hosted payment flow",
+                  "value": {
+                    "amount": "1000.00",
+                    "currency": "INR",
+                    "reference_id": "ORDER_123456",
+                    "return_url": "https://yourdomain.com/payment/callback",
+                    "collection_mode": "hosted_payment",
+                    "mop_type": "UPI",
+                    "buyer": {
+                      "name": "Alice Smith",
+                      "email": "alice.smith@example.com",
+                      "phone": "+919812345678",
+                      "address": {
+                        "line_1": "221B Baker Street",
+                        "line_2": "Near Central Park",
+                        "city": "Mumbai",
+                        "state": "Maharashtra",
+                        "postal_code": "400001"
+                      }
+                    },
+                    "product": {
+                      "name": "Wireless Headphones",
+                      "description": "Noise-cancelling over-ear headphones",
+                      "hs_code": "85183000",
+                      "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
+                      "type_of_goods": "goods"
+                    },
+                    "invoice": {
+                      "number": "INV_20240621",
+                      "date": "2024-06-21"
+                    }
                   }
                 },
-                "product": {
-                  "name": "Wireless Headphones",
-                  "description": "Noise-cancelling over-ear headphones",
-                  "hs_code": "85183000",
-                  "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
-                  "type_of_goods": "goods"
+                "s2s_upi_intent": {
+                  "summary": "UPI Intent (S2S)",
+                  "description": "Server-to-server UPI intent flow",
+                  "value": {
+                    "amount": "1000.00",
+                    "currency": "INR",
+                    "reference_id": "ORDER_123457",
+                    "collection_mode": "s2s",
+                    "mop_type": "UPI",
+                    "upi_flow_type": "intent",
+                    "upi_app_name": "google_pay",
+                    "buyer": {
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+919876543210",
+                      "address": {
+                        "line_1": "123 Main Street",
+                        "city": "Delhi",
+                        "state": "Delhi",
+                        "postal_code": "110001"
+                      }
+                    },
+                    "product": {
+                      "name": "Smartphone",
+                      "description": "Latest Android smartphone",
+                      "type_of_goods": "goods"
+                    }
+                  }
                 },
-                "invoice": {
-                  "number": "INV_20240621",
-                  "date": "2024-06-21"
+                "s2s_upi_collection": {
+                  "summary": "UPI Collection (S2S)",
+                  "description": "Server-to-server UPI collection flow",
+                  "value": {
+                    "amount": "1500.00",
+                    "currency": "INR",
+                    "reference_id": "ORDER_123458",
+                    "collection_mode": "s2s",
+                    "mop_type": "UPI",
+                    "upi_flow_type": "collection",
+                    "vpa": "customer@paytm",
+                    "buyer": {
+                      "name": "Sarah Wilson",
+                      "email": "sarah.wilson@example.com",
+                      "phone": "+919123456789",
+                      "address": {
+                        "line_1": "456 Park Avenue",
+                        "city": "Bangalore",
+                        "state": "Karnataka",
+                        "postal_code": "560001"
+                      }
+                    },
+                    "product": {
+                      "name": "Laptop",
+                      "description": "Gaming laptop",
+                      "type_of_goods": "goods"
+                    }
+                  }
                 }
               }
             }
@@ -85,12 +150,42 @@
                 "schema": {
                   "$ref": "#/components/schemas/CreateOrderResponse"
                 },
-                "example": {
-                  "success": true,
-                  "message": "Order created successfully",
-                  "data": {
-                    "session_id": "session_abc123def456",
-                    "order_id": "order_xyz789uvw012"
+                "examples": {
+                  "hosted_payment": {
+                    "summary": "Hosted Payment",
+                    "description": "Response for hosted payment mode",
+                    "value": {
+                      "success": true,
+                      "message": "Checkout session created successfully",
+                      "data": {
+                        "session_id": "session_abc123def456",
+                        "order_id": "OD2000992103"
+                      }
+                    }
+                  },
+                  "s2s_upi_intent": {
+                    "summary": "UPI Intent (S2S)",
+                    "description": "Response for S2S UPI Intent mode",
+                    "value": {
+                      "success": true,
+                      "message": "S2S UPI Request created successfully",
+                      "data": {
+                        "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+                        "order_id": "OD2000992103"
+                      }
+                    }
+                  },
+                  "s2s_upi_collection": {
+                    "summary": "UPI Collection (S2S)",
+                    "description": "Response for S2S UPI Collection mode",
+                    "value": {
+                      "success": true,
+                      "message": "S2S UPI Request created successfully",
+                      "data": {
+                        "order_id": "OD1927283599",
+                        "message": "UPI Collection request sent to customer@paytm"
+                      }
+                    }
                   }
                 }
               }
@@ -105,13 +200,11 @@
                 },
                 "example": {
                   "success": false,
-                  "message": "Invalid request parameters",
                   "error": {
                     "code": "ERR_ORDER_002",
-                    "message": "Required field 'amount' is missing",
+                    "message": "Validation error",
                     "details": {
-                      "field": "amount",
-                      "reason": "Field is required but not provided"
+                      "reference_id": "Reference ID must be unique"
                     }
                   }
                 }
@@ -1722,6 +1815,14 @@
             "format": "uri",
             "description": "URL to redirect after payment"
           },
+          "collection_mode": {
+            "type": "string",
+            "description": "Payment collection mode",
+            "enum": [
+              "hosted_payment",
+              "s2s"
+            ]
+          },
           "mop_type": {
             "type": "string",
             "description": "Method of payment type (e.g., UPI)",
@@ -1731,6 +1832,33 @@
               "NETBANKING",
               "DEBIT_CARD",
               "QR"
+            ]
+          },
+          "upi_flow_type": {
+            "type": "string",
+            "description": "UPI flow type (required when collection_mode is s2s and mop_type is UPI)",
+            "enum": [
+              "intent",
+              "collection"
+            ]
+          },
+          "vpa": {
+            "type": "string",
+            "description": "Virtual Payment Address (required when upi_flow_type is collection)",
+            "pattern": "^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$"
+          },
+          "upi_app_name": {
+            "type": "string",
+            "description": "UPI app name (optional, defaults to 'others')",
+            "enum": [
+              "bhim",
+              "paytm",
+              "google_pay",
+              "phonepe",
+              "cred",
+              "amazon_pay",
+              "whatsapp",
+              "others"
             ]
           },
           "buyer": {
@@ -1872,17 +2000,24 @@
       "OrderData": {
         "type": "object",
         "required": [
-          "session_id",
           "order_id"
         ],
         "properties": {
           "session_id": {
             "type": "string",
-            "description": "Unique session identifier for payment processing"
+            "description": "Unique session identifier for payment processing (for hosted payment mode)"
           },
           "order_id": {
             "type": "string",
             "description": "Unique order identifier"
+          },
+          "intent_uri": {
+            "type": "string",
+            "description": "UPI intent URI for direct app opening (for S2S UPI Intent mode)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message (for S2S UPI Collection mode)"
           }
         }
       },
@@ -2035,16 +2170,12 @@
         "type": "object",
         "required": [
           "success",
-          "message"
+          "error"
         ],
         "properties": {
           "success": {
             "type": "boolean",
             "description": "Indicates if the request was successful"
-          },
-          "message": {
-            "type": "string",
-            "description": "Response message"
           },
           "error": {
             "$ref": "#/components/schemas/ErrorDetails"
@@ -2068,16 +2199,10 @@
           },
           "details": {
             "type": "object",
-            "description": "Detailed error information",
-            "properties": {
-              "field": {
-                "type": "string",
-                "description": "Field that caused the error"
-              },
-              "reason": {
-                "type": "string",
-                "description": "Reason for the error"
-              }
+            "description": "Detailed validation error information with field-specific errors",
+            "additionalProperties": {
+              "type": "string",
+              "description": "Error message for the specific field"
             }
           }
         }

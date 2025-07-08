@@ -1,0 +1,252 @@
+---
+title: "S2S UPI Intent"
+description: "Enable direct UPI payments without redirection using EximPe’s server-to-server UPI intent flow"
+---
+
+# Introduction
+
+<Note>
+  The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend. Deliver a seamless checkout experience while maintaining control and confidence for your customers.
+</Note>
+
+<CardGroup cols={3}>
+  <Card title="No Redirect Hops" icon="arrow-right" href="#step-1-initiate-payment">
+    Initiate transactions directly from your server to improve user experience
+  </Card>
+  <Card title="Flexible Intent Invocation" icon="phone" href="#step-2-invoke-upi-intent">
+    Support both generic and app-specific UPI intents on mobile web and Android apps
+  </Card>
+  <Card title="Robust Server Callbacks" icon="server" href="#step-4-server-to-server-callback">
+    Receive asynchronous status updates via server-to-server callbacks
+  </Card>
+</CardGroup>
+
+### Intent Invocation
+
+The user VPA is **not** required for invoking the intent.
+
+You can initiate the payment via **Specific Intent** or **Generic Intent**:
+
+- **Specific Intent**: Opens the chosen UPI app directly.
+- **Generic Intent**: Opens the app drawer so the user can select their preferred UPI application.
+
+#### Platform Support
+
+| Platform | Supported Intent Type |
+| -------- | --------------------- |
+| Android  | Specific & Generic    |
+| iOS      | Generic only          |
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Merchant Key & Salt**: Your EximPe merchant key and salt for hash generation.
+- **Callback URL**: A publicly accessible URL configured in your EximPe dashboard for server-to-server callbacks.
+- **cURL or HTTP Client**: Capability to make HTTPS `POST` and `GET` requests from your server.
+- **UPI Knowledge**: Familiarity with UPI intent URL parameters and encoding.
+
+The following steps allow you to integrate the server-to-server UPI intent:
+
+1. Initiate payment
+2. Invoke UPI Intent on customer’s device
+3. Check UPI transaction status
+4. EximPe sends Server-to-Server callback response
+
+   **Process flow**
+
+   ![image.png](/images/image.png)
+
+## Step 1: Initiate payment
+
+#### Sample UPI Collection Request Body
+```json
+{
+  "amount": "1000.00",
+  "collection_mode": "s2s",
+  "upi_flow_type": "intent",
+  "currency": "INR",
+  "reference_id": "S2SI_U8MEIT",
+  "mop_type": "UPI",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "City",
+      "state": "State",
+      "postal_code": "123456"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_V9TZZ3",
+    "date": "2025-07-08"
+  }
+}
+```
+<Note>
+  For the S2S UPI Intent request, you must include these additional parameters beyond the standard checkout fields:
+  - `collection_mode`: must be set to `"s2s"`
+  - `upi_flow_type`: must be set to `"intent"`
+  - `buyer.ip_address`: the customer’s device IP address
+  - `buyer.user_agent`: the customer’s browser or app user-agent string
+</Note>
+
+
+### Step 2: Invoke UPI Intent on Customer’s Device
+
+#### Mobile Web
+
+Invoke a UPI payment on the customer’s mobile device by constructing a UPI intent URL that contains **only the merchant’s VPA**. This ensures accurate transaction tracking and status reconciliation.
+
+**Generic UPI Intent Example**
+
+```
+upi://pay?pa=merchant@bank&pn=Merchant%20Name&am=100.00&cu=INR&tr=TXN12345&tn=Order%20Payment
+```
+
+<Note>
+   This URL opens the system UPI app picker, allowing the user to choose any installed UPI app to complete the payment.
+</Note>
+
+**Specific App Intent Example (Google Pay)**
+
+```
+gpay://upi/pay?pa=merchant@bank&pn=Merchant%20Name&tr=TXN12345&tid=TXNID98765&am=100.00&cu=INR&tn=Order%20Payment
+```
+
+<Note>
+  This URL attempts to open the Google Pay app directly (using the `gpay://` scheme) with the payment details pre-filled. If Google Pay is not installed or the scheme is not supported in the browser, the intent may fail.
+</Note>
+
+**Explanation of URL Arguments**
+
+## Explanation of URL Arguments
+
+| Argument | Example Value   | Required | Description                                                                                      |
+| -------- | --------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `pa`     | `merchant@bank` | Yes      | Payee VPA (Virtual Payment Address) — the merchant's UPI ID that will receive the payment        |
+| `pn`     | `Merchant Name` | Yes      | Payee Name — the display name of the merchant                                                    |
+| `am`     | `100.00`        | No       | Amount — the payment amount (decimal, up to two places)                                          |
+| `cu`     | `INR`           | Yes      | Currency — must be `INR` for Indian rupees                                                       |
+| `tr`     | `TXN12345`      | Yes      | Transaction Reference ID — unique identifier for this transaction (for reconciliation)           |
+| `tid`    | `TXNID98765`    | No       | Transaction ID — a unique transaction ID (sometimes required by specific apps, e.g., Google Pay) |
+| `tn`     | `Order Payment` | No       | Transaction Note — a short note or description for the payment                                   |
+
+<Info>
+  he `pa`, `pn`, `cu`, and `tr` parameters are typically required for UPI payments.
+
+  tid is optional and may be used by some apps (like Google Pay) for additional tracking
+
+  All values should be URL-encoded where necessary (e.g., spaces as `%20`).
+
+  For generic intent, use the `upi://` scheme; for specific app intent, use the app’s custom scheme (e.g., `gpay://`, `tez://`, `phonepe://`)
+</Info>
+
+## Android App Intent Invocation
+
+To invoke specific UPI apps from an Android application, include their package names and URL scheme prefixes:
+
+| UPI App    | URL Scheme Prefix     | Android Package Name                     |
+| ---------- | --------------------- | ---------------------------------------- |
+| Google Pay | `gpay://upi/pay`      | `com.google.android.apps.nbu.paisa.user` |
+| PhonePe    | `phonepe://pay`       | `com.phonepe.app`                        |
+| BHIM       | `upi://pay` (generic) | `in.org.npci.upiapp`                     |
+| PAYTM      | `paytmmp://pay`       | `net.one97.paytm`                        |
+| Amazon Pay | `amazonpay://upi/pay` | `in.amazon.mShop.android.shopping`       |
+| WhatsApp   | `whatsapp://pay`      | `com.whatsapp`                           |
+| Fi Money   | `fi://upi/pay`        | `com.fi.money`                           |
+| Jupiter    | `jupiter://upi/pay`   | `money.jupiter.app`                      |
+| Slice      | `slice://upi/pay`     | `com.sliceit.app`                        |
+
+### Code Sample
+
+```
+// Google Pay specific implementation using package name
+public class UPIPaymentActivity extends AppCompatActivity {
+    
+    // Google Pay package name constant
+    private static final String GOOGLE_PAY_PACKAGE_NAME = "com.google.android.apps.nbu.paisa.user";
+    private static final int GOOGLE_PAY_REQUEST_CODE = 123;
+    
+    private void payWithGooglePay() {
+        // Build UPI payment URI
+        Uri uri = new Uri.Builder()
+                .scheme("upi")
+                .authority("pay")
+                .appendQueryParameter("pa", "merchant@bank")
+                .appendQueryParameter("pn", "Merchant Name")
+                .appendQueryParameter("mc", "1234")
+                .appendQueryParameter("tr", "TXN12345")
+                .appendQueryParameter("tn", "Order Payment")
+                .appendQueryParameter("am", "100.00")
+                .appendQueryParameter("cu", "INR")
+                .build();
+        
+        // Create intent with ACTION_VIEW
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(uri);
+        
+        // Set specific package name to target Google Pay directly
+        intent.setPackage(GOOGLE_PAY_PACKAGE_NAME);
+        
+        // Launch Google Pay
+        startActivityForResult(intent, GOOGLE_PAY_REQUEST_CODE);
+    }
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        if (requestCode == GOOGLE_PAY_REQUEST_CODE) {
+            switch (resultCode) {
+                case Activity.RESULT_OK:
+                    String response = data.getStringExtra("response");
+                    handlePaymentResponse(response);
+                    break;
+                case Activity.RESULT_CANCELED:
+                    handlePaymentCancelled();
+                    break;
+                default:
+                    handlePaymentError();
+                    break;
+            }
+        }
+    }
+    
+    private void handlePaymentResponse(String response) {
+        // Parse UPI response and handle success/failure
+        if (response != null) {
+            String[] response
+```
+
+### Step 3: Check UPI Transaction Status
+
+Invoke the \*\*Order details API \*\*to retrieve the status of the UPI transaction:
+
+```bash [expandable]
+curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET"
+```
+
+<Note>
+  For detailed parameters and response formats, see the [Get Order API](https://docs.eximpe.com/api-reference/order/get)
+</Note>
+
+### Step 4: EximPe sends S2S callback response
+
+EximPe can also send a server-to-server callback response whenever the transaction status gets updated.
+
+For more information, see the [Payment Successful response](https://docs.eximpe.com/api-reference/webhooks/payment-successful)

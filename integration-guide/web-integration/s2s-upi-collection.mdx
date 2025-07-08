@@ -1,0 +1,125 @@
+---
+title: "Server-to-Server UPI Collection Integration"
+description: "Enable UPI collect flows via EximPe’s server-to-server API with minimal redirection"
+---
+
+<Note>
+  The Server-to-Server (S2S) UPI Collection integration eliminates redirection hops by validating the VPA and initiating transactions directly from your backend. Deliver a seamless, secure checkout experience for your customers.
+</Note>
+
+<CardGroup cols={4}>
+  <Card title="Validate VPA" icon="user-check" href="#step-1-validate-vpa">
+    Ensure the customer’s VPA is valid before proceeding
+  </Card>
+  <Card title="Initiate Payment" icon="credit-card" href="#step-2-initiate-payment">
+    Create a UPI collect transaction via server-to-server API
+  </Card>
+  <Card title="Check Status" icon="clock" href="#step-3-check-transaction-status">
+    Poll the Verify Payment API for real-time updates
+  </Card>
+  <Card title="Server Callback" icon="server" href="#step-4-server-to-server-callback-response">
+    Receive asynchronous status updates via webhook
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Merchant Key & Salt**: Your EximPe merchant key and salt for hash generation.
+- **Callback URL**: A publicly accessible endpoint configured in your EximPe dashboard for S2S callbacks.
+- **HTTP Client**: Ability to perform HTTPS `GET` and `POST` requests from your server.
+- **JSON & Hashing**: Familiarity with JSON request bodies and SHA-512 hash computation.
+
+## Integration Steps
+
+The integration consists of four steps:
+
+1. **Validate VPA**
+2. **Initiate Payment**
+3. **Check Transaction Status**
+4. **Server-to-Server Callback**
+
+**Process Flow**
+
+![image.png](/images/image.png)
+
+## Step 1: Validate VPA
+
+This web service will let you validate VPA if it is a valid VPA or not.
+
+After the customer enters VPA on your website, you need to call this API to check for VPA validation. If VPA is valid, you need to proceed with the next step.
+
+<Warning>
+  The API to valid the API will be available soon\!
+</Warning>
+
+Collect the response in the UPI Collection under API Reference. The response for the S2S payment request is not similar to Merchant Hosted or PayU Hosted Checkout. For description of response parameters, refer to [Additional Info for Payment APIs](https://docs.payu.in/reference/addl_info-payment-apis#response-for-initial-server-to-server-request).
+
+ 
+
+## Step 2: Initiate the payment to EximPe
+
+To start with, the request is raised from the Merchant to PayU with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request
+
+```json
+curl -X POST https://api.eximpe.com/payment/s2s/upi \
+  -H "Content-Type: application/json" \
+  -H "X-Client-Key: YOUR_CLIENT_KEY" \
+  -d '{
+    "amount": "1000.00",
+    "collection_mode": "s2s",
+    "upi_flow_type": "collection",
+    "currency": "INR",
+    "reference_id": "S2SC_9PU3P4",
+    "vpa": "john.doe@payu",
+    "upi_app_name": "others",
+    "mop_type": "UPI",
+    "buyer": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+919876543210",
+      "address": {
+        "line_1": "123 Main Street",
+        "line_2": "Apt 4B",
+        "city": "City",
+        "state": "State",
+        "postal_code": "123456"
+      },
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+      "name": "Sample Product",
+      "description": "This is a sample product description",
+      "hs_code": "98051000",
+      "hs_code_description": "Portable automatic data processing machines",
+      "type_of_goods": "goods"
+    },
+    "invoice": {
+      "number": "INV_1T2N7B",
+      "date": "2025-07-08"
+    }
+  }
+```
+
+<Note>
+  For the S2S UPI Collection request, you must include these additional parameters beyond the standard checkout fields:
+
+  - `collection_mode`: must be set to `"s2s"`
+  - `upi_flow_type`: must be set to `"collection"`
+  - `vpa`: the customer’s UPI ID (e.g. `"john.doe@payu"`)
+  - `upi_app_name`: the chosen UPI app identifier (e.g. `"others"`)
+  - `buyer.ip_address`: the customer’s device IP address
+  - `buyer.user_agent`: the customer’s browser or app user-agent string
+</Note>
+
+## Step 3: Check UPI transaction status
+
+Check the UPI transaction status using the **Verify Order API** API. For more information, refer to **<u>Verify Order API</u>**
+
+## Step 4: Check the S2S callback response
+
+EximPe can also send a server-to-server callback response whenever the transaction status gets updated.
+
+For more information, see the [Payment Successful response](https://docs.eximpe.com/api-reference/webhooks/payment-successful)
