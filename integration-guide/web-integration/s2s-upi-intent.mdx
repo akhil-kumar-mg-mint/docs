@@ -39,7 +39,7 @@ The following steps allow you to integrate the server-to-server UPI intent:
 3. **Check UPI transaction status**
 4. **EximPe sends Server-to-Server callback response**
 
-   **Process flow**
+   ### **Process flow**
 
    ![image.png](/images/image.png)
 
@@ -110,11 +110,23 @@ For S2S UPI Intent mode, the response includes:
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
 
+**Explanation of URL Arguments**
+
+| Argument | Example Value   | Required | Description                                                                                      |
+| -------- | --------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `pa`     | `merchant@bank` | Yes      | Payee VPA (Virtual Payment Address) — the merchant's UPI ID that will receive the payment        |
+| `pn`     | `Merchant Name` | Yes      | Payee Name — the display name of the merchant                                                    |
+| `am`     | `100.00`        | No       | Amount — the payment amount (decimal, up to two places)                                          |
+| `cu`     | `INR`           | Yes      | Currency — must be `INR` for Indian rupees                                                       |
+| `tr`     | `TXN12345`      | Yes      | Transaction Reference ID — unique identifier for this transaction (for reconciliation)           |
+| `tid`    | `TXNID98765`    | No       | Transaction ID — a unique transaction ID (sometimes required by specific apps, e.g., Google Pay) |
+| `tn`     | `Order Payment` | No       | Transaction Note — a short note or description for the payment                                   |
+
 ### Step 2: Invoke UPI Intent on Customer’s Device
 
 #### Mobile Web
 
-Invoke a UPI payment on the customer’s mobile device by constructing a UPI intent URL that contains **only the merchant’s VPA**. This ensures accurate transaction tracking and status reconciliation.
+Invoke a UPI payment on the customer’s mobile device by constructing a UPI intent URL using the intent-uri  from the S2S UPI Intent Response
 
 **Generic UPI Intent Example**
 
@@ -136,41 +148,17 @@ gpay://upi/pay?pa=merchant@bank&pn=Merchant%20Name&tr=TXN12345&tid=TXNID98765&am
   This URL attempts to open the Google Pay app directly (using the `gpay://` scheme) with the payment details pre-filled. If Google Pay is not installed or the scheme is not supported in the browser, the intent may fail. **Always keep the generic intent as fallback.**
 </Note>
 
-**Explanation of URL Arguments**
-
-| Argument | Example Value   | Required | Description                                                                                      |
-| -------- | --------------- | -------- | ------------------------------------------------------------------------------------------------ |
-| `pa`     | `merchant@bank` | Yes      | Payee VPA (Virtual Payment Address) — the merchant's UPI ID that will receive the payment        |
-| `pn`     | `Merchant Name` | Yes      | Payee Name — the display name of the merchant                                                    |
-| `am`     | `100.00`        | No       | Amount — the payment amount (decimal, up to two places)                                          |
-| `cu`     | `INR`           | Yes      | Currency — must be `INR` for Indian rupees                                                       |
-| `tr`     | `TXN12345`      | Yes      | Transaction Reference ID — unique identifier for this transaction (for reconciliation)           |
-| `tid`    | `TXNID98765`    | No       | Transaction ID — a unique transaction ID (sometimes required by specific apps, e.g., Google Pay) |
-| `tn`     | `Order Payment` | No       | Transaction Note — a short note or description for the payment                                   |
-
-<Info>
-  On Android, Chrome supports an **intent-based deep link** method, enabling fallback mechanisms if an app is not installed. To use this method, construct your URL as follows:
-
-  ```
-  intent://<your-path-and-params>#Intent;scheme=<url-scheme>;package=<package-name>;end;
-  ```
-</Info>
-
-- `<your-path-and-params>` with your payment parameters (e.g., `pay?pa=...&am=...`).
-- `<url-scheme>` with the app-specific URL scheme from the below table (e.g., `gpay`, `phonepe`).
-- `<package-name>` with the Android package name from the below table (e.g., `com.google.android.apps.nbu.paisa.user`).
-
-| UPI App    | URL Scheme Prefix     | Android Scheme | Android Package Name                     |
-| ---------- | --------------------- | -------------- | ---------------------------------------- |
-| Google Pay | `gpay://upi/pay`      | `gpay`         | `com.google.android.apps.nbu.paisa.user` |
-| PhonePe    | `phonepe://pay`       | `phonepe`      | `com.phonepe.app`                        |
-| BHIM       | `upi://pay` (generic) | `upi`          | `in.org.npci.upiapp`                     |
-| Paytm      | `paytmmp://pay`       | `paytmmp`      | `net.one97.paytm`                        |
-| Amazon Pay | `amazonpay://upi/pay` | `amazonpay`    | `in.amazon.mShop.android.shopping`       |
-| WhatsApp   | `whatsapp://pay`      | `whatsapp`     | `com.whatsapp`                           |
-| Fi Money   | `fi://upi/pay`        | `fi`           | `com.fi.money`                           |
-| Jupiter    | `jupiter://upi/pay`   | `jupiter`      | `money.jupiter.app`                      |
-| Slice      | `slice://upi/pay`     | `slice`        | `com.sliceit.app`                        |
+| UPI App    | URL Scheme Prefix     |
+| ---------- | --------------------- |
+| Google Pay | `gpay://upi/pay`      |
+| PhonePe    | `phonepe://pay`       |
+| BHIM       | `upi://pay` (generic) |
+| Paytm      | `paytmmp://pay`       |
+| Amazon Pay | `amazonpay://upi/pay` |
+| WhatsApp   | `whatsapp://pay`      |
+| Fi Money   | `fi://upi/pay`        |
+| Jupiter    | `jupiter://upi/pay`   |
+| Slice      | `slice://upi/pay`     |
 
 ### Step 3: Check UPI Transaction Status
 
@@ -191,3 +179,49 @@ curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
 EximPe can also send a server-to-server callback response whenever the transaction status gets updated.
 
 For more information, see the [Payment Successful response](https://docs.eximpe.com/api-reference/webhooks/payment-successful)
+
+## Chrome Intent-Based Deep Links on Android
+
+On Android, Chrome supports an **intent-based deep link** method that simplifies app invocation and provides built-in fallback mechanisms.
+
+### How It Works
+
+- **Intent URL format:**
+
+  ```
+  intent://<path-and-params>#Intent;scheme=<android_scheme>;package=<package_name>;S.browser_fallback_url=<fallback_url>;end;
+  ```
+- **scheme:** Corresponds to the app’s URL scheme (e.g., `gpay`, `phonepe`).
+- **package:** Android package name for the target app.
+- **S.browser_fallback_url:** Optional. A URL (typically Play Store link) to redirect users if the app is not installed.
+
+### Example (Google Pay)
+
+```
+intent://upi/pay?pa=merchant@bank&pn=Merchant%20Name&am=100.00&cu=INR&tr=TXN12345&tn=Order%20Payment#Intent;scheme=gpay;package=com.google.android.apps.nbu.paisa.user;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.paisa.user;end;
+```
+
+- **Flow:**
+  1. Chrome attempts to open Google Pay via `gpay://`.
+  2. If installed, the payment screen launches.
+  3. If not installed, the user is redirected to the Play Store.
+
+| UPI App    | Android Scheme | Android Package Name                     |
+| ---------- | -------------- | ---------------------------------------- |
+| Google Pay | `gpay`         | `com.google.android.apps.nbu.paisa.user` |
+| PhonePe    | `phonepe`      | `com.phonepe.app`                        |
+| BHIM       | `upi`          | `in.org.npci.upiapp`                     |
+| Paytm      | `paytmmp`      | `net.one97.paytm`                        |
+| Amazon Pay | `amazonpay`    | `in.amazon.mShop.android.shopping`       |
+| WhatsApp   | `whatsapp`     | `com.whatsapp`                           |
+| Fi Money   | `fi`           | `com.fi.money`                           |
+| Jupiter    | `jupiter`      | `money.jupiter.app`                      |
+| Slice      | `slice`        | `com.sliceit.app`                        |
+
+### Benefits
+
+- **Seamless UX:** Direct app launch without intermediate redirects.
+- **Robust Fallback:** Ensures users without the app receive clear next steps (install link).
+- **Unified Approach:** Use a single URL for both deep linking and fallback.
+
+---
