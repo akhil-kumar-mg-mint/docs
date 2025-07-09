@@ -50,9 +50,9 @@ This web service will let you validate VPA if it is a valid VPA or not.
 
 After the customer enters VPA on your website, you need to call this API to check for VPA validation. If VPA is valid, you need to proceed with the next step.
 
-<RequestExample>
+### Sample Request
 
-``` validate-vpa-request
+```json
 curl --location 'https://api-staging.eximpe.com/pg/vpa/validate/' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
@@ -62,13 +62,9 @@ curl --location 'https://api-staging.eximpe.com/pg/vpa/validate/' \
 --data '{"vpa": "jake@oksbi"}'
 ```
 
-</RequestExample>
+### Response
 
-Response 
-
-<ResponseExample>
-
-``` validate-vpa-response
+```json
 {
     "success": true,
     "message": "VPA validated successfully",
@@ -79,8 +75,6 @@ Response
 }
 ```
 
-</ResponseExample>
-
 Collect the response in the UPI Collection under API Reference. The response for the S2S payment request is not similar to Merchant Hosted or PayU Hosted Checkout. For description of response parameters, refer to [Additional Info for Payment APIs](https://docs.payu.in/reference/addl_info-payment-apis#response-for-initial-server-to-server-request).
 
  
@@ -89,9 +83,7 @@ Collect the response in the UPI Collection under API Reference. The response f
 
 To start with, the request is raised from the Merchant to PayU with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request
 
-<RequestExample>
-
-```python filename
+```json
 curl -X POST https://api.eximpe.com/payment/s2s/upi \
   -H "Content-Type: application/json" \
   -H "X-Client-Key: YOUR_CLIENT_KEY" \
@@ -131,8 +123,6 @@ curl -X POST https://api.eximpe.com/payment/s2s/upi \
     }
   }
 ```
-
-</RequestExample>
 
 <Note>
   For the S2S UPI Collection request, you must include these additional parameters beyond the standard checkout fields:
