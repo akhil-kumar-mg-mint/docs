@@ -30,6 +30,8 @@
             "group": "Web Integration",
             "pages": [
               "integration-guide/web-integration/hosted-checkout",
+              "integration-guide/web-integration/s2s-upi-intent",
+               "integration-guide/web-integration/s2s-upi-collection",
               "integration-guide/web-integration/webhooks",
               "integration-guide/web-integration/test-data"
             ]
