@@ -22,6 +22,9 @@ Server-to-server UPI intent flow that generates a UPI intent link for direct app
 ### 3. S2S UPI Collection
 Server-to-server UPI collection flow that sends a payment request directly to the customer's VPA (Virtual Payment Address).
 
+### 4. S2S Card Payment
+Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Save Card API](/api-reference/card-tokens/save) after successful payment.
+
 ## Request Parameters
 
 ### Required Parameters
@@ -39,6 +42,26 @@ Server-to-server UPI collection flow that sends a payment request directly to th
 - `upi_app_name`: Preferred UPI app - optional, defaults to `others`
 - `return_url`: URL to redirect after payment completion
 - `invoice`: Invoice details object
+- `card_details`: Card information object - required when `mop_type` is `CREDIT_CARD` or `DEBIT_CARD`
+
+### Card Payment Specific Parameters
+When using card payments (`mop_type` is `CREDIT_CARD` or `DEBIT_CARD`), additional buyer information is required:
+- `buyer.ip_address`: Customer's IP address (required for fraud prevention)
+- `buyer.user_agent`: Customer's browser user agent (required for fraud prevention)
+
+#### Card Details Options
+You can provide card information in two ways:
+
+1. **New Card Details** (for first-time payments):
+   - Include full card information: `number`, `cardholder_name`, `expiry_month`, `expiry_year`, `cvv`, `network`
+   - Required for new cards not previously saved
+   - Use the [Save Card API](/api-reference/card-tokens/save) after successful payment to tokenize for future use
+
+2. **Saved Card Token** (for repeat payments):
+   - Use `token`: Previously saved card token from the [Save Card API](/api-reference/card-tokens/save)
+   - Include `identifier`: Customer identifier used when saving the card
+   - Include `network`: Card network (VISA, MASTERCARD, etc.)
+   - No sensitive card data required - token handles authentication
 
 ## Response
 
@@ -56,6 +79,13 @@ For S2S UPI Intent mode, the response includes:
 For S2S UPI Collection mode, the response includes:
 - `order_id`: Unique order identifier
 - `message`: Confirmation message about the collection request sent to the VPA
+
+### S2S Card Payment Response
+For S2S Card Payment mode, the response includes:
+- `order_id`: Unique order identifier
+- `acs_template`: Base64-encoded HTML template for 3D Secure authentication
+
+**Important**: The `acs_template` must be decoded from Base64 and rendered in the customer's browser to complete the 3D Secure authentication process.
 
 ## Examples
 
@@ -141,6 +171,93 @@ For S2S UPI Collection mode, the response includes:
 }
 ```
 
+```json S2S Card Payment
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "CARD_13MYHALESH7",
+  "return_url": "https://yourdomain.com/checkout/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "DEBIT_CARD",
+  "card_details": {
+    "nickname": "VISA Debit",
+    "number": "4895380110000003",
+    "cardholder_name": "John Doe",
+    "expiry_month": "05",
+    "expiry_year": "2030",
+    "cvv": "123",
+    "network": "VISA",
+    "identifier": "EX0001"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "City",
+      "state": "State",
+      "postal_code": "123456"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_0HOZ0C",
+    "date": "2025-09-04"
+  }
+}
+```
+
+```json S2S Card Payment (Saved Token)
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "CARD_4FQ0AIHQEI9",
+  "return_url": "https://yourdomain.com/checkout/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "CREDIT_CARD",
+  "card_details": {
+    "token": "1e6709282a21e83f43a020",
+    "identifier": "EX0001",
+    "network": "VISA"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "City",
+      "state": "State",
+      "postal_code": "123456"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_3MUK2I",
+    "date": "2025-09-04"
+  }
+}
+```
+
 </CodeGroup>
 
 ## Response Examples
@@ -180,11 +297,44 @@ For S2S UPI Collection mode, the response includes:
 }
 ```
 
+```json S2S Card Payment Response
+{
+  "success": true,
+  "message": "S2S Card Payment Request created successfully",
+  "data": {
+    "order_id": "OD9888127185",
+    "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N0IiBhY3Rpb249Imh0dHBzOi8vdGVzdC5wYXl1LmluL2UxMGMzNmExYWQ2YTQ1OTkzMWNhODYzNTBhZjIxZDU0ZDhiMTZhODRjYWQ1NDAxMDE2OGFlN2RjYmEwMmEwYWEvdGhyZWVEU2VjdXJlL21ldGhvZCIgbWV0aG9kPSJwb3N0Ij4uLi4="
+  }
+}
+```
+
 </CodeGroup>
 
-## Notes
+## Implementation Notes
 
-- For S2S UPI Intent: The response will include a UPI intent link that can be used to open UPI apps directly
-- For S2S UPI Collection: A payment request will be sent to the provided VPA, and the customer will receive a notification
-- The `upi_app_name` parameter helps optimize the intent link for specific UPI applications
-- VPA format must follow the pattern: `username@bank` (e.g., `user@paytm`, `9876543210@ybl`)
+### UPI Payments
+- **S2S UPI Intent**: The response includes a UPI intent link that can be used to open UPI apps directly
+- **S2S UPI Collection**: A payment request is sent to the provided VPA, and the customer receives a notification
+- **UPI App Optimization**: The `upi_app_name` parameter helps optimize the intent link for specific UPI applications
+- **VPA Format**: Must follow the pattern `username@bank` (e.g., `user@paytm`, `9876543210@ybl`)
+
+### Card Payments
+- **3D Secure Flow**: For new cards, the system initiates 3D Secure verification
+- **ACS Template Processing**: 
+  1. Decode the Base64 `acs_template` from the response
+  2. Render the decoded HTML in the customer's browser
+  3. The form will auto-submit to complete 3D Secure authentication
+  4. Customer will be redirected back to your `return_url` after authentication
+- **Card Tokenization**: Use the [Save Card API](/api-reference/card-tokens/save) after successful payment to securely tokenize cards for future use
+- **Saved Card Usage**: Use previously saved card tokens for faster, more secure repeat payments
+- **Fraud Prevention**: `ip_address` and `user_agent` are required for fraud detection and prevention
+
+#### New vs Saved Cards
+- **New Cards**: Require full card details and may trigger 3D Secure authentication
+- **Saved Cards**: Use tokens for faster processing, reduced 3D Secure requirements, and enhanced security
+- **Token Benefits**: No sensitive data exposure, faster checkout, improved conversion rates
+
+### Security Considerations
+- **Card Data**: Never log or store card details in your application
+- **3D Secure**: Always implement proper 3D Secure handling for card payments
+- **Token Management**: Use the [Card Token APIs](/api-reference/card-tokens/save) for managing saved cards

@@ -1,0 +1,210 @@
+---
+title: 'List Saved Cards'
+openapi: '/openapi.json GET /pg/tokens/'
+---
+
+## Overview
+
+The List Saved Cards endpoint retrieves all saved cards for a specific customer identifier. This endpoint returns only safe, tokenized card information without exposing sensitive details like full card numbers.
+
+Use this endpoint to display saved payment methods to customers, allowing them to select from their previously saved cards for faster checkout experiences.
+
+## Key Features
+
+### 🔍 **Safe Card Display**
+- Returns masked card numbers (e.g., `XXXXXXXXXXXX0003`)
+- Shows only non-sensitive card metadata
+- No exposure of full card numbers or CVV
+
+### 🎯 **Filtered Results**
+- Filter by customer identifier
+- Returns only cards belonging to the specified customer
+- Organized, easy-to-parse card information
+
+### 💳 **Complete Card Context**
+- Card network and type information
+- Expiry dates for validation
+- Custom nicknames for easy identification
+- Cardholder names for verification
+
+## Required Parameters
+
+| Parameter | Type | Location | Description |
+|-----------|------|----------|-------------|
+| `identifier` | string | Query | Unique identifier for the card owner (customer ID, user ID, etc.) |
+
+## Response Format
+
+The API returns an array of saved card objects, each containing:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `card_token` | string | Unique token for the saved card |
+| `identifier` | string | Customer identifier |
+| `cardholder_name` | string | Name on the card |
+| `nickname` | string | Custom card nickname (may be empty) |
+| `card_type` | string | Card type (CREDIT, DEBIT, PREPAID) |
+| `network` | string | Card network (VISA, MASTERCARD, etc.) |
+| `masked_pan` | string | Masked card number showing only last 4 digits |
+| `expiry_month` | integer | Card expiry month (1-12) |
+| `expiry_year` | integer | Card expiry year |
+
+## Usage Examples
+
+### Basic Card Listing
+
+**Request:**
+```bash
+GET /pg/tokens/?identifier=customer_12345
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Card details fetched successfully",
+  "data": [
+    {
+      "card_token": "1e6709282a21e83f43a020",
+      "identifier": "customer_12345",
+      "cardholder_name": "John Doe",
+      "nickname": "My Business Card",
+      "card_type": "CREDIT",
+      "network": "VISA",
+      "masked_pan": "XXXXXXXXXXXX1111",
+      "expiry_month": 12,
+      "expiry_year": 2030
+    },
+    {
+      "card_token": "2f7810393b32f94e54b131",
+      "identifier": "customer_12345",
+      "cardholder_name": "John Doe",
+      "nickname": "Personal Debit",
+      "card_type": "DEBIT",
+      "network": "MASTERCARD",
+      "masked_pan": "XXXXXXXXXXXX0008",
+      "expiry_month": 8,
+      "expiry_year": 2029
+    }
+  ]
+}
+```
+
+## Implementation Examples
+
+### Frontend Card Display
+
+```javascript
+// Fetch saved cards for a customer
+const fetchSavedCards = async (customerId) => {
+  try {
+    const response = await fetch(`/pg/tokens/?identifier=${customerId}`, {
+      headers: {
+        'X-Client-ID': 'your_client_id',
+        'X-Client-Secret': 'your_client_secret',
+        'X-Merchant-ID': 'your_merchant_id'
+      }
+    });
+    
+    const data = await response.json();
+    return data.data; // Array of saved cards
+  } catch (error) {
+    console.error('Error fetching saved cards:', error);
+    return [];
+  }
+};
+
+// Display cards in UI
+const displaySavedCards = (cards) => {
+  return cards.map(card => ({
+    token: card.card_token,
+    display: `${card.network} **** ${card.masked_pan.slice(-4)}`,
+    nickname: card.nickname || `${card.network} ${card.card_type}`,
+    expiry: `${card.expiry_month}/${card.expiry_year}`,
+    expired: isExpired(card.expiry_month, card.expiry_year)
+  }));
+};
+```
+
+### Backend Integration
+
+```python
+import requests
+
+def get_customer_cards(customer_id, client_id, client_secret, merchant_id):
+    """Fetch saved cards for a customer"""
+    
+    headers = {
+        'X-Client-ID': client_id,
+        'X-Client-Secret': client_secret,
+        'X-Merchant-ID': merchant_id,
+        'Content-Type': 'application/json'
+    }
+    
+    params = {'identifier': customer_id}
+    
+    response = requests.get(
+        'https://api.eximpe.com/pg/tokens/',
+        headers=headers,
+        params=params
+    )
+    
+    if response.status_code == 200:
+        return response.json()['data']
+    else:
+        return []
+```
+
+## Security Considerations
+
+### 🔒 **Data Protection**
+- Only masked card numbers are returned
+- No sensitive data (CVV, full PAN) is exposed
+- Secure token-based identification
+
+### 🎯 **Access Control**
+- Customer identifier filtering prevents data leakage
+- Proper authentication required
+- Cards are only visible to authorized merchants
+
+### ⏰ **Expiry Handling**
+- Check expiry dates before using cards
+- Implement expiry warnings in your UI
+- Remove or prompt for updates on expired cards
+
+## Error Handling
+
+| Status Code | Description | Action |
+|-------------|-------------|---------|
+| `200` | Success | Process the returned cards |
+| `401` | Unauthorized | Check authentication credentials |
+| `404` | No cards found | Show "no saved cards" message |
+| `500` | Server error | Retry request or show error message |
+
+## Best Practices
+
+1. **Cache Responsibly**: Cache card lists but refresh periodically
+2. **Expiry Validation**: Always check if cards are expired before displaying
+3. **Error Handling**: Provide clear messaging for empty or error states
+4. **Security**: Never log or store the returned card information
+5. **UI/UX**: Group cards by type or network for better organization
+
+## Use Cases
+
+### **Checkout Flow**
+Display saved cards during checkout for faster payment processing.
+
+### **Account Management**
+Show customers their saved cards in account settings with options to delete.
+
+### **Payment Method Selection**
+Allow customers to choose from saved cards or add new ones.
+
+### **Recurring Payments**
+Use saved cards for subscription or recurring payment setups.
+
+## Related Endpoints
+
+- [Save Card](/api-reference/card-tokens/save) - Save new cards for customers
+- [Delete Saved Card](/api-reference/card-tokens/delete) - Remove saved cards
+- [Create Order](/api-reference/order/create) - Use saved cards in new orders 

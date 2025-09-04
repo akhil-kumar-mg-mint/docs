@@ -1,5 +1,5 @@
 ---
-title: "S2S UPI Collection Integration"
+title: "S2S UPI Collection"
 description: "Enable UPI collect flows via EximPe’s server-to-server API with minimal redirection"
 ---
 
@@ -53,7 +53,7 @@ After the customer enters VPA on your website, you need to call this API to chec
 ### Sample Request
 
 ```json
-curl --location 'https://api-staging.eximpe.com/pg/vpa/validate/' \
+curl --location 'https://api.eximpe.com/pg/vpa/validate/' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
 --header 'x-client-id: <api-key>' \

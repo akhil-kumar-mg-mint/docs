@@ -30,6 +30,7 @@
             "group": "Web Integration",
             "pages": [
               "integration-guide/web-integration/hosted-checkout",
+              "integration-guide/web-integration/s2s-card-payment",
               "integration-guide/web-integration/s2s-upi-intent",
                "integration-guide/web-integration/s2s-upi-collection",
               "integration-guide/web-integration/webhooks",
@@ -55,6 +56,14 @@
             "pages": [
               "api-reference/payment/list",
               "api-reference/payment/get"  
+            ]
+          },
+          {
+            "group": "Card Tokens",
+            "pages": [
+              "api-reference/card-tokens/save",
+              "api-reference/card-tokens/list",
+              "api-reference/card-tokens/delete"
             ]
           },
           {
