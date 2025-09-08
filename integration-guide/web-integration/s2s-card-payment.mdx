@@ -1,0 +1,442 @@
+---
+title: "S2S Card Payment"
+description: "Enable secure card payments with 3D Secure authentication using EximPe's server-to-server card payment flow"
+---
+
+# Introduction
+
+The Server-to-Server (S2S) Card Payment integration provides a secure way to process card transactions directly from your backend while maintaining PCI compliance. Support both new card payments and saved card tokens through dedicated APIs for optimal user experience and security.
+
+<CardGroup cols={3}>
+  <Card title="3D Secure Ready" icon="shield-check" href="#step-1-initiate-payment">
+    Built-in 3D Secure authentication for enhanced security and compliance
+  </Card>
+  <Card title="Card Tokenization" icon="credit-card" href="#saved-card-tokens">
+    Save cards using dedicated API for faster repeat payments without storing sensitive data
+  </Card>
+  <Card title="Real-time Callbacks" icon="server" href="#step-4-server-to-server-callback">
+    Receive instant payment status updates via server-to-server webhooks
+  </Card>
+</CardGroup>
+
+### 3D Secure Authentication
+
+3D Secure (3DS) is an authentication protocol that adds an extra layer of security for online card transactions. When a payment requires 3DS verification, EximPe returns an ACS (Access Control Server) template that must be rendered in the customer's browser to complete authentication.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **API Credentials**: Your EximPe client ID, client secret, and merchant ID for authentication.
+- **Callback URL**: A publicly accessible URL configured in your EximPe dashboard for server-to-server callbacks.
+- **HTTPS Endpoint**: All card payment endpoints must use HTTPS for security compliance.
+- **3DS Integration**: Frontend capability to render HTML forms for 3D Secure authentication.
+
+The following steps allow you to integrate server-to-server card payments:
+
+1. **Initiate payment** (new card or saved token)
+2. **Handle 3D Secure authentication** (if required)
+3. **Check payment transaction status**
+4. **EximPe sends Server-to-Server callback response**
+
+## Step 1: Initiate Payment
+
+### New Card Payment
+
+For first-time card payments, provide complete card details:
+
+```json
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "CARD_13MYHALESH7",
+  "return_url": "https://yoursite.com/payment/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "DEBIT_CARD",
+  "card_details": {
+    "nickname": "VISA Debit",
+    "number": "4895380110000003",
+    "cardholder_name": "John Doe",
+    "expiry_month": "05",
+    "expiry_year": "2030",
+    "cvv": "123",
+    "network": "VISA",
+    "identifier": "EX0001"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "City",
+      "state": "State",
+      "postal_code": "123456"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_0HOZ0C",
+    "date": "2025-09-04"
+  }
+}
+```
+
+### Saved Card Token Payment
+
+For repeat payments using previously saved cards:
+
+```json
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "CARD_4FQ0AIHQEI9",
+  "return_url": "https://yoursite.com/payment/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "CREDIT_CARD",
+  "card_details": {
+    "token": "1e6709282a21e83f43a020",
+    "identifier": "EX0001",
+    "network": "VISA"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "City",
+      "state": "State",
+      "postal_code": "123456"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_3MUK2I",
+    "date": "2025-09-04"
+  }
+}
+```
+
+<Note>
+  For S2S Card Payment requests, you must include these required parameters:
+
+  - `collection_mode`: must be set to `"s2s"`
+  - `mop_type`: either `"CREDIT_CARD"` or `"DEBIT_CARD"`
+  - `buyer.ip_address`: the customer's device IP address (required for fraud prevention)
+  - `buyer.user_agent`: the customer's browser user-agent string (required for fraud prevention)
+  - `card_details`: either complete card information or saved token details
+</Note>
+
+### S2S Card Payment Response
+
+```json
+{
+  "success": true,
+  "message": "S2S Card Payment Request created successfully",
+  "data": {
+    "order_id": "OD9888127185",
+    "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N0IiBhY3Rpb249Imh0dHBzOi8vdGVzdC5wYXl1LmluL2UxMGMzNmExYWQ2YTQ1OTkzMWNhODYzNTBhZjIxZDU0ZDhiMTZhODRjYWQ1NDAxMDE2OGFlN2RjYmEwMmEwYWEvdGhyZWVEU2VjdXJlL21ldGhvZCIgbWV0aG9kPSJwb3N0Ij48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJQYVJlcSIgdmFsdWU9ImVkZTFmODA0MzBiMzgzYmY0OGZjNjRmZGMxNjE5YzM2YTlkYzVjM2NjMGI5YjQ4NDZkMDU5MTY2ZGUzMmM1MTQ1NDdhMGNiMmM5MTBhMmM4ZTFlY2E3ZTI1NzAxZWNiMzdhOGFjMGZiZjNjYTEwYjE2OTVhZGRjZGEwMGJlYmVjZjY4NGZmNzliYmM4ZjYxM2YyODUxMWIxNDljNmEwZTgxOTc0N2RiZTRlMDVhMjRhOTMyYWMyNzljMzA5ZTI4NzczNzU0YmUwY2I4ZTUzZDU5ZWUxOTY0OTAxNWM1NzZlMTQ2ODZlMmU5NjI5YzkyZDI3MmM1YjI0ZTIwNjE0OTgwOTk3ODk1NTAzMDM2YjkwZGUwZjNiNTkxZDEzMjczNTZkMTczMTI4OWMwNjY1NTEzYjVlMDYxYThmYmJjYTRhMjk0YmJjYzYyZWFiMzMwMmNmZGMwOGVhNTA2ZTA0NDg0YWE0NDNiNDBiNWQ2MWFiOTFhODViMDliNDRmMTE4N2M2OWRiNTE3ZTkwMDYwNjhhMjhjMzFiM2Y5MDEyYmNlMDg3MzcwZmE2ODBiNzdmNTlhNGQ4N2ZkMDViODRmNzk3ZjVlOTVhOTk4YTMxZjRjOTZkNTRhMzQyNDg3MTYxMDU5NWRmMGRkNGQ4YmE1YjExYTJmODMwYzFmOTM2NjRlN2Q3MTJlYjA4MTZhMTY2NzRhNTgxYTlkZDkwMGNjMDk0ZjZiYmE0OTRjZTk3MTNhNmU3MDI1NWEzNmJhNzg0MDlmMjEzN2Q1M2U0MTM5ZmU5ZjVlNDc4ZTEyMjAxNmUwMTAzNzQxYWIxNzBjZmUwMmUwMDQxNzkxZmM1NzhhMDQ0MDdhYmQ5NjUyNmFmMjMyMjg0MDhlOTJjNTcyNTg5ZTQ5ZThjMGYzZjhjYjNmNzk5MmFjNjg2NDExNmYyZTQ3NjQ4MGEzMjdlMzI0OWMyMzAzZmMxYjAzY2U3MWYyZTJmZGZjZmExYjg2OTYwOTRlMDk3ZTVhYWM1YTlhOTVjNTU5ZDRiNmY5NzNlOTI5NmY1Y2ZhNmY5NDJlMDNlMjUxN2QzNzlmNjkyMmU0NzQyYjliYmZjODgzYTVlMTc1YTE5YmMyNzQ1ZGI5Mzk5YTNjZGJhMTljMmM0Njc2NTE4NjgzNzYyZWM3MTUxOTQ2YjJhZTE1MzA2MDQ0YzhmMmVkNmVmOGU0YzNlZmU2M2Y0ZWFlNTY2N2IxNzRiMjcxOTA1YjQzOWRlYzMwMzQ4MGJmZDIwODE4MTZiMDgwMTk2ZjBmZmZiNThkMTA3Y2IxMDI1YjZlMmNjMDBmMzc5MjhkM2JkNjZhN2MxZmRkZDRjZDkwMDU0NDc5NTlmNDFkNThlMDFiZmY1YThhYjk0MjFlMzU5ZDY2ZTkwNzQyYTFlZTFjNzgyNzNhYmM5Y2RmZTljMDdhZDU4OTdkNTA3MjQ2MzFjNDZkODQ0MDhjMjNhOTc5NzBkMGFiYWZlZTBhMjllYjhiMThhNzU5ODMyM2EzMWU4MmQ2Y2IxZmRmNzhmMTQzMDBjOTA5YzhmYjA0YjNhMjNhOTYyYTBmMTA2ZjdhOTE5MTcwMWJlN2M1MDRjNmFhYmFjNjZhMmMyMTM2ZjNmMWE2N2U2MmIyY2Y4ZGNhYTc0MTFiYjczMTVkY2UzMiI+PGlucHV0IHR5cGU9ImhpZGRlbiIgbmFtZT0iTUQiIHZhbHVlPSJlMTBjMzZhMWFkNmE0NTk5MzFjYTg2MzUwYWYyMWQ1NDNiNDIxOGU0N2U1ZWU3MDI3M2I4NzdkMjFkYTE0MTNlIj48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJUZXJtVXJsIiB2YWx1ZT0iaHR0cHM6Ly90ZXN0LnBheXUuaW4vZTEwYzM2YTFhZDZhNDU5OTMxY2E4NjM1MGFmMjFkNTRkOGIxNmE4NGNhZDU0MDEwMTY4YWU3ZGNiYTAyYTBhYS9Db21tb25QZ1Jlc3BvbnNlSGFuZGxlciI+PC9mb3JtPjxzY3JpcHQgdHlwZT0ndGV4dC9qYXZhc2NyaXB0Jz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdpbmRvdy5vbmxvYWQ9ZnVuY3Rpb24oKXsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkb2N1bWVudC5mb3Jtc1sncGF5bWVudF9wb3N0J10uc3VibWl0KCk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgICAgIDwvc2NyaXB0PjwvYm9keT48L2h0bWw+"
+  }
+}
+```
+
+For S2S Card Payment mode, the response includes:
+
+- `order_id`: Unique order identifier for tracking the transaction
+- `acs_template`: Base64-encoded HTML form for 3D Secure authentication (when required)
+
+## Step 2: Handle 3D Secure Authentication
+
+When 3D Secure authentication is required, EximPe returns an `acs_template` that must be processed on the frontend:
+
+### 3DS Authentication Flow
+
+1. **Decode the ACS Template**: The `acs_template` is Base64-encoded HTML
+2. **Render in Browser**: Display the decoded HTML in the customer's browser
+3. **Auto-Submit Form**: The form will automatically submit to the bank's authentication server
+4. **Customer Authentication**: Customer completes authentication (OTP, PIN, biometric, etc.)
+5. **Redirect to Return URL**: After authentication, customer is redirected to your `return_url`
+
+### Frontend Implementation Example
+
+```javascript
+// Decode the Base64 ACS template
+function handleACSTemplate(acsTemplate) {
+  // Decode Base64
+  const decodedHTML = atob(acsTemplate);
+  
+  // Create a new window or iframe for 3DS
+  const authWindow = window.open('', '3DS_Auth', 'width=600,height=400');
+  
+  // Write the decoded HTML to the window
+  authWindow.document.write(decodedHTML);
+  authWindow.document.close();
+  
+  // Monitor for window close (authentication complete)
+  const checkClosed = setInterval(() => {
+    if (authWindow.closed) {
+      clearInterval(checkClosed);
+      // Check payment status after authentication
+      checkPaymentStatus();
+    }
+  }, 1000);
+}
+
+// Check payment status after 3DS completion
+function checkPaymentStatus() {
+  // Call your backend to check order status
+  fetch('/api/check-payment-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order_id: 'OD9888127185' })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'SUCCESS') {
+      // Payment successful - redirect to success page
+      window.location.href = '/payment-success';
+    } else if (data.status === 'FAILED') {
+      // Payment failed - show error message
+      showErrorMessage('Payment failed. Please try again.');
+    } else {
+      // Still processing - continue checking
+      setTimeout(checkPaymentStatus, 2000);
+    }
+  });
+}
+```
+
+<Warning>
+  **Security Note**: Always decode and render the ACS template in a secure context (HTTPS) and validate the response from the authentication server before proceeding with order fulfillment.
+</Warning>
+
+## Saved Card Tokens
+
+EximPe's card tokenization system uses a dedicated API approach to securely save card details for future payments:
+
+### Tokenization Workflow
+
+1. **Process Payment**: Use the Create Order API with new card details
+2. **Save Card** (optional): After successful payment, call the Save Card API to tokenize
+3. **Future Payments**: Use saved tokens instead of card details for repeat transactions
+
+### Saving Cards After Payment
+
+Use the dedicated [Save Card API](/api-reference/card-tokens/save) to tokenize cards after successful payment:
+
+```json
+POST /pg/tokens/
+{
+  "number": "4895380110000003",
+  "cardholder_name": "John Doe",
+  "expiry_month": "05",
+  "expiry_year": "2030",
+  "cvv": "123",
+  "network": "VISA",
+  "identifier": "EX0001"
+}
+```
+
+This returns a secure token that can be used for future payments without storing sensitive card data.
+
+### Complete Tokenization Example
+
+```javascript
+// Step 1: Process payment with new card
+const paymentResponse = await fetch('/pg/orders/', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Client-ID': 'YOUR_CLIENT_ID',
+    'X-Client-Secret': 'YOUR_CLIENT_SECRET',
+    'X-Merchant-ID': 'YOUR_MERCHANT_ID'
+  },
+  body: JSON.stringify({
+    amount: "1000.00",
+    collection_mode: "s2s",
+    mop_type: "CREDIT_CARD",
+    card_details: {
+      number: "4895380110000003",
+      cardholder_name: "John Doe",
+      expiry_month: "05",
+      expiry_year: "2030",
+      cvv: "123",
+      network: "VISA",
+      identifier: "EX0001"
+    },
+    // ... other required fields
+  })
+});
+
+// Step 2: After successful payment, save card for future use
+if (paymentResponse.data.status === 'SUCCESS') {
+  const tokenResponse = await fetch('/pg/tokens/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-ID': 'YOUR_CLIENT_ID',
+      'X-Client-Secret': 'YOUR_CLIENT_SECRET',
+      'X-Merchant-ID': 'YOUR_MERCHANT_ID'
+    },
+    body: JSON.stringify({
+      number: "4895380110000003",
+      cardholder_name: "John Doe",
+      expiry_month: "05",
+      expiry_year: "2030",
+      cvv: "123",
+      network: "VISA",
+      identifier: "EX0001"
+    })
+  });
+  
+  // Store the returned token for future payments
+  const cardToken = tokenResponse.data.card_token;
+}
+```
+
+### Using Saved Tokens
+
+For repeat payments, use the saved token instead of card details:
+
+```json
+{
+  "card_details": {
+    "token": "1e6709282a21e83f43a020",
+    "identifier": "EX0001",
+    "network": "VISA"
+  }
+}
+```
+
+### Token Management APIs
+
+- **[Save Card](/api-reference/card-tokens/save)**: Tokenize card details without processing payment
+- **[List Saved Cards](/api-reference/card-tokens/list)**: Retrieve customer's saved cards
+- **[Delete Saved Card](/api-reference/card-tokens/delete)**: Remove saved card tokens
+
+## Step 3: Check Payment Transaction Status
+
+Use the Order Details API to retrieve the current payment status:
+
+```bash
+curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-Merchant-ID: YOUR_MERCHANT_ID"
+```
+
+<Note>
+  For detailed parameters and response formats, see the [Get Order API](/api-reference/order/get)
+</Note>
+
+### Payment Status Values
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Payment initiated, awaiting completion |
+| `SUCCESS` | Payment completed successfully |
+| `FAILED` | Payment failed or was declined |
+| `CANCELLED` | Payment was cancelled by customer |
+| `EXPIRED` | Payment session expired |
+
+## Step 4: Server-to-Server Callback Response
+
+EximPe sends real-time webhook notifications when payment status changes:
+
+```json
+{
+  "event": "payment.successful",
+  "data": {
+    "order_id": "OD9888127185",
+    "payment_id": "PAY123456789",
+    "amount": "1000.00",
+    "currency": "INR",
+    "status": "SUCCESS",
+    "reference_id": "CARD_13MYHALESH7",
+    "payment_method": "CARD",
+    "card_details": {
+      "masked_number": "****1234",
+      "network": "VISA",
+      "type": "DEBIT"
+    },
+    "timestamp": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+For more webhook details, see:
+- [Payment Successful](/api-reference/webhooks/payment-successful)
+- [Payment Failed](/api-reference/webhooks/payment-failed)
+
+## Security Best Practices
+
+### PCI DSS Compliance
+
+- **Never log card details**: Ensure card numbers, CVV, and other sensitive data are never logged
+- **Use HTTPS**: All card payment endpoints must use HTTPS encryption
+- **Tokenize when needed**: Use the Save Card API to convert card details to tokens for repeat customers
+- **Validate inputs**: Implement proper validation for all card-related fields
+
+### Fraud Prevention
+
+- **Required fields**: Always include `ip_address` and `user_agent` for fraud detection
+- **Velocity checks**: Monitor for unusual payment patterns
+- **Address verification**: Validate billing address information
+- **CVV verification**: Always require CVV for new card transactions
+
+### 3D Secure Best Practices
+
+- **Fallback handling**: Implement proper error handling for failed 3DS authentication
+- **Timeout management**: Set appropriate timeouts for 3DS flows
+- **Mobile optimization**: Ensure 3DS works seamlessly on mobile devices
+- **User experience**: Provide clear instructions during authentication
+
+## Error Handling
+
+### Common Error Scenarios
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| `CARD_DECLINED` | Bank declined the transaction | Ask customer to try different card or contact bank |
+| `INSUFFICIENT_FUNDS` | Not enough balance | Customer needs to check account balance |
+| `EXPIRED_CARD` | Card has expired | Customer needs to use valid card |
+| `INVALID_CVV` | Incorrect CVV provided | Ask customer to re-enter CVV |
+| `3DS_FAILED` | 3D Secure authentication failed | Customer needs to complete authentication |
+| `NETWORK_ERROR` | Network connectivity issues | Retry the transaction |
+
+### Implementation Tips
+
+1. **Retry Logic**: Implement exponential backoff for network-related errors
+2. **User Feedback**: Provide clear, actionable error messages to customers
+3. **Logging**: Log errors (without sensitive data) for debugging
+4. **Monitoring**: Set up alerts for high error rates or specific error types
+
+---
+
+## Next Steps
+
+- **Test Integration**: Use test cards and credentials to validate your integration
+- **Go Live**: Switch to production credentials after thorough testing
+- **Monitor Performance**: Track success rates, error patterns, and user experience metrics
+- **Optimize Flow**: Continuously improve based on user feedback and analytics
+
+For additional support, consult our [API Reference](/api-reference) or contact our integration team. 

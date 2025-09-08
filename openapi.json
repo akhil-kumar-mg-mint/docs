@@ -10,12 +10,8 @@
   },
   "servers": [
     {
-      "url": "https://api-staging.eximpe.com",
-      "description": "Staging server"
-    },
-    {
       "url": "https://api.eximpe.com",
-      "description": "Production server"
+      "description": "Payment Gateway Base URL"
     }
   ],
   "security": [
@@ -44,96 +40,185 @@
                 "$ref": "#/components/schemas/CreateOrderRequest"
               },
               "examples": {
-                "hosted_payment": {
+                "Hosted Payment": {
                   "summary": "Hosted Payment",
                   "description": "Standard hosted payment flow",
                   "value": {
-                    "amount": "1000.00",
+                    "amount": "2499.99",
                     "currency": "INR",
-                    "reference_id": "ORDER_123456",
-                    "return_url": "https://yourdomain.com/payment/callback",
+                    "reference_id": "ORD_2024_WH_001234",
+                    "return_url": "https://electronicshub.com/payment/success",
                     "collection_mode": "hosted_payment",
                     "mop_type": "UPI",
                     "buyer": {
-                      "name": "Alice Smith",
-                      "email": "alice.smith@example.com",
-                      "phone": "+919812345678",
+                      "name": "Priya Sharma",
+                      "email": "priya.sharma@techcorp.in",
+                      "phone": "+919876543210",
                       "address": {
-                        "line_1": "221B Baker Street",
-                        "line_2": "Near Central Park",
+                        "line_1": "403, Crystal Tower, Linking Road",
+                        "line_2": "Near Metro Station",
                         "city": "Mumbai",
                         "state": "Maharashtra",
-                        "postal_code": "400001"
+                        "postal_code": "400050"
                       }
                     },
                     "product": {
-                      "name": "Wireless Headphones",
-                      "description": "Noise-cancelling over-ear headphones",
+                      "name": "Sony WH-1000XM5 Wireless Headphones",
+                      "description": "Premium noise-cancelling wireless headphones with 30-hour battery life",
                       "hs_code": "85183000",
                       "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
                       "type_of_goods": "goods"
                     },
                     "invoice": {
-                      "number": "INV_20240621",
+                      "number": "INV_WH_2024_0621",
                       "date": "2024-06-21"
                     }
                   }
                 },
-                "s2s_upi_intent": {
+                "S2S UPI Intent": {
                   "summary": "UPI Intent (S2S)",
                   "description": "Server-to-server UPI intent flow",
                   "value": {
-                    "amount": "1000.00",
+                    "amount": "24999.00",
                     "currency": "INR",
-                    "reference_id": "ORDER_123457",
+                    "reference_id": "ORD_2024_SP_005678",
                     "collection_mode": "s2s",
                     "mop_type": "UPI",
                     "upi_flow_type": "intent",
                     "upi_app_name": "google_pay",
                     "buyer": {
-                      "name": "John Doe",
-                      "email": "john.doe@example.com",
-                      "phone": "+919876543210",
+                      "name": "Rajesh Kumar",
+                      "email": "rajesh.kumar@innovatetech.com",
+                      "phone": "+919123456789",
                       "address": {
-                        "line_1": "123 Main Street",
-                        "city": "Delhi",
+                        "line_1": "B-204, Tech Park Complex, Sector 18",
+                        "city": "New Delhi",
                         "state": "Delhi",
-                        "postal_code": "110001"
+                        "postal_code": "110075"
                       }
                     },
                     "product": {
-                      "name": "Smartphone",
-                      "description": "Latest Android smartphone",
+                      "name": "Samsung Galaxy S24 Ultra 5G",
+                      "description": "Latest flagship Android smartphone with 512GB storage and S Pen",
                       "type_of_goods": "goods"
                     }
                   }
                 },
-                "s2s_upi_collection": {
+                "S2S UPI Collection": {
                   "summary": "UPI Collection (S2S)",
                   "description": "Server-to-server UPI collection flow",
                   "value": {
-                    "amount": "1500.00",
+                    "amount": "89999.00",
                     "currency": "INR",
-                    "reference_id": "ORDER_123458",
+                    "reference_id": "ORD_2024_LP_009012",
                     "collection_mode": "s2s",
                     "mop_type": "UPI",
                     "upi_flow_type": "collection",
-                    "vpa": "customer@paytm",
+                    "vpa": "aniket.verma@okaxis",
                     "buyer": {
-                      "name": "Sarah Wilson",
-                      "email": "sarah.wilson@example.com",
-                      "phone": "+919123456789",
+                      "name": "Aniket Verma",
+                      "email": "aniket.verma@digitalsolutions.co.in",
+                      "phone": "+919876501234",
                       "address": {
-                        "line_1": "456 Park Avenue",
+                        "line_1": "301, Prestige Tech Park, Outer Ring Road",
                         "city": "Bangalore",
                         "state": "Karnataka",
-                        "postal_code": "560001"
+                        "postal_code": "560037"
                       }
                     },
                     "product": {
-                      "name": "Laptop",
-                      "description": "Gaming laptop",
+                      "name": "ASUS ROG Strix G15 Gaming Laptop",
+                      "description": "High-performance gaming laptop with RTX 4060, 16GB RAM, 1TB SSD",
                       "type_of_goods": "goods"
+                    }
+                  }
+                },
+                "S2S Card Payment": {
+                  "summary": "Card Payment (S2S)",
+                  "description": "Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. The card details are securely processed and can be tokenized using the Save Card API after successful payment.",
+                  "value": {
+                    "amount": "15750.00",
+                    "currency": "INR",
+                    "reference_id": "ORD_2024_TAB_456789",
+                    "return_url": "https://gadgetstore.com/payment/callback/",
+                    "collection_mode": "s2s",
+                    "mop_type": "DEBIT_CARD",
+                    "card_details": {
+                      "nickname": "HDFC VISA Debit",
+                      "number": "4895380110000003",
+                      "cardholder_name": "Meera Patel",
+                      "expiry_month": "05",
+                      "expiry_year": "2030",
+                      "cvv": "123",
+                      "network": "VISA",
+                      "identifier": "USER_MP_001"
+                    },
+                    "buyer": {
+                      "name": "Meera Patel",
+                      "email": "meera.patel@creativeagency.in",
+                      "phone": "+919845612378",
+                      "address": {
+                        "line_1": "12/A, Shivaji Nagar Housing Society",
+                        "line_2": "Near City Mall",
+                        "city": "Pune",
+                        "state": "Maharashtra",
+                        "postal_code": "411005"
+                      },
+                      "ip_address": "103.25.142.87",
+                      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    },
+                    "product": {
+                      "name": "Apple iPad Air (5th Generation) Wi-Fi 64GB",
+                      "description": "10.9-inch Liquid Retina display with True Tone, M1 chip, 12MP cameras",
+                      "hs_code": "84713010",
+                      "hs_code_description": "Portable automatic data processing machines weighing not more than 10 kg",
+                      "type_of_goods": "goods"
+                    },
+                    "invoice": {
+                      "number": "INV_TAB_2024_1204",
+                      "date": "2024-12-04"
+                    }
+                  }
+                },
+                "S2S Card Payment (Saved Token)": {
+                  "summary": "Card Payment with Saved Token (S2S)",
+                  "description": "Server-to-server card payment using a previously saved card token. This provides faster checkout and enhanced security by avoiding transmission of sensitive card data.",
+                  "value": {
+                    "amount": "3799.00",
+                    "currency": "INR",
+                    "reference_id": "ORD_2024_WATCH_789012",
+                    "return_url": "https://luxurywatches.com/checkout/success/",
+                    "collection_mode": "s2s",
+                    "mop_type": "CREDIT_CARD",
+                    "card_details": {
+                      "token": "1e6709282a21e83f43a020",
+                      "identifier": "USER_AS_002",
+                      "network": "VISA"
+                    },
+                    "buyer": {
+                      "name": "Arjun Singh",
+                      "email": "arjun.singh@financecorp.com",
+                      "phone": "+919987654321",
+                      "address": {
+                        "line_1": "Tower B, 15th Floor, DLF Cyber City",
+                        "line_2": "Phase 2, Sector 24",
+                        "city": "Gurugram",
+                        "state": "Haryana",
+                        "postal_code": "122002"
+                      },
+                      "ip_address": "27.147.158.92",
+                      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    },
+                    "product": {
+                      "name": "Apple Watch Series 9 GPS + Cellular 45mm",
+                      "description": "Starlight Aluminum Case with Sport Loop, Advanced health monitoring features",
+                      "hs_code": "91021100",
+                      "hs_code_description": "Wrist-watches, electrically operated, whether or not incorporating a stop-watch facility",
+                      "type_of_goods": "goods"
+                    },
+                    "invoice": {
+                      "number": "INV_WATCH_2024_1205",
+                      "date": "2024-12-05"
                     }
                   }
                 }
@@ -151,39 +236,51 @@
                   "$ref": "#/components/schemas/CreateOrderResponse"
                 },
                 "examples": {
-                  "hosted_payment": {
+                  "Hosted Payment": {
                     "summary": "Hosted Payment",
                     "description": "Response for hosted payment mode",
                     "value": {
                       "success": true,
                       "message": "Checkout session created successfully",
                       "data": {
-                        "session_id": "session_abc123def456",
-                        "order_id": "OD2000992103"
+                        "session_id": "session_wh_5f8e3d7a9b2c1",
+                        "order_id": "OD2024120456789"
                       }
                     }
                   },
-                  "s2s_upi_intent": {
+                  "S2S UPI Intent": {
                     "summary": "UPI Intent (S2S)",
                     "description": "Response for S2S UPI Intent mode",
                     "value": {
                       "success": true,
                       "message": "S2S UPI Request created successfully",
                       "data": {
-                        "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
-                        "order_id": "OD2000992103"
+                        "intent_uri": "pa=rajesh.kumar@okaxis&pn=Rajesh%20Kumar&tr=624857392104738291&tid=EXIMPE624857392104738291120425184729&am=24999.00&cu=INR&tn=Samsung%20Galaxy%20S24%20Ultra%205G",
+                        "order_id": "OD2024120567890"
                       }
                     }
                   },
-                  "s2s_upi_collection": {
+                  "S2S UPI Collection": {
                     "summary": "UPI Collection (S2S)",
                     "description": "Response for S2S UPI Collection mode",
                     "value": {
                       "success": true,
                       "message": "S2S UPI Request created successfully",
                       "data": {
-                        "order_id": "OD1927283599",
-                        "message": "UPI Collection request sent to customer@paytm"
+                        "order_id": "OD2024120789012",
+                        "message": "UPI Collection request sent to aniket.verma@okaxis"
+                      }
+                    }
+                  },
+                  "S2S Card Payment": {
+                    "summary": "Card Payment (S2S)",
+                    "description": "Response for S2S Card Payment mode with 3D Secure authentication. The acs_template contains Base64-encoded HTML that must be decoded and rendered on the client side to complete the 3D Secure authentication process.",
+                    "value": {
+                      "success": true,
+                      "message": "S2S Card Payment Request created successfully",
+                      "data": {
+                        "order_id": "OD2024120890123",
+                        "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N0IiBhY3Rpb249Imh0dHBzOi8vdGVzdC5wYXl1LmluL2UxMGMzNmExYWQ2YTQ1OTkzMWNhODYzNTBhZjIxZDU0ZDhiMTZhODRjYWQ1NDAxMDE2OGFlN2RjYmEwMmEwYWEvdGhyZWVEU2VjdXJlL21ldGhvZCIgbWV0aG9kPSJwb3N0Ij48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJQYVJlcSIgdmFsdWU9ImVkZTFmODA0MzBiMzgzYmY0OGZjNjRmZGMxNjE5YzM2YTlkYzVjM2NjMGI5YjQ4NDZkMDU5MTY2ZGUzMmM1MTQ1NDdhMGNiMmM5MTBhMmM4ZTFlY2E3ZTI1NzAxZWNiMzdhOGFjMGZiZjNjYTEwYjE2OTVhZGRjZGEwMGJlYmVjZjY4NGZmNzliYmM4ZjYxM2YyODUxMWIxNDljNmEwZTgxOTc0N2RiZTRlMDVhMjRhOTMyYWMyNzljMzA5ZTI4NzczNzU0YmUwY2I4ZTUzZDU5ZWUxOTY0OTAxNWM1NzZlMTQ2ODZlMmU5NjI5YzkyZDI3MmM1YjI0ZTIwNjE0OTgwOTk3ODk1NTAzMDM2YjkwZGUwZjNiNTkxZDEzMjczNTZkMTczMTI4OWMwNjY1NTEzYjVlMDYxYThmYmJjYTRhMjk0YmJjYzYyZWFiMzMwMmNmZGMwOGVhNTA2ZTA0NDg0YWE0NDNiNDBiNWQ2MWFiOTFhODViMDliNDRmMTE4N2M2OWRiNTE3ZTkwMDYwNjhhMjhjMzFiM2Y5MDEyYmNlMDg3MzcwZmE2ODBiNzdmNTlhNGQ4N2ZkMDViODRmNzk3ZjVlOTVhOTk4YTMxZjRjOTZkNTRhMzQyNDg3MTYxMDU5NWRmMGRkNGQ4YmE1YjExYTJmODMwYzFmOTM2NjRlN2Q3MTJlYjA4MTZhMTY2NzRhNTgxYTlkZDkwMGNjMDk0ZjZiYmE0OTRjZTk3MTNhNmU3MDI1NWEzNmJhNzg0MDlmMjEzN2Q1M2U0MTM5ZmU5ZjVlNDc4ZTEyMjAxNmUwMTAzNzQxYWIxNzBjZmUwMmUwMDQxNzkxZmM1NzhhMDQ0MDdhYmQ5NjUyNmFmMjMyMjg0MDhlOTJjNTcyNTg5ZTQ5ZThjMGYzZjhjYjNmNzk5MmFjNjg2NDExNmYyZTQ3NjQ4MGEzMjdlMzI0OWMyMzAzZmMxYjAzY2U3MWYyZTJmZGZjZmExYjg2OTYwOTRlMDk3ZTVhYWM1YTlhOTVjNTU5ZDRiNmY5NzNlOTI5NmY1Y2ZhNmY5NDJlMDNlMjUxN2QzNzlmNjkyMmU0NzQyYjliYmZjODgzYTVlMTc1YTE5YmMyNzQ1ZGI5Mzk5YTNjZGJhMTljMmM0Njc2NTE4NjgzNzYyZWM3MTUxOTQ2YjJhZTE1MzA2MDQ0YzhmMmVkNmVmOGU0YzNlZmU2M2Y0ZWFlNTY2N2IxNzRiMjcxOTA1YjQzOWRlYzMwMzQ4MGJmZDIwODE4MTZiMDgwMTk2ZjBmZmZiNThkMTA3Y2IxMDI1YjZlMmNjMDBmMzc5MjhkM2JkNjZhN2MxZmRkZDRjZDkwMDU0NDc5NTlmNDFkNThlMDFiZmY1YThhYjk0MjFlMzU5ZDY2ZTkwNzQyYTFlZTFjNzgyNzNhYmM5Y2RmZTljMDdhZDU4OTdkNTA3MjQ2MzFjNDZkODQ0MDhjMjNhOTc5NzBkMGFiYWZlZTBhMjllYjhiMThhNzU5ODMyM2EzMWU4MmQ2Y2IxZmRmNzhmMTQzMDBjOTA5YzhmYjA0YjNhMjNhOTYyYTBmMTA2ZjdhOTE5MTcwMWJlN2M1MDRjNmFhYmFjNjZhMmMyMTM2ZjNmMWE2N2U2MmIyY2Y4ZGNhYTc0MTFiYjczMTVkY2UzMiI+PGlucHV0IHR5cGU9ImhpZGRlbiIgbmFtZT0iTUQiIHZhbHVlPSJlMTBjMzZhMWFkNmE0NTk5MzFjYTg2MzUwYWYyMWQ1NDNiNDIxOGU0N2U1ZWU3MDI3M2I4NzdkMjFkYTE0MTNlIj48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJUZXJtVXJsIiB2YWx1ZT0iaHR0cHM6Ly90ZXN0LnBheXUuaW4vZTEwYzM2YTFhZDZhNDU5OTMxY2E4NjM1MGFmMjFkNTRkOGIxNmE4NGNhZDU0MDEwMTY4YWU3ZGNiYTAyYTBhYS9Db21tb25QZ1Jlc3BvbnNlSGFuZGxlciI+PC9mb3JtPjxzY3JpcHQgdHlwZT0ndGV4dC9qYXZhc2NyaXB0Jz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdpbmRvdy5vbmxvYWQ9ZnVuY3Rpb24oKXsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkb2N1bWVudC5mb3Jtc1sncGF5bWVudF9wb3N0J10uc3VibWl0KCk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgICAgIDwvc2NyaXB0PjwvYm9keT48L2h0bWw+"
                       }
                     }
                   }
@@ -198,13 +295,17 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_ORDER_002",
-                    "message": "Validation error",
-                    "details": {
-                      "reference_id": "Reference ID must be unique"
+                "examples": {
+                  "Reference ID must be unique Error": {
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "reference_id": "Reference ID must be unique"
+                        }
+                      }
                     }
                   }
                 }
@@ -217,6 +318,20 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -266,12 +381,12 @@
               },
               "example": {
                 "buyer": {
-                  "pan_number": "BNYPG9212K",
-                  "dob": "2010-01-23"
+                  "pan_number": "CDEFG1234H",
+                  "dob": "1992-08-14"
                 },
                 "invoice": {
-                  "number": "INV_2TIO9F",
-                  "date": "2025-06-22"
+                  "number": "INV_UPDATED_2024_1205",
+                  "date": "2024-12-05"
                 }
               }
             }
@@ -295,12 +410,12 @@
                     "data": {
                       "order_id": "{Order_ID}",
                       "buyer": {
-                        "pan_number": "BNYPG9212K",
-                        "dob": "2010-01-23"
+                                          "pan_number": "CDEFG1234H",
+                  "dob": "1992-08-14"
                       },
                       "invoice": {
-                        "number": "INV_2TIO9F",
-                        "date": "2025-06-22"
+                                          "number": "INV_UPDATED_2024_1205",
+                  "date": "2024-12-05"
                       }
                     }
                   }
@@ -392,65 +507,82 @@
                   "success": true,
                   "message": "Order fetched successfully",
                   "data": {
-                    "order_id": "OD9411897512",
-                    "reference_id": "TEST_FOB46D",
-                    "amount": 1000.0,
+                    "order_id": "OD2024120934567",
+                    "reference_id": "ORD_BOOKS_2024_3QWD98",
+                    "amount": "1899.00",
                     "currency": "INR",
                     "mop_type": "UPI",
                     "buyer": {
-                      "name": "John Doe",
-                      "email": "john.doe@example.com",
-                      "phone": "+919876543210",
+                      "name": "Vikash Gupta",
+                      "email": "vikash.gupta@edupublishers.com",
+                      "phone": "+919456789012",
                       "address": {
-                        "line_1": "123 Main Street",
-                        "line_2": "Apt 4B",
-                        "city": "City",
-                        "state": "State",
-                        "postal_code": "123456"
+                        "line_1": "C-45, Sector 62, Institutional Area",
+                        "line_2": "Near Metro Station",
+                        "city": "Noida",
+                        "state": "Uttar Pradesh",
+                        "postal_code": "201309"
                       },
-                      "pan_number": "BNYPG9212K",
-                      "dob": "2010-01-23"
+                      "pan_number": "ABCPV1234G",
+                      "dob": "1987-03-15"
                     },
                     "product": {
-                      "name": "Sample Product",
-                      "description": "This is a sample product description",
-                      "hs_code": "98051000",
-                      "hs_code_description": "Portable automatic data processing machines",
-                      "type_of_goods": "goods"
+                      "name": "Complete Python Programming Course Bundle",
+                      "description": "Comprehensive online course with 50+ hours of content, projects, and certification",
+                      "hs_code": "49019900",
+                      "hs_code_description": "Printed books, brochures, leaflets and similar printed matter",
+                      "type_of_goods": "services"
                     },
                     "invoice": {
-                      "number": "IN1123213",
-                      "date": "2025-06-22",
-                      "file": "https://eximpe.com/inv-12312312.pdf"
+                      "number": "INV_EDU_20241205",
+                      "date": "2024-12-05",
+                      "file": "https://eximpe-private-production-storage.s3.amazonaws.com/customer_7235050248/domestic_collection/invoice_files/2345_1_FfX8ZYL.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIAU7HUSFL56WCKDV5R%2F20250904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250904T093521Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmFwLXNvdXRoLTEiSDBGAiEAsG%2FvfQFJNeDKY0LiTMFnLts8TN9n2ttxmu62wYWnORwCIQD6NOAmZAuOtqjgF%2BAbLO9IgeWRqBgYU14yTQA%2BOZu79SqQBAhZEAAaDDM0MTk2Mjc5NTc3MSIMRwrignU2m5I9wa%2BBKu0DXTql14MdcbRpHAybF8lsmDA1FSdwkeWdyV9vvkg92p8gaQ%2BPqDC6qJjDuU3QNKWlj1PFNp1tA37xb4Ks90FpVCTzxVSb0p1hiGtBFNDyHnabzp6L%2FfxA6fLBSyjcBRl24exdW0FB9TvV0fD35UnZFwXaob6ltQEHuZYOuraeOJ3J%2F4MjtigXDjWxWZ8KDQUm%2F5nl8S4zjrcYHfMryGEVkn%2Fja%2B%2FM1jua8beJL1Hcs0x2AZq6G6hLDL7nSjfRgG4renC1fHZYTHEUF2llYD%2FPKWSbTh%2Bgw6a81LmtZOGAanrG54tSbxy6LoMEZNLJhtxBKQdx6yS%2FGcbNzhVrH8YCQ5twZNa83%2B%2B9yUqkudjCeaZxJ%2Buuvoyvm13lvKhjfBpTtSZbdb5aq5IoQ7tt6XrP8lZnK9WLeIZ9RX9tcYOfKYuLpJGD9Eh%2FYooTYPl8faljhLiQo4U0qNrZ4MOFjCadalt6g73Lgz9I8fFe%2BiVZl6Fw6K6sGffJVEw296U8lMTlp7yd92gIrOBgWbQJe8TvWVdAPrQhbu6DOviW9pZ3%2Fc7nWJh6uu1hLCY2mWnbDcttU0IJTXxSbYWoKAu%2FlcanpRqzRKbuzqUmaursniJVXDA8HU85rbYDAxUHKxWXoc2g7nx2wLuVggpoMZjUFDCUleXFBjqlAQC3CvrvfNJL0aJm9e9ampx5%2B%2BGs6Oc2gQgR%2BB%2BeYH0pVbj%2Fol1Xe8b0N1Gml0Py0tXOVdUcoe4DRot1BF3%2BoCy9wRDrdB9PTHPnzRMGrXwi4lh%2FKZfubn%2Fhee9aawZ02KX1KxZ9zNZBtIX2FrkdVliwHhjvmlhUiueWBwMbsX9WFb9Q2G3aiqpRbSs2g9LPP03wTpeGxwo9B1quxFb08JGTvY33WA%3D%3D&X-Amz-Signature=9e66e0cf971a44f9a82e329ba659839354090a51c87efd4649b4bdb92a8d313c"
                     },
                     "air_waybills": [
                       {
-                        "number": "AWB-23343",
-                        "file": "https://eximpe.com/awb-8F3F51D2.pdf"
-                      },
-                      {
-                        "number": "IN1123213",
-                        "file": "https://eximpe.com/awb-12312312.pdf"
+                        "number": "AWB23498234",
+                        "file": "https://eximpe-private-production-storage.s3.amazonaws.com/merchant_7235050248/domestic_collection/awb_files/2345_1.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIAU7HUSFL56WCKDV5R%2F20250904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250904T093521Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmFwLXNvdXRoLTEiSDBGAiEAsG%2FvfQFJNeDKY0LiTMFnLts8TN9n2ttxmu62wYWnORwCIQD6NOAmZAuOtqjgF%2BAbLO9IgeWRqBgYU14yTQA%2BOZu79SqQBAhZEAAaDDM0MTk2Mjc5NTc3MSIMRwrignU2m5I9wa%2BBKu0DXTql14MdcbRpHAybF8lsmDA1FSdwkeWdyV9vvkg92p8gaQ%2BPqDC6qJjDuU3QNKWlj1PFNp1tA37xb4Ks90FpVCTzxVSb0p1hiGtBFNDyHnabzp6L%2FfxA6fLBSyjcBRl24exdW0FB9TvV0fD35UnZFwXaob6ltQEHuZYOuraeOJ3J%2F4MjtigXDjWxWZ8KDQUm%2F5nl8S4zjrcYHfMryGEVkn%2Fja%2B%2FM1jua8beJL1Hcs0x2AZq6G6hLDL7nSjfRgG4renC1fHZYTHEUF2llYD%2FPKWSbTh%2Bgw6a81LmtZOGAanrG54tSbxy6LoMEZNLJhtxBKQdx6yS%2FGcbNzhVrH8YCQ5twZNa83%2B%2B9yUqkudjCeaZxJ%2Buuvoyvm13lvKhjfBpTtSZbdb5aq5IoQ7tt6XrP8lZnK9WLeIZ9RX9tcYOfKYuLpJGD9Eh%2FYooTYPl8faljhLiQo4U0qNrZ4MOFjCadalt6g73Lgz9I8fFe%2BiVZl6Fw6K6sGffJVEw296U8lMTlp7yd92gIrOBgWbQJe8TvWVdAPrQhbu6DOviW9pZ3%2Fc7nWJh6uu1hLCY2mWnbDcttU0IJTXxSbYWoKAu%2FlcanpRqzRKbuzqUmaursniJVXDA8HU85rbYDAxUHKxWXoc2g7nx2wLuVggpoMZjUFDCUleXFBjqlAQC3CvrvfNJL0aJm9e9ampx5%2B%2BGs6Oc2gQgR%2BB%2BeYH0pVbj%2Fol1Xe8b0N1Gml0Py0tXOVdUcoe4DRot1BF3%2BoCy9wRDrdB9PTHPnzRMGrXwi4lh%2FKZfubn%2Fhee9aawZ02KX1KxZ9zNZBtIX2FrkdVliwHhjvmlhUiueWBwMbsX9WFb9Q2G3aiqpRbSs2g9LPP03wTpeGxwo9B1quxFb08JGTvY33WA%3D%3D&X-Amz-Signature=ab46a77c1aa9a42693b9abf6c7de4bbc80c5ab557b5fee6062430fc5b627816f"
                       }
                     ],
                     "payments": [
                       {
-                        "payment_id": "PR1469384681",
+                        "payment_id": "PR3932678387",
                         "mop_type": "UPI",
                         "status": "captured",
                         "status_message": null,
                         "settlement": {
                           "status": "ready_for_settlement",
                           "message": null,
-                          "settlement_details": null
+                          "settlement_details": {
+                            "settlement_id": "ST8865592169",
+                            "settlement_completed_at": "2025-08-20T20:30:00.212494Z",
+                            "settlement_currency": "USD",
+                            "transaction_amount": "1000.00",
+                            "merchant_service_fee": "20.00",
+                            "merchant_service_tax": "3.60",
+                            "merchant_net_amount": "976.40",
+                            "sgst": "0.00",
+                            "cgst": "0.00",
+                            "igst": "0.00",
+                            "merchant_transaction_id": "OD8967030165-PR3932678387",
+                            "card_type": "domestic",
+                            "offer_service_fee": "0.00",
+                            "offer_service_tax": "0.00",
+                            "forex_rate": "86",
+                            "discount": "0.00",
+                            "additional_tdr_fee": "0.00",
+                            "additional_tdr_tax": "0.00",
+                            "total_processing_fee": "0.00",
+                            "total_service_tax": "0.00",
+                            "transaction_currency": "INR"
+                          }
                         },
-                        "created_at": "2025-06-23T10:44:14.344135Z"
+                        "created_at": "2025-08-20T06:13:30.033816Z"
                       }
                     ],
                     "status": "payment_successful",
                     "status_message": "Payment captured successfully",
-                    "created_at": "2025-06-23T10:44:11.702363Z",
-                    "is_testing": true
+                    "created_at": "2025-08-20T06:13:29.988329Z"
                   }
                 }
               }
@@ -534,9 +666,9 @@
                 "invoiceUpload": {
                   "summary": "Invoice Upload Example",
                   "value": {
-                    "identifier": "IN1123213",
+                    "identifier": "INV_EDU_20241205",
                     "document_type": "invoice",
-                    "file": "your-invoice.pdf"
+                    "file": "python_course_invoice_2024.pdf"
                   }
                 }
               }
@@ -561,25 +693,25 @@
                     "currency": "INR",
                     "mop_type": "UPI",
                     "buyer": {
-                      "name": "John Doe",
-                      "email": "john.doe@example.com",
-                      "phone": "+919876543210",
+                      "name": "Vikash Gupta",
+                      "email": "vikash.gupta@edupublishers.com",
+                      "phone": "+919456789012",
                       "address": {
-                        "line_1": "123 Main Street",
-                        "line_2": "Apt 4B",
-                        "city": "City",
-                        "state": "State",
-                        "postal_code": "123456"
+                        "line_1": "C-45, Sector 62, Institutional Area",
+                        "line_2": "Near Metro Station",
+                        "city": "Noida",
+                        "state": "Uttar Pradesh",
+                        "postal_code": "201309"
                       },
-                      "pan_number": "BNYPG9212K",
-                      "dob": "2010-01-23"
+                      "pan_number": "ABCPV1234G",
+                      "dob": "1987-03-15"
                     },
                     "product": {
-                      "name": "Sample Product",
-                      "description": "This is a sample product description",
-                      "hs_code": "98051000",
-                      "hs_code_description": "Portable automatic data processing machines",
-                      "type_of_goods": "goods"
+                      "name": "Complete Python Programming Course Bundle",
+                      "description": "Comprehensive online course with 50+ hours of content, projects, and certification",
+                      "hs_code": "49019900",
+                      "hs_code_description": "Printed books, brochures, leaflets and similar printed matter",
+                      "type_of_goods": "services"
                     },
                     "invoice": {
                       "number": "IN1123213",
@@ -767,24 +899,24 @@
                     "previous": null,
                     "results": [
                       {
-                        "id": "PR1469384681",
+                        "id": "PR2024120567891",
                         "merchant": {
-                          "id": "4455704961",
-                          "name": "Acme Corp"
+                          "id": "3604346598",
+                          "name": "InnovateTech Solutions"
                         },
-                        "reference_id": "ACME_ORD_1001",
+                        "reference_id": "ORD_IT_SERVICES_2024_1001",
                         "buyer": {
-                          "name": "Rahul Mehta",
-                          "email": "rahul.mehta@acme.com",
-                          "phone": "+919812345678"
+                          "name": "Kavya Nair",
+                          "email": "kavya.nair@startupventures.in",
+                          "phone": "+919876543201"
                         },
-                        "payment_id": "OD9411897512",
+                        "payment_id": "OD2024120567891",
                         "amount": {
-                          "amount": "1000",
-                          "total_amount": "1000",
+                          "amount": "45000",
+                          "total_amount": "45000",
                           "currency": "INR"
                         },
-                        "created_at": "2025-06-23T10:44:14.344135Z",
+                        "created_at": "2024-12-05T15:22:18.344135Z",
                         "comment": null,
                         "mop_type": "UPI",
                         "status": "CAPTURED"
@@ -844,68 +976,59 @@
                   "success": true,
                   "message": "Domestic payment request details retrieved successfully",
                   "data": {
-                    "payment_id": "PR3828502708",
+                    "payment_id": "PR2099558561",
                     "order": {
-                      "order_id": "OD6530655496",
-                      "reference_id": "TEST_9P81ZL",
-                      "amount": 1000.0,
+                      "order_id": "OD2024120678912",
+                      "reference_id": "ORD_CONSULTING_2024_RC0YKG",
+                      "amount": "12500.00",
                       "currency": "INR",
                       "mop_type": "UPI",
                       "buyer": {
-                        "name": "John Doe",
-                        "email": "john.doe@example.com",
-                        "phone": "+919876543210",
+                        "name": "Amit Khanna",
+                        "email": "amit.khanna@consultingfirm.co.in",
+                        "phone": "+919123456780",
                         "address": {
-                          "line_1": "123 Main Street",
-                          "line_2": "Apt 4B",
-                          "city": "City",
-                          "state": "State",
-                          "postal_code": "123456"
+                          "line_1": "701, Business Square, Netaji Subhash Place",
+                          "line_2": "Near Pitampura Metro",
+                          "city": "New Delhi",
+                          "state": "Delhi",
+                          "postal_code": "110034"
                         },
-                        "pan_number": "BNYPG1231L",
-                        "dob": "2025-06-19"
+                        "pan_number": "CDEPK9876L",
+                        "dob": "1985-11-28"
                       },
                       "product": {
-                        "name": "Sample Product",
-                        "description": "This is a sample product description",
-                        "hs_code": "98051000",
-                        "hs_code_description": "Portable automatic data processing machines",
-                        "type_of_goods": "goods"
+                        "name": "Digital Marketing Strategy Consultation",
+                        "description": "Comprehensive 3-month digital marketing strategy and implementation consultation",
+                        "hs_code": "99831000",
+                        "hs_code_description": "Professional, technical and other services",
+                        "type_of_goods": "services"
                       },
                       "status": "payment_successful",
                       "status_message": "Payment captured successfully",
-                      "created_at": "2025-06-19T09:17:56.338741Z"
+                      "created_at": "2025-09-04T09:38:39.819054Z"
                     },
                     "settlement": {
-                      "id": "ST4353980017",
-                      "settlement_id": "d42eda3f-41b6-4d82-add5-2665181f9eea",
-                      "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
-                      "settlement_amount": 1000.0,
+                      "id": "ST6937597440",
+                      "settlement_id": "67c41a7a-010a-4667-82f2-fb529cdcdbe6",
+                      "settlement_completed_at": "2025-09-04T09:40:58.189094Z",
+                      "settlement_amount": "976.40",
                       "settlement_currency": "USD",
-                      "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
+                      "utr_number": "cea2ae3a-182c-457a-aa57-fa425000cfb8",
                       "number_of_transactions": 1,
-                      "created_date": "2025-06-20T08:06:59.307056Z"
+                      "created_date": "2025-09-04T09:40:58.199249Z"
                     },
-                    "refund": [
-                      {
-                        "refund_id": "RF8370660295",
-                        "refund_amount": 12.0,
-                        "refund_status": "INITIATED",
-                        "refunded_at": null,
-                        "message": "No action status found",
-                        "payment_id": "PR3828502708"
-                      }
-                    ],
+                    "refund": [],
                     "collection_mode": "HOSTED_PAYMENT",
                     "mop_type": "UPI",
-                    "bank_ref_num": "OD6530655496-PR3828502708",
+                    "bank_ref_num": "OD1729756084-PR2099558561",
                     "mop_detail": {
-                      "upi_id": "pay@payu"
+                      "vpa": "buyer@payu"
                     },
-                    "payment_completed_at": "2025-06-19T14:48:11.000000Z",
-                    "status": "CAPTURED",
-                    "status_message": "Invoice and AWB file missing",
-                    "created_date": "2025-06-19T09:18:10.637579Z"
+                    "payment_completed_at": "2025-09-04T09:38:44.000000Z",
+                    "status": "captured",
+                    "status_message": null,
+                    "created_date": "2025-09-04T09:38:43.422672Z"
                   }
                 }
               }
@@ -956,8 +1079,8 @@
                 "$ref": "#/components/schemas/CreateRefundRequest"
               },
               "example": {
-                "payment_id": "PR8867819681",
-                "refund_amount": "11"
+                "payment_id": "PR2024120567891",
+                "refund_amount": "2250.00"
               }
             }
           }
@@ -974,13 +1097,13 @@
                   "success": true,
                   "message": "Refund request processed successfully",
                   "data": {
-                    "refund_id": "RF8380989720",
-                    "payment_id": "PR8867819681",
-                    "refund_status": "INITIATED",
+                    "refund_id": "RF5622596094",
+                    "payment_id": "PR2099558561",
+                    "refund_status": "initiated",
                     "message": "Refund Request Queued",
-                    "transaction_id": "138287318",
+                    "transaction_id": "138605980",
                     "bank_ref_num": null,
-                    "refund_amount": "11"
+                    "refund_amount": "1000"
                   }
                 }
               }
@@ -1347,27 +1470,27 @@
                     "results": [
                       {
                         "id": "3604346598",
-                        "brand_name": "TechSubshrine",
-                        "kyc_status": "PENDING",
-                        "created_date": "2025-06-19T18:06:05.523720Z"
+                        "brand_name": "InnovateTech Solutions",
+                        "kyc_status": "APPROVED",
+                        "created_date": "2024-11-19T18:06:05.523720Z"
                       },
                       {
                         "id": "8319446548",
-                        "brand_name": "TechSubshrine",
+                        "brand_name": "DigitalCraft Enterprises",
                         "kyc_status": "PENDING",
-                        "created_date": "2025-06-19T17:43:25.467834Z"
+                        "created_date": "2024-11-19T17:43:25.467834Z"
                       },
                       {
                         "id": "2343915596",
-                        "brand_name": "TechSubshrine",
-                        "kyc_status": "PENDING",
-                        "created_date": "2025-06-19T16:43:53.317062Z"
+                        "brand_name": "CloudSync Technologies",
+                        "kyc_status": "APPROVED",
+                        "created_date": "2024-11-19T16:43:53.317062Z"
                       },
                       {
                         "id": "4455704961",
-                        "brand_name": "Test Name",
+                        "brand_name": "NextGen Software Ltd",
                         "kyc_status": "PENDING",
-                        "created_date": "2025-06-19T08:53:22.411374Z"
+                        "created_date": "2024-11-19T08:53:22.411374Z"
                       }
                     ]
                   }
@@ -1408,49 +1531,49 @@
               },
               "example": {
                 "settlement_details": {
-                  "bank_account_number": "1234567890",
-                  "bank_account_name": "Example Company Ltd",
-                  "bank_swift_code": "ABCDUS33",
-                  "bank_name": "Example Bank",
-                  "bank_branch_name": "Main Branch",
-                  "bank_address": "456 Bank St",
+                  "bank_account_number": "6789123450987654",
+                  "bank_account_name": "InnovateTech Solutions Private Limited",
+                  "bank_swift_code": "CHASINUS33XXX",
+                  "bank_name": "JPMorgan Chase Bank",
+                  "bank_branch_name": "Financial District Branch",
+                  "bank_address": "270 Park Avenue, New York",
                   "bank_city": "New York",
                   "bank_state": "NY",
                   "bank_country": "United States",
-                  "bank_pincode": "10002",
+                  "bank_pincode": "10017",
                   "routing_number": "021000021"
                 },
                 "company_details": {
-                  "legal_name": "shrine",
-                  "brand_name": "TechSubshrine",
-                  "registration_number": "REG123456",
+                  "legal_name": "InnovateTech Solutions Private Limited",
+                  "brand_name": "InnovateTech",
+                  "registration_number": "US-CORP-2024-IT789456",
                   "international_org_type": "PRIVATE_LIMITED",
-                  "tax_id": "TAX789012",
-                  "website": "https://techsub.example.com",
-                  "monthly_avg_transaction_value": "50000.00",
-                  "monthly_avg_transaction_volume": "100",
-                  "communication_address": "123 Tech Street",
+                  "tax_id": "94-8765432",
+                  "website": "https://www.innovatetech.com",
+                  "monthly_avg_transaction_value": "275000.00",
+                  "monthly_avg_transaction_volume": "485",
+                  "communication_address": "Suite 1200, 101 California Street",
                   "communication_city": "San Francisco",
                   "communication_state": "CA",
                   "communication_country": "United States",
-                  "communication_pincode": "94105",
-                  "same_as_registered_address": true,
-                  "registered_address": "123 Tech Street",
+                  "communication_pincode": "94111",
+                  "same_as_registered_address": false,
+                  "registered_address": "1455 Market Street, Suite 1600",
                   "registered_city": "San Francisco",
                   "registered_state": "CA",
                   "registered_country": "United States",
-                  "registered_pincode": "94105",
+                  "registered_pincode": "94103",
                   "business_category": "TECHNOLOGY",
                   "business_mode": "B2B",
-                  "commodity": "Software Services",
+                  "commodity": "Cloud Computing and AI Solutions",
                   "payment_terms": "NET_30",
                   "hs_codes": [
-                    "84713010",
-                    "85423100"
+                    "85234910",
+                    "84715000"
                   ],
-                  "category": "E-commerce",
-                  "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                  "agreement_details": "global_company aggrement",
+                  "category": "Enterprise Software and Cloud Services",
+                  "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
+                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
                   "purpose_code": "P0101"
                 }
               }
@@ -1568,16 +1691,16 @@
                   "data": {
                     "id": "3604346598",
                     "settlement_details": {
-                      "bank_account_number": "1234567890",
-                      "bank_account_name": "Example Company Ltd",
-                      "bank_swift_code": "ABCDUS33",
-                      "bank_name": "Example Bank",
-                      "bank_branch_name": "Main Branch",
-                      "bank_address": "456 Bank St",
+                      "bank_account_number": "9876543210123456",
+                      "bank_account_name": "InnovateTech Solutions Private Limited",
+                      "bank_swift_code": "CHASUS33XXX",
+                      "bank_name": "JPMorgan Chase Bank",
+                      "bank_branch_name": "Corporate Banking Division",
+                      "bank_address": "270 Park Avenue",
                       "bank_city": "New York",
                       "bank_state": "NY",
                       "bank_country": "United States",
-                      "bank_pincode": "10002",
+                      "bank_pincode": "10017",
                       "routing_number": "021000021",
                       "settlement_currency": "USD"
                     },
@@ -1585,12 +1708,12 @@
                     "updated_at": "2025-06-19T18:06:05.523752Z",
                     "invoice_file": null,
                     "company_details": {
-                      "legal_name": "shrine",
-                      "brand_name": "TechSubshrine",
-                      "registration_number": "REG123456",
+                      "legal_name": "InnovateTech Solutions Private Limited",
+                      "brand_name": "InnovateTech Solutions",
+                      "registration_number": "US-CORP-2024-IT789456",
                       "international_org_type": "PRIVATE_LIMITED",
-                      "tax_id": "TAX789012",
-                      "website": "https://techsub.example.com",
+                      "tax_id": "94-8765432",
+                      "website": "https://www.innovatetech.com",
                       "monthly_avg_transaction_value": "50000.00",
                       "monthly_avg_transaction_volume": "100",
                       "communication_address": "123 Tech Street",
@@ -1784,7 +1907,7 @@
               },
               "example": {
                 "document_type": "INVOICE",
-                "file": "Screenshot 2025-05-21 at 2.44.41 PM.png"
+                "file": "merchant_invoice_innovatetech_2024.pdf"
               }
             }
           }
@@ -1813,6 +1936,292 @@
                   "data": {
                     "detail": "Invoice uploaded successfully"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/tokens/": {
+      "post": {
+        "summary": "Save Card",
+        "description": "Save card details securely for future transactions. The card information is tokenized and stored securely.",
+        "tags": ["Card Tokens"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Card details to save",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveCardRequest"
+              },
+              "examples": {
+                "MasterCard Example": {
+                  "summary": "Saving a MasterCard",
+                  "value": {
+                    "identifier": "USER_PS_001",
+                    "card_number": "5506900480000008",
+                    "nickname": "HDFC Regalia Credit Card",
+                    "cardholder_name": "Priya Sharma",
+                    "expiry_month": 5,
+                    "expiry_year": 2030,
+                    "network": "MASTERCARD",
+                    "card_type": "CREDIT",
+                    "card_holder_consent": true
+                  }
+                },
+                "Rupay Card Example": {
+                  "summary": "Saving a Rupay card (requires authorization_reference_number)",
+                  "value": {
+                    "identifier": "USER_RP_002",
+                    "card_number": "6521123456789012",
+                    "nickname": "SBI RuPay Platinum Debit",
+                    "cardholder_name": "Rajesh Patel",
+                    "expiry_month": 6,
+                    "expiry_year": 2031,
+                    "network": "RUPAY",
+                    "card_type": "DEBIT",
+                    "card_holder_consent": true,
+                    "authorization_reference_number": "AUTH_REF_SBI_789012345"
+                  }
+                },
+                "AMEX Card Example": {
+                  "summary": "Saving an AMEX card (requires authorization_reference_number with AEVV)",
+                  "value": {
+                    "identifier": "USER_SJ_003",
+                    "card_number": "378282246310005",
+                    "nickname": "AMEX Gold Business Card",
+                    "cardholder_name": "Sanjana Joshi",
+                    "expiry_month": 10,
+                    "expiry_year": 2032,
+                    "network": "AMEX",
+                    "card_type": "CREDIT",
+                    "card_holder_consent": true,
+                    "authorization_reference_number": "AEVV_AMEX_ABC123DEF456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Card saved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveCardResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Card details saved successfully",
+                  "data": {
+                    "card_label": "HDFC Regalia Credit Card",
+                    "card_token": "c8a28bca2021ead49124",
+                    "issuer_token": null,
+                    "network_token": "5506940089812197"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "Missing Required Field": {
+                    "summary": "Required field missing",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "type": "validation_error",
+                        "errors": [
+                          {
+                            "code": "invalid",
+                            "detail": "This field is required.",
+                            "attr": "card_number"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "Multiple Validation Errors": {
+                    "summary": "Multiple field validation errors",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "type": "validation_error",
+                        "errors": [
+                          {
+                            "code": "invalid",
+                            "detail": "This field is required.",
+                            "attr": "cardholder_name"
+                          },
+                          {
+                            "code": "invalid",
+                            "detail": "Invalid card number format.",
+                            "attr": "card_number"
+                          },
+                          {
+                            "code": "invalid",
+                            "detail": "Consent must be true to save card details.",
+                            "attr": "card_holder_consent"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Saved Cards",
+        "description": "Retrieve a list of saved cards for a specific identifier. Returns tokenized card information without sensitive details.",
+        "tags": ["Card Tokens"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "query",
+            "description": "Unique identifier to filter saved cards",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "USER_AS_002"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of saved cards retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCardsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Card details fetched successfully",
+                  "data": [
+                    {
+                      "card_token": "1e6709282a21e83f43a020",
+                      "identifier": "USER_AS_002",
+                      "cardholder_name": "ARJUN SINGH",
+                      "nickname": "HDFC Millennia Credit Card",
+                      "card_type": "CREDIT",
+                      "network": "VISA",
+                      "masked_pan": "XXXXXXXXXXXX0003",
+                      "expiry_month": 5,
+                      "expiry_year": 2030
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/tokens/delete/": {
+      "delete": {
+        "summary": "Delete Saved Card",
+        "description": "Delete a saved card token permanently. This action cannot be undone.",
+        "tags": ["Card Tokens"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Card token details to delete",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteCardRequest"
+              },
+              "example": {
+                "card_token": "c8a28bca2021ead49124",
+                "identifier": "USER_AS_002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Card deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteCardResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Card details deleted successfully",
+                  "data": {}
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Card token not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1906,6 +2315,9 @@
           },
           "invoice": {
             "$ref": "#/components/schemas/Invoice"
+          },
+          "card_details": {
+            "$ref": "#/components/schemas/CardDetails"
           }
         }
       },
@@ -1932,6 +2344,14 @@
           },
           "address": {
             "$ref": "#/components/schemas/Address"
+          },
+          "ip_address": {
+            "type": "string",
+            "description": "Buyer's IP address (required for card payments)"
+          },
+          "user_agent": {
+            "type": "string",
+            "description": "Buyer's browser user agent (required for card payments)"
           }
         }
       },
@@ -2013,6 +2433,306 @@
           }
         }
       },
+      "CardDetails": {
+        "type": "object",
+        "required": [
+          "number",
+          "cardholder_name",
+          "expiry_month",
+          "expiry_year",
+          "cvv"
+        ],
+        "properties": {
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname for easy identification"
+          },
+          "number": {
+            "type": "string",
+            "description": "Card number (will be tokenized for security)",
+            "pattern": "^[0-9]{13,19}$"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "expiry_month": {
+            "type": "string",
+            "description": "Card expiry month (MM format)",
+            "pattern": "^(0[1-9]|1[0-2])$"
+          },
+          "expiry_year": {
+            "type": "string",
+            "description": "Card expiry year (YYYY format)",
+            "pattern": "^[0-9]{4}$"
+          },
+          "cvv": {
+            "type": "string",
+            "description": "Card verification value",
+            "pattern": "^[0-9]{3,4}$"
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network (e.g., VISA, MASTERCARD)",
+            "enum": [
+              "VISA",
+              "MASTERCARD",
+              "AMEX",
+              "DISCOVER",
+              "RUPAY"
+            ]
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card"
+          }
+        }
+      },
+      "SaveCardRequest": {
+        "type": "object",
+        "required": [
+          "identifier",
+          "card_number",
+          "cardholder_name",
+          "expiry_month",
+          "expiry_year",
+          "network",
+          "card_type",
+          "card_holder_consent"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          },
+          "card_number": {
+            "type": "string",
+            "description": "Card number (will be tokenized and securely stored)",
+            "pattern": "^[0-9]{13,19}$"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname for easy identification"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "expiry_month": {
+            "type": "integer",
+            "description": "Card expiry month (1-12)",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "expiry_year": {
+            "type": "integer",
+            "description": "Card expiry year (YYYY format)",
+            "minimum": 2024
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network",
+            "enum": [
+              "VISA",
+              "MASTERCARD",
+              "AMEX",
+              "DISCOVER",
+              "RUPAY"
+            ]
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Type of card",
+            "enum": [
+              "CREDIT",
+              "DEBIT",
+              "PREPAID"
+            ]
+          },
+          "card_holder_consent": {
+            "type": "boolean",
+            "description": "Confirmation that the card holder consents to saving card details"
+          },
+          "authorization_reference_number": {
+            "type": "string",
+            "description": "Conditional parameter required for specific card networks: For Rupay cards - the authorization reference number received during authorization call. For AMEX cards - the AEVV (American Express Verification Value) received during authorization call. This parameter is mandatory for Rupay and AMEX cards only."
+          }
+        }
+      },
+      "SaveCardResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "card_label",
+              "card_token"
+            ],
+            "properties": {
+              "card_label": {
+                "type": "string",
+                "description": "Display label for the saved card"
+              },
+              "card_token": {
+                "type": "string",
+                "description": "Unique token for the saved card"
+              },
+              "issuer_token": {
+                "type": "string",
+                "nullable": true,
+                "description": "Issuer-specific token (if available)"
+              },
+              "network_token": {
+                "type": "string",
+                "description": "Network-specific token"
+              }
+            }
+          }
+        }
+      },
+      "ListCardsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedCard"
+            }
+          }
+        }
+      },
+      "SavedCard": {
+        "type": "object",
+        "required": [
+          "card_token",
+          "identifier",
+          "cardholder_name",
+          "card_type",
+          "network",
+          "masked_pan",
+          "expiry_month",
+          "expiry_year"
+        ],
+        "properties": {
+          "card_token": {
+            "type": "string",
+            "description": "Unique token for the saved card"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname"
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Type of card",
+            "enum": [
+              "CREDIT",
+              "DEBIT",
+              "PREPAID"
+            ]
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network",
+            "enum": [
+              "VISA",
+              "MASTERCARD",
+              "AMEX",
+              "DISCOVER",
+              "RUPAY"
+            ]
+          },
+          "masked_pan": {
+            "type": "string",
+            "description": "Masked card number for display purposes",
+            "pattern": "^X{8,15}[0-9]{4}$"
+          },
+          "expiry_month": {
+            "type": "integer",
+            "description": "Card expiry month (1-12)",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "expiry_year": {
+            "type": "integer",
+            "description": "Card expiry year",
+            "minimum": 2024
+          }
+        }
+      },
+      "DeleteCardRequest": {
+        "type": "object",
+        "required": [
+          "card_token",
+          "identifier"
+        ],
+        "properties": {
+          "card_token": {
+            "type": "string",
+            "description": "Token of the card to delete"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          }
+        }
+      },
+      "DeleteCardResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Empty object confirming deletion"
+          }
+        }
+      },
       "CreateOrderResponse": {
         "type": "object",
         "required": [
@@ -2055,6 +2775,10 @@
           "message": {
             "type": "string",
             "description": "Status message (for S2S UPI Collection mode)"
+          },
+          "acs_template": {
+            "type": "string",
+            "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
           }
         }
       },

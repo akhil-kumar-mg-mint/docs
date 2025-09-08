@@ -1,0 +1,310 @@
+---
+title: 'Delete Saved Card'
+openapi: '/openapi.json DELETE /pg/tokens/delete/'
+---
+
+## Overview
+
+The Delete Saved Card endpoint permanently removes a saved card token from the system. This action is irreversible and immediately invalidates the card token for all future transactions.
+
+Use this endpoint when customers want to remove payment methods from their account or when you need to clean up expired or invalid cards.
+
+## Key Features
+
+### 🗑️ **Permanent Deletion**
+- Immediately removes card token from the system
+- Action cannot be undone
+- Token becomes invalid for all future transactions
+
+### 🔒 **Dual Verification**
+- Requires both `card_token` and `identifier` for security
+- Prevents accidental or unauthorized deletions
+- Ensures only the card owner can delete their cards
+
+### ✅ **Clean Removal**
+- Complete token invalidation
+- No residual data retention
+- Clean system state after deletion
+
+## Required Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `card_token` | string | Unique token of the card to delete |
+| `identifier` | string | Customer identifier that owns the card |
+
+## Security Requirements
+
+Both parameters are required for enhanced security:
+
+- **`card_token`**: Identifies the specific card to delete
+- **`identifier`**: Verifies ownership of the card
+
+This dual verification prevents:
+- Accidental deletion of wrong cards
+- Unauthorized deletion by malicious actors
+- Cross-customer data access
+
+## Usage Examples
+
+### Basic Card Deletion
+
+**Request:**
+```json
+{
+  "card_token": "c8a28bca2021ead49124",
+  "identifier": "customer_12345"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Card details deleted successfully",
+  "data": {}
+}
+```
+
+### Batch Card Cleanup
+
+```javascript
+// Delete multiple expired cards
+const deleteExpiredCards = async (customerId, expiredTokens) => {
+  const deletionPromises = expiredTokens.map(token => 
+    deleteCard(token, customerId)
+  );
+  
+  try {
+    await Promise.all(deletionPromises);
+    console.log('All expired cards deleted successfully');
+  } catch (error) {
+    console.error('Error deleting some cards:', error);
+  }
+};
+
+const deleteCard = async (cardToken, identifier) => {
+  const response = await fetch('/pg/tokens/delete/', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-ID': 'your_client_id',
+      'X-Client-Secret': 'your_client_secret',
+      'X-Merchant-ID': 'your_merchant_id'
+    },
+    body: JSON.stringify({
+      card_token: cardToken,
+      identifier: identifier
+    })
+  });
+  
+  return response.json();
+};
+```
+
+## Implementation Examples
+
+### Frontend Card Management
+
+```javascript
+// Card deletion with user confirmation
+const handleCardDeletion = async (card) => {
+  // Show confirmation dialog
+  const confirmed = await showConfirmDialog(
+    `Delete ${card.network} **** ${card.masked_pan.slice(-4)}?`,
+    'This action cannot be undone.'
+  );
+  
+  if (!confirmed) return;
+  
+  try {
+    // Show loading state
+    setDeletingCard(card.card_token);
+    
+    const response = await fetch('/pg/tokens/delete/', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Client-ID': process.env.CLIENT_ID,
+        'X-Client-Secret': process.env.CLIENT_SECRET,
+        'X-Merchant-ID': process.env.MERCHANT_ID
+      },
+      body: JSON.stringify({
+        card_token: card.card_token,
+        identifier: card.identifier
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      // Remove from UI
+      setCards(cards => cards.filter(c => c.card_token !== card.card_token));
+      showSuccessMessage('Card deleted successfully');
+    } else {
+      showErrorMessage('Failed to delete card');
+    }
+  } catch (error) {
+    showErrorMessage('Error deleting card');
+  } finally {
+    setDeletingCard(null);
+  }
+};
+```
+
+### Backend Integration
+
+```python
+import requests
+import logging
+
+def delete_customer_card(card_token, customer_id, client_id, client_secret, merchant_id):
+    """Delete a saved card for a customer"""
+    
+    headers = {
+        'X-Client-ID': client_id,
+        'X-Client-Secret': client_secret,
+        'X-Merchant-ID': merchant_id,
+        'Content-Type': 'application/json'
+    }
+    
+    payload = {
+        'card_token': card_token,
+        'identifier': customer_id
+    }
+    
+    try:
+        response = requests.delete(
+            'https://api.eximpe.com/pg/tokens/delete/',
+            headers=headers,
+            json=payload
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            logging.info(f"Card {card_token} deleted successfully for customer {customer_id}")
+            return True
+        else:
+            logging.error(f"Failed to delete card: {response.status_code} - {response.text}")
+            return False
+            
+    except requests.RequestException as e:
+        logging.error(f"Error deleting card: {str(e)}")
+        return False
+
+# Usage in customer account management
+def remove_expired_cards(customer_id):
+    """Remove all expired cards for a customer"""
+    
+    # First, get all saved cards
+    saved_cards = get_customer_cards(customer_id)
+    
+    # Filter expired cards
+    current_date = datetime.now()
+    expired_cards = [
+        card for card in saved_cards
+        if datetime(card['expiry_year'], card['expiry_month'], 1) < current_date
+    ]
+    
+    # Delete expired cards
+    for card in expired_cards:
+        delete_customer_card(
+            card['card_token'],
+            customer_id,
+            CLIENT_ID,
+            CLIENT_SECRET,
+            MERCHANT_ID
+        )
+```
+
+## Error Handling
+
+| Status Code | Description | Possible Cause | Action |
+|-------------|-------------|----------------|---------|
+| `200` | Success | Card deleted successfully | Update UI, show confirmation |
+| `400` | Bad Request | Missing or invalid parameters | Validate request data |
+| `401` | Unauthorized | Invalid credentials | Check authentication |
+| `404` | Not Found | Card token not found or doesn't belong to identifier | Verify token and identifier |
+| `500` | Server Error | Internal system error | Retry request or contact support |
+
+## Common Error Scenarios
+
+### Invalid Card Token
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_TOKEN_404",
+    "message": "Card token not found"
+  }
+}
+```
+
+### Mismatched Identifier
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_TOKEN_ACCESS",
+    "message": "Card token does not belong to the specified identifier"
+  }
+}
+```
+
+## Best Practices
+
+### 🚨 **User Experience**
+1. **Always Confirm**: Show confirmation dialogs before deletion
+2. **Clear Messaging**: Explain that deletion is permanent
+3. **Loading States**: Show progress during deletion
+4. **Error Handling**: Provide clear error messages
+
+### 🔒 **Security**
+1. **Validate Ownership**: Always verify the customer owns the card
+2. **Audit Logging**: Log all deletion requests for compliance
+3. **Rate Limiting**: Implement rate limits to prevent abuse
+4. **Authentication**: Ensure proper authentication before deletion
+
+### 💡 **Business Logic**
+1. **Cleanup Expired Cards**: Automatically remove expired cards
+2. **User Notifications**: Notify users when cards are deleted
+3. **Backup Considerations**: Consider if you need to retain deletion logs
+4. **Transaction Checks**: Ensure no pending transactions use the token
+
+## Use Cases
+
+### **Customer Account Management**
+Allow customers to remove unwanted payment methods from their account.
+
+### **Card Expiry Cleanup**
+Automatically remove expired cards to keep the card list clean.
+
+### **Security Breach Response**
+Quickly remove compromised cards from the system.
+
+### **Account Closure**
+Remove all saved cards when a customer closes their account.
+
+## After Deletion
+
+Once a card is deleted:
+
+1. **Token Invalidation**: The card token becomes immediately invalid
+2. **Transaction Prevention**: No future transactions can use this token
+3. **UI Updates**: Remove the card from all user interfaces
+4. **Clean State**: The system has no residual card data
+
+## Related Endpoints
+
+- [Save Card](/api-reference/card-tokens/save) - Save new cards for customers
+- [List Saved Cards](/api-reference/card-tokens/list) - View all saved cards
+- [Create Order](/api-reference/order/create) - Use remaining saved cards for payments
+
+## Migration Notes
+
+If you're migrating from a different card storage system:
+
+1. **Map Tokens**: Ensure proper mapping between old and new tokens
+2. **Batch Operations**: Use batch deletion for bulk migrations
+3. **Customer Communication**: Inform customers about card re-saving if needed
+4. **Testing**: Thoroughly test deletion flows before production 

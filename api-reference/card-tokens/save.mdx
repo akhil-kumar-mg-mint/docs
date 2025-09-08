@@ -1,0 +1,272 @@
+---
+title: 'Save Card'
+openapi: '/openapi.json POST /pg/tokens/'
+---
+
+## Overview
+
+The Save Card endpoint allows you to securely save card details for future transactions. Card information is tokenized and stored securely, ensuring PCI compliance while enabling seamless repeat transactions.
+
+When you save a card, the system generates a unique `card_token` that can be used for future payments without requiring the customer to re-enter their card details.
+
+## Key Features
+
+### 🔒 **Security First**
+- Card numbers are immediately tokenized and never stored in plain text
+- PCI DSS compliant tokenization process
+- Secure token-based card management
+
+### 📱 **Customer Consent**
+- Explicit cardholder consent verification required
+- `card_holder_consent` must be `true` to save cards
+- Compliance with data protection regulations
+
+### 🏷️ **Card Organization**
+- Optional card nickname for easy identification
+- Support for multiple card types (Credit, Debit, Prepaid)
+- Network identification (VISA, MASTERCARD, AMEX, etc.)
+
+## Required Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `identifier` | string | Unique identifier for the card owner (customer ID, user ID, etc.) |
+| `card_number` | string | Full card number (will be tokenized immediately) |
+| `cardholder_name` | string | Name as it appears on the card |
+| `expiry_month` | integer | Card expiry month (1-12) |
+| `expiry_year` | integer | Card expiry year (YYYY format) |
+| `network` | string | Card network (VISA, MASTERCARD, AMEX, DISCOVER, RUPAY) |
+| `card_type` | string | Type of card (CREDIT, DEBIT, PREPAID) |
+| `card_holder_consent` | boolean | Must be `true` - confirms cardholder consent |
+
+## Optional Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `nickname` | string | Custom name for easy card identification |
+
+## Conditional Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `authorization_reference_number` | string | **Required for Rupay and AMEX cards only** - See details below |
+
+### Authorization Reference Number Details
+
+The `authorization_reference_number` parameter is **mandatory** for specific card networks:
+
+#### **Rupay Cards**
+- **Required**: Yes
+- **Value**: The authorization reference number received during the authorization call of Rupay card transactions
+- **Note**: Authentication reference number will be sent by the PG in the authorization response. Currently, this check is skipped by Rupay
+
+#### **AMEX Cards** 
+- **Required**: Yes
+- **Value**: The AEVV (American Express Verification Value) received during authorization call of AMEX card transactions
+- **Note**: American Express Verification Value will be sent by the PG in the authorization response
+
+#### **Other Networks (VISA, MASTERCARD, DISCOVER)**
+- **Required**: No
+- **Value**: This parameter should not be included for other card networks
+
+## Response
+
+The API returns a tokenized representation of the saved card:
+
+- `card_label`: Display-friendly card label
+- `card_token`: Unique token for future transactions
+- `network_token`: Network-specific token
+- `issuer_token`: Issuer-specific token (if available)
+
+## Usage Examples
+
+### Saving a Credit Card
+
+```json
+{
+  "identifier": "customer_12345",
+  "card_number": "4111111111111111",
+  "nickname": "My VISA Card",
+  "cardholder_name": "John Doe",
+  "expiry_month": 12,
+  "expiry_year": 2030,
+  "network": "VISA",
+  "card_type": "CREDIT",
+  "card_holder_consent": true
+}
+```
+
+### Saving a Debit Card
+
+```json
+{
+  "identifier": "customer_67890",
+  "card_number": "5506900480000008",
+  "nickname": "Business Debit",
+  "cardholder_name": "Jane Smith",
+  "expiry_month": 8,
+  "expiry_year": 2029,
+  "network": "MASTERCARD",
+  "card_type": "DEBIT",
+  "card_holder_consent": true
+}
+```
+
+### Saving a Rupay Card (with Authorization Reference)
+
+```json
+{
+  "identifier": "customer_98765",
+  "card_number": "6521123456789012",
+  "nickname": "Rupay Debit",
+  "cardholder_name": "Raj Patel",
+  "expiry_month": 6,
+  "expiry_year": 2031,
+  "network": "RUPAY",
+  "card_type": "DEBIT",
+  "card_holder_consent": true,
+  "authorization_reference_number": "AUTH_REF_789012345"
+}
+```
+
+### Saving an AMEX Card (with AEVV)
+
+```json
+{
+  "identifier": "customer_54321",
+  "card_number": "378282246310005",
+  "nickname": "AMEX Business",
+  "cardholder_name": "Sarah Johnson",
+  "expiry_month": 10,
+  "expiry_year": 2032,
+  "network": "AMEX",
+  "card_type": "CREDIT",
+  "card_holder_consent": true,
+  "authorization_reference_number": "AEVV_ABC123DEF456"
+}
+```
+
+## Security Notes
+
+- **Immediate Tokenization**: Card numbers are tokenized as soon as they're received
+- **No Plain Text Storage**: Full card numbers are never stored in our systems
+- **Token Uniqueness**: Each saved card gets a unique, non-reversible token
+- **Consent Tracking**: Cardholder consent is recorded and verified
+
+## Error Handling
+
+### Common Error Responses
+
+#### 400 - Validation Error
+When required fields are missing or invalid:
+
+```json
+{
+  "success": false,
+  "error": {
+    "type": "validation_error",
+    "errors": [
+      {
+        "code": "invalid",
+        "detail": "This field is required.",
+        "attr": "card_number"
+      }
+    ]
+  }
+}
+```
+
+#### Multiple Validation Errors
+```json
+{
+  "success": false,
+  "error": {
+    "type": "validation_error",
+    "errors": [
+      {
+        "code": "invalid",
+        "detail": "This field is required.",
+        "attr": "cardholder_name"
+      },
+      {
+        "code": "invalid",
+        "detail": "Invalid card number format.",
+        "attr": "card_number"
+      },
+      {
+        "code": "invalid",
+        "detail": "Consent must be true to save card details.",
+        "attr": "card_holder_consent"
+      },
+      {
+        "code": "invalid",
+        "detail": "Authorization reference number is required for Rupay cards.",
+        "attr": "authorization_reference_number"
+      }
+    ]
+  }
+}
+```
+
+#### Authorization Reference Number Missing (Rupay/AMEX)
+```json
+{
+  "success": false,
+  "error": {
+    "type": "validation_error",
+    "errors": [
+      {
+        "code": "invalid",
+        "detail": "Authorization reference number is required for Rupay cards.",
+        "attr": "authorization_reference_number"
+      }
+    ]
+  }
+}
+```
+
+#### 401 - Authentication Error
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_AUTH_000",
+    "message": "Missing credentials",
+    "details": {
+      "authentication": "Missing credentials."
+    }
+  }
+}
+```
+
+### Error Response Structure
+
+| Status Code | Error Type | Description |
+|-------------|------------|-------------|
+| `400` | Validation Error | Missing or invalid request parameters |
+| `401` | Authentication Error | Invalid or missing credentials |
+| `403` | Authorization Error | Insufficient permissions |
+| `409` | Conflict Error | Card already exists or duplicate identifier |
+| `500` | Server Error | Internal system error |
+
+## Best Practices
+
+1. **Always Verify Consent**: Ensure customers explicitly consent before saving cards
+2. **Use Descriptive Nicknames**: Help customers identify their cards easily
+3. **Validate Card Details**: Verify card information before saving
+4. **Handle Errors Gracefully**: Implement proper error handling for failed saves
+5. **Secure Transmission**: Always use HTTPS for card data transmission
+
+## Next Steps
+
+After saving a card successfully:
+1. Store the returned `card_token` securely
+2. Use the token for future order creation
+3. Allow customers to manage their saved cards
+4. Implement card deletion when customers request it
+
+## Related Endpoints
+
+- [List Saved Cards](/api-reference/card-tokens/list) - Retrieve saved cards for a customer
+- [Delete Saved Card](/api-reference/card-tokens/delete) - Remove a saved card
+- [Create Order](/api-reference/order/create) - Use saved cards in orders 
