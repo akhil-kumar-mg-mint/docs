@@ -10,8 +10,12 @@
   },
   "servers": [
     {
-      "url": "https://api.eximpe.com",
-      "description": "Payment Gateway Base URL"
+      "url": "https://api-pacb.eximpe.com",
+      "description": "Payment Gateway Production URL"
+    },
+    {
+      "url": "https://api-pacb-uat.eximpe.com",
+      "description": "Payment Gateway Sandbox URL"
     }
   ],
   "security": [
@@ -349,7 +353,7 @@
         }
       }
     },
-    "/pg/orders/{order_id}": {
+    "/pg/orders/{order_id}/": {
       "patch": {
         "summary": "Update Order",
         "description": "Update specific fields of an existing order.",
@@ -895,7 +899,7 @@
                     "count": 15,
                     "page": 1,
                     "page_size": 10,
-                    "next": "https://api.eximpe.com/pg/payments/?page=2&page_size=10",
+                    "next": "https://api-pacb.eximpe.com/pg/payments/?page=2&page_size=10",
                     "previous": null,
                     "results": [
                       {
@@ -1057,7 +1061,7 @@
         }
       }
     },
-    "/pg/refunds": {
+    "/pg/refunds/": {
       "post": {
         "summary": "Create Refund",
         "description": "Create a new refund for a previously successful payment.",
@@ -1216,7 +1220,7 @@
         }
       }
     },
-    "/pg/refunds/{refund_id}": {
+    "/pg/refunds/{refund_id}/": {
       "get": {
         "summary": "Get Refund",
         "description": "Retrieve the details of a specific refund by its ID.",
@@ -1284,7 +1288,7 @@
         }
       }
     },
-    "/pg/settlements": {
+    "/pg/settlements/": {
       "get": {
         "summary": "List Settlements",
         "description": "Retrieve a list of settlements with optional filtering.",
@@ -1356,7 +1360,7 @@
         }
       }
     },
-    "/pg/settlements/{settlement_id}": {
+    "/pg/settlements/{settlement_id}/": {
       "get": {
         "summary": "Get Settlement",
         "description": "Retrieve the details of a specific settlement by its ID.",
