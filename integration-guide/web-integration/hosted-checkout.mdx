@@ -51,7 +51,7 @@ Create an order from your backend server before initiating payment:
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://api.eximpe.com/pg/orders/ \
+curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
   -H "Content-Type: application/json" \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -d '{
@@ -211,7 +211,7 @@ After the customer completes or cancels the payment, EximPe will redirect them t
 <CodeGroup>
 
 ```bash cURL
-curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET"
 ```

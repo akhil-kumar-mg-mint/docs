@@ -144,7 +144,7 @@ def get_customer_cards(customer_id, client_id, client_secret, merchant_id):
     params = {'identifier': customer_id}
     
     response = requests.get(
-        'https://api.eximpe.com/pg/tokens/',
+        'https://api-pacb.eximpe.com/pg/tokens/',
         headers=headers,
         params=params
     )

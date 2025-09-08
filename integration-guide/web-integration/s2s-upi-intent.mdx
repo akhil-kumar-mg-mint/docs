@@ -165,7 +165,7 @@ gpay://upi/pay?pa=merchant@bank&pn=Merchant%20Name&tr=TXN12345&tid=TXNID98765&am
 Invoke the \*\*Order details API \*\*to retrieve the status of the UPI transaction:
 
 ```bash [expandable]
-curl -X GET https://api.eximpe.com/pg/orders/{order_id} \
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET"
 ```

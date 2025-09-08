@@ -53,7 +53,7 @@ After the customer enters VPA on your website, you need to call this API to chec
 ### Sample Request
 
 ```json
-curl --location 'https://api.eximpe.com/pg/vpa/validate/' \
+curl --location 'https://api-pacb.eximpe.com/pg/vpa/validate/' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
 --header 'x-client-id: <api-key>' \
@@ -84,7 +84,7 @@ Collect the response in the UPI Collection under API Reference. The response f
 To start with, the request is raised from the Merchant to PayU with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request
 
 ```json
-curl -X POST https://api.eximpe.com/payment/s2s/upi \
+curl -X POST https://api-pacb.eximpe.com/payment/s2s/upi \
   -H "Content-Type: application/json" \
   -H "X-Client-Key: YOUR_CLIENT_KEY" \
   -d '{

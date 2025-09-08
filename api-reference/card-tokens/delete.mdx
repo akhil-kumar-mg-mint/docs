@@ -175,7 +175,7 @@ def delete_customer_card(card_token, customer_id, client_id, client_secret, merc
     
     try:
         response = requests.delete(
-            'https://api.eximpe.com/pg/tokens/delete/',
+            'https://api-pacb.eximpe.com/pg/tokens/delete/',
             headers=headers,
             json=payload
         )
