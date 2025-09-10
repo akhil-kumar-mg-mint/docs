@@ -10,10 +10,6 @@
   },
   "servers": [
     {
-      "url": "https://api-pacb.eximpe.com",
-      "description": "Payment Gateway Production URL"
-    },
-    {
       "url": "https://api-pacb-uat.eximpe.com",
       "description": "Payment Gateway Sandbox URL"
     }
