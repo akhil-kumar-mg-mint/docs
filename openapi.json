@@ -2168,7 +2168,7 @@
       }
     },
     "/pg/tokens/delete/": {
-      "delete": {
+      "post": {
         "summary": "Delete Saved Card",
         "description": "Delete a saved card token permanently. This action cannot be undone.",
         "tags": ["Card Tokens"],
@@ -2329,7 +2329,9 @@
         "type": "object",
         "required": [
           "name",
-          "address"
+          "address",
+          "email",
+          "phone"
         ],
         "properties": {
           "name": {
@@ -2444,7 +2446,9 @@
           "cardholder_name",
           "expiry_month",
           "expiry_year",
-          "cvv"
+          "cvv",
+          "network",
+          "identifier"
         ],
         "properties": {
           "nickname": {
