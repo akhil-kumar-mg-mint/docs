@@ -2502,6 +2502,7 @@
           "expiry_year",
           "network",
           "card_type",
+          "nickname",
           "card_holder_consent"
         ],
         "properties": {
