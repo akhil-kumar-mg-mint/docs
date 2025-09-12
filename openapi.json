@@ -2925,10 +2925,6 @@
             "type": "string",
             "format": "date-time",
             "description": "Order creation timestamp"
-          },
-          "is_testing": {
-            "type": "boolean",
-            "description": "Whether this is a test order"
           }
         }
       },
