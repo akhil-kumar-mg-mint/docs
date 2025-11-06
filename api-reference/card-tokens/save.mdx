@@ -18,12 +18,11 @@ When you save a card, the system generates a unique `card_token` that can be use
 
 ### 📱 **Customer Consent**
 - Explicit cardholder consent verification required
-- `card_holder_consent` must be `true` to save cards
 - Compliance with data protection regulations
 
 ### 🏷️ **Card Organization**
 - Optional card nickname for easy identification
-- Support for multiple card types (Credit, Debit, Prepaid)
+- Support for multiple card types (Credit Card, Debit Dard)
 - Network identification (VISA, MASTERCARD, AMEX, etc.)
 
 ## Required Parameters
@@ -35,15 +34,10 @@ When you save a card, the system generates a unique `card_token` that can be use
 | `cardholder_name` | string | Name as it appears on the card |
 | `expiry_month` | integer | Card expiry month (1-12) |
 | `expiry_year` | integer | Card expiry year (YYYY format) |
-| `network` | string | Card network (VISA, MASTERCARD, AMEX, DISCOVER, RUPAY) |
-| `card_type` | string | Type of card (CREDIT, DEBIT, PREPAID) |
-| `card_holder_consent` | boolean | Must be `true` - confirms cardholder consent |
-
-## Optional Parameters
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| `network` | string | Card network (visa, mastercard, amex, discover, rupay) |
+| `card_type` | string | Type of card (credit_card, debit_card) |
 | `nickname` | string | Custom name for easy card identification |
+
 
 ## Conditional Parameters
 
@@ -75,8 +69,6 @@ The API returns a tokenized representation of the saved card:
 
 - `card_label`: Display-friendly card label
 - `card_token`: Unique token for future transactions
-- `network_token`: Network-specific token
-- `issuer_token`: Issuer-specific token (if available)
 
 ## Usage Examples
 
@@ -90,9 +82,8 @@ The API returns a tokenized representation of the saved card:
   "cardholder_name": "John Doe",
   "expiry_month": 12,
   "expiry_year": 2030,
-  "network": "VISA",
-  "card_type": "CREDIT",
-  "card_holder_consent": true
+  "network": "visa",
+  "card_type": "credit_card"
 }
 ```
 
@@ -106,9 +97,8 @@ The API returns a tokenized representation of the saved card:
   "cardholder_name": "Jane Smith",
   "expiry_month": 8,
   "expiry_year": 2029,
-  "network": "MASTERCARD",
-  "card_type": "DEBIT",
-  "card_holder_consent": true
+  "network": "mastercard",
+  "card_type": "debit_card"
 }
 ```
 
@@ -122,9 +112,8 @@ The API returns a tokenized representation of the saved card:
   "cardholder_name": "Raj Patel",
   "expiry_month": 6,
   "expiry_year": 2031,
-  "network": "RUPAY",
-  "card_type": "DEBIT",
-  "card_holder_consent": true,
+  "network": "rupay",
+  "card_type": "debit_card",
   "authorization_reference_number": "AUTH_REF_789012345"
 }
 ```
@@ -139,9 +128,8 @@ The API returns a tokenized representation of the saved card:
   "cardholder_name": "Sarah Johnson",
   "expiry_month": 10,
   "expiry_year": 2032,
-  "network": "AMEX",
-  "card_type": "CREDIT",
-  "card_holder_consent": true,
+  "network": "amex",
+  "card_type": "credit_card",
   "authorization_reference_number": "AEVV_ABC123DEF456"
 }
 ```
@@ -151,7 +139,6 @@ The API returns a tokenized representation of the saved card:
 - **Immediate Tokenization**: Card numbers are tokenized as soon as they're received
 - **No Plain Text Storage**: Full card numbers are never stored in our systems
 - **Token Uniqueness**: Each saved card gets a unique, non-reversible token
-- **Consent Tracking**: Cardholder consent is recorded and verified
 
 ## Error Handling
 
@@ -192,11 +179,6 @@ When required fields are missing or invalid:
         "code": "invalid",
         "detail": "Invalid card number format.",
         "attr": "card_number"
-      },
-      {
-        "code": "invalid",
-        "detail": "Consent must be true to save card details.",
-        "attr": "card_holder_consent"
       },
       {
         "code": "invalid",

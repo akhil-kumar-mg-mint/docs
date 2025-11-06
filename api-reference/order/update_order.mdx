@@ -6,8 +6,43 @@ openapi: '/openapi.json PATCH /pg/orders/{order_id}/'
 
 ## Overview
 
-The Update Order endpoint enables you to modify specific information of an existing order, such as buyer details (PAN number, date of birth) and invoice information. This is useful for correcting or updating order details after creation.
+The Update Order endpoint enables you to modify specific information of an existing order, such as buyer details (PAN number, date of birth) and invoice information. This is useful for updating order details after creation or if additional buyer information is requested from the bank.
 
 You can update the following fields:
 - **Buyer Information**: PAN number, date of birth
 - **Invoice Information**: Invoice number, invoice date
+
+## Request Parameters
+
+### Path
+
+| Name | In | Type | Required | Description |
+|---|---|---|---|---|
+| order_id | path | string | Yes | Unique identifier of the order |
+
+### Body (JSON)
+
+Only include the fields you want to update.
+
+### Parameter Definitions
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| buyer | object | No | Buyer information to update | See Buyer object |
+| invoice | object | No | Invoice information to update | See Invoice object |
+
+#### Buyer
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| pan_number | string | No | Buyer's PAN number | Format: Indian PAN (e.g., `ABCDE1234F`) |
+| dob | string (date) | No | Buyer's date of birth | Format: `YYYY-MM-DD` |
+
+#### Invoice
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| number | string | No | Invoice number | Max 255 chars |
+| date | string (date) | No | Invoice date | Format: `YYYY-MM-DD` |

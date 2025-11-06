@@ -52,7 +52,7 @@ For first-time card payments, provide complete card details:
   "reference_id": "CARD_13MYHALESH7",
   "return_url": "https://yoursite.com/payment/callback/",
   "collection_mode": "s2s",
-  "mop_type": "DEBIT_CARD",
+  "mop_type": "debit_card",
   "card_details": {
     "nickname": "VISA Debit",
     "number": "4895380110000003",
@@ -60,7 +60,7 @@ For first-time card payments, provide complete card details:
     "expiry_month": "05",
     "expiry_year": "2030",
     "cvv": "123",
-    "network": "VISA",
+    "network": "visa",
     "identifier": "EX0001"
   },
   "buyer": {
@@ -102,11 +102,11 @@ For repeat payments using previously saved cards:
   "reference_id": "CARD_4FQ0AIHQEI9",
   "return_url": "https://yoursite.com/payment/callback/",
   "collection_mode": "s2s",
-  "mop_type": "CREDIT_CARD",
+  "mop_type": "credit_card",
   "card_details": {
     "token": "1e6709282a21e83f43a020",
     "identifier": "EX0001",
-    "network": "VISA"
+    "network": "visa"
   },
   "buyer": {
     "name": "John Doe",
@@ -141,8 +141,8 @@ For repeat payments using previously saved cards:
 
   - `collection_mode`: must be set to `"s2s"`
   - `mop_type`: either `"CREDIT_CARD"` or `"DEBIT_CARD"`
-  - `buyer.ip_address`: the customer's device IP address (required for fraud prevention)
-  - `buyer.user_agent`: the customer's browser user-agent string (required for fraud prevention)
+  - `buyer.ip_address`: the customer's device IP address (used for fraud prevention)
+  - `buyer.user_agent`: the customer's browser user-agent string (used for fraud prevention)
   - `card_details`: either complete card information or saved token details
 </Note>
 
@@ -251,7 +251,7 @@ POST /pg/tokens/
   "expiry_month": "05",
   "expiry_year": "2030",
   "cvv": "123",
-  "network": "VISA",
+  "network": "visa",
   "identifier": "EX0001"
 }
 ```
@@ -280,7 +280,7 @@ const paymentResponse = await fetch('/pg/orders/', {
       expiry_month: "05",
       expiry_year: "2030",
       cvv: "123",
-      network: "VISA",
+      network: "visa",
       identifier: "EX0001"
     },
     // ... other required fields
@@ -303,7 +303,7 @@ if (paymentResponse.data.status === 'SUCCESS') {
       expiry_month: "05",
       expiry_year: "2030",
       cvv: "123",
-      network: "VISA",
+      network: "visa",
       identifier: "EX0001"
     })
   });
@@ -322,7 +322,7 @@ For repeat payments, use the saved token instead of card details:
   "card_details": {
     "token": "1e6709282a21e83f43a020",
     "identifier": "EX0001",
-    "network": "VISA"
+    "network": "visa"
   }
 }
 ```
@@ -375,7 +375,7 @@ EximPe sends real-time webhook notifications when payment status changes:
     "payment_method": "CARD",
     "card_details": {
       "masked_number": "****1234",
-      "network": "VISA",
+      "network": "visa",
       "type": "DEBIT"
     },
     "timestamp": "2025-01-15T10:30:00Z"

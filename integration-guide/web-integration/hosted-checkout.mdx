@@ -59,7 +59,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
     "currency": "INR",
     "reference_id": "OD-12345",
     "return_url": "https://your-website.com/payment/callback",
-    "mop_type": "UPI",
+    "mop_type": "upi",
     "buyer": {
         "name": "John Doe",
         "email": "john.doe@example.com",
@@ -97,10 +97,13 @@ curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
 
 <Steps>
   <Step title="Include JS SDK">
-    To integrate the EximPe Checkout, include our JavaScript SDK in your HTML:
+    To integrate the EximPe Checkout, include our JavaScript SDK in your HTML using a versioned URL and Subresource Integrity (SRI):
     
     ```html
-    <script src="https://cdn.eximpe.com/sdk/eximpe-sdk.min.js"></script>
+    <script
+      src="https://cdn.eximpe.com/sdk/eximpe-sdk-1.0.0.min.js"
+      integrity="sha384-OyfZwwebJ8vXkRqK6z0vBa1ow9chBsvuaMh+wlk0q9I0udI0VAyp590HKO6RUY4h"
+      crossorigin="anonymous"></script>
     ```
   </Step>
   
@@ -108,7 +111,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
     Initialize the SDK with your environment mode:
     
     ```javascript
-    const eximpe = EximPe({
+    const eximpe = new Eximpe({
         mode: "sandbox" // or "production"
     });
     ```
@@ -158,8 +161,11 @@ If you attempt to use an invalid or expired session ID, you'll receive the follo
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EximPe Checkout Integration</title>
-  <!-- EximPe SDK -->
-  <script src="https://cdn.eximpe.com/sdk/eximpe-sdk.min.js"></script>
+  <!-- EximPe SDK (versioned + SRI) -->
+  <script
+    src="https://cdn.eximpe.com/sdk/eximpe-sdk-1.0.0.min.js"
+    integrity="sha384-OyfZwwebJ8vXkRqK6z0vBa1ow9chBsvuaMh+wlk0q9I0udI0VAyp590HKO6RUY4h"
+    crossorigin="anonymous"></script>
 </head>
 <body>
   <div>
@@ -204,14 +210,14 @@ After the customer completes or cancels the payment, EximPe will redirect them t
 #### Payment Verification Process
 
 1. **Customer completes payment** → EximPe redirects to your `return_url`
-2. **On your return_url page** → Call the payment verification API from your backend
+2. **On your return_url page** → Call the Order Status API from your backend
 3. **Verify payment status** → Use the `order_id` to check actual payment status
 4. **Process accordingly** → Deliver services only after confirming successful payment
 
 <CodeGroup>
 
 ```bash cURL
-curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/ \
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET"
 ```
@@ -244,8 +250,8 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/ \
   **Important**: Use the `order_id` returned from the order creation response, not the session ID. This endpoint provides the most accurate payment status confirmation.
 </Note>
 
-<Card title="📚 API Reference" href="/api-reference/order/#get">
-  **Get Order API** - View complete documentation including request/response formats, error codes, and examples for verifying payment status.
+<Card title="📚 API Reference" href="/api-reference/order/get-status">
+  **Get Order Status API** - View complete documentation including request/response formats, error codes, and examples for verifying payment status.
 </Card>
 
 #### Handling Different Payment Statuses

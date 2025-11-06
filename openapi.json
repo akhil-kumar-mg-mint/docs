@@ -49,7 +49,7 @@
                     "reference_id": "ORD_2024_WH_001234",
                     "return_url": "https://electronicshub.com/payment/success",
                     "collection_mode": "hosted_payment",
-                    "mop_type": "UPI",
+                    "mop_type": "upi",
                     "buyer": {
                       "name": "Priya Sharma",
                       "email": "priya.sharma@techcorp.in",
@@ -83,7 +83,7 @@
                     "currency": "INR",
                     "reference_id": "ORD_2024_SP_005678",
                     "collection_mode": "s2s",
-                    "mop_type": "UPI",
+                    "mop_type": "upi",
                     "upi_flow_type": "intent",
                     "upi_app_name": "google_pay",
                     "buyer": {
@@ -112,7 +112,7 @@
                     "currency": "INR",
                     "reference_id": "ORD_2024_LP_009012",
                     "collection_mode": "s2s",
-                    "mop_type": "UPI",
+                    "mop_type": "upi",
                     "upi_flow_type": "collection",
                     "vpa": "aniket.verma@okaxis",
                     "buyer": {
@@ -142,7 +142,7 @@
                     "reference_id": "ORD_2024_TAB_456789",
                     "return_url": "https://gadgetstore.com/payment/callback/",
                     "collection_mode": "s2s",
-                    "mop_type": "DEBIT_CARD",
+                    "mop_type": "debit_card",
                     "card_details": {
                       "nickname": "HDFC VISA Debit",
                       "number": "4895380110000003",
@@ -150,7 +150,7 @@
                       "expiry_month": "05",
                       "expiry_year": "2030",
                       "cvv": "123",
-                      "network": "VISA",
+                      "network": "visa",
                       "identifier": "USER_MP_001"
                     },
                     "buyer": {
@@ -189,11 +189,11 @@
                     "reference_id": "ORD_2024_WATCH_789012",
                     "return_url": "https://luxurywatches.com/checkout/success/",
                     "collection_mode": "s2s",
-                    "mop_type": "CREDIT_CARD",
+                    "mop_type": "credit_card",
                     "card_details": {
                       "token": "1e6709282a21e83f43a020",
                       "identifier": "USER_AS_002",
-                      "network": "VISA"
+                      "network": "visa"
                     },
                     "buyer": {
                       "name": "Arjun Singh",
@@ -280,7 +280,19 @@
                       "message": "S2S Card Payment Request created successfully",
                       "data": {
                         "order_id": "OD2024120890123",
-                        "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N0IiBhY3Rpb249Imh0dHBzOi8vdGVzdC5wYXl1LmluL2UxMGMzNmExYWQ2YTQ1OTkzMWNhODYzNTBhZjIxZDU0ZDhiMTZhODRjYWQ1NDAxMDE2OGFlN2RjYmEwMmEwYWEvdGhyZWVEU2VjdXJlL21ldGhvZCIgbWV0aG9kPSJwb3N0Ij48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJQYVJlcSIgdmFsdWU9ImVkZTFmODA0MzBiMzgzYmY0OGZjNjRmZGMxNjE5YzM2YTlkYzVjM2NjMGI5YjQ4NDZkMDU5MTY2ZGUzMmM1MTQ1NDdhMGNiMmM5MTBhMmM4ZTFlY2E3ZTI1NzAxZWNiMzdhOGFjMGZiZjNjYTEwYjE2OTVhZGRjZGEwMGJlYmVjZjY4NGZmNzliYmM4ZjYxM2YyODUxMWIxNDljNmEwZTgxOTc0N2RiZTRlMDVhMjRhOTMyYWMyNzljMzA5ZTI4NzczNzU0YmUwY2I4ZTUzZDU5ZWUxOTY0OTAxNWM1NzZlMTQ2ODZlMmU5NjI5YzkyZDI3MmM1YjI0ZTIwNjE0OTgwOTk3ODk1NTAzMDM2YjkwZGUwZjNiNTkxZDEzMjczNTZkMTczMTI4OWMwNjY1NTEzYjVlMDYxYThmYmJjYTRhMjk0YmJjYzYyZWFiMzMwMmNmZGMwOGVhNTA2ZTA0NDg0YWE0NDNiNDBiNWQ2MWFiOTFhODViMDliNDRmMTE4N2M2OWRiNTE3ZTkwMDYwNjhhMjhjMzFiM2Y5MDEyYmNlMDg3MzcwZmE2ODBiNzdmNTlhNGQ4N2ZkMDViODRmNzk3ZjVlOTVhOTk4YTMxZjRjOTZkNTRhMzQyNDg3MTYxMDU5NWRmMGRkNGQ4YmE1YjExYTJmODMwYzFmOTM2NjRlN2Q3MTJlYjA4MTZhMTY2NzRhNTgxYTlkZDkwMGNjMDk0ZjZiYmE0OTRjZTk3MTNhNmU3MDI1NWEzNmJhNzg0MDlmMjEzN2Q1M2U0MTM5ZmU5ZjVlNDc4ZTEyMjAxNmUwMTAzNzQxYWIxNzBjZmUwMmUwMDQxNzkxZmM1NzhhMDQ0MDdhYmQ5NjUyNmFmMjMyMjg0MDhlOTJjNTcyNTg5ZTQ5ZThjMGYzZjhjYjNmNzk5MmFjNjg2NDExNmYyZTQ3NjQ4MGEzMjdlMzI0OWMyMzAzZmMxYjAzY2U3MWYyZTJmZGZjZmExYjg2OTYwOTRlMDk3ZTVhYWM1YTlhOTVjNTU5ZDRiNmY5NzNlOTI5NmY1Y2ZhNmY5NDJlMDNlMjUxN2QzNzlmNjkyMmU0NzQyYjliYmZjODgzYTVlMTc1YTE5YmMyNzQ1ZGI5Mzk5YTNjZGJhMTljMmM0Njc2NTE4NjgzNzYyZWM3MTUxOTQ2YjJhZTE1MzA2MDQ0YzhmMmVkNmVmOGU0YzNlZmU2M2Y0ZWFlNTY2N2IxNzRiMjcxOTA1YjQzOWRlYzMwMzQ4MGJmZDIwODE4MTZiMDgwMTk2ZjBmZmZiNThkMTA3Y2IxMDI1YjZlMmNjMDBmMzc5MjhkM2JkNjZhN2MxZmRkZDRjZDkwMDU0NDc5NTlmNDFkNThlMDFiZmY1YThhYjk0MjFlMzU5ZDY2ZTkwNzQyYTFlZTFjNzgyNzNhYmM5Y2RmZTljMDdhZDU4OTdkNTA3MjQ2MzFjNDZkODQ0MDhjMjNhOTc5NzBkMGFiYWZlZTBhMjllYjhiMThhNzU5ODMyM2EzMWU4MmQ2Y2IxZmRmNzhmMTQzMDBjOTA5YzhmYjA0YjNhMjNhOTYyYTBmMTA2ZjdhOTE5MTcwMWJlN2M1MDRjNmFhYmFjNjZhMmMyMTM2ZjNmMWE2N2U2MmIyY2Y4ZGNhYTc0MTFiYjczMTVkY2UzMiI+PGlucHV0IHR5cGU9ImhpZGRlbiIgbmFtZT0iTUQiIHZhbHVlPSJlMTBjMzZhMWFkNmE0NTk5MzFjYTg2MzUwYWYyMWQ1NDNiNDIxOGU0N2U1ZWU3MDI3M2I4NzdkMjFkYTE0MTNlIj48aW5wdXQgdHlwZT0iaGlkZGVuIiBuYW1lPSJUZXJtVXJsIiB2YWx1ZT0iaHR0cHM6Ly90ZXN0LnBheXUuaW4vZTEwYzM2YTFhZDZhNDU5OTMxY2E4NjM1MGFmMjFkNTRkOGIxNmE4NGNhZDU0MDEwMTY4YWU3ZGNiYTAyYTBhYS9Db21tb25QZ1Jlc3BvbnNlSGFuZGxlciI+PC9mb3JtPjxzY3JpcHQgdHlwZT0ndGV4dC9qYXZhc2NyaXB0Jz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdpbmRvdy5vbmxvYWQ9ZnVuY3Rpb24oKXsKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBkb2N1bWVudC5mb3Jtc1sncGF5bWVudF9wb3N0J10uc3VibWl0KCk7CiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgICAgIDwvc2NyaXB0PjwvYm9keT48L2h0bWw+"
+                        "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N..."
+                      }
+                    }
+                  },
+                  "S2S Card Payment (Saved Token)": {
+                    "summary": "Card Payment with Saved Token (S2S)",
+                    "description": "Response for S2S Card Payment mode with saved token",
+                    "value": {
+                      "success": true,
+                      "message": "S2S Card Payment Request created successfully",
+                      "data": {
+                        "order_id": "OD2024120890123",
+                        "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0IiBpZD0icGF5bWVudF9wb3N..."
                       }
                     }
                   }
@@ -342,7 +354,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_SERVICE_ERROR_000",
+                      "message": "Payment gateway error",
+                      "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                      }
+                  }
+              }
               }
             }
           }
@@ -432,12 +454,14 @@
                 },
                 "example": {
                   "success": false,
-                  "message": "Order not found",
                   "error": {
-                    "code": "ERR_ORDER_404",
-                    "message": "Order with ID 'OD3451762252' not found"
+                      "code": "ERR_ORDER_001",
+                      "message": "Order not found",
+                      "details": {
+                          "order_id": "Order not found"
+                      }
                   }
-                }
+              }
               }
             }
           },
@@ -447,7 +471,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_ORDER_002",
+                      "message": "Validation error",
+                      "details": {
+                          "buyer": {
+                              "pan_number": "PAN number must be in format: AAAAA1111A (5 letters, 4 digits, 1 letter)"
+                          }
+                      }
+                  }
+              }
               }
             }
           },
@@ -457,7 +493,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           },
@@ -467,14 +513,24 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_SERVICE_ERROR_000",
+                      "message": "Payment gateway error",
+                      "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                      }
+                  }
+              }
               }
             }
           }
         }
       },
       "get": {
-        "summary": "Get Order",
+        "summary": "Get Order Details",
         "description": "Retrieve order details by order ID.",
         "tags": ["Orders"],
         "security": [
@@ -511,7 +567,7 @@
                     "reference_id": "ORD_BOOKS_2024_3QWD98",
                     "amount": "1899.00",
                     "currency": "INR",
-                    "mop_type": "UPI",
+                    "opted_mop_type": "upi",
                     "buyer": {
                       "name": "Vikash Gupta",
                       "email": "vikash.gupta@edupublishers.com",
@@ -536,18 +592,18 @@
                     "invoice": {
                       "number": "INV_EDU_20241205",
                       "date": "2024-12-05",
-                      "file": "https://eximpe-private-production-storage.s3.amazonaws.com/customer_7235050248/domestic_collection/invoice_files/2345_1_FfX8ZYL.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIAU7HUSFL56WCKDV5R%2F20250904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250904T093521Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmFwLXNvdXRoLTEiSDBGAiEAsG%2FvfQFJNeDKY0LiTMFnLts8TN9n2ttxmu62wYWnORwCIQD6NOAmZAuOtqjgF%2BAbLO9IgeWRqBgYU14yTQA%2BOZu79SqQBAhZEAAaDDM0MTk2Mjc5NTc3MSIMRwrignU2m5I9wa%2BBKu0DXTql14MdcbRpHAybF8lsmDA1FSdwkeWdyV9vvkg92p8gaQ%2BPqDC6qJjDuU3QNKWlj1PFNp1tA37xb4Ks90FpVCTzxVSb0p1hiGtBFNDyHnabzp6L%2FfxA6fLBSyjcBRl24exdW0FB9TvV0fD35UnZFwXaob6ltQEHuZYOuraeOJ3J%2F4MjtigXDjWxWZ8KDQUm%2F5nl8S4zjrcYHfMryGEVkn%2Fja%2B%2FM1jua8beJL1Hcs0x2AZq6G6hLDL7nSjfRgG4renC1fHZYTHEUF2llYD%2FPKWSbTh%2Bgw6a81LmtZOGAanrG54tSbxy6LoMEZNLJhtxBKQdx6yS%2FGcbNzhVrH8YCQ5twZNa83%2B%2B9yUqkudjCeaZxJ%2Buuvoyvm13lvKhjfBpTtSZbdb5aq5IoQ7tt6XrP8lZnK9WLeIZ9RX9tcYOfKYuLpJGD9Eh%2FYooTYPl8faljhLiQo4U0qNrZ4MOFjCadalt6g73Lgz9I8fFe%2BiVZl6Fw6K6sGffJVEw296U8lMTlp7yd92gIrOBgWbQJe8TvWVdAPrQhbu6DOviW9pZ3%2Fc7nWJh6uu1hLCY2mWnbDcttU0IJTXxSbYWoKAu%2FlcanpRqzRKbuzqUmaursniJVXDA8HU85rbYDAxUHKxWXoc2g7nx2wLuVggpoMZjUFDCUleXFBjqlAQC3CvrvfNJL0aJm9e9ampx5%2B%2BGs6Oc2gQgR%2BB%2BeYH0pVbj%2Fol1Xe8b0N1Gml0Py0tXOVdUcoe4DRot1BF3%2BoCy9wRDrdB9PTHPnzRMGrXwi4lh%2FKZfubn%2Fhee9aawZ02KX1KxZ9zNZBtIX2FrkdVliwHhjvmlhUiueWBwMbsX9WFb9Q2G3aiqpRbSs2g9LPP03wTpeGxwo9B1quxFb08JGTvY33WA%3D%3D&X-Amz-Signature=9e66e0cf971a44f9a82e329ba659839354090a51c87efd4649b4bdb92a8d313c"
+                      "file": "https://eximpe.com/invoice_file.pdf"
                     },
                     "air_waybills": [
                       {
                         "number": "AWB23498234",
-                        "file": "https://eximpe-private-production-storage.s3.amazonaws.com/merchant_7235050248/domestic_collection/awb_files/2345_1.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIAU7HUSFL56WCKDV5R%2F20250904%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20250904T093521Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEPD%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCmFwLXNvdXRoLTEiSDBGAiEAsG%2FvfQFJNeDKY0LiTMFnLts8TN9n2ttxmu62wYWnORwCIQD6NOAmZAuOtqjgF%2BAbLO9IgeWRqBgYU14yTQA%2BOZu79SqQBAhZEAAaDDM0MTk2Mjc5NTc3MSIMRwrignU2m5I9wa%2BBKu0DXTql14MdcbRpHAybF8lsmDA1FSdwkeWdyV9vvkg92p8gaQ%2BPqDC6qJjDuU3QNKWlj1PFNp1tA37xb4Ks90FpVCTzxVSb0p1hiGtBFNDyHnabzp6L%2FfxA6fLBSyjcBRl24exdW0FB9TvV0fD35UnZFwXaob6ltQEHuZYOuraeOJ3J%2F4MjtigXDjWxWZ8KDQUm%2F5nl8S4zjrcYHfMryGEVkn%2Fja%2B%2FM1jua8beJL1Hcs0x2AZq6G6hLDL7nSjfRgG4renC1fHZYTHEUF2llYD%2FPKWSbTh%2Bgw6a81LmtZOGAanrG54tSbxy6LoMEZNLJhtxBKQdx6yS%2FGcbNzhVrH8YCQ5twZNa83%2B%2B9yUqkudjCeaZxJ%2Buuvoyvm13lvKhjfBpTtSZbdb5aq5IoQ7tt6XrP8lZnK9WLeIZ9RX9tcYOfKYuLpJGD9Eh%2FYooTYPl8faljhLiQo4U0qNrZ4MOFjCadalt6g73Lgz9I8fFe%2BiVZl6Fw6K6sGffJVEw296U8lMTlp7yd92gIrOBgWbQJe8TvWVdAPrQhbu6DOviW9pZ3%2Fc7nWJh6uu1hLCY2mWnbDcttU0IJTXxSbYWoKAu%2FlcanpRqzRKbuzqUmaursniJVXDA8HU85rbYDAxUHKxWXoc2g7nx2wLuVggpoMZjUFDCUleXFBjqlAQC3CvrvfNJL0aJm9e9ampx5%2B%2BGs6Oc2gQgR%2BB%2BeYH0pVbj%2Fol1Xe8b0N1Gml0Py0tXOVdUcoe4DRot1BF3%2BoCy9wRDrdB9PTHPnzRMGrXwi4lh%2FKZfubn%2Fhee9aawZ02KX1KxZ9zNZBtIX2FrkdVliwHhjvmlhUiueWBwMbsX9WFb9Q2G3aiqpRbSs2g9LPP03wTpeGxwo9B1quxFb08JGTvY33WA%3D%3D&X-Amz-Signature=ab46a77c1aa9a42693b9abf6c7de4bbc80c5ab557b5fee6062430fc5b627816f"
+                        "file": "https://eximpe.com/awb_file.pdf"
                       }
                     ],
                     "payments": [
                       {
                         "payment_id": "PR3932678387",
-                        "mop_type": "UPI",
+                        "mop_type": "upi",
                         "status": "captured",
                         "status_message": null,
                         "settlement": {
@@ -597,12 +653,14 @@
                 },
                 "example": {
                   "success": false,
-                  "message": "Order not found",
                   "error": {
-                    "code": "ERR_ORDER_404",
-                    "message": "Order with ID 'OD3451762252' not found"
+                      "code": "ERR_ORDER_001",
+                      "message": "Order not found",
+                      "details": {
+                          "order_id": "Order not found"
+                      }
                   }
-                }
+              }
               }
             }
           },
@@ -612,7 +670,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           },
@@ -622,7 +690,121 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_SERVICE_ERROR_000",
+                      "message": "Payment gateway error",
+                      "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                      }
+                  }
+              }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/orders/{order_id}/status/": {
+      "get": {
+        "summary": "Get Order Status",
+        "description": "Retrieve current status of an order by order ID.",
+        "tags": ["Orders"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "description": "Unique identifier of the order",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "OD9795883191"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Order status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetOrderStatusResponse" },
+                "example": {
+                  "success": true,
+                  "message": "Order status fetched successfully",
+                  "data": {
+                    "order_id": "OD9795883191",
+                    "status": "payment_successful",
+                    "status_message": "Payment captured successfully",
+                    "created_at": "2025-11-04T10:53:33.444171Z",
+                    "updated_at": "2025-11-04T11:01:17.586554Z"
+                  }
                 }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_ORDER_001",
+                      "message": "Order not found",
+                      "details": {
+                          "order_id": "Order not found"
+                      }
+                  }
+              }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_SERVICE_ERROR_000",
+                      "message": "Payment gateway error",
+                      "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                      }
+                  }
+              }
               }
             }
           }
@@ -691,7 +873,7 @@
                     "reference_id": "TEST_FOB46D",
                     "amount": 1000.0,
                     "currency": "INR",
-                    "mop_type": "UPI",
+                    "mop_type": "upi",
                     "buyer": {
                       "name": "Vikash Gupta",
                       "email": "vikash.gupta@edupublishers.com",
@@ -727,7 +909,7 @@
                     "payments": [
                       {
                         "payment_id": "PR1469384681",
-                        "mop_type": "UPI",
+                        "mop_type": "upi",
                         "status": "captured",
                         "status_message": null,
                         "settlement": {
@@ -752,7 +934,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_ORDER_002",
+                      "message": "Validation error",
+                      "details": {
+                          "identifier": "This field is required."
+                      }
+                  }
+              }
               }
             }
           },
@@ -762,7 +954,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           },
@@ -772,6 +974,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
+                  }
                 }
               }
             }
@@ -818,6 +1030,14 @@
             }
           },
           {
+            "name": "order_id",
+            "in": "query",
+            "description": "Filter by order ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "reference_id",
             "in": "query",
             "description": "Filter by order reference ID.",
@@ -840,11 +1060,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "UPI",
-                "CREDIT_CARD",
-                "DEBIT_CARD",
-                "NET_BANKING",
-                "QR"
+                "upi",
+                "credit_card",
+                "debit_card",
+                "net_banking",
+                "qr"
               ]
             }
           },
@@ -855,14 +1075,14 @@
             "schema": {
               "type": "string",
               "enum": [
-                "PENDING",
-                "CAPTURED",
-                "FAILED"
+                "pending",
+                "captured",
+                "failed"
               ]
             }
           },
           {
-            "name": "from_created_date",
+            "name": "from_created_at",
             "in": "query",
             "description": "Filter by creation date (from).",
             "schema": {
@@ -871,7 +1091,7 @@
             }
           },
           {
-            "name": "to_created_date",
+            "name": "to_created_at",
             "in": "query",
             "description": "Filter by creation date (to).",
             "schema": {
@@ -899,7 +1119,7 @@
                     "previous": null,
                     "results": [
                       {
-                        "id": "PR2024120567891",
+                        "payment_id": "PR2024120567891",
                         "merchant": {
                           "id": "3604346598",
                           "name": "InnovateTech Solutions"
@@ -910,7 +1130,8 @@
                           "email": "kavya.nair@startupventures.in",
                           "phone": "+919876543201"
                         },
-                        "payment_id": "OD2024120567891",
+                        "order_id": "OD2024120567891",
+                        "invoice_number": "INV2024120567891",
                         "amount": {
                           "amount": "45000",
                           "total_amount": "45000",
@@ -918,8 +1139,8 @@
                         },
                         "created_at": "2024-12-05T15:22:18.344135Z",
                         "comment": null,
-                        "mop_type": "UPI",
-                        "status": "CAPTURED"
+                        "mop_type": "upi",
+                        "status": "captured"
                       }
                     ]
                   }
@@ -933,7 +1154,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           }
@@ -982,7 +1213,7 @@
                       "reference_id": "ORD_CONSULTING_2024_RC0YKG",
                       "amount": "12500.00",
                       "currency": "INR",
-                      "mop_type": "UPI",
+                      "opted_mop_type": "upi",
                       "buyer": {
                         "name": "Amit Khanna",
                         "email": "amit.khanna@consultingfirm.co.in",
@@ -1019,8 +1250,8 @@
                       "created_date": "2025-09-04T09:40:58.199249Z"
                     },
                     "refund": [],
-                    "collection_mode": "HOSTED_PAYMENT",
-                    "mop_type": "UPI",
+                    "collection_mode": "hosted_payment",
+                    "mop_type": "upi",
                     "bank_ref_num": "OD1729756084-PR2099558561",
                     "mop_detail": {
                       "vpa": "buyer@payu"
@@ -1040,7 +1271,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           },
@@ -1272,12 +1513,14 @@
                 },
                 "example": {
                   "success": false,
-                  "message": "Refund not found",
                   "error": {
-                    "code": "ERR_REFUND_404",
-                    "message": "Refund with ID 'RF1481534012' not found"
+                      "code": "ERR_REFUND_003",
+                      "message": "Refund not found",
+                      "details": {
+                          "refund_id": "Refund not found"
+                      }
                   }
-                }
+              }
               }
             }
           }
@@ -1343,7 +1586,7 @@
                         "merchant_service_fee": 0.0,
                         "merchant_service_tax": 0.0,
                         "merchant_net_amount": 1000.0,
-                        "mop_type": "UPI",
+                        "mop_type": "upi",
                         "transaction_currency": "INR",
                         "forex_rate": 86.0
                       }
@@ -1406,7 +1649,7 @@
                         "merchant_service_fee": 0.0,
                         "merchant_service_tax": 0.0,
                         "merchant_net_amount": 1000.0,
-                        "mop_type": "UPI",
+                        "mop_type": "upi",
                         "transaction_currency": "INR",
                         "forex_rate": 86.0
                       }
@@ -1425,12 +1668,14 @@
                 },
                 "example": {
                   "success": false,
-                  "message": "Settlement not found",
                   "error": {
-                    "code": "ERR_SETTLEMENT_404",
-                    "message": "Settlement with ID 'ST4353980017' not found"
+                      "code": "ERR_SETTLEMENT_002",
+                      "message": "Settlement not found",
+                      "details": {
+                          "settlement_id": "Settlement not found"
+                      }
                   }
-                }
+              }
               }
             }
           }
@@ -1504,7 +1749,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           }
@@ -1655,7 +1910,39 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": 40000,
+                      "message": "Invalid request",
+                      "details": {
+                          "settlement_details": {
+                              "bank_account_number": "This field is required."
+                          }
+                      }
+                  }
+              }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_003",
+                      "message": "This endpoint is only accessible to PSP merchants",
+                      "details": {
+                          "authentication": "This endpoint is only accessible to PSP merchants."
+                      }
+                  }
+              }
               }
             }
           }
@@ -1973,9 +2260,8 @@
                     "cardholder_name": "Priya Sharma",
                     "expiry_month": 5,
                     "expiry_year": 2030,
-                    "network": "MASTERCARD",
-                    "card_type": "CREDIT",
-                    "card_holder_consent": true
+                    "network": "mastercard",
+                    "card_type": "credit_card"
                   }
                 },
                 "Rupay Card Example": {
@@ -1987,9 +2273,8 @@
                     "cardholder_name": "Rajesh Patel",
                     "expiry_month": 6,
                     "expiry_year": 2031,
-                    "network": "RUPAY",
-                    "card_type": "DEBIT",
-                    "card_holder_consent": true,
+                    "network": "rupay",
+                    "card_type": "debit_card",
                     "authorization_reference_number": "AUTH_REF_SBI_789012345"
                   }
                 },
@@ -2002,9 +2287,8 @@
                     "cardholder_name": "Sanjana Joshi",
                     "expiry_month": 10,
                     "expiry_year": 2032,
-                    "network": "AMEX",
-                    "card_type": "CREDIT",
-                    "card_holder_consent": true,
+                    "network": "amex",
+                    "card_type": "credit_card",
                     "authorization_reference_number": "AEVV_AMEX_ABC123DEF456"
                   }
                 }
@@ -2025,9 +2309,7 @@
                   "message": "Card details saved successfully",
                   "data": {
                     "card_label": "HDFC Regalia Credit Card",
-                    "card_token": "c8a28bca2021ead49124",
-                    "issuer_token": null,
-                    "network_token": "5506940089812197"
+                    "card_token": "c8a28bca2021ead49124"
                   }
                 }
               }
@@ -2073,11 +2355,6 @@
                             "code": "invalid",
                             "detail": "Invalid card number format.",
                             "attr": "card_number"
-                          },
-                          {
-                            "code": "invalid",
-                            "detail": "Consent must be true to save card details.",
-                            "attr": "card_holder_consent"
                           }
                         ]
                       }
@@ -2093,7 +2370,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           }
@@ -2139,8 +2426,8 @@
                       "identifier": "USER_AS_002",
                       "cardholder_name": "ARJUN SINGH",
                       "nickname": "HDFC Millennia Credit Card",
-                      "card_type": "CREDIT",
-                      "network": "VISA",
+                      "card_type": "credit_card",
+                      "network": "visa",
                       "masked_pan": "XXXXXXXXXXXX0003",
                       "expiry_month": 5,
                       "expiry_year": 2030
@@ -2156,7 +2443,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           }
@@ -2222,7 +2519,17 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
-                }
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                      "code": "ERR_AUTH_000",
+                      "message": "Missing credentials",
+                      "details": {
+                          "authentication": "Missing credentials."
+                      }
+                  }
+              }
               }
             }
           }
@@ -2273,11 +2580,11 @@
             "type": "string",
             "description": "Method of payment type (e.g., UPI)",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "NETBANKING",
-              "DEBIT_CARD",
-              "QR"
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
             ]
           },
           "upi_flow_type": {
@@ -2477,13 +2784,13 @@
           },
           "network": {
             "type": "string",
-            "description": "Card network (e.g., VISA, MASTERCARD)",
+            "description": "Card network (e.g., visa, mastercard)",
             "enum": [
-              "VISA",
-              "MASTERCARD",
-              "AMEX",
-              "DISCOVER",
-              "RUPAY"
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
             ]
           },
           "identifier": {
@@ -2501,8 +2808,7 @@
           "expiry_month",
           "expiry_year",
           "network",
-          "card_type",
-          "card_holder_consent"
+          "card_type"
         ],
         "properties": {
           "identifier": {
@@ -2537,25 +2843,20 @@
             "type": "string",
             "description": "Card network",
             "enum": [
-              "VISA",
-              "MASTERCARD",
-              "AMEX",
-              "DISCOVER",
-              "RUPAY"
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
             ]
           },
           "card_type": {
             "type": "string",
             "description": "Type of card",
             "enum": [
-              "CREDIT",
-              "DEBIT",
-              "PREPAID"
+              "credit_card",
+              "debit_card"
             ]
-          },
-          "card_holder_consent": {
-            "type": "boolean",
-            "description": "Confirmation that the card holder consents to saving card details"
           },
           "authorization_reference_number": {
             "type": "string",
@@ -2593,15 +2894,6 @@
               "card_token": {
                 "type": "string",
                 "description": "Unique token for the saved card"
-              },
-              "issuer_token": {
-                "type": "string",
-                "nullable": true,
-                "description": "Issuer-specific token (if available)"
-              },
-              "network_token": {
-                "type": "string",
-                "description": "Network-specific token"
               }
             }
           }
@@ -2664,20 +2956,19 @@
             "type": "string",
             "description": "Type of card",
             "enum": [
-              "CREDIT",
-              "DEBIT",
-              "PREPAID"
+              "credit_card",
+              "debit_card"
             ]
           },
           "network": {
             "type": "string",
             "description": "Card network",
             "enum": [
-              "VISA",
-              "MASTERCARD",
-              "AMEX",
-              "DISCOVER",
-              "RUPAY"
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
             ]
           },
           "masked_pan": {
@@ -2813,15 +3104,15 @@
             "type": "string",
             "description": "3-letter ISO currency code"
           },
-          "mop_type": {
+          "opted_mop_type": {
             "type": "string",
             "description": "Method of payment type",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "NETBANKING",
-              "DEBIT_CARD",
-              "QR"
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
             ]
           },
           "buyer": {
@@ -2910,9 +3201,9 @@
             "type": "string",
             "description": "Order status",
             "enum": [
-              "PAYMENT_PENDING",
-              "PAYMENT_SUCCESSFUL",
-              "FAILED"
+              "payment_pending",
+              "payment_successful",
+              "failed"
             ]
           },
           "status_message": {
@@ -2924,10 +3215,6 @@
             "type": "string",
             "format": "date-time",
             "description": "Order creation timestamp"
-          },
-          "is_testing": {
-            "type": "boolean",
-            "description": "Whether this is a test order"
           }
         }
       },
@@ -2990,6 +3277,25 @@
           },
           "data": {
             "$ref": "#/components/schemas/OrderDetails"
+          }
+        }
+      },
+      "GetOrderStatusResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "required": ["order_id", "status", "created_at", "updated_at"],
+            "properties": {
+              "order_id": { "type": "string" },
+              "status": { "type": "string" },
+              "status_message": { "type": "string", "nullable": true },
+              "created_at": { "type": "string", "format": "date-time" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
           }
         }
       },
@@ -3239,6 +3545,14 @@
               }
             }
           },
+          "order_id": {
+            "type": "string",
+            "description": "Order ID"
+          },
+          "invoice_number": {
+            "type": "string",
+            "description": "Invoice number"
+          },
           "reference_id": {
             "type": "string",
             "description": "Order reference identifier"
@@ -3302,20 +3616,20 @@
             "type": "string",
             "description": "Method of payment",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "DEBIT_CARD",
-              "NET_BANKING",
-              "QR"
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
             ]
           },
           "status": {
             "type": "string",
             "description": "Payment status",
             "enum": [
-              "PENDING",
-              "CAPTURED",
-              "FAILED"
+              "pending",
+              "captured",
+              "failed"
             ]
           }
         }
@@ -3570,11 +3884,11 @@
             "type": "string",
             "description": "Method of payment type",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "DEBIT_CARD",
-              "NET_BANKING",
-              "QR"
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
             ]
           },
           "transaction_currency": {
@@ -4316,11 +4630,11 @@
             "type": "string",
             "description": "Method of payment type",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "NETBANKING",
-              "DEBIT_CARD",
-              "QR"
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
             ]
           },
           "status": {
@@ -4415,15 +4729,15 @@
                 "type": "string",
                 "description": "3-letter ISO currency code"
               },
-              "mop_type": {
+              "opted_mop_type": {
                 "type": "string",
                 "description": "Method of payment type",
                 "enum": [
-                  "UPI",
-                  "CREDIT_CARD",
-                  "NETBANKING",
-                  "DEBIT_CARD",
-                  "QR"
+                  "upi",
+                  "credit_card",
+                  "net_banking",
+                  "debit_card",
+                  "qr"
                 ]
               },
               "buyer": {
@@ -4469,9 +4783,9 @@
                 "type": "string",
                 "description": "Order status",
                 "enum": [
-                  "PAYMENT_PENDING",
-                  "PAYMENT_SUCCESSFUL",
-                  "FAILED"
+                  "payment_pending",
+                  "payment_successful",
+                  "failed"
                 ]
               },
               "status_message": {
@@ -4538,19 +4852,19 @@
             "type": "string",
             "description": "Payment collection mode",
             "enum": [
-              "HOSTED_PAYMENT",
-              "DIRECT_PAYMENT"
+              "hosted_payment",
+              "s2s"
             ]
           },
           "mop_type": {
             "type": "string",
             "description": "Method of payment",
             "enum": [
-              "UPI",
-              "CREDIT_CARD",
-              "DEBIT_CARD",
-              "NET_BANKING",
-              "QR"
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
             ]
           },
           "bank_ref_num": {
@@ -4624,9 +4938,9 @@
             "type": "string",
             "description": "Payment status",
             "enum": [
-              "PENDING",
-              "CAPTURED",
-              "FAILED"
+              "pending",
+              "captured",
+              "failed"
             ]
           },
           "status_message": {
@@ -4647,19 +4961,19 @@
     "type": "apiKey",
     "name": "X-Client-ID",
     "in": "header",
-    "description": "Client app ID. You can find your app id in the merchant dashboard."
+    "description": "Client app ID. You can find your app id in the merchant dashboard's developer settings."
   },
   "clientSecretAuth": {
     "type": "apiKey",
     "name": "X-Client-Secret",
     "in": "header",
-    "description": "Client secret key. You can find your secret in the merchant dashboard."
+    "description": "Client secret key. You can find your secret in the merchant dashboard's developer settings."
   },
   "merchantAuth": {
     "type": "apiKey",
     "name": "X-Merchant-ID",
     "in": "header",
-    "description": "Merchant ID. You can find your merchant ID in the merchant section of the merchant dashboard."
+    "description": "Merchant ID. You can find your merchant ID in the merchant section of the merchant dashboard. Only applicable for PSP merchants."
   }
 }
   }

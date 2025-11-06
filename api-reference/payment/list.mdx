@@ -11,11 +11,12 @@ The List Payments endpoint allows you to search and retrieve payment records bas
 You can combine multiple filters to create a precise query. All filter parameters are optional.
 
 ### Available Filters
+- `payment_id`
 - `currency`
 - `merchant_id`
-- `payment_id`
+- `order_id`
 - `reference_id`
 - `buyer_name`
-- `mop_type`: (e.g., `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `QR`)
-- `status`: ( `PENDING`, `CAPTURED`, `FAILED`)
-- `from_created_date` / `to_created_date`
+- `mop_type`: (e.g., `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`)
+- `status`: ( `pending`, `captured`, `failed`)
+- `from_created_at` / `to_created_at`
