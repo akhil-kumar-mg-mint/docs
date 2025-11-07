@@ -42,9 +42,9 @@ The API returns an array of saved card objects, each containing:
 | `card_token` | string | Unique token for the saved card |
 | `identifier` | string | Customer identifier |
 | `cardholder_name` | string | Name on the card |
-| `nickname` | string | Custom card nickname (may be empty) |
-| `card_type` | string | Card type (CREDIT, DEBIT, PREPAID) |
-| `network` | string | Card network (VISA, MASTERCARD, etc.) |
+| `nickname` | string | Custom card nickname |
+| `card_type` | string | Card type (credit_card, debit_card) |
+| `network` | string | Card network (visa, mastercard, etc.) |
 | `masked_pan` | string | Masked card number showing only last 4 digits |
 | `expiry_month` | integer | Card expiry month (1-12) |
 | `expiry_year` | integer | Card expiry year |
@@ -69,8 +69,8 @@ GET /pg/tokens/?identifier=customer_12345
       "identifier": "customer_12345",
       "cardholder_name": "John Doe",
       "nickname": "My Business Card",
-      "card_type": "CREDIT",
-      "network": "VISA",
+      "card_type": "credit_card",
+      "network": "visa",
       "masked_pan": "XXXXXXXXXXXX1111",
       "expiry_month": 12,
       "expiry_year": 2030
@@ -80,8 +80,8 @@ GET /pg/tokens/?identifier=customer_12345
       "identifier": "customer_12345",
       "cardholder_name": "John Doe",
       "nickname": "Personal Debit",
-      "card_type": "DEBIT",
-      "network": "MASTERCARD",
+      "card_type": "debit_card",
+      "network": "mastercard",
       "masked_pan": "XXXXXXXXXXXX0008",
       "expiry_month": 8,
       "expiry_year": 2029

@@ -46,6 +46,7 @@
             "group": "Order",
             "pages": [
               "api-reference/order/create",
+              "api-reference/order/get-status",
               "api-reference/order/get",
               "api-reference/order/update_order",
               "api-reference/order/invoice_upload"

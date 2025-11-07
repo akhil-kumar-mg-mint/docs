@@ -9,4 +9,49 @@ openapi: '/openapi.json POST /pg/orders/{order_id}/documents/'
 The Upload Invoice endpoint is used to attach required documents to an order after it has been created. This is crucial for compliance and record-keeping. The request must be sent as `multipart/form-data`.
 
 This endpoint allows you to upload a document (like an invoice or air waybill), associated with an existing order.
-  
+
+## Request Parameters
+
+### Path
+
+| Name | In | Type | Required | Description |
+|---|---|---|---|---|
+| order_id | path | string | Yes | Unique identifier of the order |
+
+### Body (multipart/form-data)
+
+### Parameter Definitions
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| identifier | string | Yes | Identifier for the document | Free-form string for your reference (e.g., invoice or AWB number) |
+| document_type | string | Yes | Type of document | Enum: `invoice`, `awb` |
+| file | binary | Yes | The file to upload | Max size 2MB; supported formats: `pdf`, `jpg`, `jpeg` |
+
+## Examples
+
+<CodeGroup>
+
+```bash Upload Invoice (multipart/form-data)
+curl -X POST 'https://api.eximpe.com/pg/orders/{order_id}/documents/' \
+  -H 'Accept: application/json' \
+  -H 'X-Client-ID: {client_id}' \
+  -H 'X-Client-Secret: {client_secret}' \
+  -F 'identifier=INV23987' \
+  -F 'document_type=invoice' \
+  -F 'file=@INV23987.pdf;type=application/pdf'
+```
+
+```bash Upload Air Waybill (multipart/form-data)
+curl -X POST 'https://api.eximpe.com/pg/orders/{order_id}/documents/' \
+  -H 'Accept: application/json' \
+  -H 'X-Client-ID: {client_id}' \
+  -H 'X-Client-Secret: {client_secret}' \
+  -F 'identifier=AWB23987' \
+  -F 'document_type=awb' \
+  -F 'file=@AWB23987.pdf;type=application/pdf'
+```
+
+</CodeGroup>

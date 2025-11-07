@@ -5,9 +5,13 @@ openapi: '/openapi.json POST /pg/orders/'
 
 ## Overview
 
-The Create Order endpoint is the first step in the payment flow. It creates a new order with all the necessary details including buyer information, product details, and payment preferences.
+The Create Order endpoint is the first step in the payment flow across all collection modes. It creates a new order with buyer details, product information, and your preferred payment collection settings (Hosted Payment, Server-to-Server, Payment Link, etc.).
 
-After creating an order successfully, you'll receive a `session_id` and `order_id`. Use the `session_id` to redirect the customer to the payment gateway for completing the transaction.
+After creating an order, the response depends on the selected mode:
+- Hosted Payment: returns a `session_id` and `order_id` for redirecting customers to the checkout page
+- S2S UPI Intent: returns an `order_id` and `intent_uri`
+- S2S UPI Collection: returns an `order_id` and a confirmation `message`
+- S2S Card: returns an `order_id` and an `acs_template` (Base64) for 3D Secure
 
 ## Payment Collection Modes
 
@@ -20,34 +24,34 @@ The standard hosted payment flow where customers are redirected to EximPe's secu
 Server-to-server UPI intent flow that generates a UPI intent link for direct app-to-app payments.
 
 ### 3. S2S UPI Collection
-Server-to-server UPI collection flow that sends a payment request directly to the customer's VPA (Virtual Payment Address).
+Server-to-server UPI collection flow that sends a payment request directly to the customer's UPI App.
 
 ### 4. S2S Card Payment
-Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Save Card API](/api-reference/card-tokens/save) after successful payment.
+Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/card-tokens/save) after successful payment.
 
 ## Request Parameters
 
 ### Required Parameters
+- `reference_id`: Unique identifier for the order
 - `amount`: Payment amount in decimal format
 - `currency`: 3-letter ISO currency code (e.g., INR)
-- `reference_id`: Unique identifier for the order
+- `return_url`: URL to redirect after payment completion
 - `buyer`: Buyer details object
 - `product`: Product details object
 
 ### Optional Parameters
 - `collection_mode`: Payment collection mode (`hosted_payment` or `s2s`)
-- `mop_type`: Method of payment (`UPI`, `CREDIT_CARD`, `DEBIT_CARD`, `NET_BANKING`, `QR`)
+- `mop_type`: Method of payment (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`)
 - `upi_flow_type`: UPI flow type (`intent` or `collection`) - required when using S2S with UPI
 - `vpa`: Virtual Payment Address - required when `upi_flow_type` is `collection`
 - `upi_app_name`: Preferred UPI app - optional, defaults to `others`
-- `return_url`: URL to redirect after payment completion
 - `invoice`: Invoice details object
-- `card_details`: Card information object - required when `mop_type` is `CREDIT_CARD` or `DEBIT_CARD`
+- `card_details`: Card information object - required when `mop_type` is `credit_card` or `debit_card`
 
 ### Card Payment Specific Parameters
-When using card payments (`mop_type` is `CREDIT_CARD` or `DEBIT_CARD`), additional buyer information is required:
-- `buyer.ip_address`: Customer's IP address (required for fraud prevention)
-- `buyer.user_agent`: Customer's browser user agent (required for fraud prevention)
+When using card payments (`mop_type` is `credit_card` or `debit_card`), additional buyer information is required:
+- `buyer.ip_address`: Customer's IP address (used for fraud prevention)
+- `buyer.user_agent`: Customer's browser user agent (used for fraud prevention)
 
 #### Card Details Options
 You can provide card information in two ways:
@@ -55,13 +59,96 @@ You can provide card information in two ways:
 1. **New Card Details** (for first-time payments):
    - Include full card information: `number`, `cardholder_name`, `expiry_month`, `expiry_year`, `cvv`, `network`
    - Required for new cards not previously saved
-   - Use the [Save Card API](/api-reference/card-tokens/save) after successful payment to tokenize for future use
+   - Use the [Create Token API](/api-reference/card-tokens/save) after successful payment to tokenize for future use
 
 2. **Saved Card Token** (for repeat payments):
-   - Use `token`: Previously saved card token from the [Save Card API](/api-reference/card-tokens/save)
+   - Use `token`: Previously saved card token from the [Create Token API](/api-reference/card-tokens/save)
    - Include `identifier`: Customer identifier used when saving the card
-   - Include `network`: Card network (VISA, MASTERCARD, etc.)
+   - Include `network`: Card network (visa, mastercard, etc.)
    - No sensitive card data required - token handles authentication
+
+### Parameter Definitions
+
+The following tables define all request parameters, including nested objects, types, requirements, and constraints.
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| amount | string | Yes | Amount to charge, decimal string. | Format: `^[0-9]+(\.[0-9]{1,2})?$`; amount must be > 0 and ≤ 10,000,000.00 |
+| currency | string | Yes | 3-letter ISO currency code. | Supported: `INR` |
+| reference_id | string | Yes | Merchant-side unique reference for the order. | 1–50 chars; use letters, numbers, and dashes; unique per merchant while order is active |
+| collection_mode | string | No | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; default `hosted_payment` |
+| mop_type | string | No | Method of payment. | Enum: `upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr` |
+| upi_flow_type | string | Conditionally | UPI flow when `mop_type` is `UPI` and `collection_mode` is `s2s`. | Required if `mop_type=UPI` and `collection_mode=s2s`; Enum: `intent`, `collection` |
+| vpa | string | Conditionally | Customer VPA for UPI collection. | Required if `upi_flow_type=collection`; Format: `username@bank` |
+| upi_app_name | string | No | Preferred UPI app for intent optimization. | Enum (examples): `google_pay`, `phonepe`, `paytm`, `bhim`, `amazon_pay`, `others`; default `others` |
+| return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
+| buyer | object | Yes | Buyer/customer details. | See Buyer object |
+| product | object | Yes | Product or service being purchased. | See Product object |
+| invoice | object | No | Invoice metadata. | See Invoice object |
+| card_details | object | Conditionally | Card details or token for card payments. | Required if `mop_type` is `credit_card` or `debit_card`; See Card Details |
+
+Notes:
+- "Conditionally" required means the field is required only when the stated condition is met.
+
+#### Buyer
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Full name of the buyer. | Max 255 chars; letters, spaces, and common name punctuation (.,-' ) |
+| email | string | Yes | Email of the buyer. | RFC 5322 email format |
+| phone | string | Yes | Phone number with country code. | Valid phone number; E.164 preferred (e.g., `+9198xxxxxxxx`) |
+| address | object | Yes | Buyer address. | See Address object |
+| ip_address | string | Optional | Customer IP address for card fraud checks. | IPv4/IPv6 |
+| user_agent | string | Optional | Browser/device user agent for card fraud checks. | typical browser user agent string |
+
+#### Address (Buyer.address)
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| line_1 | string | Yes | Address line 1. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
+| line_2 | string | No | Address line 2. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
+| city | string | Yes | City. | Alphabetic only; Max 255 chars |
+| state | string | Yes | State/Province. | Alphabetic only; Max 255 chars |
+| postal_code | string | Yes | Postal/ZIP code. | 6 chars |
+
+#### Product
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Product or service name. | Max 255 chars; letters, numbers, spaces, and common punctuation |
+| description | string | No | Description of the product/service. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
+| type_of_goods | string | Yes | Nature of goods/services. | Enum: `goods`, `service` |
+
+#### Invoice
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| number | string | No | Invoice number. | Max 255 chars; letters, numbers, dashes/slashes |
+| date | string | No | Invoice date (ISO 8601). | Format: `YYYY-MM-DD` |
+
+#### Card Details
+
+Provide one of the following variants when `mop_type` is `credit_card` or `debit_card`:
+
+- New card (full PAN):
+  - `number` (string, required): PAN; numeric 12-19 digits
+  - `cardholder_name` (string, required): Name on card; max 128 chars
+  - `expiry_month` (string, required): `MM` format; `01`-`12`
+  - `expiry_year` (string, required): `YYYY`; current year or later
+  - `cvv` (string, required): 3-4 digits
+  - `network` (string, required): Enum: `visa`, `mastercard`, `rupay`, `amex`, `diners`, `discover`
+  - `nickname` (string, required): Friendly label; max 64 chars
+  - `identifier` (string, required): Customer identifier used for future reference
+
+- Saved card (tokenized):
+  - `token` (string, required): Token from Create Token API
+  - `identifier` (string, required): Customer identifier used when saving the card
+  - `network` (string, required): Card network; same enum as above
+
+Security:
+- Do not log or store raw PAN/CVV. Use HTTPS and comply with applicable PCI requirements.
 
 ## Response
 
@@ -98,7 +185,7 @@ For S2S Card Payment mode, the response includes:
   "reference_id": "ORDER_123456",
   "collection_mode": "hosted_payment",
   "return_url": "https://yourdomain.com/payment/callback",
-  "mop_type": "UPI",
+  "mop_type": "upi",
   "buyer": {
     "name": "Alice Smith",
     "email": "alice.smith@example.com",
@@ -123,7 +210,7 @@ For S2S Card Payment mode, the response includes:
   "currency": "INR",
   "reference_id": "ORDER_123457", 
   "collection_mode": "s2s",
-  "mop_type": "UPI",
+  "mop_type": "upi",
   "upi_flow_type": "intent",
   "upi_app_name": "google_pay",
   "buyer": {
@@ -150,7 +237,7 @@ For S2S Card Payment mode, the response includes:
   "currency": "INR",
   "reference_id": "ORDER_123458",
   "collection_mode": "s2s", 
-  "mop_type": "UPI",
+  "mop_type": "upi",
   "upi_flow_type": "collection",
   "vpa": "customer@paytm",
   "buyer": {
@@ -178,15 +265,15 @@ For S2S Card Payment mode, the response includes:
   "reference_id": "CARD_13MYHALESH7",
   "return_url": "https://yourdomain.com/checkout/callback/",
   "collection_mode": "s2s",
-  "mop_type": "DEBIT_CARD",
+  "mop_type": "debit_card",
   "card_details": {
-    "nickname": "VISA Debit",
+    "nickname": "My Card",
     "number": "4895380110000003",
     "cardholder_name": "John Doe",
     "expiry_month": "05",
     "expiry_year": "2030",
     "cvv": "123",
-    "network": "VISA",
+    "network": "visa",
     "identifier": "EX0001"
   },
   "buyer": {
@@ -224,11 +311,11 @@ For S2S Card Payment mode, the response includes:
   "reference_id": "CARD_4FQ0AIHQEI9",
   "return_url": "https://yourdomain.com/checkout/callback/",
   "collection_mode": "s2s",
-  "mop_type": "CREDIT_CARD",
+  "mop_type": "credit_card",
   "card_details": {
     "token": "1e6709282a21e83f43a020",
     "identifier": "EX0001",
-    "network": "VISA"
+    "network": "visa"
   },
   "buyer": {
     "name": "John Doe",
@@ -325,7 +412,7 @@ For S2S Card Payment mode, the response includes:
   2. Render the decoded HTML in the customer's browser
   3. The form will auto-submit to complete 3D Secure authentication
   4. Customer will be redirected back to your `return_url` after authentication
-- **Card Tokenization**: Use the [Save Card API](/api-reference/card-tokens/save) after successful payment to securely tokenize cards for future use
+- **Card Tokenization**: Use the [Create Token API](/api-reference/card-tokens/save) after successful payment to securely tokenize cards for future use
 - **Saved Card Usage**: Use previously saved card tokens for faster, more secure repeat payments
 - **Fraud Prevention**: `ip_address` and `user_agent` are required for fraud detection and prevention
 
