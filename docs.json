@@ -96,8 +96,8 @@
           {
             "group": "Subscriptions",
             "pages": [
-              "api-reference/subscriptions/create",
               "api-reference/subscriptions/create-intent",
+              "api-reference/subscriptions/create",
               "api-reference/subscriptions/get",
               "api-reference/subscriptions/modify-mandate",
               "api-reference/subscriptions/mandate-status",

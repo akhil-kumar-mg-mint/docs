@@ -43,63 +43,11 @@ The integration consists of four steps:
 
 ## Step 1: Create Subscription
 
-Use the **Create UPI Subscription** Partner API to create a subscription order and standing instruction.
-
-To start with, the request is raised from the Merchant to EximPe with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request.
-
-### Sample Request
-
-```json
-curl -X POST https://api-pacb.eximpe.com/partner-api/subscriptions/ \
-  -H "Content-Type: application/json" \
-  -H "X-Client-ID: <your-client-id>" \
-  -H "X-Client-Secret: <your-client-secret>" \
-  -d '{
-    "amount": "1000.00",
-    "currency": "INR",
-    "reference_id": "SUB-ORDER-001",
-    "preferred_mop_type": "UPI",
-    "preferred_collection_mode": "S2S",
-    "preferred_upi_flow_type": "COLLECTION",
-    "buyer_name": "John Doe",
-    "buyer_email": "john@example.com",
-    "buyer_phone": "+911234567890",
-    "standing_instruction": {
-      "billing_amount": "1000.00",
-      "billing_currency": "INR",
-      "billing_cycle": "MONTHLY",
-      "billing_interval": 1,
-      "payment_start_date": "2025-01-01",
-      "payment_end_date": "2025-12-31",
-      "billing_date": 5,
-      "billing_limit": "AFTER",
-      "billing_rule": "MAX",
-      "remarks": "Subscription for plan X",
-      "status": "ACTIVE"
-    }
-  }'
-```
-
-### Response
-
-```json
-{
-  "success": true,
-  "message": "UPI Subscription created successfully",
-  "data": {
-    "order_id": "ORD_xxx",
-    "subscription_type": "UPI_RECURRING",
-    "payment_link": "upi://pay?...",
-    "subscription_id": "SUB_xxx"
-  }
-}
-```
-
-For full request and response schema, see the **Create UPI Subscription** endpoint in API Reference.
+Use the **Create UPI Subscription** API to create a subscription order and standing instruction. You can use either Intent Flow (QR code/payment link) or Collection Flow (requires VPA).
 
 ### Intent Flow
 
-Alternatively, you can use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link.
+Use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link.
 
 #### Sample Request (Intent Flow)
 
@@ -181,6 +129,62 @@ The response includes a base64-encoded QR code that can be displayed directly:
 Alternatively, you can use the `payment_link` to generate a QR code client-side or use the provided `qr_code.url` for UPI app deep linking.
 
 For full request and response schema, see the **Create UPI Subscription (Intent Flow)** endpoint in API Reference.
+
+### Collection Flow
+
+Alternatively, you can use the **Collection Flow** which requires the customer's VPA upfront. Payment request is sent directly to the customer's UPI app.
+
+To start with, the request is raised from the Merchant to EximPe with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request.
+
+#### Sample Request (Collection Flow)
+
+```json
+curl -X POST https://api-pacb.eximpe.com/partner-api/subscriptions/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -d '{
+    "amount": "1000.00",
+    "currency": "INR",
+    "reference_id": "SUB-ORDER-001",
+    "preferred_mop_type": "UPI",
+    "preferred_collection_mode": "S2S",
+    "preferred_upi_flow_type": "COLLECTION",
+    "buyer_name": "John Doe",
+    "buyer_email": "john@example.com",
+    "buyer_phone": "+911234567890",
+    "standing_instruction": {
+      "billing_amount": "1000.00",
+      "billing_currency": "INR",
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2025-01-01",
+      "payment_end_date": "2025-12-31",
+      "billing_date": 5,
+      "billing_limit": "AFTER",
+      "billing_rule": "MAX",
+      "remarks": "Subscription for plan X",
+      "status": "ACTIVE"
+    }
+  }'
+```
+
+#### Response (Collection Flow)
+
+```json
+{
+  "success": true,
+  "message": "UPI Subscription created successfully",
+  "data": {
+    "order_id": "ORD_xxx",
+    "subscription_type": "UPI_RECURRING",
+    "payment_link": "upi://pay?...",
+    "subscription_id": "SUB_xxx"
+  }
+}
+```
+
+For full request and response schema, see the **Create UPI Subscription** endpoint in API Reference.
 
 ## Step 2: Check Mandate Status
 
