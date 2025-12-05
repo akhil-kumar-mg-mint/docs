@@ -97,6 +97,91 @@ curl -X POST https://api-pacb.eximpe.com/partner-api/subscriptions/ \
 
 For full request and response schema, see the **Create UPI Subscription** endpoint in API Reference.
 
+### Intent Flow
+
+Alternatively, you can use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link.
+
+#### Sample Request (Intent Flow)
+
+```json
+curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -d '{
+    "amount": "1000.00",
+    "currency": "INR",
+    "buyer_name": "John Doe",
+    "buyer_email": "john.doe@example.com",
+    "buyer_phone": "9876543210",
+    "collection_mode": "s2s",
+    "preferred_mop_type": "UPI",
+    "preferred_upi_flow_type": "INTENT",
+    "reference_id": "ORD-2024-001",
+    "return_url": "https://example.com/return",
+    "description": "Monthly subscription payment",
+    "standing_instruction": {
+      "billing_amount": "1000.00",
+      "billing_currency": "INR",
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2025-01-01",
+      "payment_end_date": "2025-12-31",
+      "billing_date": 15,
+      "billing_limit": "AFTER",
+      "billing_rule": "MAX",
+      "remarks": "Monthly subscription"
+    }
+  }'
+```
+
+#### Response (Intent Flow)
+
+```json
+{
+  "success": true,
+  "message": "UPI Subscription created successfully",
+  "data": {
+    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+    "subscription_type": "UPI_RECURRING",
+    "payment_link": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+    "qr_code": {
+      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+    },
+    "subscription": {
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2025-01-01",
+      "payment_end_date": "2025-12-31",
+      "status": "PENDING"
+    }
+  }
+}
+```
+
+<Note>
+  **Key differences between Collection and Intent flow:**
+  
+  - **Collection Flow**: Requires customer's VPA upfront. Payment request is sent directly to the customer's UPI app.
+  - **Intent Flow**: No VPA required. Customer approves mandate by scanning QR code or using payment link. Returns QR code in base64 format for display.
+  
+  The Intent flow is ideal when you want to let customers approve mandates without collecting their VPA first.
+</Note>
+
+#### Display QR Code
+
+The response includes a base64-encoded QR code that can be displayed directly:
+
+```html
+<img src="data:image/png;base64,{data.qr_code.base64}" alt="UPI Payment QR Code" />
+```
+
+Alternatively, you can use the `payment_link` to generate a QR code client-side or use the provided `qr_code.url` for UPI app deep linking.
+
+For full request and response schema, see the **Create UPI Subscription (Intent Flow)** endpoint in API Reference.
+
 ## Step 2: Check Mandate Status
 
 After the customer approves the UPI mandate, use the **Get Subscription Mandate Status** API to verify that it is active.

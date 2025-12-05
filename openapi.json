@@ -2536,6 +2536,118 @@
         }
       }
     },
+    "/pg/subscriptions/": {
+      "post": {
+        "summary": "Create UPI Subscription (Intent Flow)",
+        "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request with INTENT flow. Requires preferred_upi_flow_type to be 'INTENT'.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionIntentRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "currency": "INR",
+                "buyer_name": "John Doe",
+                "buyer_email": "john.doe@example.com",
+                "buyer_phone": "9876543210",
+                "collection_mode": "s2s",
+                "preferred_mop_type": "UPI",
+                "preferred_upi_flow_type": "INTENT",
+                "reference_id": "ORD-2024-001",
+                "return_url": "https://example.com/return",
+                "description": "Monthly subscription payment",
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2024-01-01",
+                  "payment_end_date": "2024-12-31",
+                  "billing_date": 15,
+                  "billing_limit": "AFTER",
+                  "billing_rule": "MAX",
+                  "remarks": "Monthly subscription"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionIntentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "UPI Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "subscription_type": "UPI_RECURRING",
+                    "payment_link": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "qr_code": {
+                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+                    },
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31",
+                      "status": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/partner-api/subscriptions/": {
       "post": {
         "summary": "Create UPI Subscription",
@@ -5474,6 +5586,52 @@
               "payment_link": { "type": "string" },
               "acstemplate": { "type": "string" },
               "subscription_id": { "type": "string" },
+              "subscription": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "CreateSubscriptionIntentRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateOrderRequest" },
+          {
+            "type": "object",
+            "required": ["preferred_upi_flow_type", "standing_instruction"],
+            "properties": {
+              "preferred_upi_flow_type": {
+                "type": "string",
+                "enum": ["INTENT"],
+                "description": "Must be 'INTENT' for Intent flow subscriptions"
+              },
+              "standing_instruction": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        ]
+      },
+      "CreateSubscriptionIntentResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": { "type": "string" },
+              "subscription_id": { "type": "string" },
+              "subscription_type": { "type": "string" },
+              "payment_link": { "type": "string", "description": "UPI Intent URI for mandate approval" },
+              "qr_code": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "description": "Full UPI URL for QR code scanning" },
+                  "base64": { "type": "string", "description": "Base64-encoded QR code image (PNG format)" }
+                }
+              },
               "subscription": {
                 "$ref": "#/components/schemas/StandingInstruction"
               }
