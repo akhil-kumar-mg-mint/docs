@@ -32,7 +32,8 @@
               "integration-guide/web-integration/hosted-checkout",
               "integration-guide/web-integration/s2s-card-payment",
               "integration-guide/web-integration/s2s-upi-intent",
-               "integration-guide/web-integration/s2s-upi-collection",
+              "integration-guide/web-integration/s2s-upi-collection",
+              "integration-guide/web-integration/subscriptions",
               "integration-guide/web-integration/webhooks",
               "integration-guide/web-integration/test-data"
             ]
@@ -90,6 +91,19 @@
               "api-reference/refunds/create",
               "api-reference/refunds/list",
               "api-reference/refunds/get"
+            ]
+          },
+          {
+            "group": "Subscriptions",
+            "pages": [
+              "api-reference/subscriptions/create-intent",
+              "api-reference/subscriptions/create",
+              "api-reference/subscriptions/get",
+              "api-reference/subscriptions/modify-mandate",
+              "api-reference/subscriptions/mandate-status",
+              "api-reference/subscriptions/cancel-mandate",
+              "api-reference/subscriptions/pre-debit-notification",
+              "api-reference/subscriptions/recurring-payment"
             ]
           },
           {

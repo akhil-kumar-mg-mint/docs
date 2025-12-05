@@ -2535,6 +2535,593 @@
           }
         }
       }
+    },
+    "/pg/subscriptions/": {
+      "post": {
+        "summary": "Create UPI Subscription (Intent Flow)",
+        "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request with INTENT flow. Requires preferred_upi_flow_type to be 'INTENT'.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionIntentRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "currency": "INR",
+                "buyer_name": "John Doe",
+                "buyer_email": "john.doe@example.com",
+                "buyer_phone": "9876543210",
+                "collection_mode": "s2s",
+                "preferred_mop_type": "UPI",
+                "preferred_upi_flow_type": "INTENT",
+                "reference_id": "ORD-2024-001",
+                "return_url": "https://example.com/return",
+                "description": "Monthly subscription payment",
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2024-01-01",
+                  "payment_end_date": "2024-12-31",
+                  "billing_date": 15,
+                  "billing_limit": "AFTER",
+                  "billing_rule": "MAX",
+                  "remarks": "Monthly subscription"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionIntentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "UPI Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "subscription_type": "UPI_RECURRING",
+                    "payment_link": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "qr_code": {
+                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+                    },
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31",
+                      "status": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/": {
+      "post": {
+        "summary": "Create UPI Subscription",
+        "description": "Create a new UPI subscription order with standing instructions (SI).",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request. Accepts the same fields as Create Order (S2S UPI) plus a standing_instruction block.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal / configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/": {
+      "get": {
+        "summary": "Get Subscription Order Details",
+        "description": "Retrieve order-level details for a subscription by subscription UID.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription order fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSubscriptionOrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/mandate_status/": {
+      "get": {
+        "summary": "Get Subscription Mandate Status",
+        "description": "Fetch the current UPI mandate status for a subscription.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription mandate status fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSubscriptionMandateStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Business validation error (e.g. mandate not yet created)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/modify_mandate/": {
+      "post": {
+        "summary": "Modify Subscription Mandate",
+        "description": "Update mandate amount and/or end date for a subscription.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Mandate modification payload. At least one of amount or end_date must be provided.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModifySubscriptionMandateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription mandate modification request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModifySubscriptionMandateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/cancel_mandate/": {
+      "post": {
+        "summary": "Cancel Subscription Mandate",
+        "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription mandate cancel request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelSubscriptionMandateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Business validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/pre_debit_notification/": {
+      "post": {
+        "summary": "Send Pre-Debit Notification",
+        "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Pre-debit notification payload.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreDebitNotificationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pre-debit notification triggered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreDebitNotificationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business error (e.g. mandate not active)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/partner-api/subscriptions/{uid}/recurring_payment/": {
+      "post": {
+        "summary": "Trigger Recurring Payment",
+        "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
+        "tags": ["Subscriptions"],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Recurring payment payload. If amount is omitted, the subscription’s billing amount is used.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringPaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recurring payment triggered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringPaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4952,6 +5539,223 @@
             "type": "string",
             "format": "date-time",
             "description": "Payment creation timestamp"
+          }
+        }
+      },
+      "StandingInstruction": {
+        "type": "object",
+        "description": "Standing instruction configuration for a subscription",
+        "properties": {
+          "billing_amount": { "type": "string", "description": "Billing amount per cycle" },
+          "billing_currency": { "type": "string", "description": "Currency for billing amount" },
+          "billing_cycle": { "type": "string", "description": "Billing cycle (e.g. MONTHLY)" },
+          "billing_interval": { "type": "integer", "description": "Interval between each billing cycle" },
+          "payment_start_date": { "type": "string", "format": "date", "description": "Subscription start date (YYYY-MM-DD)" },
+          "payment_end_date": { "type": "string", "format": "date", "description": "Subscription end date (YYYY-MM-DD)" },
+          "billing_date": { "type": "integer", "description": "Day of month for billing" },
+          "billing_limit": { "type": "string", "description": "Billing limit rule (e.g. BEFORE, AFTER)" },
+          "billing_rule": { "type": "string", "description": "Billing rule (e.g. MAX)" },
+          "remarks": { "type": "string", "description": "Subscription remarks" },
+          "status": { "type": "string", "description": "Subscription status" }
+        }
+      },
+      "CreateSubscriptionRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateOrderRequest" },
+          {
+            "type": "object",
+            "properties": {
+              "standing_instruction": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        ]
+      },
+      "CreateSubscriptionResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": { "type": "string" },
+              "subscription_type": { "type": "string" },
+              "payment_link": { "type": "string" },
+              "acstemplate": { "type": "string" },
+              "subscription_id": { "type": "string" },
+              "subscription": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "CreateSubscriptionIntentRequest": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CreateOrderRequest" },
+          {
+            "type": "object",
+            "required": ["preferred_upi_flow_type", "standing_instruction"],
+            "properties": {
+              "preferred_upi_flow_type": {
+                "type": "string",
+                "enum": ["INTENT"],
+                "description": "Must be 'INTENT' for Intent flow subscriptions"
+              },
+              "standing_instruction": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        ]
+      },
+      "CreateSubscriptionIntentResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": { "type": "string" },
+              "subscription_id": { "type": "string" },
+              "subscription_type": { "type": "string" },
+              "payment_link": { "type": "string", "description": "UPI Intent URI for mandate approval" },
+              "qr_code": {
+                "type": "object",
+                "properties": {
+                  "url": { "type": "string", "description": "Full UPI URL for QR code scanning" },
+                  "base64": { "type": "string", "description": "Base64-encoded QR code image (PNG format)" }
+                }
+              },
+              "subscription": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "GetSubscriptionOrderResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": { "type": "string" },
+              "reference_id": { "type": "string" },
+              "amount": { "type": "string" },
+              "currency": { "type": "string" },
+              "status": { "type": "string" },
+              "subscription_type": { "type": "string" }
+            }
+          }
+        }
+      },
+      "GetSubscriptionMandateStatusResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": { "type": "string" },
+              "mandate_is_active": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "ModifySubscriptionMandateRequest": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number", "format": "float" },
+          "end_date": { "type": "string", "format": "date" }
+        }
+      },
+      "ModifySubscriptionMandateResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": { "type": "string" },
+              "mandate_modified": { "type": "boolean" },
+              "updated_amount": { "type": "string" },
+              "updated_end_date": { "type": "string", "format": "date" }
+            }
+          }
+        }
+      },
+      "CancelSubscriptionMandateResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": { "type": "string" },
+              "mandate_cancelled": { "type": "boolean" },
+              "subscription_status": { "type": "string" }
+            }
+          }
+        }
+      },
+      "PreDebitNotificationRequest": {
+        "type": "object",
+        "required": ["debit_date", "amount"],
+        "properties": {
+          "debit_date": { "type": "string", "format": "date" },
+          "amount": { "type": "number", "format": "float" }
+        }
+      },
+      "PreDebitNotificationResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": { "type": "string" },
+              "debit_date": { "type": "string", "format": "date" },
+              "amount": { "type": "string" },
+              "notification_sent": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "RecurringPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number", "format": "float" }
+        }
+      },
+      "RecurringPaymentResponse": {
+        "type": "object",
+        "required": ["success", "message", "data"],
+        "properties": {
+          "success": { "type": "boolean" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": { "type": "string" },
+              "message": { "type": "string" }
+            }
           }
         }
       }
