@@ -24,7 +24,9 @@
     "/pg/orders/": {
       "post": {
         "summary": "Create Order",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -358,13 +360,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_SERVICE_ERROR_000",
-                      "message": "Payment gateway error",
-                      "details": {
-                          "error": "An unexpected error occurred. Please try again later"
-                      }
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -375,7 +377,9 @@
       "patch": {
         "summary": "Update Order",
         "description": "Update specific fields of an existing order.",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -432,12 +436,12 @@
                     "data": {
                       "order_id": "{Order_ID}",
                       "buyer": {
-                                          "pan_number": "CDEFG1234H",
-                  "dob": "1992-08-14"
+                        "pan_number": "CDEFG1234H",
+                        "dob": "1992-08-14"
                       },
                       "invoice": {
-                                          "number": "INV_UPDATED_2024_1205",
-                  "date": "2024-12-05"
+                        "number": "INV_UPDATED_2024_1205",
+                        "date": "2024-12-05"
                       }
                     }
                   }
@@ -455,13 +459,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_ORDER_001",
-                      "message": "Order not found",
-                      "details": {
-                          "order_id": "Order not found"
-                      }
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -475,15 +479,15 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_ORDER_002",
-                      "message": "Validation error",
-                      "details": {
-                          "buyer": {
-                              "pan_number": "PAN number must be in format: AAAAA1111A (5 letters, 4 digits, 1 letter)"
-                          }
+                    "code": "ERR_ORDER_002",
+                    "message": "Validation error",
+                    "details": {
+                      "buyer": {
+                        "pan_number": "PAN number must be in format: AAAAA1111A (5 letters, 4 digits, 1 letter)"
                       }
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -497,13 +501,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -517,13 +521,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_SERVICE_ERROR_000",
-                      "message": "Payment gateway error",
-                      "details": {
-                          "error": "An unexpected error occurred. Please try again later"
-                      }
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -532,7 +536,9 @@
       "get": {
         "summary": "Get Order Details",
         "description": "Retrieve order details by order ID.",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -654,13 +660,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_ORDER_001",
-                      "message": "Order not found",
-                      "details": {
-                          "order_id": "Order not found"
-                      }
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -674,13 +680,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -694,13 +700,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_SERVICE_ERROR_000",
-                      "message": "Payment gateway error",
-                      "details": {
-                          "error": "An unexpected error occurred. Please try again later"
-                      }
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -711,7 +717,9 @@
       "get": {
         "summary": "Get Order Status",
         "description": "Retrieve current status of an order by order ID.",
-        "tags": ["Orders"],
+        "tags": [
+          "Orders"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -724,7 +732,9 @@
             "in": "path",
             "description": "Unique identifier of the order",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "example": "OD9795883191"
           }
         ],
@@ -733,7 +743,9 @@
             "description": "Order status retrieved successfully",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetOrderStatusResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/GetOrderStatusResponse"
+                },
                 "example": {
                   "success": true,
                   "message": "Order status fetched successfully",
@@ -758,13 +770,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_ORDER_001",
-                      "message": "Order not found",
-                      "details": {
-                          "order_id": "Order not found"
-                      }
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -778,13 +790,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -798,13 +810,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_SERVICE_ERROR_000",
-                      "message": "Payment gateway error",
-                      "details": {
-                          "error": "An unexpected error occurred. Please try again later"
-                      }
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -938,13 +950,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_ORDER_002",
-                      "message": "Validation error",
-                      "details": {
-                          "identifier": "This field is required."
-                      }
+                    "code": "ERR_ORDER_002",
+                    "message": "Validation error",
+                    "details": {
+                      "identifier": "This field is required."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -958,13 +970,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -1158,13 +1170,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -1275,13 +1287,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -1514,13 +1526,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_REFUND_003",
-                      "message": "Refund not found",
-                      "details": {
-                          "refund_id": "Refund not found"
-                      }
+                    "code": "ERR_REFUND_003",
+                    "message": "Refund not found",
+                    "details": {
+                      "refund_id": "Refund not found"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -1669,13 +1681,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_SETTLEMENT_002",
-                      "message": "Settlement not found",
-                      "details": {
-                          "settlement_id": "Settlement not found"
-                      }
+                    "code": "ERR_SETTLEMENT_002",
+                    "message": "Settlement not found",
+                    "details": {
+                      "settlement_id": "Settlement not found"
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -1753,13 +1765,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -1802,10 +1814,9 @@
                   "legal_name": "InnovateTech Solutions Private Limited",
                   "brand_name": "InnovateTech",
                   "registration_number": "US-CORP-2024-IT789456",
-                  "international_org_type": "PRIVATE_LIMITED",
+                  "international_org_type": "Private Limited Company",
                   "tax_id": "94-8765432",
                   "website": "https://www.innovatetech.com",
-                  "monthly_avg_transaction_value": "275000.00",
                   "monthly_avg_transaction_volume": "485",
                   "communication_address": "Suite 1200, 101 California Street",
                   "communication_city": "San Francisco",
@@ -1818,18 +1829,15 @@
                   "registered_state": "CA",
                   "registered_country": "United States",
                   "registered_pincode": "94103",
-                  "business_category": "TECHNOLOGY",
-                  "business_mode": "B2B",
-                  "commodity": "Cloud Computing and AI Solutions",
-                  "payment_terms": "NET_30",
+                  "business_category": "goods_merchant",
+                  "business_mode": "b2b",
                   "hs_codes": [
                     "85234910",
                     "84715000"
                   ],
                   "category": "Enterprise Software and Cloud Services",
                   "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
-                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
-                  "purpose_code": "P0101"
+                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15"
                 }
               }
             }
@@ -1870,10 +1878,9 @@
                       "legal_name": "GlobalTech Solutions Inc.",
                       "brand_name": "GlobalTech",
                       "registration_number": "US-CORP-99887766",
-                      "international_org_type": "PRIVATE_LIMITED",
+                      "international_org_type": "Private Limited Company",
                       "tax_id": "94-1234567",
                       "website": "https://www.globaltech.io",
-                      "monthly_avg_transaction_value": "150000.00",
                       "monthly_avg_transaction_volume": "300",
                       "communication_address": "500 Mission Street, Suite 2400",
                       "communication_city": "San Francisco",
@@ -1886,18 +1893,15 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94043",
-                      "business_category": "TECHNOLOGY",
-                      "business_mode": "B2B",
-                      "commodity": "Enterprise Software Solutions",
-                      "payment_terms": "NET_30",
+                      "business_category": "goods_merchant",
+                      "business_mode": "b2b",
                       "hs_codes": [
                         "85234910",
                         "84715000"
                       ],
                       "category": "Enterprise SaaS",
                       "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
-                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
-                      "purpose_code": "P0101"
+                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients"
                     }
                   }
                 }
@@ -1914,15 +1918,15 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": 40000,
-                      "message": "Invalid request",
-                      "details": {
-                          "settlement_details": {
-                              "bank_account_number": "This field is required."
-                          }
+                    "code": 40000,
+                    "message": "Invalid request",
+                    "details": {
+                      "settlement_details": {
+                        "bank_account_number": "This field is required."
                       }
+                    }
                   }
-              }
+                }
               }
             }
           },
@@ -1936,13 +1940,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_003",
-                      "message": "This endpoint is only accessible to PSP merchants",
-                      "details": {
-                          "authentication": "This endpoint is only accessible to PSP merchants."
-                      }
+                    "code": "ERR_AUTH_003",
+                    "message": "This endpoint is only accessible to PSP merchants",
+                    "details": {
+                      "authentication": "This endpoint is only accessible to PSP merchants."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -1953,9 +1957,14 @@
       "get": {
         "summary": "Get Merchant",
         "description": "Retrieve the details of a specific merchant by its ID.",
-        "tags": ["Merchants"],
+        "tags": [
+          "Merchants"
+        ],
         "security": [
-          { "clientAuth": [], "clientSecretAuth": [] }
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
         ],
         "parameters": [
           {
@@ -1963,7 +1972,9 @@
             "in": "path",
             "description": "The ID of the merchant to retrieve.",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1971,7 +1982,9 @@
             "description": "Merchant details retrieved successfully.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetMerchantResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/GetMerchantResponse"
+                },
                 "example": {
                   "success": true,
                   "message": "Sub-merchant details retrieved successfully",
@@ -1998,10 +2011,9 @@
                       "legal_name": "InnovateTech Solutions Private Limited",
                       "brand_name": "InnovateTech Solutions",
                       "registration_number": "US-CORP-2024-IT789456",
-                      "international_org_type": "PRIVATE_LIMITED",
+                      "international_org_type": "Private Limited Company",
                       "tax_id": "94-8765432",
                       "website": "https://www.innovatetech.com",
-                      "monthly_avg_transaction_value": "50000.00",
                       "monthly_avg_transaction_volume": "100",
                       "communication_address": "123 Tech Street",
                       "communication_city": "San Francisco",
@@ -2014,18 +2026,15 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94105",
-                      "business_category": "TECHNOLOGY",
-                      "business_mode": "B2B",
-                      "commodity": "Software Services",
-                      "payment_terms": "NET_30",
+                      "business_category": "goods_merchant",
+                      "business_mode": "b2b",
                       "hs_codes": [
                         "84713010",
                         "85423100"
                       ],
                       "category": "E-commerce",
                       "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                      "agreement_details": "global_company aggrement",
-                      "purpose_code": "P0101"
+                      "agreement_details": "global_company aggrement"
                     }
                   }
                 }
@@ -2036,7 +2045,9 @@
             "description": "Merchant not found.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2045,9 +2056,14 @@
       "patch": {
         "summary": "Update Merchant",
         "description": "Update specific fields of an existing merchant.",
-        "tags": ["Merchants"],
+        "tags": [
+          "Merchants"
+        ],
         "security": [
-          { "clientAuth": [], "clientSecretAuth": [] }
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
         ],
         "parameters": [
           {
@@ -2055,7 +2071,9 @@
             "in": "path",
             "description": "The ID of the merchant to update.",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2071,15 +2089,12 @@
                   "legal_name": "Shakti Logistics & Exports Pvt Ltd",
                   "brand_name": "ShaktiXpress",
                   "registration_number": "IN09DEL2021PTC987654",
-                  "international_org_type": "PRIVATE_LIMITED",
+                  "international_org_type": "Private Limited Company",
                   "tax_id": "29AABCT1234D1Z9",
                   "website": "https://www.shaktiexpress.in",
-                  "monthly_avg_transaction_value": "780000.00",
                   "monthly_avg_transaction_volume": "120",
-                  "business_category": "MANUFACTURING",
-                  "business_mode": "B2B",
-                  "commodity": "Textile Machinery and Automotive Components",
-                  "payment_terms": "NET_30",
+                  "business_category": "goods_merchant",
+                  "business_mode": "b2b",
                   "category": "Logistics & Manufacturing Support",
                   "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
                   "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
@@ -2094,7 +2109,6 @@
                   "registered_state": "Maharashtra",
                   "registered_country": "India",
                   "registered_pincode": "400072",
-                  "purpose_code": "P0101",
                   "hs_codes": [
                     "85234910",
                     "84715000"
@@ -2130,7 +2144,10 @@
                   "message": "Merchant updated successfully",
                   "data": {
                     "merchant_id": "3604346598",
-                    "updated_fields": ["company_details", "settlement_details"]
+                    "updated_fields": [
+                      "company_details",
+                      "settlement_details"
+                    ]
                   }
                 }
               }
@@ -2140,7 +2157,9 @@
             "description": "Bad request - Invalid parameters.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           },
@@ -2148,7 +2167,9 @@
             "description": "Merchant not found.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
               }
             }
           }
@@ -2159,9 +2180,14 @@
       "patch": {
         "summary": "Upload Merchant Document",
         "description": "Upload a document for a merchant.",
-        "tags": ["Merchants"],
+        "tags": [
+          "Merchants"
+        ],
         "security": [
-          { "clientAuth": [], "clientSecretAuth": [] }
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
         ],
         "parameters": [
           {
@@ -2169,7 +2195,9 @@
             "in": "path",
             "description": "The ID of the merchant to upload the document for.",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -2190,7 +2218,10 @@
                     "description": "Type of document (INVOICE). Only invoice is supported currently."
                   }
                 },
-                "required": ["file", "document_type"]
+                "required": [
+                  "file",
+                  "document_type"
+                ]
               },
               "example": {
                 "document_type": "INVOICE",
@@ -2207,12 +2238,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "detail": { "type": "string" }
+                        "detail": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -2234,7 +2271,9 @@
       "post": {
         "summary": "Save Card",
         "description": "Save card details securely for future transactions. The card information is tokenized and stored securely.",
-        "tags": ["Card Tokens"],
+        "tags": [
+          "Card Tokens"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2374,13 +2413,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -2389,7 +2428,9 @@
       "get": {
         "summary": "List Saved Cards",
         "description": "Retrieve a list of saved cards for a specific identifier. Returns tokenized card information without sensitive details.",
-        "tags": ["Card Tokens"],
+        "tags": [
+          "Card Tokens"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2447,13 +2488,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -2464,7 +2505,9 @@
       "post": {
         "summary": "Delete Saved Card",
         "description": "Delete a saved card token permanently. This action cannot be undone.",
-        "tags": ["Card Tokens"],
+        "tags": [
+          "Card Tokens"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2523,13 +2566,13 @@
                 "example": {
                   "success": false,
                   "error": {
-                      "code": "ERR_AUTH_000",
-                      "message": "Missing credentials",
-                      "details": {
-                          "authentication": "Missing credentials."
-                      }
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
                   }
-              }
+                }
               }
             }
           }
@@ -3282,24 +3325,50 @@
       },
       "GetOrderStatusResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
-            "required": ["order_id", "status", "created_at", "updated_at"],
+            "required": [
+              "order_id",
+              "status",
+              "created_at",
+              "updated_at"
+            ],
             "properties": {
-              "order_id": { "type": "string" },
-              "status": { "type": "string" },
-              "status_message": { "type": "string", "nullable": true },
-              "created_at": { "type": "string", "format": "date-time" },
-              "updated_at": { "type": "string", "format": "date-time" }
+              "order_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
             }
           }
         }
       },
-    "UpdateOrderRequest": {
+      "UpdateOrderRequest": {
         "type": "object",
         "description": "Request body for updating order - only include fields to update",
         "properties": {
@@ -4058,14 +4127,7 @@
           "international_org_type",
           "tax_id",
           "website",
-          "monthly_avg_transaction_value",
           "monthly_avg_transaction_volume",
-          "communication_address",
-          "communication_city",
-          "communication_state",
-          "communication_country",
-          "communication_pincode",
-          "same_as_registered_address",
           "registered_address",
           "registered_city",
           "registered_state",
@@ -4073,13 +4135,9 @@
           "registered_pincode",
           "business_category",
           "business_mode",
-          "commodity",
-          "payment_terms",
-          "hs_codes",
           "category",
           "description_of_products_and_services",
-          "agreement_details",
-          "purpose_code"
+          "agreement_details"
         ],
         "properties": {
           "legal_name": {
@@ -4098,12 +4156,13 @@
             "type": "string",
             "description": "Type of international organization",
             "enum": [
-              "PRIVATE_LIMITED",
-              "PUBLIC_LIMITED",
-              "PARTNERSHIP",
-              "SOLE_PROPRIETORSHIP",
-              "LLC",
-              "CORPORATION"
+              "Private Limited Company",
+              "Public Limited Company",
+              "Limited Liability Company",
+              "Free Zone Company / Entity",
+              "Partnership / LLP",
+              "Sole Proprietorship",
+              "Other"
             ]
           },
           "tax_id": {
@@ -4115,37 +4174,18 @@
             "format": "uri",
             "description": "Company website URL"
           },
-          "monthly_avg_transaction_value": {
-            "type": "string",
-            "description": "Average monthly transaction value"
-          },
           "monthly_avg_transaction_volume": {
             "type": "string",
-            "description": "Average monthly transaction volume"
-          },
-          "communication_address": {
-            "type": "string",
-            "description": "Communication address"
-          },
-          "communication_city": {
-            "type": "string",
-            "description": "Communication city"
-          },
-          "communication_state": {
-            "type": "string",
-            "description": "Communication state"
-          },
-          "communication_country": {
-            "type": "string",
-            "description": "Communication country"
-          },
-          "communication_pincode": {
-            "type": "string",
-            "description": "Communication pincode/postal code"
-          },
-          "same_as_registered_address": {
-            "type": "boolean",
-            "description": "Whether communication address is same as registered address"
+            "description": "Average monthly transaction volume",
+            "enum": [
+              "LESS_THAN_5_K",
+              "BETWEEN_5_K_AND_20_K",
+              "BETWEEN_20_K_AND_50_K",
+              "BETWEEN_50_K_AND_100_K",
+              "BETWEEN_100_K_AND_250_K",
+              "BETWEEN_250_K_AND_500_K",
+              "ABOVE_500_K"
+            ]
           },
           "registered_address": {
             "type": "string",
@@ -4167,41 +4207,44 @@
             "type": "string",
             "description": "Registered pincode/postal code"
           },
+          "same_as_registered_address": {
+            "type": "boolean",
+            "description": "Whether communication address is same as registered address, if provided communication address will be ignored"
+          },
+          "communication_address": {
+            "type": "string",
+            "description": "Communication address, required if same_as_registered_address is false or not provided"
+          },
+          "communication_city": {
+            "type": "string",
+            "description": "Communication city, required if same_as_registered_address is false or not provided"
+          },
+          "communication_state": {
+            "type": "string",
+            "description": "Communication state, required if same_as_registered_address is false or not provided"
+          },
+          "communication_country": {
+            "type": "string",
+            "description": "Communication country, required if same_as_registered_address is false or not provided"
+          },
+          "communication_pincode": {
+            "type": "string",
+            "description": "Communication pincode/postal code, required if same_as_registered_address is false or not provided"
+          },
           "business_category": {
             "type": "string",
             "description": "Business category",
             "enum": [
-              "TECHNOLOGY",
-              "HEALTHCARE",
-              "FINANCE",
-              "RETAIL",
-              "MANUFACTURING",
-              "EDUCATION",
-              "ENTERTAINMENT",
-              "OTHER"
+              "goods_merchant",
+              "service_merchant"
             ]
           },
           "business_mode": {
             "type": "string",
             "description": "Business mode",
             "enum": [
-              "B2B",
-              "B2C",
-              "B2B2C"
-            ]
-          },
-          "commodity": {
-            "type": "string",
-            "description": "Primary commodity or service"
-          },
-          "payment_terms": {
-            "type": "string",
-            "description": "Payment terms",
-            "enum": [
-              "NET_30",
-              "NET_60",
-              "NET_90",
-              "IMMEDIATE"
+              "b2b",
+              "b2c"
             ]
           },
           "hs_codes": {
@@ -4222,10 +4265,6 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
-          },
-          "purpose_code": {
-            "type": "string",
-            "description": "Purpose code for international transactions"
           }
         }
       },
@@ -4396,12 +4435,13 @@
                 "type": "string",
                 "description": "Updated type of international organization",
                 "enum": [
-                  "PRIVATE_LIMITED",
-                  "PUBLIC_LIMITED",
-                  "PARTNERSHIP",
-                  "SOLE_PROPRIETORSHIP",
-                  "LLC",
-                  "CORPORATION"
+                  "Private Limited Company",
+                  "Public Limited Company",
+                  "Limited Liability Company",
+                  "Free Zone Company / Entity",
+                  "Partnership / LLP",
+                  "Sole Proprietorship",
+                  "Other"
                 ]
               },
               "tax_id": {
@@ -4412,10 +4452,6 @@
                 "type": "string",
                 "format": "uri",
                 "description": "Updated company website URL"
-              },
-              "monthly_avg_transaction_value": {
-                "type": "string",
-                "description": "Updated average monthly transaction value"
               },
               "monthly_avg_transaction_volume": {
                 "type": "string",
@@ -4469,37 +4505,16 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "TECHNOLOGY",
-                  "HEALTHCARE",
-                  "FINANCE",
-                  "RETAIL",
-                  "MANUFACTURING",
-                  "EDUCATION",
-                  "ENTERTAINMENT",
-                  "OTHER"
+                  "goods_merchant",
+                  "service_merchant"
                 ]
               },
               "business_mode": {
                 "type": "string",
                 "description": "Updated business mode",
                 "enum": [
-                  "B2B",
-                  "B2C",
-                  "B2B2C"
-                ]
-              },
-              "commodity": {
-                "type": "string",
-                "description": "Updated primary commodity or service"
-              },
-              "payment_terms": {
-                "type": "string",
-                "description": "Updated payment terms",
-                "enum": [
-                  "NET_30",
-                  "NET_60",
-                  "NET_90",
-                  "IMMEDIATE"
+                  "b2b",
+                  "b2c"
                 ]
               },
               "hs_codes": {
@@ -4520,10 +4535,6 @@
               "agreement_details": {
                 "type": "string",
                 "description": "Updated agreement details"
-              },
-              "purpose_code": {
-                "type": "string",
-                "description": "Updated purpose code for international transactions"
               }
             }
           },
@@ -4886,7 +4897,9 @@
                     "description": "UPI ID for UPI payments"
                   }
                 },
-                "required": ["upi_id"]
+                "required": [
+                  "upi_id"
+                ]
               },
               {
                 "title": "Card Details",
@@ -4909,7 +4922,12 @@
                     "description": "Bank that issued the card"
                   }
                 },
-                "required": ["card_mask", "card_holder_name", "card_issuer_country", "card_issuer_bank"]
+                "required": [
+                  "card_mask",
+                  "card_holder_name",
+                  "card_issuer_country",
+                  "card_issuer_bank"
+                ]
               },
               {
                 "title": "Net Banking Details",
@@ -4924,7 +4942,10 @@
                     "description": "Acquirer ID"
                   }
                 },
-                "required": ["bank_ref_num", "acq_id"]
+                "required": [
+                  "bank_ref_num",
+                  "acq_id"
+                ]
               }
             ]
           },
@@ -4957,24 +4978,24 @@
       }
     },
     "securitySchemes": {
-  "clientAuth": {
-    "type": "apiKey",
-    "name": "X-Client-ID",
-    "in": "header",
-    "description": "Client app ID. You can find your app id in the merchant dashboard's developer settings."
-  },
-  "clientSecretAuth": {
-    "type": "apiKey",
-    "name": "X-Client-Secret",
-    "in": "header",
-    "description": "Client secret key. You can find your secret in the merchant dashboard's developer settings."
-  },
-  "merchantAuth": {
-    "type": "apiKey",
-    "name": "X-Merchant-ID",
-    "in": "header",
-    "description": "Merchant ID. You can find your merchant ID in the merchant section of the merchant dashboard. Only applicable for PSP merchants."
-  }
-}
+      "clientAuth": {
+        "type": "apiKey",
+        "name": "X-Client-ID",
+        "in": "header",
+        "description": "Client app ID. You can find your app id in the merchant dashboard's developer settings."
+      },
+      "clientSecretAuth": {
+        "type": "apiKey",
+        "name": "X-Client-Secret",
+        "in": "header",
+        "description": "Client secret key. You can find your secret in the merchant dashboard's developer settings."
+      },
+      "merchantAuth": {
+        "type": "apiKey",
+        "name": "X-Merchant-ID",
+        "in": "header",
+        "description": "Merchant ID. You can find your merchant ID in the merchant section of the merchant dashboard. Only applicable for PSP merchants."
+      }
+    }
   }
 }
