@@ -1,0 +1,127 @@
+---
+title: "SUBSCRIPTION STATUS"
+description: "Technical reference for the SUBSCRIPTION_STATUS webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `SUBSCRIPTION_STATUS`  
+**Category**: Subscription  
+**Description**: Subscription status has been updated
+
+This webhook is triggered when a subscription status changes or subscription information is updated.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "event_type": "SUBSCRIPTION_STATUS",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
+    "data": {
+        "subscriptions": [
+            {
+                "subscription_id": "SUB123456",
+                "status": "ACTIVE",
+                "billing_amount": 1000.00,
+                "billing_currency": "INR",
+                "billing_cycle": "MONTHLY",
+                "payment_start_date": "2024-01-01",
+                "payment_end_date": "2024-12-31"
+            }
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"SUBSCRIPTION_STATUS"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      
+      **Example**: `"2024-02-15 16:53:15"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "1.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"a3791670-7c5d-4a86-aa7a-fe35e58a9dbb"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing subscription details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.subscriptions" type="array" required>
+      Array of subscription objects containing the subscription information
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].subscription_id" type="string" required>
+      Unique subscription identifier
+      
+      **Example**: `"SUB123456"`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].status" type="string" required>
+      Current status of the subscription
+      
+      **Example**: `"ACTIVE"`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].billing_amount" type="number" required>
+      Billing amount for the subscription
+      
+      **Example**: `1000.00`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].billing_currency" type="string" required>
+      Currency code for the billing amount
+      
+      **Example**: `"INR"`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].billing_cycle" type="string" required>
+      Billing cycle frequency
+      
+      **Example**: `"MONTHLY"`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].payment_start_date" type="string" required>
+      Start date for subscription payments in YYYY-MM-DD format
+      
+      **Example**: `"2024-01-01"`
+    </ParamField>
+
+    <ParamField path="data.subscriptions[].payment_end_date" type="string" required>
+      End date for subscription payments in YYYY-MM-DD format
+      
+      **Example**: `"2024-12-31"`
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---
+
