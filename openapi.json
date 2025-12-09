@@ -2579,7 +2579,7 @@
         }
       }
     },
-    "/pg/subscriptions/": {
+    "/pg/subscriptions/intent/": {
       "post": {
         "summary": "Create UPI Subscription (Intent Flow)",
         "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront.",
