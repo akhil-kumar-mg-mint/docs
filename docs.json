@@ -113,7 +113,8 @@
               "api-reference/webhooks/payment-successful",
               "api-reference/webhooks/payment-failed",
               "api-reference/webhooks/payment-refunded",
-              "api-reference/webhooks/payment-settled"
+              "api-reference/webhooks/payment-settled",
+              "api-reference/webhooks/subscription-status"
             ]
           }
         ]
