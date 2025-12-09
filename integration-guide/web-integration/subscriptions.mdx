@@ -255,8 +255,28 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_not
 
 On the scheduled billing date, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/subscriptions/recurring-payment) API.
 
-#### Sample Request
+<Warning>
+**₹15,000 Transaction Limit (RBI Mandate)**
 
+UPI AutoPay has a hard limit of **₹15,000 per transaction** for frictionless recurring payments. For amounts above ₹15,000, customers will be prompted to enter UPI PIN/OTP, converting it to a regular payment transaction instead of automated recurring payment. Structure subscription plans to stay within this limit for true AutoPay functionality.
+</Warning>
+
+<Warning>
+**NPCI UPI AutoPay Retry Rules**
+
+When triggering recurring payments, you must adhere to NPCI's retry guidelines:
+
+- **Maximum Attempts**: 4 attempts total (1 original + 3 retries)
+- **Retry Window**: Within 96 hours from first attempt
+- **Minimum Gap**: At least 1 hour between retry attempts
+- **Peak Hour Restrictions**: Avoid executing during peak hours to minimize failures:
+  - 10:00 AM to 1:00 PM IST
+  - 5:00 PM to 9:30 PM IST
+
+**Recommended retry schedule**: Execute during off-peak hours (2:00 AM - 9:00 AM IST) and space retries 2-3 hours apart for optimal success rates. See [Trigger Recurring Payment API documentation](https://docs.eximpe.com/api-reference/subscriptions/recurring-payment) for detailed retry guidelines.
+</Warning>
+
+#### Sample Request
 ```json
 curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_payment/" \
   -H "Content-Type: application/json" \
@@ -269,7 +289,6 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 ```
 
 #### Response
-
 ```json
 {
   "success": true,
