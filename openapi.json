@@ -2691,7 +2691,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/": {
+    "/pg/subscriptions/": {
       "post": {
         "summary": "Create UPI Subscription",
         "description": "Create a new UPI subscription order with standing instructions (SI).",
@@ -2757,7 +2757,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/": {
+    "/pg/subscriptions/{uid}/": {
       "get": {
         "summary": "Get Subscription Order Details",
         "description": "Retrieve order-level details for a subscription by subscription UID.",
@@ -2803,7 +2803,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/mandate_status/": {
+    "/pg/subscriptions/{uid}/mandate_status/": {
       "get": {
         "summary": "Get Subscription Mandate Status",
         "description": "Fetch the current UPI mandate status for a subscription.",
@@ -2869,7 +2869,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/modify_mandate/": {
+    "/pg/subscriptions/{uid}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate",
         "description": "Update mandate amount and/or end date for a subscription.",
@@ -2946,7 +2946,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/cancel_mandate/": {
+    "/pg/subscriptions/{uid}/cancel_mandate/": {
       "post": {
         "summary": "Cancel Subscription Mandate",
         "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
@@ -3012,7 +3012,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/pre_debit_notification/": {
+    "/pg/subscriptions/{uid}/pre_debit_notification/": {
       "post": {
         "summary": "Send Pre-Debit Notification",
         "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
@@ -3089,7 +3089,7 @@
         }
       }
     },
-    "/partner-api/subscriptions/{uid}/recurring_payment/": {
+    "/pg/subscriptions/{uid}/recurring_payment/": {
       "post": {
         "summary": "Trigger Recurring Payment",
         "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
