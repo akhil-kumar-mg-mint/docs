@@ -5762,7 +5762,8 @@
       "RecurringPaymentRequest": {
         "type": "object",
         "properties": {
-          "amount": { "type": "number", "format": "float" }
+          "amount": { "type": "number", "format": "float" },
+          "invoice_display_number": { "type": "string", "description": "Invoice display number for the recurring payment" }
         }
       },
       "RecurringPaymentResponse": {

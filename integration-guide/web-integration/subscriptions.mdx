@@ -43,45 +43,74 @@ The integration consists of four steps:
 
 ## Step 1: Create Subscription
 
+<Note>
+  **Test/Sandbox Environment Limits**: In test/sandbox environment, there is a lower limit of **₹100** for the `amount` field and **₹200** for the `billing_amount` field in the standing instruction. These limits apply to both Intent Flow and Collection Flow subscriptions.
+</Note>
+
 Use the **Create UPI Subscription** API to create a subscription order and standing instruction. You can use either Intent Flow (QR code/intent) or Collection Flow (requires VPA).
 
 ### Intent Flow
+
+<Note>
+  **Production Only**: Intent Flow can be tested only in production environment. This feature is not available in test/sandbox environments.
+</Note>
 
 Use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment intent.
 
 #### Sample Request (Intent Flow)
 
 ```json
-curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/ \
+curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
   -H "Content-Type: application/json" \
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
   -d '{
     "amount": "1000.00",
-    "currency": "INR",
-    "buyer_name": "John Doe",
-    "buyer_email": "john.doe@example.com",
-    "buyer_phone": "9876543210",
     "collection_mode": "s2s",
-    "preferred_mop_type": "UPI",
-    "preferred_upi_flow_type": "INTENT",
-    "reference_id": "ORD-2024-001",
-    "return_url": "https://example.com/return",
-    "description": "Monthly subscription payment",
+    "currency": "INR",
+    "reference_id": "SUBR8QRLW",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210",
+        "address": {
+            "line_1": "123 Main Street",
+            "line_2": "Apt 4B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400001"
+        },
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+        "name": "Monthly Subscription Plan",
+        "description": "Monthly subscription for premium services",
+        "hs_code": "98051000",
+        "hs_code_description": "Subscription services",
+        "type_of_goods": "service"
+    },
+    "invoice": {
+        "number": "INVMVLSVW",
+        "date": "2025-12-15"
+    },
     "standing_instruction": {
-      "billing_amount": "1000.00",
-      "billing_currency": "INR",
-      "billing_cycle": "MONTHLY",
-      "billing_interval": 1,
-      "payment_start_date": "2025-01-01",
-      "payment_end_date": "2025-12-31",
-      "billing_date": 15,
-      "billing_limit": "AFTER",
-      "billing_rule": "MAX",
-      "remarks": "Monthly subscription"
-    }
-  }'
+        "billing_amount": "1000.00",
+        "billing_currency": "INR",
+        "billing_cycle": "MONTHLY",
+        "billing_interval": 1,
+        "payment_start_date": "2026-01-15",
+        "payment_end_date": "2027-01-15",
+        "billing_date": 1,
+        "billing_limit": "AFTER",
+        "billing_rule": "MAX",
+        "remarks": "Monthly subscription for premium services"
+    },
+    "mop_type": "UPI",
+    "upi_flow_type": "intent",
+    "upi_app_name": "others"
+}'
 ```
 
 #### Response (Intent Flow)
@@ -147,28 +176,51 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/ \
   -H "X-Merchant-ID: <your-merchant-id>" \
   -d '{
     "amount": "1000.00",
+    "collection_mode": "s2s",
     "currency": "INR",
-    "reference_id": "SUB-ORDER-001",
-    "preferred_mop_type": "UPI",
-    "preferred_collection_mode": "S2S",
-    "preferred_upi_flow_type": "COLLECTION",
-    "buyer_name": "John Doe",
-    "buyer_email": "john@example.com",
-    "buyer_phone": "+911234567890",
+    "reference_id": "SUB6ACIQ7",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210",
+        "address": {
+            "line_1": "123 Main Street",
+            "line_2": "Apt 4B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400001"
+        },
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+        "name": "Monthly Subscription Plan",
+        "description": "Monthly subscription for premium services",
+        "hs_code": "98051000",
+        "hs_code_description": "Subscription services",
+        "type_of_goods": "service"
+    },
+    "invoice": {
+        "number": "INVW72Z2G",
+        "date": "2025-12-12"
+    },
     "standing_instruction": {
-      "billing_amount": "1000.00",
-      "billing_currency": "INR",
-      "billing_cycle": "MONTHLY",
-      "billing_interval": 1,
-      "payment_start_date": "2025-01-01",
-      "payment_end_date": "2025-12-31",
-      "billing_date": 5,
-      "billing_limit": "AFTER",
-      "billing_rule": "MAX",
-      "remarks": "Subscription for plan X",
-      "status": "ACTIVE"
-    }
-  }'
+        "billing_amount": "1000.00",
+        "billing_currency": "INR",
+        "billing_cycle": "MONTHLY",
+        "billing_interval": 1,
+        "payment_start_date": "2026-01-12",
+        "payment_end_date": "2027-01-12",
+        "billing_date": 1,
+        "billing_limit": "AFTER",
+        "billing_rule": "MAX",
+        "remarks": "Monthly subscription for premium services"
+    },
+    "mop_type": "UPI",
+    "upi_flow_type": "collection",
+    "vpa": "9999999999@upi",
+    "upi_app_name": "others"
+}'
 ```
 
 #### Response (Collection Flow)
@@ -253,6 +305,10 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_not
 
 ### 3.2 Trigger Recurring Payment
 
+<Note>
+  **Test/Sandbox Environment**: In test/sandbox environment, the recurring payment can be called immediately after the pre-debit notification is sent. The 48-hour (or 24-hour for daily billing) waiting period requirement applies only to production environment.
+</Note>
+
 On the scheduled billing date, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/subscriptions/recurring-payment) API.
 
 #### Sample Request
@@ -264,7 +320,8 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
   -d '{
-    "amount": 1000.00
+    "amount": 1000.00,
+    "invoice_display_number": "INV-2025-001"
   }'
 ```
 
@@ -284,6 +341,10 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 Use the standard [**Get Payment**](https://docs.eximpe.com/api-reference/payment/get) or [**Get Order**](https://docs.eximpe.com/api-reference/order/get) APIs or webhooks to track installment success and failures.
 
 ## Step 4: Modify or Cancel Mandate
+
+<Note>
+  **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
+</Note>
 
 ### 4.1 Modify Mandate
 
