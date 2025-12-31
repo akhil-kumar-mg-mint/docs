@@ -86,7 +86,7 @@ The following tables define all request parameters, including nested objects, ty
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
 | buyer | object | Yes | Buyer/customer details. | See Buyer object |
 | product | object | Yes | Product or service being purchased. | See Product object |
-| invoice | object | No | Invoice metadata. | See Invoice object |
+| invoice | object | Yes | Invoice metadata. | See Invoice object |
 | card_details | object | Conditionally | Card details or token for card payments. | Required if `mop_type` is `credit_card` or `debit_card`; See Card Details |
 
 Notes:
@@ -125,7 +125,7 @@ Notes:
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| number | string | No | Invoice number. | Max 255 chars; letters, numbers, dashes/slashes |
+| number | string | Yes | Invoice number. | Max 255 chars; letters, numbers, dashes/slashes |
 | date | string | No | Invoice date (ISO 8601). | Format: `YYYY-MM-DD` |
 
 #### Card Details

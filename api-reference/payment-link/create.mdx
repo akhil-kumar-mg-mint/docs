@@ -1,0 +1,30 @@
+---
+title: 'Create Payment Link'
+openapi: 'POST /pg/payment-links/'
+---
+
+## Overview
+
+The Create Payment Link endpoint allows you to generate a unique URL that you can share with your customers to collect payments. This is ideal for businesses that don't have a full website integration or want to collect payments via chat, email, or SMS.
+
+## Key Features
+
+- **Customizable Expiry**: Set how long the link remains valid.
+- **Buyer Information**: Pre-fill buyer details to simplify their checkout experience.
+- **Product Details**: Include what the payment is for.
+- **Instant Sharing**: Get a link that can be shared immediately.
+
+## Request Parameters
+
+The request body follows the same structure as the [Create Order](/api-reference/order/create) API, but it's specifically optimized for generating shareable links.
+
+### Required Fields
+- `amount`: The amount to collect.
+- `currency`: Currently supports `INR`.
+- `reference_id`: Your internal reference for this payment.
+- `buyer`: Customer details (name, email, phone, address).
+- `product`: Details of the item or service.
+- `invoice`: Invoice number and date.
+
+### Optional Fields
+- `expiry_date`: When the link should expire (ISO 8601 format). Defaults to 1 year if not provided.

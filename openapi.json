@@ -1587,8 +1587,8 @@
                     "settlement_id": "ST4353980017",
                     "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
                     "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
-                    "forex_rate_cents": 8600,
-                    "settlement_amount_cents": 100000,
+                    "forex_rate": 86,
+                    "settlement_amount": 1000,
                     "settlement_currency": "USD",
                     "transactions": [
                       {
@@ -1650,8 +1650,8 @@
                     "settlement_id": "ST4353980017",
                     "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
                     "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
-                    "forex_rate_cents": 8600,
-                    "settlement_amount_cents": 100000,
+                    "forex_rate": 86,
+                    "settlement_amount": 1000,
                     "settlement_currency": "USD",
                     "transactions": [
                       {
@@ -2583,7 +2583,9 @@
       "post": {
         "summary": "Create UPI Subscription (Intent Flow)",
         "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2717,7 +2719,9 @@
       "post": {
         "summary": "Create UPI Subscription",
         "description": "Create a new UPI subscription order with standing instructions (SI).",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2784,7 +2788,9 @@
       "get": {
         "summary": "Get Subscription Order Details",
         "description": "Retrieve order-level details for a subscription by subscription UID.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2831,7 +2837,9 @@
       "get": {
         "summary": "Get Subscription Mandate Status",
         "description": "Fetch the current UPI mandate status for a subscription.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2898,7 +2906,9 @@
       "post": {
         "summary": "Modify Subscription Mandate",
         "description": "Update mandate amount and/or end date for a subscription.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -2976,7 +2986,9 @@
       "post": {
         "summary": "Cancel Subscription Mandate",
         "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -3043,7 +3055,9 @@
       "post": {
         "summary": "Send Pre-Debit Notification",
         "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -3121,7 +3135,9 @@
       "post": {
         "summary": "Trigger Recurring Payment",
         "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
-        "tags": ["Subscriptions"],
+        "tags": [
+          "Subscriptions"
+        ],
         "security": [
           {
             "clientAuth": [],
@@ -3194,7 +3210,303 @@
           }
         }
       }
-    }
+    },
+    "/pg/payment-links/": {
+      "post": {
+        "summary": "Create Payment Link",
+        "description": "Create a new payment link to collect payments from customers.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment link created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePaymentLinkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Payment Links",
+        "description": "Retrieve a paginated list of payment links.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of payment links retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPaymentLinksResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{paymentLinkId}/": {
+      "get": {
+        "summary": "Retrieve Payment Link",
+        "description": "Get detailed information about a specific payment link.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment link details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentLinkDetailsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment link not found"
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{paymentLinkId}/extend_expiry/": {
+      "post": {
+        "summary": "Extend Payment Link Expiry",
+        "description": "Extend the expiry date of an active payment link.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expiry_date"
+                ],
+                "properties": {
+                  "expiry_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "New expiry date in UTC"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment link expiry extended successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{paymentLinkId}/deactivate/": {
+      "post": {
+        "summary": "Deactivate Payment Link",
+        "description": "Deactivate an active payment link to prevent further payments.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment link deactivated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{paymentLinkId}/share/": {
+      "post": {
+        "summary": "Share Payment Link",
+        "description": "Send payment link to customers via email or SMS.",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentLinkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharePaymentLinkRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment link shared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
   },
   "components": {
     "schemas": {
@@ -3756,8 +4068,9 @@
             "description": "Unique reference identifier for the order"
           },
           "amount": {
-            "type": "number",
-            "description": "Order amount"
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
           },
           "currency": {
             "type": "string",
@@ -4275,7 +4588,8 @@
             "properties": {
               "amount": {
                 "type": "string",
-                "description": "Payment amount"
+                "description": "Amount in decimal format (e.g., \"100.00\")",
+                "pattern": "^\\d+\\.\\d{2}$"
               },
               "total_amount": {
                 "type": "string",
@@ -4514,13 +4828,13 @@
             "format": "date-time",
             "description": "The timestamp of when the settlement was completed."
           },
-          "forex_rate_cents": {
+          "forex_rate": {
             "type": "integer",
-            "description": "Forex rate in cents (e.g., 8600 represents 86.00)."
+            "description": "Forex rate."
           },
-          "settlement_amount_cents": {
+          "settlement_amount": {
             "type": "integer",
-            "description": "Settlement amount in cents (e.g., 100000 represents 1000.00)."
+            "description": "Settlement amount."
           },
           "settlement_currency": {
             "type": "string",
@@ -5348,9 +5662,9 @@
                 "description": "Order reference identifier"
               },
               "amount": {
-                "type": "number",
-                "format": "float",
-                "description": "Order amount"
+                "type": "string",
+                "description": "Amount in decimal format (e.g., \"100.00\")",
+                "pattern": "^\\d+\\.\\d{2}$"
               },
               "currency": {
                 "type": "string",
@@ -5596,22 +5910,59 @@
         "type": "object",
         "description": "Standing instruction configuration for a subscription",
         "properties": {
-          "billing_amount": { "type": "string", "description": "Billing amount per cycle" },
-          "billing_currency": { "type": "string", "description": "Currency for billing amount" },
-          "billing_cycle": { "type": "string", "description": "Billing cycle (e.g. MONTHLY)" },
-          "billing_interval": { "type": "integer", "description": "Interval between each billing cycle" },
-          "payment_start_date": { "type": "string", "format": "date", "description": "Subscription start date (YYYY-MM-DD)" },
-          "payment_end_date": { "type": "string", "format": "date", "description": "Subscription end date (YYYY-MM-DD)" },
-          "billing_date": { "type": "integer", "description": "Day of month for billing" },
-          "billing_limit": { "type": "string", "description": "Billing limit rule (e.g. BEFORE, AFTER)" },
-          "billing_rule": { "type": "string", "description": "Billing rule (e.g. MAX)" },
-          "remarks": { "type": "string", "description": "Subscription remarks" },
-          "status": { "type": "string", "description": "Subscription status" }
+          "billing_amount": {
+            "type": "string",
+            "description": "Billing amount per cycle"
+          },
+          "billing_currency": {
+            "type": "string",
+            "description": "Currency for billing amount"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "description": "Billing cycle (e.g. MONTHLY)"
+          },
+          "billing_interval": {
+            "type": "integer",
+            "description": "Interval between each billing cycle"
+          },
+          "payment_start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription start date (YYYY-MM-DD)"
+          },
+          "payment_end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription end date (YYYY-MM-DD)"
+          },
+          "billing_date": {
+            "type": "integer",
+            "description": "Day of month for billing"
+          },
+          "billing_limit": {
+            "type": "string",
+            "description": "Billing limit rule (e.g. BEFORE, AFTER)"
+          },
+          "billing_rule": {
+            "type": "string",
+            "description": "Billing rule (e.g. MAX)"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Subscription remarks"
+          },
+          "status": {
+            "type": "string",
+            "description": "Subscription status"
+          }
         }
       },
       "CreateSubscriptionRequest": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateOrderRequest" },
+          {
+            "$ref": "#/components/schemas/CreateOrderRequest"
+          },
           {
             "type": "object",
             "properties": {
@@ -5624,18 +5975,36 @@
       },
       "CreateSubscriptionResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "order_id": { "type": "string" },
-              "subscription_type": { "type": "string" },
-              "payment_link": { "type": "string" },
-              "acstemplate": { "type": "string" },
-              "subscription_id": { "type": "string" },
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string"
+              },
+              "acstemplate": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
               "subscription": {
                 "$ref": "#/components/schemas/StandingInstruction"
               }
@@ -5645,14 +6014,21 @@
       },
       "CreateSubscriptionIntentRequest": {
         "allOf": [
-          { "$ref": "#/components/schemas/CreateOrderRequest" },
+          {
+            "$ref": "#/components/schemas/CreateOrderRequest"
+          },
           {
             "type": "object",
-            "required": ["preferred_upi_flow_type", "standing_instruction"],
+            "required": [
+              "preferred_upi_flow_type",
+              "standing_instruction"
+            ],
             "properties": {
               "preferred_upi_flow_type": {
                 "type": "string",
-                "enum": ["INTENT"],
+                "enum": [
+                  "INTENT"
+                ],
                 "description": "Must be 'INTENT' for Intent flow subscriptions"
               },
               "standing_instruction": {
@@ -5664,22 +6040,45 @@
       },
       "CreateSubscriptionIntentResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "order_id": { "type": "string" },
-              "subscription_id": { "type": "string" },
-              "subscription_type": { "type": "string" },
-              "payment_link": { "type": "string", "description": "UPI Intent URI for mandate approval" },
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string",
+                "description": "UPI Intent URI for mandate approval"
+              },
               "qr_code": {
                 "type": "object",
                 "properties": {
-                  "url": { "type": "string", "description": "Full UPI URL for QR code scanning" },
-                  "base64": { "type": "string", "description": "Base64-encoded QR code image (PNG format)" }
+                  "url": {
+                    "type": "string",
+                    "description": "Full UPI URL for QR code scanning"
+                  },
+                  "base64": {
+                    "type": "string",
+                    "description": "Base64-encoded QR code image (PNG format)"
+                  }
                 }
               },
               "subscription": {
@@ -5691,34 +6090,66 @@
       },
       "GetSubscriptionOrderResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "order_id": { "type": "string" },
-              "reference_id": { "type": "string" },
-              "amount": { "type": "string" },
-              "currency": { "type": "string" },
-              "status": { "type": "string" },
-              "subscription_type": { "type": "string" }
+              "order_id": {
+                "type": "string"
+              },
+              "reference_id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "GetSubscriptionMandateStatusResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "subscription_id": { "type": "string" },
-              "mandate_is_active": { "type": "boolean" }
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_is_active": {
+                "type": "boolean"
+              }
             }
           }
         }
@@ -5726,64 +6157,129 @@
       "ModifySubscriptionMandateRequest": {
         "type": "object",
         "properties": {
-          "amount": { "type": "number", "format": "float" },
-          "end_date": { "type": "string", "format": "date" }
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          }
         }
       },
       "ModifySubscriptionMandateResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "subscription_id": { "type": "string" },
-              "mandate_modified": { "type": "boolean" },
-              "updated_amount": { "type": "string" },
-              "updated_end_date": { "type": "string", "format": "date" }
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_modified": {
+                "type": "boolean"
+              },
+              "updated_amount": {
+                "type": "string"
+              },
+              "updated_end_date": {
+                "type": "string",
+                "format": "date"
+              }
             }
           }
         }
       },
       "CancelSubscriptionMandateResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "subscription_id": { "type": "string" },
-              "mandate_cancelled": { "type": "boolean" },
-              "subscription_status": { "type": "string" }
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_cancelled": {
+                "type": "boolean"
+              },
+              "subscription_status": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "PreDebitNotificationRequest": {
         "type": "object",
-        "required": ["debit_date", "amount"],
+        "required": [
+          "debit_date",
+          "amount"
+        ],
         "properties": {
-          "debit_date": { "type": "string", "format": "date" },
-          "amount": { "type": "number", "format": "float" }
+          "debit_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          }
         }
       },
       "PreDebitNotificationResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "subscription_id": { "type": "string" },
-              "debit_date": { "type": "string", "format": "date" },
-              "amount": { "type": "string" },
-              "notification_sent": { "type": "boolean" }
+              "subscription_id": {
+                "type": "string"
+              },
+              "debit_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "notification_sent": {
+                "type": "boolean"
+              }
             }
           }
         }
@@ -5791,25 +6287,408 @@
       "RecurringPaymentRequest": {
         "type": "object",
         "properties": {
-          "amount": { "type": "number", "format": "float" },
-          "invoice_display_number": { "type": "string", "description": "Invoice display number for the recurring payment" }
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "invoice_display_number": {
+            "type": "string",
+            "description": "Invoice display number for the recurring payment"
+          }
         }
       },
       "RecurringPaymentResponse": {
         "type": "object",
-        "required": ["success", "message", "data"],
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
-          "success": { "type": "boolean" },
-          "message": { "type": "string" },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "order_id": { "type": "string" },
-              "message": { "type": "string" }
+              "order_id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
             }
           }
         }
-      }
+      },
+      "CreatePaymentLinkRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "reference_id",
+          "buyer",
+          "product",
+          "invoice"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "float"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique identifier for the order"
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiry date in UTC"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "email",
+              "phone",
+              "address"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number with country code"
+              },
+              "send_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "send_email": {
+                "type": "boolean",
+                "default": false
+              },
+              "address": {
+                "$ref": "#/components/schemas/Address"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "required": [
+              "name",
+              "type_of_goods"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "type_of_goods": {
+                "type": "string",
+                "enum": [
+                  "goods",
+                  "services"
+                ]
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "number"
+            ],
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Alphanumeric invoice number"
+              }
+            }
+          }
+        }
+      },
+      "CreatePaymentLinkResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "payment_id": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string",
+                "format": "uri"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ListPaymentLinksResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "payment_id": {
+                      "type": "string"
+                    },
+                    "payment_link": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "reference_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "object",
+                      "properties": {
+                        "amount": {
+                          "type": "string"
+                        },
+                        "total_amount": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "buyer": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "PaymentLinkDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "payment_id": {
+                "type": "string"
+              },
+              "reference_id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string",
+                "format": "uri"
+              },
+              "status": {
+                "type": "string"
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "buyer": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "$ref": "#/components/schemas/Address"
+                  },
+                  "pan_number": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dob": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "product": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hs_code": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hs_code_description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "type_of_goods": {
+                    "type": "string"
+                  }
+                }
+              },
+              "invoice": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true
+                  }
+                }
+              },
+              "settlement": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "settlement_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "properties": {
+                      "settlement_id": {
+                        "type": "string"
+                      },
+                      "settlement_completed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "utr_number": {
+                        "type": "string"
+                      },
+                      "merchant_net_amount": {
+                        "type": "string"
+                      },
+                      "settlement_currency": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "SharePaymentLinkRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "phone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
     },
     "securitySchemes": {
       "clientAuth": {

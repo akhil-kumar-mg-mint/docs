@@ -1,0 +1,17 @@
+---
+title: 'Share Link'
+openapi: 'POST /pg/payment-links/{paymentLinkId}/share/'
+---
+
+## Overview
+
+Trigger automated notifications to share the payment link with your customers via Email or SMS.
+
+## Path Parameters
+
+- `paymentLinkId`: The unique identifier of the payment link.
+
+## Request Body
+
+- `email`: A list of email addresses to send the link to.
+- `phone`: A list of phone numbers (with country code) to send the link to.
