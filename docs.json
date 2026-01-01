@@ -23,7 +23,6 @@
               "integration-guide/getting-started/account-activation",
               "integration-guide/getting-started/adding-merchants",
               "integration-guide/getting-started/faqs"
-
             ]
           },
           {
@@ -57,7 +56,7 @@
             "group": "Payment",
             "pages": [
               "api-reference/payment/list",
-              "api-reference/payment/get"  
+              "api-reference/payment/get"
             ]
           },
           {
@@ -85,7 +84,7 @@
               "api-reference/settlement/get"
             ]
           },
-           {
+          {
             "group": "Refund",
             "pages": [
               "api-reference/refunds/create",
@@ -107,6 +106,17 @@
             ]
           },
           {
+            "group": "Payment Links",
+            "pages": [
+              "api-reference/payment-link/create",
+              "api-reference/payment-link/list",
+              "api-reference/payment-link/retrieve",
+              "api-reference/payment-link/extend-expiry",
+              "api-reference/payment-link/deactivate",
+              "api-reference/payment-link/share"
+            ]
+          },
+          {
             "group": "Webhooks",
             "pages": [
               "api-reference/webhooks/merchant-approved",
@@ -120,8 +130,7 @@
         ]
       }
     ],
-    "global": {
-    }
+    "global": {}
   },
   "logo": {
     "light": "/logo/Black.svg",
@@ -142,9 +151,9 @@
   },
   "footer": {
     "socials": {
-      "facebook":"https://www.facebook.com/eximpe/",
-      "twitter":"https://x.com/eximpe",
-      "instagram" : "https://www.instagram.com/exim.pe/?hl=en",
+      "facebook": "https://www.facebook.com/eximpe/",
+      "twitter": "https://x.com/eximpe",
+      "instagram": "https://www.instagram.com/exim.pe/?hl=en",
       "linkedin": "https://www.linkedin.com/company/eximpe/?viewAsMember=true"
     }
   }
