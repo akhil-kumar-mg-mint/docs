@@ -335,10 +335,10 @@ For repeat payments, use the saved token instead of card details:
 
 ## Step 3: Check Payment Transaction Status
 
-Use the Order Details API to retrieve the current payment status:
+Use the Order Status API to retrieve the current payment status:
 
 ```bash
-curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/ \
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
   -H "X-Merchant-ID: YOUR_MERCHANT_ID"

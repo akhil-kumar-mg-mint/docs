@@ -38,6 +38,7 @@ Server-to-server card payment flow with 3D Secure authentication. For new cards,
 - `return_url`: URL to redirect after payment completion
 - `buyer`: Buyer details object
 - `product`: Product details object
+- `invoice`: Invoice details object
 
 ### Optional Parameters
 - `collection_mode`: Payment collection mode (`hosted_payment` or `s2s`)
@@ -45,7 +46,6 @@ Server-to-server card payment flow with 3D Secure authentication. For new cards,
 - `upi_flow_type`: UPI flow type (`intent` or `collection`) - required when using S2S with UPI
 - `vpa`: Virtual Payment Address - required when `upi_flow_type` is `collection`
 - `upi_app_name`: Preferred UPI app - optional, defaults to `others`
-- `invoice`: Invoice details object
 - `card_details`: Card information object - required when `mop_type` is `credit_card` or `debit_card`
 
 ### Card Payment Specific Parameters
