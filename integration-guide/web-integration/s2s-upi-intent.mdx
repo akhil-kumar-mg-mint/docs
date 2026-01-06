@@ -12,7 +12,7 @@ The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by
     Initiate transactions directly from your server to improve user experience
   </Card>
   <Card title="Flexible Intent Invocation" icon="phone" href="#step-2-invoke-upi-intent">
-    Support both generic and app-specific UPI intents on mobile web and Android apps
+    Call the Initiate Payment API when the user selects an app (Mobile) or scans a QR code (Desktop)
   </Card>
   <Card title="Robust Server Callbacks" icon="server" href="#step-4-server-to-server-callback">
     Receive asynchronous status updates via server-to-server callbacks
@@ -34,18 +34,32 @@ Before you begin, ensure you have:
 
 The following steps allow you to integrate the server-to-server UPI intent:
 
-1. **Initiate payment**
-2. **Invoke UPI Intent on customer’s device**
-3. **Check UPI transaction status**
-4. **EximPe sends Server-to-Server callback response**
+1. **User selects UPI App (Mobile) or QR Code (Desktop)** on your frontend.
+2. **Frontend calls your Backend** to initiate the payment.
+3. **Backend calls EximPe Initiate Payment API** to get the `intent_uri`.
+4. **Backend returns `intent_uri`** to the Frontend.
+5. **Frontend invokes the UPI Intent** on the customer’s device.
+6. **Check UPI transaction status** via API or Webhook.
 
-   ### **Process flow**
+## Step 1: Payment Page UI
 
-   ![image.png](/images/image.png)
+Design your payment page to allow users to select their preferred UPI method.
 
-## Step 1: Initiate payment
+#### Desktop (PC)
 
-#### Sample UPI Collection Request Body
+On desktop browsers, prepare a container to display a **QR Code**. When the user proceeds, you will generate this QR code from the intent URI.
+
+#### Mobile (Android & iOS)
+
+<img src="/images/upi-app-selection.png" alt="UPI App Selection UI" style={{ width: '200px', float: 'right', marginLeft: '20px', marginBottom: '20px' }} />
+
+For mobile devices, design a list of popular UPI apps (like Google Pay, PhonePe, Paytm) for the buyer to select from. This provides the best user experience.
+
+## Step 2: Initiate Payment
+
+When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or selects "Show QR" on desktop, your backend should call this API to generate the `intent_uri`.
+
+#### Sample UPI Intent Request Body
 
 ```json
 {
@@ -122,17 +136,57 @@ For S2S UPI Intent mode, the response includes:
 | `tid`    | `TXNID98765`    | No       | Transaction ID — a unique transaction ID (sometimes required by specific apps, e.g., Google Pay) |
 | `tn`     | `Order Payment` | No       | Transaction Note — a short note or description for the payment                                   |
 
-### Step 2: Invoke UPI Intent on Customer’s Device
+## Step 3: Invoke UPI Intent
 
-The method for invoking a UPI payment depends on the customer's operating system. Android uses intent-based deep links for better reliability and fallback, while iOS relies on specific URL schemes.
+The method for invoking a UPI payment depends on the customer's device and operating system.
 
-#### Android (Chrome Intent-Based)
+#### Desktop (PC)
 
-On Android, it is highly recommended to use the **Intent URL format**. This method allows you to target a specific UPI app directly from the browser.
+On desktop browsers, display the **QR Code** generated from the `intent_uri`.
 
-**Format:**
+**Implementation:**
+1. Prefix the `intent_uri` with `upi://pay?`
+2. Use a QR code generation library or API to convert the full URI into a QR code image.
+3. Display the QR code prominently with instructions like "Scan to Pay".
+
+***PC Specific App Format***:
+```text
+upi://pay?<intent_uri>
 ```
-intent://pay?<upi_params>#Intent;scheme=upi;package=<package_name>;end;
+
+
+**Examples:**
+
+<CodeGroup>
+```text
+upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
+```
+</CodeGroup>
+
+#### Mobile (Android & iOS)
+
+For mobile devices, launch the selected UPI app using deep links constructed with the `intent_uri`.
+
+##### 1. Specific App Invocation (Android & iOS)
+
+To target a specific app, use the following schemes:
+
+| UPI App      | Android Package Name (for Intent URL)    | iOS URL Scheme Prefix |
+| ------------ | ---------------------------------------- | --------------------- |
+| Google Pay   | `com.google.android.apps.nbu.paisa.user` | `gpay://upi/pay?`     |
+| PhonePe      | `com.phonepe.app`                        | `phonepe://upi/pay?`  |
+| BHIM         | `in.org.npci.upiapp`                     | `bhim://upi/pay?`     |
+| Paytm        | `net.one97.paytm`                        | `paytmmp://upi/pay?`  |
+| Amazon Pay   | `in.amazon.mShop.android.shopping`       | `amazonpay://upi/pay?`|
+| CRED         | `com.dreamplug.androidapp`               | `credpay://upi/pay?`  |
+| Supermoney   | `money.super.payments`                   | `super://pay?`        |
+| Fi Money     | `com.fi.money`                           | `fi://upi/pay?`       |
+| Jupiter      | `money.jupiter`                          | `jupiter://upi/pay?`  |
+| Slice        | `indwin.c3.shareapp`                     | `slice://upi/pay?`    |
+
+**Android Specific App Format:**
+```
+intent://pay?<intent_uri>#Intent;scheme=upi;package=<package_name>;end;
 ```
 
 **Examples:**
@@ -155,23 +209,10 @@ intent://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123#Intent;scheme
 ```
 </CodeGroup>
 
-| UPI App      | Android Package Name                     |
-| ------------ | ---------------------------------------- |
-| Google Pay   | `com.google.android.apps.nbu.paisa.user` |
-| PhonePe      | `com.phonepe.app`                        |
-| BHIM         | `in.org.npci.upiapp`                     |
-| Paytm        | `net.one97.paytm`                        |
-| Amazon Pay   | `in.amazon.mShop.android.shopping`       |
-| WhatsApp     | `com.whatsapp`                           |
-| CRED         | `com.dreamplug.androidapp`               |
-| Supermoney   | `money.super.payments`                   |
-| Fi Money     | `com.fi.money`                           |
-| Jupiter      | `money.jupiter`                          |
-| Slice        | `indwin.c3.shareapp`                     |
-
-#### iOS (URL Schemes)
-
-On iOS, you must use specific URL schemes to launch each app. If you want to show a generic picker, you can use the `upi://` scheme, though its behavior depends on the default handler set on the device.
+**iOS Specific App Format:**
+```
+<scheme_prefix><intent_uri>
+```
 
 **Examples:**
 
@@ -193,22 +234,29 @@ paytmmp://upi/pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
 ```
 </CodeGroup>
 
-| UPI App      | iOS URL Scheme Prefix |
-| ------------ | --------------------- |
-| BHIM         | `bhim://upi/pay?`     |
-| Google Pay   | `gpay://upi/pay?`     |
-| PhonePe      | `phonepe://upi/pay?`  |
-| Paytm        | `paytmmp://upi/pay?`  |
-| Amazon Pay   | `amazonpay://upi/pay?`|
-| CRED         | `credpay://upi/pay?`  |
-| Supermoney   | `super://pay?`        |
-| Fi Money     | `fi://upi/pay?`       |
-| Jupiter      | `jupiter://upi/pay?`  |
-| Slice        | `slice://upi/pay?`    |
-| Generic      | `upi://pay?`          |
+##### 2. Generic Intent Invocation
+
+If you want to allow the user to choose from any available UPI app or use their default handler, use the following scheme:
+
+| Type           | Scheme Prefix | Description                                      |
+| -------------- | ------------- | ------------------------------------------------ |
+| **General UPI**| `upi://pay?`  | Launches the system's default UPI handler        |
+
+**Example:**
+```text
+upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
+```
 
 <Note>
-  **Pro Tip:** For the best user experience, detect the user's OS via the User-Agent and dynamically generate the appropriate link. Always provide a "Copy UPI ID" or "Generic UPI" option as a fallback.
+  - **On Android**: Invoking `upi://pay?` will open the system's app tray (the "Complete action using" dialog), allowing the buyer to select from all installed UPI apps.
+
+  <img src="/images/android-app-tray.jpg" alt="Android App Tray UI" style={{ width: '200px' }} />
+
+  - **On iOS**: Invoking `upi://pay?` will directly open the default UPI app configured on the device.
+</Note>
+
+<Note>
+  **Pro Tip:** For the best user experience, detect the user's device type. Show a QR code on Desktop and a list of UPI apps (or a "Pay via UPI" button) on Mobile.
 </Note>
 
 ### Step 3: Check UPI Transaction Status

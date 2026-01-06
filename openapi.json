@@ -87,7 +87,6 @@
                     "collection_mode": "s2s",
                     "mop_type": "upi",
                     "upi_flow_type": "intent",
-                    "upi_app_name": "google_pay",
                     "buyer": {
                       "name": "Rajesh Kumar",
                       "email": "rajesh.kumar@innovatetech.com",
@@ -102,35 +101,6 @@
                     "product": {
                       "name": "Samsung Galaxy S24 Ultra 5G",
                       "description": "Latest flagship Android smartphone with 512GB storage and S Pen",
-                      "type_of_goods": "goods"
-                    }
-                  }
-                },
-                "S2S UPI Collection": {
-                  "summary": "UPI Collection (S2S)",
-                  "description": "Server-to-server UPI collection flow",
-                  "value": {
-                    "amount": "89999.00",
-                    "currency": "INR",
-                    "reference_id": "ORD_2024_LP_009012",
-                    "collection_mode": "s2s",
-                    "mop_type": "upi",
-                    "upi_flow_type": "collection",
-                    "vpa": "aniket.verma@okaxis",
-                    "buyer": {
-                      "name": "Aniket Verma",
-                      "email": "aniket.verma@digitalsolutions.co.in",
-                      "phone": "+919876501234",
-                      "address": {
-                        "line_1": "301, Prestige Tech Park, Outer Ring Road",
-                        "city": "Bangalore",
-                        "state": "Karnataka",
-                        "postal_code": "560037"
-                      }
-                    },
-                    "product": {
-                      "name": "ASUS ROG Strix G15 Gaming Laptop",
-                      "description": "High-performance gaming laptop with RTX 4060, 16GB RAM, 1TB SSD",
                       "type_of_goods": "goods"
                     }
                   }
@@ -259,18 +229,6 @@
                       "data": {
                         "intent_uri": "pa=rajesh.kumar@okaxis&pn=Rajesh%20Kumar&tr=624857392104738291&tid=EXIMPE624857392104738291120425184729&am=24999.00&cu=INR&tn=Samsung%20Galaxy%20S24%20Ultra%205G",
                         "order_id": "OD2024120567890"
-                      }
-                    }
-                  },
-                  "S2S UPI Collection": {
-                    "summary": "UPI Collection (S2S)",
-                    "description": "Response for S2S UPI Collection mode",
-                    "value": {
-                      "success": true,
-                      "message": "S2S UPI Request created successfully",
-                      "data": {
-                        "order_id": "OD2024120789012",
-                        "message": "UPI Collection request sent to aniket.verma@okaxis"
                       }
                     }
                   },
@@ -2644,8 +2602,7 @@
                   "remarks": "Monthly subscription for premium services"
                 },
                 "mop_type": "UPI",
-                "upi_flow_type": "intent",
-                "upi_app_name": "others"
+                "upi_flow_type": "intent"
               }
             }
           }
@@ -3564,25 +3521,6 @@
             "enum": [
               "intent",
               "collection"
-            ]
-          },
-          "vpa": {
-            "type": "string",
-            "description": "Virtual Payment Address (required when upi_flow_type is collection)",
-            "pattern": "^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$"
-          },
-          "upi_app_name": {
-            "type": "string",
-            "description": "UPI app name (optional, defaults to 'others')",
-            "enum": [
-              "bhim",
-              "paytm",
-              "google_pay",
-              "phonepe",
-              "cred",
-              "amazon_pay",
-              "whatsapp",
-              "others"
             ]
           },
           "buyer": {
