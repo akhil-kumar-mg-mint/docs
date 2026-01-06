@@ -10,7 +10,6 @@ The Create Order endpoint is the first step in the payment flow across all colle
 After creating an order, the response depends on the selected mode:
 - Hosted Payment: returns a `session_id` and `order_id` for redirecting customers to the checkout page
 - S2S UPI Intent: returns an `order_id` and `intent_uri`
-- S2S UPI Collection: returns an `order_id` and a confirmation `message`
 - S2S Card: returns an `order_id` and an `acs_template` (Base64) for 3D Secure
 
 ## Payment Collection Modes
@@ -23,10 +22,7 @@ The standard hosted payment flow where customers are redirected to EximPe's secu
 ### 2. S2S UPI Intent
 Server-to-server UPI intent flow that generates a UPI intent link for direct app-to-app payments.
 
-### 3. S2S UPI Collection
-Server-to-server UPI collection flow that sends a payment request directly to the customer's UPI App.
-
-### 4. S2S Card Payment
+### 3. S2S Card Payment
 Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/card-tokens/save) after successful payment.
 
 ## Request Parameters
@@ -43,9 +39,7 @@ Server-to-server card payment flow with 3D Secure authentication. For new cards,
 ### Optional Parameters
 - `collection_mode`: Payment collection mode (`hosted_payment` or `s2s`)
 - `mop_type`: Method of payment (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`)
-- `upi_flow_type`: UPI flow type (`intent` or `collection`) - required when using S2S with UPI
-- `vpa`: Virtual Payment Address - required when `upi_flow_type` is `collection`
-- `upi_app_name`: Preferred UPI app - optional, defaults to `others`
+- `upi_flow_type`: UPI flow type (`intent`) - required when using S2S with UPI
 - `card_details`: Card information object - required when `mop_type` is `credit_card` or `debit_card`
 
 ### Card Payment Specific Parameters
@@ -81,8 +75,6 @@ The following tables define all request parameters, including nested objects, ty
 | collection_mode | string | No | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; default `hosted_payment` |
 | mop_type | string | No | Method of payment. | Enum: `upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr` |
 | upi_flow_type | string | Conditionally | UPI flow when `mop_type` is `UPI` and `collection_mode` is `s2s`. | Required if `mop_type=UPI` and `collection_mode=s2s`; Enum: `intent`, `collection` |
-| vpa | string | Conditionally | Customer VPA for UPI collection. | Required if `upi_flow_type=collection`; Format: `username@bank` |
-| upi_app_name | string | No | Preferred UPI app for intent optimization. | Enum (examples): `google_pay`, `phonepe`, `paytm`, `bhim`, `amazon_pay`, `others`; default `others` |
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
 | buyer | object | Yes | Buyer/customer details. | See Buyer object |
 | product | object | Yes | Product or service being purchased. | See Product object |
@@ -162,11 +154,6 @@ For S2S UPI Intent mode, the response includes:
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
 
-### S2S UPI Collection Response
-For S2S UPI Collection mode, the response includes:
-- `order_id`: Unique order identifier
-- `message`: Confirmation message about the collection request sent to the VPA
-
 ### S2S Card Payment Response
 For S2S Card Payment mode, the response includes:
 - `order_id`: Unique order identifier
@@ -212,7 +199,6 @@ For S2S Card Payment mode, the response includes:
   "collection_mode": "s2s",
   "mop_type": "upi",
   "upi_flow_type": "intent",
-  "upi_app_name": "google_pay",
   "buyer": {
     "name": "John Doe",
     "email": "john.doe@example.com",
@@ -226,33 +212,6 @@ For S2S Card Payment mode, the response includes:
   },
   "product": {
     "name": "Smartphone", 
-    "type_of_goods": "goods"
-  }
-}
-```
-
-```json S2S UPI Collection
-{
-  "amount": "1500.00",
-  "currency": "INR",
-  "reference_id": "ORDER_123458",
-  "collection_mode": "s2s", 
-  "mop_type": "upi",
-  "upi_flow_type": "collection",
-  "vpa": "customer@paytm",
-  "buyer": {
-    "name": "Sarah Wilson",
-    "email": "sarah.wilson@example.com", 
-    "phone": "+919123456789",
-    "address": {
-      "line_1": "456 Park Avenue",
-      "city": "Bangalore",
-      "state": "Karnataka",
-      "postal_code": "560001"
-    }
-  },
-  "product": {
-    "name": "Laptop",
     "type_of_goods": "goods"
   }
 }
@@ -373,17 +332,6 @@ For S2S Card Payment mode, the response includes:
 }
 ```
 
-```json S2S UPI Collection Response
-{
-  "success": true,
-  "message": "S2S UPI Request created successfully", 
-  "data": {
-    "order_id": "OD1927283599",
-    "message": "UPI Collection request sent to john.doe@payu"
-  }
-}
-```
-
 ```json S2S Card Payment Response
 {
   "success": true,
@@ -401,9 +349,6 @@ For S2S Card Payment mode, the response includes:
 
 ### UPI Payments
 - **S2S UPI Intent**: The response includes a UPI intent link that can be used to open UPI apps directly
-- **S2S UPI Collection**: A payment request is sent to the provided VPA, and the customer receives a notification
-- **UPI App Optimization**: The `upi_app_name` parameter helps optimize the intent link for specific UPI applications
-- **VPA Format**: Must follow the pattern `username@bank` (e.g., `user@paytm`, `9876543210@ybl`)
 
 ### Card Payments
 - **3D Secure Flow**: For new cards, the system initiates 3D Secure verification

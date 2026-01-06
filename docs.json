@@ -31,7 +31,6 @@
               "integration-guide/web-integration/hosted-checkout",
               "integration-guide/web-integration/s2s-card-payment",
               "integration-guide/web-integration/s2s-upi-intent",
-              "integration-guide/web-integration/s2s-upi-collection",
               "integration-guide/web-integration/subscriptions",
               "integration-guide/web-integration/webhooks",
               "integration-guide/web-integration/test-data"
