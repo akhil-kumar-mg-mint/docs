@@ -61,7 +61,8 @@ For first-time card payments, provide complete card details:
     "expiry_year": "2030",
     "cvv": "123",
     "network": "visa",
-    "identifier": "EX0001"
+    "identifier": "EX0001",
+    "save_card": true
   },
   "buyer": {
     "name": "John Doe",
@@ -143,7 +144,7 @@ For repeat payments using previously saved cards:
   - `mop_type`: either `"CREDIT_CARD"` or `"DEBIT_CARD"`
   - `buyer.ip_address`: the customer's device IP address (used for fraud prevention)
   - `buyer.user_agent`: the customer's browser user-agent string (used for fraud prevention)
-  - `card_details`: either complete card information or saved token details
+  - `card_details`: either complete card information (including optional `save_card: true`) or saved token details
 </Note>
 
 ### S2S Card Payment Response
@@ -231,17 +232,39 @@ function checkPaymentStatus() {
 
 ## Saved Card Tokens
 
-EximPe's card tokenization system uses a dedicated API approach to securely save card details for future payments:
+EximPe's card tokenization system allows you to securely save card details for future payments using two different flows:
 
-### Tokenization Workflow
+### Tokenization Flows
 
-1. **Process Payment**: Use the Create Order API with new card details
-2. **Save Card** (optional): After successful payment, call the Save Card API to tokenize
-3. **Future Payments**: Use saved tokens instead of card details for repeat transactions
+1. **Automatic Save (During Payment)**: Add `"save_card": true` in the `card_details` object when initiating a payment. The card will be tokenized automatically upon successful payment.
+2. **Manual Save (Dedicated API)**: Call the [Save Card API](/api-reference/card-tokens/save) to tokenize card details independently of a payment.
 
-### Saving Cards After Payment
+### Flow 1: Automatic Save During Payment
 
-Use the dedicated [Save Card API](/api-reference/card-tokens/save) to tokenize cards after successful payment:
+To save a card while processing a payment, include the `save_card` parameter in your `card_details` object:
+
+```json
+{
+  "amount": "1000.00",
+  "collection_mode": "s2s",
+  "mop_type": "debit_card",
+  "card_details": {
+    "number": "4895380110000003",
+    "cardholder_name": "John Doe",
+    "expiry_month": "05",
+    "expiry_year": "2030",
+    "cvv": "123",
+    "network": "visa",
+    "identifier": "EX0001",
+    "save_card": true
+  },
+  // ... other required fields
+}
+```
+
+### Flow 2: Manual Save via API
+
+Use the dedicated [Save Card API](/api-reference/card-tokens/save) to tokenize cards manually:
 
 ```json
 POST /pg/tokens/
