@@ -6185,6 +6185,10 @@
             "type": "string",
             "description": "Amount in decimal format (e.g., \"100.00\")",
             "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "invoice_display_number": {
+            "type": "string",
+            "description": "Invoice display number. Required only for card payments, optional for other payment methods."
           }
         }
       },
