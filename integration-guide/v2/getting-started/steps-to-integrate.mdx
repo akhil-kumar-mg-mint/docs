@@ -1,0 +1,38 @@
+---
+title: "Steps to Integrate"
+description: "Follow these steps to register and collect payments from customer in India"
+---
+
+## Register for EximPe Account
+
+In order to collect Payments from Indian Buyers as a foreign merchant or PA collecting payments on behalf of your merchants, first you need to [Register](/integration-guide/getting-started/register-merchant) on EximPe to get your API Access key and token.
+
+## Get API Credentials
+
+Grab your `client_id`, `client_secret`, and `merchant_id` to start making secure API calls.\
+Refer to [Get Credentials for Web Checkout & API Access](./test-credentials) to complete this step.
+
+## Payment Collection and Settlement
+
+The cross-border payment collection using EximPe involves the following significant steps:
+
+<Steps>
+  <Step title="Step 1: Collect Payment using Hosted Checkout Integration">
+    The first step is collect the payment from the buyer. For this you can utilise the EximPe Web Checkout Integration. Refer the [Hosted Checkout](../web-integration/hosted-checkout) guide to understand how this works. Refer the [Authentication](./authentication) page for details on how to authenticate API calls.
+  </Step>
+  <Step title="Step 2: Update Invoice ID [Conditional]">
+    Invoice ID: The Invoice ID needs to be shared with the AD-1 category bank on the same day of the transaction to initiate settlements with the merchant.
+
+    **Case**: If the Invoice ID value was unavailable when posting the transaction at Step 1, it can be updated using the Update Order API by posting it in the Invoice Object. For more information, refer to [Update Order API](../../api-reference/order/update_order)
+
+    If the merchant fails to furnish the invoice ID on the same day (IST) of the transaction the Partner Bank will not be able to process the settlement.
+  </Step>
+  <Step title="Step 3: Get Settlement Details">
+    You can get the Settlement details and Settlement Details Recon using the [Settlement API's](../../api-reference/settelement/)
+  </Step>
+  <Step title="Step 4: Upload the Invoices">
+    According to the RBI guidelines, the invoice file must be shared with EximPe within 10 days of the transaction. The invoices can be uploaded using the **Invoice Upload** API. For more information, refer to [Upload Document API](../../api-reference/order/invoice_upload).
+
+    To follow the guidelines – EximPe’s system will create an auto-refund entry to the buyer if the Invoice file is not received within 10 days.
+  </Step>
+</Steps>

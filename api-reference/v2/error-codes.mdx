@@ -1,0 +1,142 @@
+---
+title: "FAQ's for Cross Border Payments"
+description: "Description of your new file."
+---
+
+# Frequently Asked Questions
+
+---
+
+## General
+
+### What is the purpose of Cross-Border Payments Import?
+
+Cross-Border Payments Import enables you to accept and process cross-border payments from customers around the world. This feature allows your business to expand its reach and tap into new international markets.
+
+### What is the PACB Integration and why is it important for cross-border payments?
+
+The PACB (Payment Aggregator Cross Border) Integration is the process of connecting your website or online store to the EximPe payment gateway for cross-border payments. It is important because it enables merchants to accept and process payments from customers in different countries and currencies.
+
+### What are the requirements for integrating with EximPe for cross-border payments?
+
+To integrate with EximPe, you will need a website or online store capable of accepting payments through EximPe's payment gateway and must follow RBI guidelines.\
+👉 Refer to [RBI Guidelines for Cross-Border Payments](#) for more information.
+
+### What currencies does EximPe accept for Cross-Border Payments?
+
+EximPe supports a wide range of currencies, including:
+
+- U.S. Dollar (USD)
+- European Euro (EUR)
+- Pound Sterling (GBP)
+
+### How does EximPe handle currency conversion?
+
+EximPe uses real-time exchange rates to convert currencies. These rates are updated regularly to ensure accuracy and transparency for merchants and customers.
+
+### How does EximPe ensure the security of my transactions?
+
+EximPe uses industry-grade security protocols including encryption, fraud detection and prevention tools, and full compliance with applicable regulatory standards.
+
+### What fees does EximPe charge for Cross-Border Payment services?
+
+EximPe charges a processing fee per transaction. The fee varies based on payment method, currency, and country. Contact your EximPe Key Account Manager (KAM) for a detailed fee structure.
+
+### How do I get started with EximPe Cross-Border Payments?
+
+- If you already have an account with EximPe, contact your KAM to enable Cross-Border Payments.
+- If you’re new, register on [EximPe’s Dashboard](#) and complete the onboarding process.\
+  👉 See [Register for a Merchant Account](#).
+
+### By when can we update the UDFs if the invoice number was not available before the payment?
+
+The Invoice ID must be shared with ICICI Bank on the **same day** of the transaction. If unavailable at the time of payment, use the **UDF Update API** or **Invoice Upload API** to submit it **on the same day (IST)**.\
+Invoices must be uploaded within **10 days** of the transaction per RBI guidelines.
+
+### Which payment modes does EximPe support for cross-border payments?
+
+- UPI
+- Credit/Debit Cards
+- Net Banking
+- 
+
+---
+
+## Invoice Upload
+
+### What is the purpose of the Invoice Upload API?
+
+As per RBI guidelines, invoices must be uploaded within 10 days of the transaction. The Update Order API allows merchants to submit invoices for regulatory and settlement purposes.
+
+### Which file formats are supported for invoice or AWB files?
+
+The following formats are supported:
+
+- PDF (`.pdf`)
+- Word Document (`.doc`, `.docx`)
+- Image Files (`.jpg`, `.jpeg`)
+
+### Can I upload multiple AWBs using the Invoice Upload API?
+
+Yes. For shipments from multiple vendors, you must post multiple requests:
+
+1. Invoice Upload
+2. AWB Upload for Vendor A
+3. AWB Upload for Vendor B
+
+Each AWB must have a corresponding file and request.
+
+---
+
+## 📝 UDF Update
+
+### What is the Order Update API?
+
+Order Update API is used to capture buyer information (e.g., name, address) required for compliance and settlement in cross-border flows.
+
+### Can I update Invoice data after upload?
+
+Yes, Invoice data can be updated multiple times. The latest update will overwrite previous data.
+
+### Is there a limit on the number of updates?
+
+No limit on the number of updates. Each new update replaces the previous data.
+
+### Why is buyer’s full information mandatory?
+
+As per RBI, full buyer information (name, address, etc.) is mandatory for:
+
+- KYC compliance
+- Anti-Money Laundering (AML) requirements
+- Fraud prevention
+- Smooth delivery and settlement
+
+### By when should invoices be uploaded?
+
+Invoices should be uploaded **as soon as possible**, and no later than **10 days from the transaction date**.
+
+---
+
+## 💰 Settlements
+
+### Does EximPe calculate forex rates at the time of transaction or settlement?
+
+Forex rates are calculated at the **time of transaction**.
+
+### How can I get the settlement details?
+
+Settlement data is accessible via the **EximPe Dashboard** or via the **Settlement Details API**.\
+👉 Refer to [Retrieve Bank Settlement Details APIs](#).
+
+### When does the settlement process start?
+
+Settlements begin after a transaction is successfully processed. Timelines may vary based on the payment method and type.
+
+### How long does it take for funds to reach my bank?
+
+Typically **1–2 days**, but may take up to **5 days** depending on the currency and banking partners involved.
+
+### Can I retrieve settlement data using API?
+
+Yes. Use the **Settlement Details API** and follow EximPe's integration guide.\
+👉 Refer to [Retrieve Bank Settlement Details APIs](#).

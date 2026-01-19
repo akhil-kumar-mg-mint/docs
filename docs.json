@@ -2,6 +2,10 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "EximPe Docs",
+  "openapi": {
+    "V1.0.0": "/openapi/v1/openapi.json",
+    "V2.0.0": "/openapi/v2/openapi.json"
+  },
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
@@ -9,127 +13,238 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "tabs": [
+    "anchors": [
       {
-        "tab": "Integration Guide",
-        "groups": [
+        "anchor": "V1.0.0",
+        "icon": "code",
+        "url": "/integration-guide/v1/getting-started/introduction"
+      },
+      {
+        "anchor": "V2.0.0",
+        "icon": "bolt",
+        "url": "/integration-guide/v2/getting-started/introduction"
+      }
+    ],
+    "versions": [
+      {
+        "version": "V1.0.0",
+        "tabs": [
           {
-            "group": "Get Started",
-            "pages": [
-              "integration-guide/getting-started/introduction",
-              "integration-guide/getting-started/steps-to-integrate",
-              "integration-guide/getting-started/register-merchant",
-              "integration-guide/getting-started/test-credentials",
-              "integration-guide/getting-started/account-activation",
-              "integration-guide/getting-started/adding-merchants",
-              "integration-guide/getting-started/faqs"
+            "tab": "Integration Guide",
+            "groups": [
+              {
+                "group": "Get Started",
+                "pages": [
+                  "integration-guide/v1/getting-started/introduction",
+                  "integration-guide/v1/getting-started/steps-to-integrate",
+                  "integration-guide/v1/getting-started/register-merchant",
+                  "integration-guide/v1/getting-started/test-credentials",
+                  "integration-guide/v1/getting-started/account-activation",
+                  "integration-guide/v1/getting-started/adding-merchants",
+                  "integration-guide/v1/getting-started/faqs"
+                ]
+              },
+              {
+                "group": "Web Integration",
+                "pages": [
+                  "integration-guide/v1/web-integration/hosted-checkout",
+                  "integration-guide/v1/web-integration/s2s-card-payment",
+                  "integration-guide/v1/web-integration/s2s-upi-intent",
+                  "integration-guide/v1/web-integration/subscriptions",
+                  "integration-guide/v1/web-integration/webhooks",
+                  "integration-guide/v1/web-integration/test-data"
+                ]
+              }
             ]
           },
           {
-            "group": "Web Integration",
-            "pages": [
-              "integration-guide/web-integration/hosted-checkout",
-              "integration-guide/web-integration/s2s-card-payment",
-              "integration-guide/web-integration/s2s-upi-intent",
-              "integration-guide/web-integration/subscriptions",
-              "integration-guide/web-integration/webhooks",
-              "integration-guide/web-integration/test-data"
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Order",
+                "pages": [
+                  "api-reference/v1/order/create",
+                  "api-reference/v1/order/get-status",
+                  "api-reference/v1/order/get",
+                  "api-reference/v1/order/update_order",
+                  "api-reference/v1/order/invoice_upload"
+                ]
+              },
+              {
+                "group": "Payment",
+                "pages": [
+                  "api-reference/v1/payment/list",
+                  "api-reference/v1/payment/get"
+                ]
+              },
+              {
+                "group": "Card Tokens",
+                "pages": [
+                  "api-reference/v1/card-tokens/save",
+                  "api-reference/v1/card-tokens/list",
+                  "api-reference/v1/card-tokens/delete"
+                ]
+              },
+              {
+                "group": "Merchant",
+                "pages": [
+                  "api-reference/v1/merchant/create",
+                  "api-reference/v1/merchant/list",
+                  "api-reference/v1/merchant/get",
+                  "api-reference/v1/merchant/update",
+                  "api-reference/v1/merchant/upload"
+                ]
+              },
+              {
+                "group": "Settlement",
+                "pages": [
+                  "api-reference/v1/settlement/list",
+                  "api-reference/v1/settlement/get"
+                ]
+              },
+              {
+                "group": "Refund",
+                "pages": [
+                  "api-reference/v1/refunds/create",
+                  "api-reference/v1/refunds/list",
+                  "api-reference/v1/refunds/get"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "api-reference/v1/subscriptions/create-intent",
+                  "api-reference/v1/subscriptions/create",
+                  "api-reference/v1/subscriptions/get",
+                  "api-reference/v1/subscriptions/modify-mandate",
+                  "api-reference/v1/subscriptions/mandate-status",
+                  "api-reference/v1/subscriptions/cancel-mandate",
+                  "api-reference/v1/subscriptions/pre-debit-notification",
+                  "api-reference/v1/subscriptions/recurring-payment"
+                ]
+              },
+              {
+                "group": "Payment Links",
+                "pages": [
+                  "api-reference/v1/payment-link/create",
+                  "api-reference/v1/payment-link/list",
+                  "api-reference/v1/payment-link/retrieve",
+                  "api-reference/v1/payment-link/extend-expiry",
+                  "api-reference/v1/payment-link/deactivate",
+                  "api-reference/v1/payment-link/share"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "api-reference/v1/webhooks/merchant-approved",
+                  "api-reference/v1/webhooks/payment-successful",
+                  "api-reference/v1/webhooks/payment-failed",
+                  "api-reference/v1/webhooks/payment-refunded",
+                  "api-reference/v1/webhooks/payment-settled",
+                  "api-reference/v1/webhooks/subscription-status"
+                ]
+              }
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "groups": [
+        "version": "V2.0.0",
+        "tabs": [
           {
-            "group": "Order",
-            "pages": [
-              "api-reference/order/create",
-              "api-reference/order/get-status",
-              "api-reference/order/get",
-              "api-reference/order/update_order",
-              "api-reference/order/invoice_upload"
+            "tab": "Integration Guide",
+            "groups": [
+              {
+                "group": "Get Started",
+                "pages": [
+                  "integration-guide/v2/getting-started/introduction",
+                  "integration-guide/v2/getting-started/steps-to-integrate",
+                  "integration-guide/v2/getting-started/register-merchant",
+                  "integration-guide/v2/getting-started/test-credentials",
+                  "integration-guide/v2/getting-started/account-activation",
+                  "integration-guide/v2/getting-started/adding-merchants",
+                  "integration-guide/v2/getting-started/faqs"
+                ]
+              },
+              {
+                "group": "Web Integration",
+                "pages": [
+                  "integration-guide/v2/web-integration/hosted-checkout",
+                  "integration-guide/v2/web-integration/s2s-upi-intent",
+                  "integration-guide/v2/web-integration/webhooks",
+                  "integration-guide/v2/web-integration/test-data"
+                ]
+              }
             ]
           },
           {
-            "group": "Payment",
-            "pages": [
-              "api-reference/payment/list",
-              "api-reference/payment/get"
-            ]
-          },
-          {
-            "group": "Card Tokens",
-            "pages": [
-              "api-reference/card-tokens/save",
-              "api-reference/card-tokens/list",
-              "api-reference/card-tokens/delete"
-            ]
-          },
-          {
-            "group": "Merchant",
-            "pages": [
-              "api-reference/merchant/create",
-              "api-reference/merchant/list",
-              "api-reference/merchant/get",
-              "api-reference/merchant/update",
-              "api-reference/merchant/upload"
-            ]
-          },
-          {
-            "group": "Settlement",
-            "pages": [
-              "api-reference/settlement/list",
-              "api-reference/settlement/get"
-            ]
-          },
-          {
-            "group": "Refund",
-            "pages": [
-              "api-reference/refunds/create",
-              "api-reference/refunds/list",
-              "api-reference/refunds/get"
-            ]
-          },
-          {
-            "group": "Subscriptions",
-            "pages": [
-              "api-reference/subscriptions/create-intent",
-              "api-reference/subscriptions/create",
-              "api-reference/subscriptions/get",
-              "api-reference/subscriptions/modify-mandate",
-              "api-reference/subscriptions/mandate-status",
-              "api-reference/subscriptions/cancel-mandate",
-              "api-reference/subscriptions/pre-debit-notification",
-              "api-reference/subscriptions/recurring-payment"
-            ]
-          },
-          {
-            "group": "Payment Links",
-            "pages": [
-              "api-reference/payment-link/create",
-              "api-reference/payment-link/list",
-              "api-reference/payment-link/retrieve",
-              "api-reference/payment-link/extend-expiry",
-              "api-reference/payment-link/deactivate",
-              "api-reference/payment-link/share"
-            ]
-          },
-          {
-            "group": "Webhooks",
-            "pages": [
-              "api-reference/webhooks/merchant-approved",
-              "api-reference/webhooks/payment-successful",
-              "api-reference/webhooks/payment-failed",
-              "api-reference/webhooks/payment-refunded",
-              "api-reference/webhooks/payment-settled",
-              "api-reference/webhooks/subscription-status"
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Order",
+                "pages": [
+                  "api-reference/v2/order/create",
+                  "api-reference/v2/order/get-status",
+                  "api-reference/v2/order/get"
+                ]
+              },
+              {
+                "group": "Payment",
+                "pages": [
+                  "api-reference/v2/payment/list",
+                  "api-reference/v2/payment/get"
+                ]
+              },
+              {
+                "group": "Card Tokens",
+                "pages": [
+                  "api-reference/v2/card-tokens/save",
+                  "api-reference/v2/card-tokens/list",
+                  "api-reference/v2/card-tokens/delete"
+                ]
+              },
+              {
+                "group": "Merchant",
+                "pages": [
+                  "api-reference/v2/merchant/create",
+                  "api-reference/v2/merchant/list",
+                  "api-reference/v2/merchant/get",
+                  "api-reference/v2/merchant/update",
+                  "api-reference/v2/merchant/upload"
+                ]
+              },
+              {
+                "group": "Settlement",
+                "pages": [
+                  "api-reference/v2/settlement/list",
+                  "api-reference/v2/settlement/get"
+                ]
+              },
+              {
+                "group": "Refund",
+                "pages": [
+                  "api-reference/v2/refunds/create",
+                  "api-reference/v2/refunds/list",
+                  "api-reference/v2/refunds/get"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "api-reference/v2/webhooks/merchant-approved",
+                  "api-reference/v2/webhooks/payment-successful",
+                  "api-reference/v2/webhooks/payment-failed",
+                  "api-reference/v2/webhooks/payment-refunded",
+                  "api-reference/v2/webhooks/payment-settled",
+                  "api-reference/v2/webhooks/subscription-status"
+                ]
+              }
             ]
           }
         ]
       }
-    ],
-    "global": {}
+    ]
   },
   "logo": {
     "light": "/logo/Black.svg",
