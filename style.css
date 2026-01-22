@@ -26,13 +26,12 @@
     height: 32px !important;
 
     /* High-contrast brand styling */
-    background-color: #26a887 !important;
+    background-color: #15803d !important;
     color: white !important;
     border: none !important;
     border-radius: 8px !important;
 
     /* Typography */
-    font-weight: 700 !important;
     font-size: 0.85rem !important;
     letter-spacing: 0.01em !important;
 
@@ -59,13 +58,12 @@
     margin-bottom: 16px !important;
 
     /* High-contrast brand styling */
-    background-color: #26a887 !important;
+    background-color: #15803d !important;
     color: white !important;
     border: none !important;
     border-radius: 8px !important;
 
     /* Typography */
-    font-weight: 700 !important;
     font-size: 0.85rem !important;
 
     /* Visual effects */
@@ -104,7 +102,6 @@
     padding: 1px 5px;
     border-radius: 3px;
     margin-right: 6px;
-    font-weight: 800;
 }
 
 /* Fix for the mobile sidebar header which might stack elements */

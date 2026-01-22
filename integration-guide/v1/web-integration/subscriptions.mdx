@@ -27,7 +27,9 @@ description: "Set up and manage UPI subscription mandates using EximPe Merchant 
 
 Before you begin, ensure you have:
 
-- **Merchant API credentials**: `X-Client-ID`, `X-Client-Secret`, and `X-Merchant-ID` to call the Merchant APIs.
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
 - **UPI Subscription enablement**: UPI recurring subscription enabled and approved by EximPe.
 - **Server environment**: Ability to make HTTPS `POST` and `GET` requests from your backend.
 - **JSON & HTTP Client**: Familiarity with JSON request bodies and HTTP client libraries.
@@ -65,6 +67,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
     "amount": "1000.00",
     "collection_mode": "s2s",
@@ -174,6 +177,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/ \
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
     "amount": "1000.00",
     "collection_mode": "s2s",
@@ -250,7 +254,8 @@ After the customer approves the UPI mandate, use the [**Get Subscription Mandate
 curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/mandate_status/" \
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
-  -H "X-Merchant-ID: <your-merchant-id>"
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
 ```
 
 ### Response
@@ -282,6 +287,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_not
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
     "debit_date": "2025-06-10",
     "amount": 1000.00,
@@ -320,6 +326,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
     "amount": 1000.00,
     "invoice_display_number": "INV-2025-001"
@@ -359,6 +366,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/modify_mandat
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
   -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
     "amount": 1500.00,
     "end_date": "2025-12-31"
@@ -394,7 +402,8 @@ To fully stop future debits and revoke the subscription mandate, use the [**Canc
 curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/cancel_mandate/" \
   -H "X-Client-ID: <your-client-id>" \
   -H "X-Client-Secret: <your-client-secret>" \
-  -H "X-Merchant-ID: <your-merchant-id>"
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
 ```
 
 #### Response

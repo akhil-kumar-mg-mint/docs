@@ -37,8 +37,8 @@ Before integrating EximPe Hosted Checkout, ensure you have:
 
 - **Merchant Account**: An active EximPe merchant account
 - **Credentials**: Your Client ID and Client Secret
-- **Test Environment**: Test environment credentials (for development)
 - **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
 
 ## Integration Steps
 
@@ -54,17 +54,38 @@ Create an order from your backend server before initiating payment:
 curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
   -H "Content-Type: application/json" \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 1.0.0" \
   -d '{
-    "amount": "1000.00",
-    "currency": "INR",
-    "reference_id": "OD-12345",
-    "return_url": "https://your-website.com/payment/callback",
-    "mop_type": "upi",
-    "buyer": {
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "phone": "+919876543210"
+  "amount": "2499.99",
+  "currency": "INR",
+  "reference_id": "ORD_2024_WH_001234",
+  "return_url": "https://electronicshub.com/payment/success",
+  "collection_mode": "hosted_payment",
+  "mop_type": "upi",
+  "buyer": {
+    "name": "Priya Sharma",
+    "email": "priya.sharma@techcorp.in",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "403, Crystal Tower, Linking Road",
+      "line_2": "Near Metro Station",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400050"
     }
+  },
+  "product": {
+    "name": "Sony WH-1000XM5 Wireless Headphones",
+    "description": "Premium noise-cancelling wireless headphones with 30-hour battery life",
+    "hs_code": "85183000",
+    "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
+    "type_of_goods": "goods"
+  },
+  "invoice": {
+    "number": "INV_WH_2024_0621",
+    "date": "2024-06-21"
+  }
 }'
 ```
 
@@ -85,7 +106,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
 
 </CodeGroup>
 
-<Card title="📚 API Reference" href="/api-reference/order/#create">
+<Card title="📚 API Reference" href="/api-reference/v1/order/create">
   **Create Order API** - View complete documentation including all parameters, request/response formats, error codes, and examples.
 </Card>
 
@@ -103,7 +124,8 @@ curl -X POST https://api-pacb.eximpe.com/pg/orders/ \
     <script
       src="https://cdn.eximpe.com/sdk/eximpe-sdk-1.0.0.min.js"
       integrity="sha384-qdh+Nx5ZnVyo4n6LOLYPySpx2UDRduvTJ22+vVxzL+K6Df3tGgd96P925G0+6tpz"
-      crossorigin="anonymous"></script>
+      crossorigin="anonymous"
+    ></script>
     ```
   </Step>
   
@@ -219,7 +241,8 @@ After the customer completes or cancels the payment, EximPe will redirect them t
 ```bash cURL
 curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
-  -H "X-Client-Secret: YOUR_CLIENT_SECRET"
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 1.0.0"
 ```
 
 ```json Response
@@ -250,7 +273,7 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   **Important**: Use the `order_id` returned from the order creation response, not the session ID. This endpoint provides the most accurate payment status confirmation.
 </Note>
 
-<Card title="📚 API Reference" href="/api-reference/order/get-status">
+<Card title="📚 API Reference" href="/api-reference/v1/order/get-status">
   **Get Order Status API** - View complete documentation including request/response formats, error codes, and examples for verifying payment status.
 </Card>
 
@@ -447,7 +470,7 @@ def handle_payment_callback(request):
   <Card
     title="Developer Resources"
     icon="book-open"
-    href="/api-reference/hosted-checkout"
+    href="/api-reference/v1/order/create"
   >
     📚 Web Hosted API Reference
     💻 Developer Resources

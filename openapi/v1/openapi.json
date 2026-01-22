@@ -258,6 +258,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -280,6 +289,15 @@
                       }
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -306,6 +324,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "500": {
@@ -326,9 +353,32 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_orders_"
       }
     },
     "/pg/orders/{order_id}/": {
@@ -354,6 +404,17 @@
               "type": "string"
             },
             "example": "OD3451762252"
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "requestBody": {
@@ -405,6 +466,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -423,6 +493,15 @@
                       "order_id": "Order not found"
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -447,6 +526,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -465,6 +553,15 @@
                       "authentication": "Missing credentials."
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -487,9 +584,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_patch_pg_orders_order_id_"
       },
       "get": {
         "summary": "Get Order Details",
@@ -513,6 +620,17 @@
               "type": "string"
             },
             "example": "OD3451762252"
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -606,6 +724,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -624,6 +751,15 @@
                       "order_id": "Order not found"
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -646,6 +782,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "500": {
@@ -666,9 +811,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_orders_order_id_"
       }
     },
     "/pg/orders/{order_id}/status/": {
@@ -694,6 +849,17 @@
               "type": "string"
             },
             "example": "OD9795883191"
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -716,6 +882,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -734,6 +909,15 @@
                       "order_id": "Order not found"
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -756,6 +940,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "500": {
@@ -776,9 +969,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_orders_order_id_status_"
       }
     },
     "/pg/orders/{order_id}/documents/": {
@@ -804,6 +1007,17 @@
               "type": "string"
             },
             "example": "OD3451762252"
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "requestBody": {
@@ -896,6 +1110,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -914,6 +1137,15 @@
                       "identifier": "This field is required."
                     }
                   }
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -936,6 +1168,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -956,9 +1197,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_orders_order_id_documents_"
       }
     },
     "/pg/payments/": {
@@ -1068,6 +1319,17 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -1116,6 +1378,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -1136,9 +1407,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_payments_"
       }
     },
     "/pg/payments/{payment_id}/": {
@@ -1162,6 +1443,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -1233,6 +1525,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -1253,6 +1554,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -1263,9 +1573,19 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_payments_payment_id_"
       }
     },
     "/pg/refunds/": {
@@ -1318,6 +1638,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -1328,9 +1657,32 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_refunds_"
       },
       "get": {
         "summary": "List Refunds",
@@ -1386,6 +1738,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -1422,9 +1785,19 @@
                   ]
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_refunds_"
       }
     },
     "/pg/refunds/{refund_id}/": {
@@ -1449,6 +1822,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -1472,6 +1856,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -1492,9 +1885,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_refunds_refund_id_"
       }
     },
     "/pg/settlements/": {
@@ -1527,6 +1930,17 @@
             "schema": {
               "type": "string",
               "format": "date"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -1564,9 +1978,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_settlements_"
       }
     },
     "/pg/settlements/{settlement_id}/": {
@@ -1590,6 +2014,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -1627,6 +2062,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -1647,9 +2091,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_settlements_settlement_id_"
       }
     },
     "/partners/merchants/": {
@@ -1711,6 +2165,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -1731,9 +2194,32 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_get_partners_merchants_"
       },
       "post": {
         "summary": "Create Merchant",
@@ -1864,6 +2350,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -1886,6 +2381,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "403": {
@@ -1906,9 +2410,32 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_partners_merchants_"
       }
     },
     "/partners/merchants/{merchant_id}/": {
@@ -1932,6 +2459,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -1997,6 +2535,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -2007,9 +2554,19 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_partners_merchants_merchant_id_"
       },
       "patch": {
         "summary": "Update Merchant",
@@ -2031,6 +2588,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -2109,6 +2677,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -2117,6 +2694,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2129,9 +2715,19 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_patch_partners_merchants_merchant_id_"
       }
     },
     "/partners/merchants/{merchant_id}/documents/": {
@@ -2155,6 +2751,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -2220,9 +2827,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_patch_partners_merchants_merchant_id_documents_"
       }
     },
     "/pg/tokens/": {
@@ -2310,6 +2927,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -2359,6 +2985,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -2379,9 +3014,32 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_tokens_"
       },
       "get": {
         "summary": "List Saved Cards",
@@ -2406,6 +3064,17 @@
               "type": "string"
             },
             "example": "USER_AS_002"
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -2434,6 +3103,15 @@
                   ]
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "401": {
@@ -2454,9 +3132,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_tokens_"
       }
     },
     "/pg/tokens/delete/": {
@@ -2502,6 +3190,15 @@
                   "data": {}
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
@@ -2510,6 +3207,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2532,9 +3238,32 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_tokens_delete_"
       }
     },
     "/pg/subscriptions/intent/": {
@@ -2637,6 +3366,15 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -2645,6 +3383,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2657,6 +3404,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "503": {
@@ -2667,9 +3423,32 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_subscriptions_intent_"
       }
     },
     "/pg/subscriptions/": {
@@ -2706,6 +3485,15 @@
                   "$ref": "#/components/schemas/CreateSubscriptionResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -2714,6 +3502,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2726,6 +3523,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "503": {
@@ -2736,12 +3542,35 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_subscriptions_"
       }
     },
-    "/pg/subscriptions/{uid}/": {
+    "/pg/subscriptions/{subscription_id}/": {
       "get": {
         "summary": "Get Subscription Order Details",
         "description": "Retrieve order-level details for a subscription by subscription UID.",
@@ -2764,6 +3593,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -2773,6 +3613,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetSubscriptionOrderResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2785,12 +3634,22 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_subscriptions_subscription_id_"
       }
     },
-    "/pg/subscriptions/{uid}/mandate_status/": {
+    "/pg/subscriptions/{subscription_id}/mandate_status/": {
       "get": {
         "summary": "Get Subscription Mandate Status",
         "description": "Fetch the current UPI mandate status for a subscription.",
@@ -2813,6 +3672,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -2822,6 +3692,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/GetSubscriptionMandateStatusResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2834,6 +3713,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "500": {
@@ -2842,6 +3730,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2854,12 +3751,22 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_subscriptions_subscription_id_mandate_status_"
       }
     },
-    "/pg/subscriptions/{uid}/modify_mandate/": {
+    "/pg/subscriptions/{subscription_id}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate",
         "description": "Update mandate amount and/or end date for a subscription.",
@@ -2881,6 +3788,17 @@
             "description": "Subscription UID.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -2904,6 +3822,15 @@
                   "$ref": "#/components/schemas/ModifySubscriptionMandateResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -2912,6 +3839,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2924,6 +3860,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "503": {
@@ -2934,12 +3879,22 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_subscriptions_subscription_id_modify_mandate_"
       }
     },
-    "/pg/subscriptions/{uid}/cancel_mandate/": {
+    "/pg/subscriptions/{subscription_id}/cancel_mandate/": {
       "post": {
         "summary": "Cancel Subscription Mandate",
         "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
@@ -2962,6 +3917,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -2971,6 +3937,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CancelSubscriptionMandateResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -2983,6 +3958,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "500": {
@@ -2991,6 +3975,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -3003,15 +3996,25 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_subscriptions_subscription_id_cancel_mandate_"
       }
     },
-    "/pg/subscriptions/{uid}/pre_debit_notification/": {
+    "/pg/subscriptions/{subscription_id}/pre_debit_notification/": {
       "post": {
         "summary": "Send Pre-Debit Notification",
-        "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
+        "description": "Trigger PayU\u2019s Pre-Debit Notification API for an upcoming debit.",
         "tags": [
           "Subscriptions"
         ],
@@ -3030,6 +4033,17 @@
             "description": "Subscription UID.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -3053,6 +4067,15 @@
                   "$ref": "#/components/schemas/PreDebitNotificationResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -3061,6 +4084,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -3073,6 +4105,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "503": {
@@ -3083,15 +4124,25 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_subscriptions_subscription_id_pre_debit_notification_"
       }
     },
-    "/pg/subscriptions/{uid}/recurring_payment/": {
+    "/pg/subscriptions/{subscription_id}/recurring_payment/": {
       "post": {
         "summary": "Trigger Recurring Payment",
-        "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
+        "description": "Trigger a recurring payment installment via PayU\u2019s Recurring Payment Transaction API.",
         "tags": [
           "Subscriptions"
         ],
@@ -3110,6 +4161,17 @@
             "description": "Subscription UID.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -3133,6 +4195,15 @@
                   "$ref": "#/components/schemas/RecurringPaymentResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -3141,6 +4212,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
                 }
               }
             }
@@ -3153,6 +4233,15 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "503": {
@@ -3163,9 +4252,19 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_subscriptions_subscription_id_recurring_payment_"
       }
     },
     "/pg/payment-links/": {
@@ -3201,6 +4300,15 @@
                   "$ref": "#/components/schemas/CreatePaymentLinkResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "400": {
@@ -3211,9 +4319,32 @@
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
+          }
+        ],
+        "operationId": "v1_post_pg_payment-links_"
       },
       "get": {
         "summary": "List Payment Links",
@@ -3243,6 +4374,17 @@
               "type": "integer",
               "default": 10
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -3254,9 +4396,19 @@
                   "$ref": "#/components/schemas/ListPaymentLinksResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_get_pg_payment-links_"
       }
     },
     "/pg/payment-links/{paymentLinkId}/": {
@@ -3280,6 +4432,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -3291,12 +4454,31 @@
                   "$ref": "#/components/schemas/PaymentLinkDetailsResponse"
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           },
           "404": {
-            "description": "Payment link not found"
+            "description": "Payment link not found",
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
+            }
           }
-        }
+        },
+        "operationId": "v1_get_pg_payment-links_paymentLinkId_"
       }
     },
     "/pg/payment-links/{paymentLinkId}/extend_expiry/": {
@@ -3319,6 +4501,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -3359,9 +4552,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_payment-links_paymentLinkId_extend_expiry_"
       }
     },
     "/pg/payment-links/{paymentLinkId}/deactivate/": {
@@ -3385,6 +4588,17 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
+            }
           }
         ],
         "responses": {
@@ -3404,9 +4618,19 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_payment-links_paymentLinkId_deactivate_"
       }
     },
     "/pg/payment-links/{paymentLinkId}/share/": {
@@ -3429,6 +4653,17 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "X-API-Version",
+            "in": "header",
+            "description": "API Version",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "1.0.0",
+              "example": "1.0.0"
             }
           }
         ],
@@ -3459,11 +4694,21 @@
                   }
                 }
               }
+            },
+            "headers": {
+              "X-API-Version": {
+                "description": "API version 1.0.0",
+                "schema": {
+                  "type": "string",
+                  "example": "1.0.0"
+                }
+              }
             }
           }
-        }
+        },
+        "operationId": "v1_post_pg_payment-links_paymentLinkId_share_"
       }
-    },
+    }
   },
   "components": {
     "schemas": {
@@ -6630,7 +7875,7 @@
             }
           }
         }
-      },
+      }
     },
     "securitySchemes": {
       "clientAuth": {

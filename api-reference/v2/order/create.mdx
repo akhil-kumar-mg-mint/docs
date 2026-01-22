@@ -99,11 +99,11 @@ Notes:
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| line_1 | string | Yes | Address line 1. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
+| line_1 | string | No | Address line 1. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
 | line_2 | string | No | Address line 2. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
-| city | string | Yes | City. | Alphabetic only; Max 255 chars |
-| state | string | Yes | State/Province. | Alphabetic only; Max 255 chars |
-| postal_code | string | Yes | Postal/ZIP code. | 6 chars |
+| city | string | No | City. | Alphabetic only; Max 255 chars |
+| state | string | No | State/Province. | Alphabetic only; Max 255 chars |
+| postal_code | string | Yes | Postal/ZIP code. | 6 chars; numbers |
 
 #### Product
 
@@ -112,6 +112,8 @@ Notes:
 | name | string | Yes | Product or service name. | Max 255 chars; letters, numbers, spaces, and common punctuation |
 | description | string | No | Description of the product/service. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
 | type_of_goods | string | Yes | Nature of goods/services. | Enum: `goods`, `service` |
+| hs_code | string | Yes | 8-digit HS Code. | Max 8 chars; numbers |
+| hs_code_description | string | No | HS Code description. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
 
 #### Invoice
 

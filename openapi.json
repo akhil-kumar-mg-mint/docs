@@ -2741,7 +2741,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/": {
+    "/pg/subscriptions/{subscription_id}/": {
       "get": {
         "summary": "Get Subscription Order Details",
         "description": "Retrieve order-level details for a subscription by subscription UID.",
@@ -2790,7 +2790,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/mandate_status/": {
+    "/pg/subscriptions/{subscription_id}/mandate_status/": {
       "get": {
         "summary": "Get Subscription Mandate Status",
         "description": "Fetch the current UPI mandate status for a subscription.",
@@ -2859,7 +2859,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/modify_mandate/": {
+    "/pg/subscriptions/{subscription_id}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate",
         "description": "Update mandate amount and/or end date for a subscription.",
@@ -2939,7 +2939,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/cancel_mandate/": {
+    "/pg/subscriptions/{subscription_id}/cancel_mandate/": {
       "post": {
         "summary": "Cancel Subscription Mandate",
         "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
@@ -3008,7 +3008,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/pre_debit_notification/": {
+    "/pg/subscriptions/{subscription_id}/pre_debit_notification/": {
       "post": {
         "summary": "Send Pre-Debit Notification",
         "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
@@ -3088,7 +3088,7 @@
         }
       }
     },
-    "/pg/subscriptions/{uid}/recurring_payment/": {
+    "/pg/subscriptions/{subscription_id}/recurring_payment/": {
       "post": {
         "summary": "Trigger Recurring Payment",
         "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
@@ -3463,7 +3463,7 @@
           }
         }
       }
-    },
+    }
   },
   "components": {
     "schemas": {
@@ -6630,7 +6630,7 @@
             }
           }
         }
-      },
+      }
     },
     "securitySchemes": {
       "clientAuth": {

@@ -88,9 +88,9 @@ const deleteCard = async (cardToken, identifier) => {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
-      'X-Client-ID': 'your_client_id',
-      'X-Client-Secret': 'your_client_secret',
-      'X-Merchant-ID': 'your_merchant_id'
+      'X-Client-ID': 'CLIENT_ID',
+      'X-Client-Secret': 'CLIENT_SECRET',
+      'X-Merchant-ID': 'MERCHANT_ID'
     },
     body: JSON.stringify({
       card_token: cardToken,
@@ -125,9 +125,9 @@ const handleCardDeletion = async (card) => {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'X-Client-ID': process.env.CLIENT_ID,
-        'X-Client-Secret': process.env.CLIENT_SECRET,
-        'X-Merchant-ID': process.env.MERCHANT_ID
+        'X-Client-ID': 'CLIENT_ID',
+        'X-Client-Secret': 'CLIENT_SECRET',
+        'X-Merchant-ID': 'MERCHANT_ID'
       },
       body: JSON.stringify({
         card_token: card.card_token,

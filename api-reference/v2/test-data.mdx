@@ -5,47 +5,63 @@ description: "Use test data on this page to test payments across various payment
 
 ## Test Cards
 
-The following table provides details of some of the test cards that you can use to test your integration in the sandbox (Test environment).
+Use the following card details to test card payments in the sandbox environment.
 
-<Warning>
-  These test cards, UPI, and Wallet credentials must only be used in the sandbox environment. Using these test cards in production environment may cause validation error 
-</Warning>
+### Credit Cards
 
-<Tip>
-  Any value can be used for the name parameter in Test environment.
-</Tip>
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5123456789012346  | Mastercard | 05/30  | 123 | 123456 | Success |
+| 4012001037141112  | VISA       | 05/30  | 123 | 123456 | Success |
+| 5497774415170603  | Mastercard | 05/30  | 412 | 123456 | Success |
+| 6082015309577308  | RUPAY      | 05/30  | 123 | 123456 | Success |
 
-### 💳 Credit Card
+### Debit Cards
 
-| **Card Number**  | **Network** | **Expiry** | **CVV** | **OTP** |
-| ---------------- | ----------- | ---------- | ------- | ------- |
-|  5123456789012346 | Mastercard  | 05/30      | 123     | 123456  |
-| 4012001037141112 | VISA        | 05/30      | 123     | 123456  |
-|  5497774415170603 | Mastercard  | 05/30      | 412     | 123456  |
-|  6082015309577308 | RUPAY       | 05/30      | 123     | 123456  |
-
-### 🏦 Debit Card
-
-| **Card Number**     | **Network** | **Expiry** | **CVV** | **OTP** |
-| ------------------- | ----------- | ---------- | ------- | ------- |
-| 5118-7000-0000-0003 | Mastercard  | 05/30      | 123     | 123456  |
-| 4594-5380-5063-9999 | VISA        | 05/30      | 123     | 123456  |
-
-
-## Test UPI ID
-
-You can use **anything@payu** or **9999999999@payu** as VPA to test your UPI-related integration in the sandbox (Test environment) 
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5118700000000003  | Mastercard | 05/30  | 123 | 123456 | Success |
+| 4594538050639999  | VISA       | 05/30  | 123 | 123456 | Success |
 
 <Note>
-Only `anything@payu` is supported for UPI transactions in the **sandbox** or **API Playground**. Other VPAs will not work in the test environment.
+  For all test cards, you can use any valid future date as expiry and any 3-digit number as CVV. The OTP for all successful transactions is `123456`.
 </Note>
 
+## Test Net Banking
 
-## Test Net Banking credentials
-Use the following credentials to test Net Banking transactions in the **sandbox environment**:  
+Use the following credentials to test Net Banking transactions. Select **Test Bank** from the bank list.
 
-**Username:** `payu`  
-**Password:** `payu`  
-**OTP:** `123456`
+| Parameter | Value      |
+| :--- | :--- |
+| **Bank Name** | Test Bank |
+| **Username** | `user123` |
+| **Password** | `password` |
+| **OTP** | `123456` |
 
+## Test UPI VPA
 
+Use the following VPAs to test UPI transactions.
+
+| VPA | Description | Result |
+| :--- | :--- | :--- |
+| `success@upi` | Simulates a successful payment | **Success** |
+| `failure@upi` | Simulates a failed payment | **Failure** |
+| `pending@upi` | Simulates a pending payment | **Pending** |
+
+<Tip>
+  When using the `intent` flow on mobile, selecting any UPI app in the simulator will trigger the respective flow based on the test VPA used.
+</Tip>
+
+## Wallets
+
+Use the following mobile numbers to test Wallet transactions.
+
+| Wallet | Mobile Number | OTP | Result |
+| :--- | :--- | :--- | :--- |
+| **PhonePe** | `9999999999` | `123456` | Success |
+| **Paytm** | `7777777777` | `123456` | Success |
+| **Freecharge** | `8888888888` | `123456` | Success |
+
+<Warning>
+  These credentials are only for the **Sandbox Environment**. Do not use them in Production.
+</Warning>

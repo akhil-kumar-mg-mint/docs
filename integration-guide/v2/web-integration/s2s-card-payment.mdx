@@ -12,7 +12,7 @@ The Server-to-Server (S2S) Card Payment integration provides a secure way to pro
     Built-in 3D Secure authentication for enhanced security and compliance
   </Card>
   <Card title="Card Tokenization" icon="credit-card" href="#saved-card-tokens">
-    Save cards using dedicated API for faster repeat payments without storing sensitive data
+    Save cards during payment for faster repeat transactions without storing sensitive data
   </Card>
   <Card title="Real-time Callbacks" icon="server" href="#step-4-server-to-server-callback">
     Receive instant payment status updates via server-to-server webhooks
@@ -234,16 +234,11 @@ function checkPaymentStatus() {
 
 ## Saved Card Tokens
 
-EximPe's card tokenization system allows you to securely save card details for future payments using two different flows:
+EximPe's card tokenization system allows you to securely save card details for future payments.
 
-### Tokenization Flows
+### Automatic Save During Payment
 
-1. **Automatic Save (During Payment)**: Add `"save_card": true` in the `card_details` object when initiating a payment. The card will be tokenized automatically upon successful payment.
-2. **Manual Save (Dedicated API)**: Call the [Save Card API](/api-reference/card-tokens/save) to tokenize card details independently of a payment.
-
-### Flow 1: Automatic Save During Payment
-
-To save a card while processing a payment, include the `save_card` parameter in your `card_details` object:
+To save a card while processing a payment, include the `save_card` parameter in your `card_details` object. The card will be tokenized automatically upon successful payment.
 
 ```json
 {
@@ -264,79 +259,7 @@ To save a card while processing a payment, include the `save_card` parameter in 
 }
 ```
 
-### Flow 2: Manual Save via API
 
-Use the dedicated [Save Card API](/api-reference/card-tokens/save) to tokenize cards manually:
-
-```json
-POST /pg/tokens/
-{
-  "number": "4895380110000003",
-  "cardholder_name": "John Doe",
-  "expiry_month": "05",
-  "expiry_year": "2030",
-  "cvv": "123",
-  "network": "visa",
-  "identifier": "EX0001"
-}
-```
-
-This returns a secure token that can be used for future payments without storing sensitive card data.
-
-### Complete Tokenization Example
-
-```javascript
-// Step 1: Process payment with new card
-const paymentResponse = await fetch('/pg/orders/', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-Client-ID': 'YOUR_CLIENT_ID',
-    'X-Client-Secret': 'YOUR_CLIENT_SECRET',
-    'X-Merchant-ID': 'YOUR_MERCHANT_ID'
-  },
-  body: JSON.stringify({
-    amount: "1000.00",
-    collection_mode: "s2s",
-    mop_type: "CREDIT_CARD",
-    card_details: {
-      number: "4895380110000003",
-      cardholder_name: "John Doe",
-      expiry_month: "05",
-      expiry_year: "2030",
-      cvv: "123",
-      network: "visa",
-      identifier: "EX0001"
-    },
-    // ... other required fields
-  })
-});
-
-// Step 2: After successful payment, save card for future use
-if (paymentResponse.data.status === 'SUCCESS') {
-  const tokenResponse = await fetch('/pg/tokens/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Client-ID': 'YOUR_CLIENT_ID',
-      'X-Client-Secret': 'YOUR_CLIENT_SECRET',
-      'X-Merchant-ID': 'YOUR_MERCHANT_ID'
-    },
-    body: JSON.stringify({
-      number: "4895380110000003",
-      cardholder_name: "John Doe",
-      expiry_month: "05",
-      expiry_year: "2030",
-      cvv: "123",
-      network: "visa",
-      identifier: "EX0001"
-    })
-  });
-  
-  // Store the returned token for future payments
-  const cardToken = tokenResponse.data.card_token;
-}
-```
 
 ### Using Saved Tokens
 
@@ -354,9 +277,9 @@ For repeat payments, use the saved token instead of card details:
 
 ### Token Management APIs
 
-- **[Save Card](/api-reference/v1/card-tokens/save)**: Tokenize card details without processing payment
-- **[List Saved Cards](/api-reference/v1/card-tokens/list)**: Retrieve customer's saved cards
-- **[Delete Saved Card](/api-reference/v1/card-tokens/delete)**: Remove saved card tokens
+
+- **[List Saved Cards](/api-reference/v2/card-tokens/list)**: Retrieve customer's saved cards
+- **[Delete Saved Card](/api-reference/v2/card-tokens/delete)**: Remove saved card tokens
 
 ## Step 3: Check Payment Transaction Status
 
@@ -367,7 +290,7 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
   -H "X-Merchant-ID: YOUR_MERCHANT_ID" \
-  -H "X-API-Version: 1.0.0"
+  -H "X-API-Version: 2.0.0"
 ```
 
 <Note>
@@ -388,6 +311,7 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
 
 EximPe sends real-time webhook notifications when payment status changes:
 
+
 ```json
 {
     "event_type": "PAYMENT_SUCCESSFUL",
@@ -397,7 +321,7 @@ EximPe sends real-time webhook notifications when payment status changes:
     "data": {
         "status": "captured",
         "message": "Payment successful",
-        "mop_type": "debit_card",
+        "mop_type": "credit_card",
         "order_id": "OD3376378679",
         "payment_id": "PR6938527534",
         "bank_ref_num": "OD3376378679-PR6938527534",
@@ -407,8 +331,8 @@ EximPe sends real-time webhook notifications when payment status changes:
 ```
 
 For more webhook details, see:
-- [Payment Successful](/api-reference/webhooks/payment-successful)
-- [Payment Failed](/api-reference/webhooks/payment-failed)
+- [Payment Successful](/api-reference/v2/webhooks/payment-successful)
+- [Payment Failed](/api-reference/v2/webhooks/payment-failed)
 
 ## Security Best Practices
 
@@ -462,4 +386,4 @@ For more webhook details, see:
 - **Monitor Performance**: Track success rates, error patterns, and user experience metrics
 - **Optimize Flow**: Continuously improve based on user feedback and analytics
 
-For additional support, consult our [API Reference](/api-reference/v1/) or contact our integration team. 
+For additional support, consult our [API Reference](/api-reference/v2/) or contact our integration team. 

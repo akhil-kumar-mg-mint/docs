@@ -4,11 +4,22 @@ description: 'Ready to start accepting payments with EximPe? Just follow this qu
 ---
 
 
-<Button href="https://merchant.eximpe.com/auth/sign-up" variant="primary" size="lg">
-  Start Onboarding Process
-</Button>
+<CardGroup cols={2}>
+  <Card title="Production" icon="rocket" href="https://merchant.eximpe.com/auth/sign-up">
+    Sign up for a live account to start accepting real payments
+  </Card>
+  <Card title="Sandbox" icon="code" href="https://merchant-uat.eximpe.com/auth/sign-up">
+    Sign up for a sandbox account to test your integration
+  </Card>
+</CardGroup>
 
-1. **Navigate to the sign-up page** - [merchant signup](https://merchant.eximpe.com/auth/sign-up)
+<Tip>
+  **Parallel Workflow:** Developers can sign up on the **Sandbox** environment to start the integration immediately, while the Business Team can sign up on **Production** to submit KYC details and complete the onboarding process in parallel.
+</Tip>
+
+1. **Navigate to the sign-up page**
+   - For **Production**: [https://merchant.eximpe.com/auth/sign-up](https://merchant.eximpe.com/auth/sign-up)
+   - For **Sandbox**: [https://merchant-uat.eximpe.com/auth/sign-up](https://merchant-uat.eximpe.com/auth/sign-up)
 <Frame>
   <img
     src="/images/sign_up.png"

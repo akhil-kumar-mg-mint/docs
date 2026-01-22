@@ -8,13 +8,13 @@ description: "Enable direct UPI payments without redirection using EximPe’s se
 The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend. Deliver a seamless checkout experience while maintaining control and confidence for your customers.
 
 <CardGroup cols={3}>
-  <Card title="No Redirect Hops" icon="arrow-right" href="#step-1-initiate-payment">
+  <Card title="No Redirect Hops" icon="arrow-right" href="#step-2-initiate-payment">
     Initiate transactions directly from your server to improve user experience
   </Card>
-  <Card title="Flexible Intent Invocation" icon="phone" href="#step-2-invoke-upi-intent">
+  <Card title="Flexible Intent Invocation" icon="phone" href="#step-3-invoke-upi-intent">
     Call the Initiate Payment API when the user selects an app (Mobile) or scans a QR code (Desktop)
   </Card>
-  <Card title="Robust Server Callbacks" icon="server" href="#step-4-server-to-server-callback">
+  <Card title="Robust Server Callbacks" icon="server" href="#step-4-eximpe-sends-webhook-response">
     Receive asynchronous status updates via server-to-server callbacks
   </Card>
 </CardGroup>
@@ -27,7 +27,9 @@ Intent invocation is simply the act of packaging your UPI payment details (amoun
 
 Before you begin, ensure you have:
 
-- **Merchant Key & Salt**: Your EximPe merchant key and salt for hash generation.
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
 - **Callback URL**: A publicly accessible URL configured in your EximPe dashboard for server-to-server callbacks.
 - **cURL or HTTP Client**: Capability to make HTTPS `POST` and `GET` requests from your server.
 - **UPI Knowledge**: Familiarity with UPI intent URL parameters and encoding.
@@ -51,7 +53,7 @@ On desktop browsers, prepare a container to display a **QR Code**. When the user
 
 #### Mobile (Android & iOS)
 
-<img src="/images/upi-app-selection.png" alt="UPI App Selection UI" style={{ width: '200px', float: 'right', marginLeft: '20px', marginBottom: '20px' }} />
+<img src="/images/upi-app-selection.png" alt="UPI App Selection UI" style={{ width: '200px', marginBottom: '20px' }} />
 
 For mobile devices, design a list of popular UPI apps (like Google Pay, PhonePe, Paytm) for the buyer to select from. This provides the best user experience.
 
@@ -142,7 +144,7 @@ The method for invoking a UPI payment depends on the customer's device and opera
 
 #### Desktop (PC)
 
-On desktop browsers, display the **QR Code** generated from the `intent_uri`.
+On desktop browsers, use the `intent_uri` to generate a **QR Code**. The user can then scan this code with their mobile UPI app to complete the payment.
 
 **Implementation:**
 1. Prefix the `intent_uri` with `upi://pay?`
@@ -165,7 +167,7 @@ upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
 
 #### Mobile (Android & iOS)
 
-For mobile devices, launch the selected UPI app using deep links constructed with the `intent_uri`.
+For mobile devices, use the `intent_uri` to directly launch the customer's UPI application. This provides a seamless experience without manual data entry.
 
 ##### 1. Specific App Invocation (Android & iOS)
 
@@ -266,7 +268,8 @@ Invoke the **Order Status API** to retrieve the status of the UPI transaction:
 ```bash [expandable]
 curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
-  -H "X-Client-Secret: YOUR_CLIENT_SECRET"
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 2.0.0"
 ```
 
 <Note>
