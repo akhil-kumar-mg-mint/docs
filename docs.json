@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "EximPe Docs",
-  "openapi": "/openapi/v2/openapi.json",
+  "openapi": "/openapi/openapi.json",
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
@@ -94,8 +94,7 @@
                   "api-reference/v1/merchant/create",
                   "api-reference/v1/merchant/list",
                   "api-reference/v1/merchant/get",
-                  "api-reference/v1/merchant/update",
-                  "api-reference/v1/merchant/upload"
+                  "api-reference/v1/merchant/update"
                 ]
               },
               {
@@ -219,8 +218,7 @@
                   "api-reference/v2/merchant/create",
                   "api-reference/v2/merchant/list",
                   "api-reference/v2/merchant/get",
-                  "api-reference/v2/merchant/update",
-                  "api-reference/v2/merchant/upload"
+                  "api-reference/v2/merchant/update"
                 ]
               },
               {
