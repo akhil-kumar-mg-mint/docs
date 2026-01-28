@@ -103,7 +103,9 @@
                     "product": {
                       "name": "Samsung Galaxy S24 Ultra 5G",
                       "description": "Latest flagship Android smartphone with 512GB storage and S Pen",
-                      "type_of_goods": "physical_goods"
+                      "type_of_goods": "physical_goods",
+                      "hs_code": "85183000",
+                      "hs_code_description": "Headphones and earphones, whether or not combined with a microphone"
                     }
                   }
                 },
@@ -3690,7 +3692,7 @@
           },
           "hs_code": {
             "type": "string",
-            "description": "Harmonized System code"
+            "description": "Harmonized System code, required for physical goods"
           },
           "hs_code_description": {
             "type": "string",
@@ -5190,7 +5192,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Harmonized System codes for products/services"
+            "description": "Harmonized System codes for products/services, required for physical goods"
           },
           "category": {
             "type": "string",
@@ -5460,7 +5462,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "Updated Harmonized System codes for products/services"
+                "description": "Updated Harmonized System codes for products/services, required for physical goods"
               },
               "category": {
                 "type": "string",
@@ -6413,6 +6415,14 @@
                   "digital_goods",
                   "service"
                 ]
+              },
+              "hs_code": {
+                "type": "string",
+                "description": "Harmonized System code, required for physical goods"
+              },
+              "hs_code_description": {
+                "type": "string",
+                "description": "Description of the HS code"
               }
             }
           },
@@ -6856,7 +6866,7 @@
           },
           "hs_code": {
             "type": "string",
-            "description": "Harmonized System code"
+            "description": "Harmonized System code, required for physical goods"
           },
           "hs_code_description": {
             "type": "string",
@@ -8356,7 +8366,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Harmonized System codes for products/services"
+            "description": "Harmonized System codes for products/services, required for physical goods"
           },
           "category": {
             "type": "string",
@@ -8626,7 +8636,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "Updated Harmonized System codes for products/services"
+                "description": "Updated Harmonized System codes for products/services, required for physical goods"
               },
               "category": {
                 "type": "string",
