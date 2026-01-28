@@ -71,7 +71,7 @@
                       "description": "Premium noise-cancelling wireless headphones with 30-hour battery life",
                       "hs_code": "85183000",
                       "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
-                      "type_of_goods": "goods"
+                      "type_of_goods": "physical_goods"
                     },
                     "invoice": {
                       "number": "INV_WH_2024_0621",
@@ -103,7 +103,7 @@
                     "product": {
                       "name": "Samsung Galaxy S24 Ultra 5G",
                       "description": "Latest flagship Android smartphone with 512GB storage and S Pen",
-                      "type_of_goods": "goods"
+                      "type_of_goods": "physical_goods"
                     }
                   }
                 },
@@ -146,7 +146,7 @@
                       "description": "10.9-inch Liquid Retina display with True Tone, M1 chip, 12MP cameras",
                       "hs_code": "84713010",
                       "hs_code_description": "Portable automatic data processing machines weighing not more than 10 kg",
-                      "type_of_goods": "goods"
+                      "type_of_goods": "physical_goods"
                     },
                     "invoice": {
                       "number": "INV_TAB_2024_1204",
@@ -188,7 +188,7 @@
                       "description": "Starlight Aluminum Case with Sport Loop, Advanced health monitoring features",
                       "hs_code": "91021100",
                       "hs_code_description": "Wrist-watches, electrically operated, whether or not incorporating a stop-watch facility",
-                      "type_of_goods": "goods"
+                      "type_of_goods": "physical_goods"
                     },
                     "invoice": {
                       "number": "INV_WATCH_2024_1205",
@@ -557,7 +557,7 @@
                       "description": "Comprehensive online course with 50+ hours of content, projects, and certification",
                       "hs_code": "49019900",
                       "hs_code_description": "Printed books, brochures, leaflets and similar printed matter",
-                      "type_of_goods": "services"
+                      "type_of_goods": "service"
                     },
                     "invoice": {
                       "number": "INV_EDU_20241205",
@@ -873,7 +873,7 @@
                       "description": "Comprehensive online course with 50+ hours of content, projects, and certification",
                       "hs_code": "49019900",
                       "hs_code_description": "Printed books, brochures, leaflets and similar printed matter",
-                      "type_of_goods": "services"
+                      "type_of_goods": "service"
                     },
                     "invoice": {
                       "number": "IN1123213",
@@ -1217,7 +1217,7 @@
                         "description": "Comprehensive 3-month digital marketing strategy and implementation consultation",
                         "hs_code": "99831000",
                         "hs_code_description": "Professional, technical and other services",
-                        "type_of_goods": "services"
+                        "type_of_goods": "service"
                       },
                       "status": "payment_successful",
                       "status_message": "Payment captured successfully",
@@ -3698,10 +3698,11 @@
           },
           "type_of_goods": {
             "type": "string",
-            "description": "Type of goods (e.g., goods)",
+            "description": "Type of goods (e.g., physical_goods)",
             "enum": [
-              "goods",
-              "services"
+              "physical_goods",
+              "digital_goods",
+              "service"
             ]
           }
         }
@@ -6408,8 +6409,9 @@
               "type_of_goods": {
                 "type": "string",
                 "enum": [
-                  "goods",
-                  "services"
+                  "physical_goods",
+                  "digital_goods",
+                  "service"
                 ]
               }
             }
@@ -6862,10 +6864,11 @@
           },
           "type_of_goods": {
             "type": "string",
-            "description": "Type of goods (e.g., goods)",
+            "description": "Type of goods (e.g., physical_goods)",
             "enum": [
-              "goods",
-              "services"
+              "physical_goods",
+              "digital_goods",
+              "service"
             ]
           }
         }
@@ -9572,8 +9575,9 @@
               "type_of_goods": {
                 "type": "string",
                 "enum": [
-                  "goods",
-                  "services"
+                  "physical_goods",
+                  "digital_goods",
+                  "service"
                 ]
               }
             }

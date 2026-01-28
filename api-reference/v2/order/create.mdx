@@ -111,7 +111,7 @@ Notes:
 |---|---|---|---|---|
 | name | string | Yes | Product or service name. | Max 255 chars; letters, numbers, spaces, and common punctuation |
 | description | string | No | Description of the product/service. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
-| type_of_goods | string | Yes | Nature of goods/services. | Enum: `goods`, `service` |
+| type_of_goods | string | Yes | Nature of goods/services. | Enum: `digital_goods`, `physical_goods`, `service` |
 | hs_code | string | Conditional | 8-digit HS Code. Required for physical goods | Max 8 chars; numbers |
 | hs_code_description | string | No | HS Code description. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
 
@@ -188,7 +188,7 @@ For S2S Card Payment mode, the response includes:
   },
   "product": {
     "name": "Wireless Headphones",
-    "type_of_goods": "goods"
+    "type_of_goods": "physical_goods"
   }
 }
 ```
@@ -214,7 +214,7 @@ For S2S Card Payment mode, the response includes:
   },
   "product": {
     "name": "Smartphone", 
-    "type_of_goods": "goods"
+    "type_of_goods": "physical_goods"
   }
 }
 ```
@@ -256,7 +256,7 @@ For S2S Card Payment mode, the response includes:
     "description": "This is a sample product description",
     "hs_code": "98051000",
     "hs_code_description": "Portable automatic data processing machines",
-    "type_of_goods": "goods"
+    "type_of_goods": "physical_goods"
   },
   "invoice": {
     "number": "INV_0HOZ0C",
@@ -297,7 +297,7 @@ For S2S Card Payment mode, the response includes:
     "description": "This is a sample product description",
     "hs_code": "98051000",
     "hs_code_description": "Portable automatic data processing machines",
-    "type_of_goods": "goods"
+    "type_of_goods": "physical_goods"
   },
   "invoice": {
     "number": "INV_3MUK2I",
