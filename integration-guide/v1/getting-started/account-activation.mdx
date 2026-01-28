@@ -1,0 +1,78 @@
+---
+title: "Account Activation"
+description: "Complete KYC verification to activate your merchant account and start accepting live payments."
+---
+
+## Complete KYC from Your Dashboard
+
+Start the KYC process directly on your [**EximPe Dashboard**](https://merchant.eximpe.com). Click on the **"Complete KYC"** button.
+
+<Frame>
+  <img
+    src="/images/dashboard.png"
+    alt="KYC Dashboard"
+    style={{ borderRadius:"0.5rem" }}
+  />
+</Frame>
+
+## Required Documents
+
+Make sure you have the following **details and documents** ready:
+
+**Company Information:**
+
+- Legal Company Name
+- Trade Name (DBA)
+- Business Registration Number
+- Tax Identification Number
+- Organization Type (LLC, Pvt Ltd, etc.)
+- Website / App / Store URL
+- Average Transaction Value (USD)
+- Estimated Monthly Volume (USD)
+
+**Registered Business Address:**
+
+- This cannot be changed once submitted.
+
+**Authorized Representative:**
+
+- Full Name
+- Email Address
+- Phone Number
+
+**Settlement Bank Details:**
+
+- Bank Account Number / IBAN
+- Bank Name & Branch Address
+- SWIFT / BIC Code
+
+**Business Documents:**
+
+- Certificate of Incorporation
+- MoA & AoA
+- Valid Business Licenses _(if applicable)_
+- Proof of Business Address _(e.g., utility bill or bank statement)_
+
+**Ownership & Banking:**
+
+- Beneficial Owners' ID & Address Proof
+- Cancelled Cheque or Signed Bank Statement
+
+## API Key Access
+
+**Sandbox API Keys** are available immediately after signing up on the [Sandbox Environment](https://merchant-uat.eximpe.com/). These keys allow you to simulate transactions and test your integration without real funds.
+
+**Production API Keys** are provided only after your account is activated on the [Production Environment](https://merchant.eximpe.com/). This requires completing the KYC process and receiving approval from the EximPe team.
+
+<Tip>
+  Ensure you switch your integration to use the **Production API Keys** and endpoint once your account is live!
+</Tip>
+
+## Account Status Lifecycle
+
+| Status                  | Description                                          | Action Required           |
+| ----------------------- | ---------------------------------------------------- | ------------------------- |
+| **Pending**             | KYC not yet started or documents missing             | Start KYC process         |
+| **Documents Submitted** | Documents uploaded – under review                    | Wait for review           |
+| **Approved**            | KYC successful – ready for account activation        | Account will be activated |
+| **Suspended**           | Temporarily blocked due to compliance or data issues | Contact support           |

@@ -1,0 +1,67 @@
+---
+title: "Test Data"
+description: "Use test data on this page to test payments across various payment modes."
+---
+
+## Test Cards
+
+Use the following card details to test card payments in the sandbox environment.
+
+### Credit Cards
+
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5123456789012346  | Mastercard | 05/30  | 123 | 123456 | Success |
+| 4012001037141112  | VISA       | 05/30  | 123 | 123456 | Success |
+| 5497774415170603  | Mastercard | 05/30  | 412 | 123456 | Success |
+| 6082015309577308  | RUPAY      | 05/30  | 123 | 123456 | Success |
+
+### Debit Cards
+
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5118700000000003  | Mastercard | 05/30  | 123 | 123456 | Success |
+| 4594538050639999  | VISA       | 05/30  | 123 | 123456 | Success |
+
+<Note>
+  For all test cards, you can use any valid future date as expiry and any 3-digit number as CVV. The OTP for all successful transactions is `123456`.
+</Note>
+
+## Test Net Banking
+
+Use the following credentials to test Net Banking transactions. Select **Test Bank** from the bank list.
+
+| Parameter | Value      |
+| :--- | :--- |
+| **Bank Name** | Test Bank |
+| **Username** | `user123` |
+| **Password** | `password` |
+| **OTP** | `123456` |
+
+## Test UPI VPA
+
+Use the following VPAs to test UPI transactions.
+
+| VPA | Description | Result |
+| :--- | :--- | :--- |
+| `success@upi` | Simulates a successful payment | **Success** |
+| `failure@upi` | Simulates a failed payment | **Failure** |
+| `pending@upi` | Simulates a pending payment | **Pending** |
+
+<Tip>
+  When using the `intent` flow on mobile, selecting any UPI app in the simulator will trigger the respective flow based on the test VPA used.
+</Tip>
+
+## Wallets
+
+Use the following mobile numbers to test Wallet transactions.
+
+| Wallet | Mobile Number | OTP | Result |
+| :--- | :--- | :--- | :--- |
+| **PhonePe** | `9999999999` | `123456` | Success |
+| **Paytm** | `7777777777` | `123456` | Success |
+| **Freecharge** | `8888888888` | `123456` | Success |
+
+<Warning>
+  These credentials are only for the **Sandbox Environment**. Do not use them in Production.
+</Warning>

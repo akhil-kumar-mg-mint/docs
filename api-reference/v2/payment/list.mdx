@@ -1,0 +1,22 @@
+---
+title: 'List Payments'
+description: 'Retrieve a list of payments for a merchant.'
+openapi: 'GET /pg/payments/'
+---
+
+## Overview
+The List Payments endpoint allows you to search and retrieve payment records based on a variety of criteria. You can filter by payment status, date ranges, currency, and more. The response is paginated to handle large datasets efficiently.
+
+## Filtering
+You can combine multiple filters to create a precise query. All filter parameters are optional.
+
+### Available Filters
+- `payment_id`
+- `currency`
+- `merchant_id`
+- `order_id`
+- `reference_id`
+- `buyer_name`
+- `mop_type`: (e.g., `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`)
+- `status`: ( `pending`, `captured`, `failed`)
+- `from_created_at` / `to_created_at`

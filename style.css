@@ -1,0 +1,112 @@
+/* Custom styles for EximPe Docs */
+
+/* Desktop-only styles for sidebar width */
+@media (min-width: 1024px) {
+
+    #sidebar-content,
+    .sidebar,
+    [class*="Sidebar"] {
+        width: 340px !important;
+        min-width: 340px !important;
+        border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+    }
+
+    main,
+    #main-content {
+        margin-left: 340px !important;
+    }
+}
+
+/* Specific styling for the Version Selector - Desktop */
+.hidden.lg\:flex.items-center.gap-x-2 button[id*="radix"],
+[class*="VersionSwitcher"] button {
+    width: auto !important;
+    min-width: 120px !important;
+    padding: 6px 12px !important;
+    height: 32px !important;
+
+    /* High-contrast brand styling */
+    background-color: #15803d !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+
+    /* Typography */
+    font-size: 0.85rem !important;
+    letter-spacing: 0.01em !important;
+
+    /* Visual effects */
+    box-shadow: 0 4px 6px -1px rgba(38, 168, 135, 0.2), 0 2px 4px -1px rgba(38, 168, 135, 0.1) !important;
+    transition: all 0.2s ease !important;
+
+    /* Layout */
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 0 !important;
+    vertical-align: middle !important;
+}
+
+/* Specific styling for the Version Selector - Mobile */
+#navigation-items>div.flex.flex-col>button[id*="radix"] {
+    width: fit-content !important;
+    min-width: 110px !important;
+    padding: 6px 12px !important;
+    height: 32px !important;
+    align-self: flex-start !important;
+    /* Fix for mobile stretching */
+    margin-bottom: 16px !important;
+
+    /* High-contrast brand styling */
+    background-color: #15803d !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+
+    /* Typography */
+    font-size: 0.85rem !important;
+
+    /* Visual effects */
+    box-shadow: 0 4px 6px -1px rgba(38, 168, 135, 0.2) !important;
+}
+
+/* Hover effects for the version selector */
+.hidden.lg\:flex.items-center.gap-x-2 button[id*="radix"]:hover,
+#navigation-items>div.flex.flex-col>button[id*="radix"]:hover {
+    background-color: #1f8a6d !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Style the text inside the dropdown to ensure it's white */
+.hidden.lg\:flex.items-center.gap-x-2 button[id*="radix"] span,
+.hidden.lg\:flex.items-center.gap-x-2 button[id*="radix"] div,
+#navigation-items>div.flex.flex-col>button[id*="radix"] span,
+#navigation-items>div.flex.flex-col>button[id*="radix"] div {
+    color: white !important;
+}
+
+/* Ensure the desktop header container is centered */
+.hidden.lg\:flex.items-center.gap-x-2 {
+    align-items: center !important;
+    display: flex !important;
+    gap: 12px !important;
+}
+
+/* Add a subtle "API" label indicator - ONLY to the version switcher */
+.hidden.lg\:flex.items-center.gap-x-2 button[id*="radix"]::before,
+#navigation-items>div.flex.flex-col>button[id*="radix"]::before {
+    content: "API";
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-right: 6px;
+}
+
+/* Fix for the mobile sidebar header which might stack elements */
+@media (max-width: 1023px) {
+    header+div>div.flex {
+        flex-wrap: wrap !important;
+    }
+}

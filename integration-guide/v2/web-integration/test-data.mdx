@@ -1,0 +1,64 @@
+---
+title: "Test Data"
+description: "Use test data on this page to test payments across various payment modes."
+---
+
+## Test Cards
+
+Use the following card details to test card payments in the sandbox environment.
+
+### Credit Cards
+
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5105105105105100  | Mastercard | 05/30  | 123 | 111000 | Success |
+| 4576238912771450  | VISA       | 05/30  | 123 | 111000 | Success |
+| 5552190758372734  | Mastercard | 05/30  | 123 | 111000 | Success |
+| 6528591234543575  | RUPAY      | 05/30  | 123 | 111000 | Success |
+
+### Debit Cards
+
+| Card Number       | Network    | Expiry | CVV | OTP    | Status  |
+| ----------------- | ---------- | ------ | --- | ------ | ------- |
+| 5409162669381034  | Mastercard | 05/30  | 123 | 111000 | Success |
+| 4706131211212123  | VISA       | 05/30  | 123 | 111000 | Success |
+| 6074825972083818  | RUPAY      | 05/30  | 123 | 111000 | Success |
+
+<Note>
+  For all test cards, you can use any valid future date as expiry and any 3-digit number as CVV. The OTP for all successful transactions is `111000`.
+</Note>
+
+## Test Net Banking
+
+Use the following credentials to test Net Banking transactions. Select **Test Bank** from the bank list.
+
+| Parameter | Value      |
+| :--- | :--- |
+| **Bank Name** | Test Bank |
+| **Payment Code** | `3333` |
+| **Bank API Code** | `TESTR` |
+
+## Test UPI VPA
+
+Use the following VPAs to test UPI transactions.
+
+| VPA | Description | Result |
+| :--- | :--- | :--- |
+| `testsuccess@gocash` | Simulates a successful payment | **Success** |
+| `testfailure@gocash` | Simulates a failed payment | **Failure** |
+
+<Tip>
+  When using the `intent` flow in the **sandbox environment**, the API response will include a `test_simulator_url` parameter. You can open this URL in a browser to simulate the payment flow and complete the transaction without needing a real UPI app.
+</Tip>
+
+## Wallets
+
+Use the following OTP to test Wallet transactions.
+
+| Wallet | OTP |
+| :--- | :--- |
+| **Test Wallet** | `111000` |
+
+<Warning>
+  These credentials are only for the **Sandbox Environment**. Do not use them in Production.
+</Warning>
