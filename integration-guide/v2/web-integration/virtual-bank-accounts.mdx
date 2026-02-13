@@ -1,0 +1,114 @@
+---
+title: "Virtual Bank Accounts"
+description: "Collect payments via bank transfers with unique virtual accounts for each customer"
+---
+
+# Introduction
+
+Virtual Bank Accounts (VBAs) simplify payment collection via bank transfers—NEFT, RTGS, and IMPS. Each customer gets a unique virtual account for payments, so you can track transactions per customer and reconcile them automatically. You receive instant payment notifications, and funds are transferred and settled into your business account.
+
+<CardGroup cols={3}>
+  <Card title="Seamless Payments" icon="building-columns" href="#benefits">
+    Unique VBAs remove the need for manual tracking per customer
+  </Card>
+  <Card title="Real-Time Tracking" icon="bolt" href="#integration-steps">
+    Instant payment notifications give full visibility
+  </Card>
+  <Card title="Automated Reconciliation" icon="arrows-rotate" href="#step-3-track-payments">
+    Minimise errors and reduce operational overhead
+  </Card>
+</CardGroup>
+
+## Benefits
+
+- **Seamless Payments**: Unique VBAs remove the need for manual tracking per customer.
+- **Real-Time Tracking**: Instant payment notifications provide full visibility.
+- **Automated Reconciliation**: The system minimises errors and reduces operational overhead.
+- **Supports High-Value Transactions**: Efficient handling of large payments (NEFT/RTGS/IMPS).
+
+## Use Cases
+
+- **NBFCs**: Collect EMIs, loan repayments, and deposits. Each borrower can have a unique virtual account.
+- **Stock brokerage and trading**: Fund transfers for investors; each investor gets a unique VBA to add funds.
+- **Real estate**: Collect property bookings, rentals, and maintenance charges.
+- **Educational institutes**: Collect tuition fees, exam charges, and other payments. Each student can have a unique virtual account.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Merchant Account**: An active EximPe merchant account with VBA feature enabled
+- **Credentials**: Your Client ID and Client Secret
+- **Webhook URL**: A secure endpoint to receive VBA payment notifications (configured on your API credentials). When a payment is received on your VBA, the platform sends a webhook to this URL.
+
+## Integration Steps
+
+1. **Create VBA**: Call the API to create a virtual bank account for a customer or merchant.
+2. **Share Account Details**: Share the account number, IFSC, and bank name with your customer.
+3. **Track Payments**: List payments or fetch by UTR via API, or use webhooks for real-time updates.
+
+## Step 1: Create VBA
+
+Create a Virtual Bank Account for the authenticated merchant. At most one **ACTIVE** VBA is allowed per merchant.
+
+<Card title="📚 API Reference" href="/api-reference/v2/vba/create">
+  **Create VBA API** – View full request/response and error codes.
+</Card>
+
+## Step 2: Share Account Details
+
+After creation, the API returns `vba_account_number`, `vba_ifsc`, `vba_bank_code`, and `vba_account_name`. Share these with your customer so they can initiate a NEFT, RTGS, or IMPS transfer to this virtual account. Each payment is linked to your merchant and can be reconciled automatically.
+
+## Step 3: Track Payments
+
+When a payment is received on your VBA account, the platform sends webhooks to your registered API URL so you can process it in real time. You can also track payments via the API.
+
+### Payment Webhook Flow
+
+When a payment is received to a VBA account:
+
+1. **Payment Successful Webhook**: The platform sends a **PAYMENT_SUCCESSFUL** webhook indicating that the payment has been captured.
+
+2. **Payment Details Missing Webhook**: Since payment verification details are missing (common for bank transfers), the platform also sends a **PAYMENT_DETAILS_MISSING** webhook.
+
+3. **Upload Verification Details**: On receiving the **PAYMENT_DETAILS_MISSING** webhook, call the **Upload Payment Verification Details** API to provide the missing details (such as buyer name, product description, invoice number, etc.).
+
+4. **Settlement**: After the verification details are uploaded, the settlement process will proceed.
+
+<Card title="📚 Webhook Reference" href="/api-reference/v2/webhooks/payment-successful">
+  **Payment Successful** – Payload schema, headers, signature verification, and handling.
+</Card>
+
+<Card title="📚 Webhook Reference" href="/api-reference/v2/webhooks/payment-details-missing">
+  **Payment Details Missing** – Payload schema, headers, signature verification, and handling.
+</Card>
+
+<Card title="📚 API Reference" href="/api-reference/v2/payment/upload-verification-details">
+  **Upload Payment Verification Details API** – Upload missing payment verification details.
+</Card>
+
+### 1. List VBA Payments
+
+Retrieve a paginated list of all payments collected on a VBA.
+
+<Card title="📚 API Reference" href="/api-reference/v2/vba/list-payments">
+  **List VBA Payments API** – Pagination and response format.
+</Card>
+
+### 2. Get Payment by UTR
+
+Fetch a single payment using the UTR (reference number) from the bank transfer.
+
+<Card title="📚 API Reference" href="/api-reference/v2/vba/get-payment-by-utr">
+  **Get VBA Payment by UTR API** – Query by UTR.
+</Card>
+
+## Managing VBAs
+
+EximPe provides APIs to manage the lifecycle of your virtual bank accounts:
+
+- **[Get VBA Details](/api-reference/v2/vba/get)**: Fetch details of an existing VBA.
+- **[Edit VBA](/api-reference/v2/vba/edit)**: Update name, email, or phone associated with the VBA.
+- **[Manage VBA Status](/api-reference/v2/vba/manage)**: Activate or deactivate a VBA.
+- **[List VBA Payments](/api-reference/v2/vba/list-payments)**: List all payments for a VBA.
+- **[Get Payment by UTR](/api-reference/v2/vba/get-payment-by-utr)**: Get a single payment by UTR.

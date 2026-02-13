@@ -11,6 +11,33 @@ description: "Technical reference for the PAYMENT_REFUNDED webhook event, includ
 
 This webhook is triggered when a payment is refunded to the customer through EximPe.
 
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_REFUNDED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+
+---
+
 ## Payload Schema
 
 <CodeGroup>
@@ -19,7 +46,7 @@ This webhook is triggered when a payment is refunded to the customer through Exi
 {
     "event_type": "PAYMENT_REFUNDED",
     "event_time": "2024-02-15 16:53:15",
-    "version": "1.0",
+    "version": "2.0.0",
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
         "refunds": [

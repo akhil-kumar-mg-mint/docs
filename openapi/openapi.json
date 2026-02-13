@@ -1285,6 +1285,124 @@
         "operationId": "v1_get_pg_payments_payment_id_"
       }
     },
+    "/pg/payments/{uid}/upload-verification-details/": {
+      "post": {
+        "summary": "Upload Payment Verification Details",
+        "description": "Upload payment verification details for a payment and update the associated order.",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "UID of the payment for which to upload verification details.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_UploadVerificationDetailsRequest"
+              },
+              "example": {
+                "buyer_name": "John Doe",
+                "type_of_goods": "GOODS",
+                "product_description": "Electronics and accessories",
+                "buyer_address": "123 Main Street, City, State",
+                "invoice_number": "INV-2025-001",
+                "buyer_postal_code": "12345",
+                "hs_code": "8517.12.00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment verification details uploaded successfully; order updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_UploadVerificationDetailsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Payment verification details uploaded successfully; order updated.",
+                  "data": {
+                    "uploaded_documents": [
+                      {
+                        "doc_name": "importer_name",
+                        "doc_type": "VALUE",
+                        "doc_status": "VERIFIED",
+                        "remarks": null,
+                        "added_on": null,
+                        "last_updated_on": null
+                      }
+                    ],
+                    "missing_documents": [],
+                    "errors": []
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or payment not supported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_payments_uid_upload_verification_details_"
+      }
+    },
     "/pg/refunds/": {
       "post": {
         "summary": "Create Refund",
@@ -3227,6 +3345,809 @@
         "operationId": "v1_post_pg_subscriptions_subscription_id_recurring_payment_"
       }
     },
+    "/pg/vba/": {
+      "post": {
+        "summary": "Create VBA",
+        "description": "Create one or more Virtual Bank Accounts for the authenticated merchant. VBA details (email, name, phone, virtual_account_id) are derived from the merchant account. At most one ACTIVE VBA is allowed per merchant; if one already exists, the request fails with 400. No request body required.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VBA created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA created successfully" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "virtual_account_id": { "type": "string", "example": "a1b2c3d4" },
+                          "vba_account_name": { "type": "string", "example": "My Trade Name" },
+                          "vba_bank_code": { "type": "string", "example": "UTIB" },
+                          "vba_account_number": { "type": "string", "example": "12345678901234" },
+                          "vba_ifsc": { "type": "string", "example": "UTIB0001234" },
+                          "vba_status": { "type": "string", "example": "ACTIVE" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Merchant account not identified, active VBA already exists, email required, or notification group error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled for merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to generate unique virtual_account_id or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error (PAYMENT_GATEWAY_API_ERROR)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_vba_"
+      }
+    },
+    "/pg/vba/{virtual_account_id}/": {
+      "put": {
+        "summary": "Edit VBA",
+        "description": "Update an existing Virtual Bank Account. Only the virtual_account_name field is editable.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA to update.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "virtual_account_name": {
+                    "type": "string",
+                    "description": "Display name for the VBA."
+                  }
+                }
+              },
+              "example": {
+                "virtual_account_name": "Updated Trade Name"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VBA updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA updated successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uid": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440000" },
+                        "virtual_account_id": { "type": "string", "example": "a1b2c3d4" },
+                        "vba_account_name": { "type": "string", "example": "Updated Trade Name" },
+                        "vba_bank_code": { "type": "string", "example": "UTIB" },
+                        "vba_account_number": { "type": "string", "example": "12345678901234" },
+                        "vba_ifsc": { "type": "string", "example": "UTIB0001234" },
+                        "vba_status": { "type": "string", "example": "ACTIVE" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA updated successfully",
+                  "data": {
+                    "uid": "550e8400-e29b-41d4-a716-446655440000",
+                    "virtual_account_id": "a1b2c3d4",
+                    "vba_account_name": "Updated Trade Name",
+                    "vba_bank_code": "UTIB",
+                    "vba_account_number": "12345678901234",
+                    "vba_ifsc": "UTIB0001234",
+                    "vba_status": "ACTIVE"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No editable fields provided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to update VBA details or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_put_pg_vba_virtual_account_id_"
+      },
+      "get": {
+        "summary": "Get VBA Details",
+        "description": "Fetch details of an existing Virtual Bank Account by virtual_account_id for the authenticated merchant and syncs the local VBA record.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "VBA identifier.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VBA details fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA details fetched successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uid": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440000" },
+                        "virtual_account_id": { "type": "string", "example": "a1b2c3d4" },
+                        "vba_bank_code": { "type": "string", "example": "UTIB" },
+                        "vba_account_number": { "type": "string", "example": "12345678901234" },
+                        "vba_ifsc": { "type": "string", "example": "UTIB0001234" },
+                        "vba_status": { "type": "string", "example": "ACTIVE" },
+                        "vba_account_name": { "type": "string", "example": "My Trade Name" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA details fetched successfully",
+                  "data": {
+                    "uid": "550e8400-e29b-41d4-a716-446655440000",
+                    "virtual_account_id": "a1b2c3d4",
+                    "vba_bank_code": "UTIB",
+                    "vba_account_number": "12345678901234",
+                    "vba_ifsc": "UTIB0001234",
+                    "vba_status": "ACTIVE",
+                    "vba_account_name": "My Trade Name"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Business/validation exception from service or missing virtual_account_id in path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to fetch VBA details or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_get_pg_vba_virtual_account_id_"
+      },
+      "patch": {
+        "summary": "Manage VBA Status",
+        "description": "Sets the VBA status to ACTIVE or INACTIVE. Only one ACTIVE VBA is allowed per merchant; activating a second VBA returns 400.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA to manage.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["ACTIVE", "INACTIVE"],
+                    "description": "VBA status."
+                  }
+                }
+              },
+              "example": {
+                "status": "INACTIVE"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VBA status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA status updated successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uid": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440000" },
+                        "virtual_account_id": { "type": "string", "example": "a1b2c3d4" },
+                        "vba_account_name": { "type": "string", "example": "My Trade Name" },
+                        "vba_bank_code": { "type": "string", "example": "UTIB" },
+                        "vba_account_number": { "type": "string", "example": "12345678901234" },
+                        "vba_ifsc": { "type": "string", "example": "UTIB0001234" },
+                        "vba_status": { "type": "string", "example": "INACTIVE" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA status updated successfully",
+                  "data": {
+                    "uid": "550e8400-e29b-41d4-a716-446655440000",
+                    "virtual_account_id": "a1b2c3d4",
+                    "vba_account_name": "My Trade Name",
+                    "vba_bank_code": "UTIB",
+                    "vba_account_number": "12345678901234",
+                    "vba_ifsc": "UTIB0001234",
+                    "vba_status": "INACTIVE"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status (not ACTIVE or INACTIVE) or activating when another active VBA exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to update VBA status or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_patch_pg_vba_virtual_account_id_"
+      }
+    },
+    "/pg/vba/{virtual_account_id}/payment-by-utr/": {
+      "get": {
+        "summary": "Get VBA Payment by UTR",
+        "description": "Fetch a single payment for a VBA by UTR.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "utr",
+            "in": "query",
+            "description": "UTR of the payment.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VBA payment retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA payment retrieved successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "payment_id": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440001" },
+                        "order_id": { "type": "string", "example": "660e8400-e29b-41d4-a716-446655440002" },
+                        "status": { "type": "string", "example": "SUCCESS" },
+                        "amount": { "type": "number", "example": 100.50 },
+                        "payment_utr": { "type": "string", "example": "UTR123456789012" },
+                        "created_at": { "type": "string", "format": "date-time", "example": "2025-02-10T14:30:00Z" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA payment retrieved successfully",
+                  "data": {
+                    "payment_id": "550e8400-e29b-41d4-a716-446655440001",
+                    "order_id": "660e8400-e29b-41d4-a716-446655440002",
+                    "status": "SUCCESS",
+                    "amount": 100.50,
+                    "payment_utr": "UTR123456789012",
+                    "created_at": "2025-02-10T14:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "utr missing or virtual_account_id missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant or payment not found for given UTR and VBA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_get_pg_vba_virtual_account_id_payment_by_utr_"
+      }
+    },
+    "/pg/vba/{virtual_account_id}/payments/": {
+      "get": {
+        "summary": "List VBA Payments",
+        "description": "Get a paginated list of payments collected on a Virtual Bank Account for the authenticated merchant.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Number of items per page. Default is 250, maximum is 1000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 250
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "VBA payments retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "VBA payments retrieved successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": { "type": "integer", "example": 42 },
+                        "page": { "type": "integer", "example": 1 },
+                        "page_size": { "type": "integer", "example": 10 },
+                        "next": { "type": "string", "format": "uri", "nullable": true, "example": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2&page_size=10" },
+                        "previous": { "type": "string", "format": "uri", "nullable": true, "example": null },
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "payment_id": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440001" },
+                              "order_id": { "type": "string", "example": "660e8400-e29b-41d4-a716-446655440002" },
+                              "status": { "type": "string", "example": "SUCCESS" },
+                              "amount": { "type": "number", "example": 100.50 },
+                              "payment_utr": { "type": "string", "example": "UTR123456789012" },
+                              "created_at": { "type": "string", "format": "date-time", "example": "2025-02-10T14:30:00Z" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA payments retrieved successfully",
+                  "data": {
+                    "count": 42,
+                    "page": 1,
+                    "page_size": 10,
+                    "next": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2&page_size=10",
+                    "previous": null,
+                    "results": [
+                      {
+                        "payment_id": "550e8400-e29b-41d4-a716-446655440001",
+                        "order_id": "660e8400-e29b-41d4-a716-446655440002",
+                        "status": "SUCCESS",
+                        "amount": 100.50,
+                        "payment_utr": "UTR123456789012",
+                        "created_at": "2025-02-10T14:30:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination (e.g. page out of range) or virtual_account_id missing in path",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA feature not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_get_pg_vba_virtual_account_id_payments_"
+      }
+    },
     "/pg/payment-links/": {
       "post": {
         "summary": "Create Payment Link",
@@ -3538,6 +4459,99 @@
   },
   "components": {
     "schemas": {
+      "v2_UploadVerificationDetailsRequest": {
+        "type": "object",
+        "required": ["buyer_name", "type_of_goods", "product_description", "buyer_address", "invoice_number", "buyer_postal_code"],
+        "properties": {
+          "buyer_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Name of the buyer/importer."
+          },
+          "type_of_goods": {
+            "type": "string",
+            "enum": ["GOODS", "PHYSICAL_GOODS", "DIGITAL_GOODS", "SERVICE"],
+            "description": "Type of goods."
+          },
+          "product_description": {
+            "type": "string",
+            "description": "Description of the product/goods."
+          },
+          "buyer_address": {
+            "type": "string",
+            "description": "Buyer's address."
+          },
+          "invoice_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Invoice number."
+          },
+          "buyer_postal_code": {
+            "type": "string",
+            "maxLength": 10,
+            "description": "Buyer's postal/ZIP code."
+          },
+          "hs_code": {
+            "type": "string",
+            "maxLength": 30,
+            "description": "HS code. Required when type_of_goods is GOODS, PHYSICAL_GOODS, or DIGITAL_GOODS; optional for SERVICE."
+          }
+        }
+      },
+      "v2_UploadVerificationDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "uploaded_documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "doc_name": { "type": "string" },
+                    "doc_type": { "type": "string" },
+                    "doc_status": { "type": "string" },
+                    "remarks": { "type": "string", "nullable": true },
+                    "added_on": { "type": "string", "nullable": true },
+                    "last_updated_on": { "type": "string", "nullable": true }
+                  }
+                }
+              },
+              "missing_documents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "doc_name": { "type": "string" },
+                    "doc_type": { "type": "string" },
+                    "doc_status": { "type": "string" },
+                    "remarks": { "type": "string", "nullable": true },
+                    "added_on": { "type": "string", "nullable": true },
+                    "last_updated_on": { "type": "string", "nullable": true }
+                  }
+                }
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "doc_name": { "type": "string" },
+                    "error_message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "v1_CreateOrderRequest": {
         "type": "object",
         "required": [

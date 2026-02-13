@@ -1,0 +1,158 @@
+---
+title: "PAYMENT DETAILS MISSING"
+description: "Technical reference for the webhook sent when a payment is recorded but one or more fields that are required for payment verification are missing on the order."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `PAYMENT_DETAILS_MISSING`  
+**Category**: Payment  
+**Description**: Payment was recorded but one or more order fields required for payment verification are missing.
+
+This webhook notifies you which fields that are missing for payment verification so you can supply them via the Partner API (order update or **upload-verification-details**) or dashboard. It is used for any payment with missing verification details, including VBA transfer and regular payment success flows.
+
+### When the webhook is sent
+
+The webhook is sent **only when all** of the following are true:
+
+1. **Merchant has webhook URL** – Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+2. **At least one detail is missing** – The payment’s order is missing one or more verification fields (see [details_missing](#details_missing-field-names) below). If all six fields are present on the order, the webhook is not sent.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_DETAILS_MISSING` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+  "event_type": "PAYMENT_DETAILS_MISSING",
+  "event_time": "2025-02-12T10:30:00.123456Z",
+  "version": "2.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
+  "data": {
+    "order_uid": "660e8400-e29b-41d4-a716-446655440001",
+    "payment_id": "770e8400-e29b-41d4-a716-446655440002",
+    "message": "Payment recorded but verification details missing for Upload Payment Verification Details API. Supply the missing fields via the upload-verification-details API or dashboard.",
+    "details_missing": [
+      "buyer_name",
+      "product_description",
+      "buyer_address",
+      "invoice_number",
+      "buyer_postal_code",
+      "hs_code"
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"PAYMENT_DETAILS_MISSING"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      ISO 8601 datetime when the webhook event was created
+      
+      **Example**: `"2025-02-12T10:30:00.123456Z"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Envelope version (e.g. "2.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for this webhook event (UUID), useful for idempotency
+      
+      **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event payload: order_uid, payment_id, message, details_missing
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.order_uid" type="string" required>
+      UID of the order for this payment
+      
+      **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+    </ParamField>
+
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment
+      
+      **Example**: `"770e8400-e29b-41d4-a716-446655440002"`
+    </ParamField>
+
+    <ParamField path="data.message" type="string" required>
+      Human-readable message instructing you to supply the missing verification details via the upload-verification-details API or dashboard
+      
+      **Example**: `"Payment recorded but verification details missing for Upload Payment Verification Details API. Supply the missing fields via the upload-verification-details API or dashboard."`
+    </ParamField>
+
+    <ParamField path="data.details_missing" type="array" required>
+      List of **field names** that are missing on the order. Use these when updating the order via the Partner API or dashboard. See the table below for descriptions.
+      
+      **Example**: `["buyer_name", "product_description", "buyer_address", "invoice_number", "buyer_postal_code", "hs_code"]`
+    </ParamField>
+  </Tab>
+</Tabs>
+
+### details_missing field names
+
+Each element in `details_missing` is a field name that may be missing on the order. Supply the missing fields by updating the order (Partner API or dashboard) or by calling the **upload-verification-details** endpoint for that payment. The following field names may appear:
+
+| Field name | Description |
+|------------|-------------|
+| `buyer_name` | Name of the buyer/importer. |
+| `product_description` | Description of the product/goods. |
+| `buyer_address` | Buyer's address. |
+| `invoice_number` | Invoice number. |
+| `buyer_postal_code` | Buyer's postal/ZIP code. |
+| `hs_code` | HS code (or `hs_code_description` on the order). |
+
+The webhook is sent only when at least one of these fields is missing (empty or not set) on the order.
+
+---
+
+## What to Do When You Receive This Webhook
+
+1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
+2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
+3. **Use `order_uid` and `payment_id`** to fetch full order/payment details from the Partner API if needed (e.g. amount, status).
+4. **Supply missing verification details** by updating the order with the missing fields (via the Partner API or dashboard) or by calling the **upload-verification-details** endpoint for that payment. The `details_missing` array lists the field names that are missing (e.g. `buyer_name`, `product_description`, `invoice_number`, `buyer_address`, `buyer_postal_code`, `hs_code`).

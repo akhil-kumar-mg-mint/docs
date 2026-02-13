@@ -11,7 +11,37 @@ description: "Technical reference for the PAYMENT_FAILED webhook event, includin
 **Category**: Payment  
 **Description**: Payment transaction has failed
 
-This webhook is triggered when a customer's payment attempt fails through EximPe.
+This webhook is triggered when a payment is marked FAILED (after a payment failed webhook/callback is received).
+
+### When the webhook is sent
+
+- **Payment failed flow:** After a payment failed webhook/callback is received, the payment is updated to FAILED and the webhook is created.
+- The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_FAILED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
 
 ---
 
@@ -21,19 +51,21 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
 
 ```json Example Payload
 {
-    "event_type": "PAYMENT_FAILED",
-    "event_time": "2024-02-15 16:53:15Z",
-    "version": "1.0",
-    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
-    "data": {
-        "status": "failed",
-        "message": "Cancelled by user",
-        "mop_type": "upi",
-        "order_id": "OD3376378679",
-        "payment_id": "PR6938527534",
-        "bank_ref_num": "OD3376378679-PR6938527534",
-        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
-    }
+  "event_type": "PAYMENT_FAILED",
+  "event_time": "2025-02-12T10:31:00.123456Z",
+  "version": "2.0.0",
+  "sequence_number": "660e8400-e29b-41d4-a716-446655440001",
+  "data": {
+    "payment_id": "770e8400-e29b-41d4-a716-446655440003",
+    "order_id": "660e8400-e29b-41d4-a716-446655440001",
+    "status": "FAILED",
+    "message": "Payment declined by bank",
+    "mop_type": "CARD",
+    "bank_ref_num": "",
+    "payment_completed_at": null,
+    "utr": null,
+    "virtual_account_id": null
+  }
 }
 ```
 
@@ -50,27 +82,39 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in ISO 8601 format
+      ISO 8601 datetime when the webhook event was created
       
-      **Example**: `"2024-02-15 16:53:15Z"`
+      **Example**: `"2025-02-12T10:31:00.123456Z"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Envelope version (e.g. "1.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
+      Unique identifier for this webhook event (UUID), useful for idempotency
       
-      **Example**: `"e40552bf-ed12-4f35-9a97-162d97e6fa34"`
+      **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Event-specific data payload containing failed payment transaction details
+      Payment request details (payment_id, order_id, status, message, mop_type, bank_ref_num, payment_completed_at, utr, virtual_account_id)
     </ParamField>
   </Tab>
 
   <Tab title="Data Object Fields">
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment
+      
+      **Example**: `"770e8400-e29b-41d4-a716-446655440003"`
+    </ParamField>
+
+    <ParamField path="data.order_id" type="string" required>
+      UID of the order for this payment
+      
+      **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+    </ParamField>
+
     <ParamField path="data.status" type="string" required>
       Payment status (FAILED for failed payments)
       
@@ -78,41 +122,47 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
-      Failure reason or message
+      Failure reason or message from the payment
       
-      **Example**: `"Cancelled by user"`
+      **Example**: `"Payment declined by bank"`
     </ParamField>
 
     <ParamField path="data.mop_type" type="string" required>
       Method of payment type
       
-      **Example**: `"UPI"`
-    </ParamField>
-
-    <ParamField path="data.order_id" type="string" required>
-      Order ID
-      
-      **Example**: `"OD3376378679"`
-    </ParamField>
-
-    <ParamField path="data.payment_id" type="string" required>
-      Payment ID
-      
-      **Example**: `"PR6938527534"`
+      **Example**: `"CARD"`
     </ParamField>
 
     <ParamField path="data.bank_ref_num" type="string" required>
-      Bank reference number
+      Bank reference number (if any); may be empty string
       
-      **Example**: `"OD3376378679-PR6938527534"`
+      **Example**: `""`
     </ParamField>
 
     <ParamField path="data.payment_completed_at" type="string" required>
-      ISO 8601 payment completion timestamp
+      ISO 8601 datetime when payment completed; may be null for failed payments
       
-      **Example**: `"2025-06-24T12:30:44.000000Z"`
+      **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.utr" type="string" required>
+      UTR of the payment (if any); may be empty or null
+      
+      **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.virtual_account_id" type="string" required>
+      Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
+      
+      **Example**: `null`
     </ParamField>
   </Tab>
 </Tabs>
 
 ---
+
+## What to Do When You Receive This Webhook
+
+1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
+2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
+3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
