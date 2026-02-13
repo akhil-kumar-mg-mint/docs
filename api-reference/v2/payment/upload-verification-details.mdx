@@ -3,3 +3,19 @@ title: 'Upload Payment Verification Details'
 description: 'Upload payment verification details for a payment and update the associated order.'
 openapi: 'POST /pg/payments/{uid}/upload-verification-details/'
 ---
+
+## Overview
+
+The Upload Payment Verification Details endpoint allows you to upload payment verification details for a payment. This updates the associated order with the provided information and uploads the verification details to the payment gateway. Use this endpoint when you receive a PAYMENT_DETAILS_MISSING webhook and need to supply missing verification fields.
+
+## Test Data
+
+When testing this API in the **sandbox environment**, you must use the following specific test values for the API to work correctly:
+
+- **buyer_name**: `John`
+- **buyer_postal_code**: `560034`
+- **product_description**: `This is a test product for test purpose.`
+
+<Card title="📚 Test Data Reference" href="/integration-guide/v2/web-integration/test-data#upload-payment-verification-details">
+  **View all test data** – Complete test data guide for sandbox testing.
+</Card>
