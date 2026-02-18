@@ -59,6 +59,20 @@ Use the following OTP to test Wallet transactions.
 | :--- | :--- |
 | **Test Wallet** | `111000` |
 
+## Upload Payment Verification Details
+
+Use the following test data to test the Upload Payment Verification Details API in the sandbox environment. These specific values are required for the API to work correctly in sandbox:
+
+| Parameter | Value |
+| :--- | :--- |
+| **buyer_name** | `John` |
+| **buyer_postal_code** | `560034` |
+| **product_description** | `This is a test product for test purpose.` |
+
+<Note>
+  When testing the Upload Payment Verification Details API in sandbox, you must use these exact values (`buyer_name: "John"`, `buyer_postal_code: "560034"`, `product_description: "This is a test product for test purpose."`) for the API to work correctly. Other required fields (`type_of_goods`, `buyer_address`, `invoice_number`) should also be provided as per the API specification.
+</Note>
+
 <Warning>
   These credentials are only for the **Sandbox Environment**. Do not use them in Production.
 </Warning>
