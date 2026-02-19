@@ -1,0 +1,198 @@
+---
+title: "VERIFICATION NEEDED"
+description: "Technical reference for the VERIFICATION_NEEDED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `VERIFICATION_NEEDED`  
+**Category**: Payment Verification  
+**Description**: Payment verification status has been updated
+
+This webhook is triggered when the payment verification status is updated for collect-from-India payments (after receiving a verification update from the payment gateway).
+
+### When the webhook is sent
+
+The webhook is sent in the following scenarios:
+
+1. **Action Required** (`ACTION_REQUIRED`): Additional or corrected information is needed
+2. **Payment Verified** (`VERIFIED`): Payment has been successfully verified
+
+The webhook is created **only if**:
+- Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `VERIFICATION_NEEDED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example: Action Required
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2025-02-13T10:30:00.123456Z",
+  "version": "2.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
+  "data": {
+    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "verification_status": "ACTION_REQUIRED",
+    "message": "Payment verification action required",
+    "action_required_fields": ["buyer_name", "hs_code"]
+  }
+}
+```
+
+```json Example: Verified
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2025-02-13T10:30:00.123456Z",
+  "version": "2.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
+  "data": {
+    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "verification_status": "VERIFIED",
+    "message": "Payment verified",
+    "action_required_fields": []
+  }
+}
+```
+
+```json Example: In Review
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2025-02-13T10:30:00.123456Z",
+  "version": "2.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440002",
+  "data": {
+    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "verification_status": "IN_REVIEW",
+    "message": "Payment verification action required",
+    "action_required_fields": []
+  }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"VERIFICATION_NEEDED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      ISO 8601 datetime when the webhook event was created
+      
+      **Example**: `"2025-02-13T10:30:00.123456Z"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Envelope version (e.g. "2.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for this webhook event (UUID), useful for idempotency
+      
+      **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Verification status details (payment_id, order_id, verification_status, message, action_required_fields)
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment
+      
+      **Example**: `"a1b2c3d4-e5f6-7890-abcd-ef1234567890"`
+    </ParamField>
+
+    <ParamField path="data.order_id" type="string" required>
+      UID of the order for this payment
+      
+      **Example**: `"98765432-10ab-cdef-9876-543210fedcba"`
+    </ParamField>
+
+    <ParamField path="data.verification_status" type="string" required>
+      Current verification status. One of: `IN_REVIEW`, `ACTION_REQUIRED`, `VERIFIED`
+      
+      **Example**: `"ACTION_REQUIRED"`
+    </ParamField>
+
+    <ParamField path="data.message" type="string" required>
+      Human-readable message describing the verification status
+      
+      **Example**: `"Payment verification action required"`
+    </ParamField>
+
+    <ParamField path="data.action_required_fields" type="array" required>
+      List of order field names that require merchant action. Empty array when `verification_status` is `VERIFIED` or `IN_REVIEW`.
+      
+      **Possible values**: `buyer_name`, `buyer_address`, `buyer_postal_code`, `product_description`, `invoice_number`, `invoice_file`, `hs_code`, `country_of_origin`
+      
+      **Example**: `["buyer_name", "hs_code"]`
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---
+
+## What to Do When You Receive This Webhook
+
+1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
+2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
+3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
+4. **Handle based on verification status**:
+   - **`VERIFIED`**: Update your system to reflect successful verification. Payment can proceed to settlement.
+   - **`ACTION_REQUIRED`**: 
+     - Check `data.action_required_fields` to see what needs updating
+     - Notify merchant/admin about required actions
+     - Update the specified fields using the [Upload Verification Details API](/api-reference/v2/payment/upload-verification-details)
+  
+### Action Required Fields Reference
+
+When `verification_status` is `ACTION_REQUIRED`, the `action_required_fields` array contains field names that need attention:
+
+| Field Name | Description |
+|------------|-------------|
+| `buyer_name` | Full name of the buyer/importer |
+| `buyer_address` | Complete address of the buyer |
+| `buyer_postal_code` | Postal/ZIP code of the buyer |
+| `product_description` | Description of goods/services |
+| `invoice_number` | Invoice or order number |
+| `hs_code` | Harmonized System code for goods |

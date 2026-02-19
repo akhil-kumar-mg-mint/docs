@@ -267,7 +267,8 @@
                   "api-reference/v2/webhooks/payment-refunded",
                   "api-reference/v2/webhooks/payment-settled",
                   "api-reference/v2/webhooks/subscription-status",
-                  "api-reference/v2/webhooks/payment-details-missing"
+                  "api-reference/v2/webhooks/payment-details-missing",
+                  "api-reference/v2/webhooks/verification-needed"
                 ]
               }
             ]
