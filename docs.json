@@ -2,7 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "EximPe Docs",
-  "openapi": "/openapi/openapi.json",
+  "openapi": "openapi/openapi.json",
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
@@ -20,6 +20,11 @@
         "anchor": "Version 2",
         "icon": "bolt",
         "url": "/integration-guide/v2/getting-started/introduction"
+      },
+      {
+        "anchor": "Version 3",
+        "icon": "rocket",
+        "url": "/integration-guide/v3/getting-started/introduction"
       }
     ],
     "versions": [
@@ -53,6 +58,7 @@
                       "integration-guide/v1/web-integration/s2s-upi-intent"
                     ]
                   },
+                  "integration-guide/v1/web-integration/bin-lookup",
                   "integration-guide/v1/web-integration/subscriptions",
                   "integration-guide/v1/web-integration/webhooks",
                   "integration-guide/v1/web-integration/test-data"
@@ -137,6 +143,12 @@
                 ]
               },
               {
+                "group": "Utilities",
+                "pages": [
+                  "api-reference/v1/bin-lookup/lookup"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v1/webhooks/merchant-approved",
@@ -182,6 +194,7 @@
                       "integration-guide/v2/web-integration/s2s-upi-intent"
                     ]
                   },
+                  "integration-guide/v2/web-integration/bin-lookup",
                   "integration-guide/v2/web-integration/webhooks",
                   "integration-guide/v2/web-integration/test-data"
                 ]
@@ -259,6 +272,12 @@
                 ]
               },
               {
+                "group": "Utilities",
+                "pages": [
+                  "api-reference/v2/bin-lookup/lookup"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v2/webhooks/merchant-approved",
@@ -269,6 +288,122 @@
                   "api-reference/v2/webhooks/subscription-status",
                   "api-reference/v2/webhooks/payment-details-missing",
                   "api-reference/v2/webhooks/verification-needed"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "version": "Version 3",
+        "tabs": [
+          {
+            "tab": "Integration Guide",
+            "groups": [
+              {
+                "group": "Get Started",
+                "pages": [
+                  "integration-guide/v3/getting-started/introduction",
+                  "integration-guide/v3/getting-started/steps-to-integrate",
+                  "integration-guide/v3/getting-started/register-merchant",
+                  "integration-guide/v3/getting-started/test-credentials",
+                  "integration-guide/v3/getting-started/account-activation",
+                  "integration-guide/v3/getting-started/adding-merchants",
+                  "integration-guide/v3/getting-started/faqs"
+                ]
+              },
+              {
+                "group": "Payment Integration",
+                "pages": [
+                  "integration-guide/v3/web-integration/hosted-checkout",
+                  "integration-guide/v3/web-integration/payment-links",
+                  {
+                    "group": "Server to Server",
+                    "pages": [
+                      "integration-guide/v3/web-integration/s2s-card-payment",
+                      "integration-guide/v3/web-integration/s2s-upi-intent"
+                    ]
+                  },
+                  "integration-guide/v3/web-integration/bin-lookup",
+                  "integration-guide/v3/web-integration/webhooks",
+                  "integration-guide/v3/web-integration/test-data"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "API Reference",
+            "groups": [
+              {
+                "group": "Order",
+                "pages": [
+                  "api-reference/v3/order/create",
+                  "api-reference/v3/order/get-status",
+                  "api-reference/v3/order/get"
+                ]
+              },
+              {
+                "group": "Payment",
+                "pages": [
+                  "api-reference/v3/payment/list",
+                  "api-reference/v3/payment/get"
+                ]
+              },
+              {
+                "group": "Card Tokens",
+                "pages": [
+                  "api-reference/v3/card-tokens/list",
+                  "api-reference/v3/card-tokens/delete"
+                ]
+              },
+              {
+                "group": "Merchant",
+                "pages": [
+                  "api-reference/v3/merchant/create",
+                  "api-reference/v3/merchant/list",
+                  "api-reference/v3/merchant/get",
+                  "api-reference/v3/merchant/update"
+                ]
+              },
+              {
+                "group": "Settlement",
+                "pages": [
+                  "api-reference/v3/settlement/list",
+                  "api-reference/v3/settlement/get"
+                ]
+              },
+              {
+                "group": "Refund",
+                "pages": [
+                  "api-reference/v3/refunds/create",
+                  "api-reference/v3/refunds/list",
+                  "api-reference/v3/refunds/get"
+                ]
+              },
+              {
+                "group": "Payment Links",
+                "pages": [
+                  "api-reference/v3/payment-link/create",
+                  "api-reference/v3/payment-link/list",
+                  "api-reference/v3/payment-link/retrieve",
+                  "api-reference/v3/payment-link/deactivate"
+                ]
+              },
+              {
+                "group": "Utilities",
+                "pages": [
+                  "api-reference/v3/bin-lookup/lookup"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "api-reference/v3/webhooks/merchant-approved",
+                  "api-reference/v3/webhooks/payment-successful",
+                  "api-reference/v3/webhooks/payment-failed",
+                  "api-reference/v3/webhooks/payment-refunded",
+                  "api-reference/v3/webhooks/payment-settled",
+                  "api-reference/v3/webhooks/subscription-status"
                 ]
               }
             ]

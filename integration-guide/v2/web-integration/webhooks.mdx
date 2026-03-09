@@ -120,16 +120,16 @@ EximPe signs each webhook with an HMAC signature to ensure authenticity:
   <Step title="Extract the signature">
     Extract the signature from the X-Webhook-Signature header in the request
   </Step>
-  <Step title="Get your API key">
+  <Step title="Get your Encryption Key">
     Get your Encryption key 
     <Frame>
-      <img src="/images/encryption-key.png" alt="Get your API key from Developer Section" />
+      <img src="/images/encryption-key.png" alt="Get your Encryption Key from Developer Section" />
     </Frame>
   </Step>
   <Step title="Recreate the signature">
     Recreate the signature using HMAC-SHA256:
     <ul>
-      <li>Use your API key as the secret</li>
+      <li>Use your Encryption Key as the secret</li>
       <li>Use the raw JSON body as the message</li>
       <li>**Important:** If reconstructing from JSON object, ensure consistent serialization using `json.dumps()` with `sort_keys=True` and `separators=(",", ":")` to match EximPe's format</li>
       <li>Generate HMAC-SHA256 hash</li>
@@ -148,9 +148,9 @@ EximPe signs each webhook with an HMAC signature to ensure authenticity:
 ```javascript Node.js
 const crypto = require('crypto');
 
-function verifyWebhookSignature(payload, signature, apiKey) {
-  // Create HMAC using your API key
-  const hmac = crypto.createHmac('sha256', apiKey);
+function verifyWebhookSignature(payload, signature, encryptionKey) {
+  // Create HMAC using your Encryption Key
+  const hmac = crypto.createHmac('sha256', encryptionKey);
   
   // Update with the raw JSON body
   hmac.update(payload, 'utf8');
@@ -165,12 +165,12 @@ function verifyWebhookSignature(payload, signature, apiKey) {
   );
 }
 
-function generateSignatureFromObject(webhookData, apiKey) {
+function generateSignatureFromObject(webhookData, encryptionKey) {
   // If you need to recreate signature from a JSON object
   // Use the same serialization as EximPe
   const payloadJson = JSON.stringify(webhookData, Object.keys(webhookData).sort());
   
-  const hmac = crypto.createHmac('sha256', apiKey);
+  const hmac = crypto.createHmac('sha256', encryptionKey);
   hmac.update(payloadJson, 'utf8');
   return hmac.digest('hex');
 }
@@ -180,7 +180,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-webhook-signature'];
   const payload = req.body.toString();
   
-  if (!verifyWebhookSignature(payload, signature, process.env.API_KEY)) {
+  if (!verifyWebhookSignature(payload, signature, process.env.ENCRYPTION_KEY)) {
     return res.status(401).send('Invalid signature');
   }
   
@@ -197,10 +197,10 @@ import hmac
 import hashlib
 import json
 
-def verify_webhook_signature(payload, signature, api_key):
-    # Create HMAC using your API key
+def verify_webhook_signature(payload, signature, encryption_key):
+    # Create HMAC using your Encryption Key
     expected_signature = hmac.new(
-        api_key.encode('utf-8'),
+        encryption_key.encode('utf-8'),
         payload.encode('utf-8'),
         hashlib.sha256
     ).hexdigest()
@@ -208,14 +208,14 @@ def verify_webhook_signature(payload, signature, api_key):
     # Compare signatures securely
     return hmac.compare_digest(signature, expected_signature)
 
-def generate_signature_from_object(webhook_data, api_key):
+def generate_signature_from_object(webhook_data, encryption_key):
     # If you need to recreate signature from a JSON object
     # Use the same serialization as EximPe
     payload_json = json.dumps(
         webhook_data, sort_keys=True, separators=(",", ":")
     )
     signature = hmac.new(
-        api_key.encode(), payload_json.encode(), hashlib.sha256
+        encryption_key.encode(), payload_json.encode(), hashlib.sha256
     ).hexdigest()
     return signature
 
@@ -229,7 +229,7 @@ def webhook():
     signature = request.headers.get('X-Webhook-Signature')
     payload = request.get_data(as_text=True)
     
-    if not verify_webhook_signature(payload, signature, app.config['API_KEY']):
+    if not verify_webhook_signature(payload, signature, app.config['ENCRYPTION_KEY']):
         return 'Invalid signature', 401
     
     # Process webhook
@@ -240,21 +240,21 @@ def webhook():
 ```
 
 ```php PHP
-function verifyWebhookSignature($payload, $signature, $apiKey) {
-    // Create HMAC using your API key
-    $expectedSignature = hash_hmac('sha256', $payload, $apiKey);
+function verifyWebhookSignature($payload, $signature, $encryptionKey) {
+    // Create HMAC using your Encryption Key
+    $expectedSignature = hash_hmac('sha256', $payload, $encryptionKey);
     
     // Compare signatures securely
     return hash_equals($expectedSignature, $signature);
 }
 
-function generateSignatureFromObject($webhookData, $apiKey) {
+function generateSignatureFromObject($webhookData, $encryptionKey) {
     // If you need to recreate signature from a JSON object
     // Use the same serialization as EximPe
     ksort($webhookData); // Sort keys for consistency
     $payloadJson = json_encode($webhookData, JSON_UNESCAPED_SLASHES);
     
-    return hash_hmac('sha256', $payloadJson, $apiKey);
+    return hash_hmac('sha256', $payloadJson, $encryptionKey);
 }
 
 // Usage in Laravel/Symfony
@@ -262,7 +262,7 @@ public function webhook(Request $request) {
     $signature = $request->header('X-Webhook-Signature');
     $payload = $request->getContent();
     
-    if (!verifyWebhookSignature($payload, $signature, config('app.api_key'))) {
+    if (!verifyWebhookSignature($payload, $signature, config('app.encryption_key'))) {
         return response('Invalid signature', 401);
     }
     

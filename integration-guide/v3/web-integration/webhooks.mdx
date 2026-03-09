@@ -121,7 +121,7 @@ EximPe signs each webhook with an HMAC signature to ensure authenticity:
     Extract the signature from the X-Webhook-Signature header in the request
   </Step>
   <Step title="Get your Encryption Key">
-    Get your Encryption Key 
+    Get your Encryption key 
     <Frame>
       <img src="/images/encryption-key.png" alt="Get your Encryption Key from Developer Section" />
     </Frame>
@@ -129,7 +129,7 @@ EximPe signs each webhook with an HMAC signature to ensure authenticity:
   <Step title="Recreate the signature">
     Recreate the signature using HMAC-SHA256:
     <ul>
-      <li>Use your Encryption key as the secret</li>
+      <li>Use your Encryption Key as the secret</li>
       <li>Use the raw JSON body as the message</li>
       <li>**Important:** If reconstructing from JSON object, ensure consistent serialization using `json.dumps()` with `sort_keys=True` and `separators=(",", ":")` to match EximPe's format</li>
       <li>Generate HMAC-SHA256 hash</li>
@@ -180,7 +180,7 @@ app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-webhook-signature'];
   const payload = req.body.toString();
   
-  if (!verifyWebhookSignature(payload, signature, process.env.API_KEY)) {
+  if (!verifyWebhookSignature(payload, signature, process.env.ENCRYPTION_KEY)) {
     return res.status(401).send('Invalid signature');
   }
   
@@ -241,7 +241,7 @@ def webhook():
 
 ```php PHP
 function verifyWebhookSignature($payload, $signature, $encryptionKey) {
-    // Create HMAC using your Encryption key
+    // Create HMAC using your Encryption Key
     $expectedSignature = hash_hmac('sha256', $payload, $encryptionKey);
     
     // Compare signatures securely
@@ -295,7 +295,7 @@ EximPe implements an automatic retry mechanism to ensure reliable webhook delive
 
 <Note>
   **Next Steps:**
-  - Review the [API Reference](/api-reference/v1/webhooks) for detailed webhook payload specifications
+  - Review the [API Reference](/api-reference/v3/webhooks) for detailed webhook payload specifications
   - Test your webhook integration in the sandbox environment
   - Monitor webhook delivery in your EximPe dashboard
 </Note>

@@ -1,0 +1,40 @@
+---
+title: "Test Data"
+description: "Use test data on this page to test payments across various payment modes."
+---
+
+## Test Cards
+
+Use the following card details to test card payments in the sandbox environment.
+
+### Credit Cards
+
+| Card Number       | Network    | Expiry | CVV | Status  |
+| ----------------- | ---------- | ------ | --- | ------- |
+| 4000000000001091  | Visa       | 05/30  | 123 | Success |
+
+
+## Test Net Banking
+
+Use the following credentials to test Net Banking transactions. Select **Test Bank** from the bank list.
+
+| Parameter | Value      |
+| :--- | :--- |
+| **Bank Name** | Axis Bank |
+
+## Test UPI VPA
+
+Use the following VPAs to test UPI transactions.
+
+| VPA | Description | Result |
+| :--- | :--- | :--- |
+| `success@upi` | Simulates a successful payment | **Success** |
+| `failure@upi` | Simulates a failed payment | **Failure** |
+
+<Tip>
+  When using the `intent` flow in the **sandbox environment**, the API response will include a `test_simulator_url` parameter. You can open this URL in a browser to simulate the payment flow and complete the transaction without needing a real UPI app.
+</Tip>
+
+<Warning>
+  These credentials are only for the **Sandbox Environment**. Do not use them in Production.
+</Warning>

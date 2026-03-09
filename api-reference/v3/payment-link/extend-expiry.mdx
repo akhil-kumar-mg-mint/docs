@@ -1,0 +1,16 @@
+---
+title: 'Extend Expiry'
+openapi: 'POST /pg/payment-links/{paymentLinkId}/extend_expiry/'
+---
+
+## Overview
+
+Extend the validity of an active payment link by setting a new expiry date. This is useful if a customer needs more time to complete a payment and you don't want to generate a new link.
+
+## Path Parameters
+
+- `paymentLinkId`: The unique identifier of the payment link.
+
+## Request Body
+
+- `expiry_date`: The new expiry date in UTC (ISO 8601 format).
