@@ -429,6 +429,7 @@
       "href": "https://merchant.eximpe.com"
     }
   },
+  "scripts": ["/ai-chat-buttons.js"],
   "footer": {
     "socials": {
       "facebook": "https://www.facebook.com/eximpe/",
