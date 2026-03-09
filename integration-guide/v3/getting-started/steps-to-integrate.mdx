@@ -1,0 +1,32 @@
+---
+title: "Steps to Integrate"
+description: "Follow these steps to register and collect payments from customer in India"
+---
+
+## Register for EximPe Account
+
+In order to collect Payments from Indian Buyers as a foreign merchant or PA collecting payments on behalf of your merchants, first you need to [Register](/integration-guide/getting-started/register-merchant) on EximPe to get your API Access key and token.
+
+To start the development, you can signup to [Merchant Sandbox](https://merchant-uat.eximpe.com/). Please ensure to select **PSP** or **Merchant** based on your business requirement while creating the account.
+
+## Get API Credentials
+
+Grab your `client_id` and `client_secret` to start making secure API calls.\
+Refer to [Get Credentials for Web Checkout & API Access](./test-credentials) to complete this step.
+
+<Note>
+  After signup, please share your `client_id` with the EximPe team to configure your account and approve your webhooks and merchant IP in the Sandbox environment.
+</Note>
+
+## Configure Webhooks & IP Whitelisting
+
+Webhooks are **real-time server-to-server (S2S) notifications** that EximPe sends to your backend when important events occur.
+
+### Setup Guide
+
+1.  **Prepare Your Endpoint**: Ensure your server has a **public HTTPS URL** accessible from the internet.
+2.  **Configure Webhook URL**: Log into your **EximPe Dashboard**, navigate to the **Developer Section**, and enter your webhook URL.
+3.  **Whitelist IPs**: Configure your firewall to only accept webhooks from EximPe's IP ranges (found in the Developer Section).
+
+For detailed setup instructions, security verification, and supported events, refer to the [Webhooks Guide](../web-integration/webhooks).
+

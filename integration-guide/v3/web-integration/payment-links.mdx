@@ -1,0 +1,157 @@
+---
+title: "Payment Links"
+description: "Generate and share payment links to collect payments without a website integration"
+---
+
+# Introduction
+
+Payment Links allow you to collect payments from customers without a full website integration. You can generate a unique link, share it via email, SMS, or chat, and get paid instantly. This is ideal for:
+
+- Sending invoices to clients
+- Collecting payments for custom orders
+- Accepting payments without a website
+- recovering abandoned carts
+
+<CardGroup cols={3}>
+  <Card title="Easy Sharing" icon="share-nodes" href="#step-2-share-payment-link">
+    Share links via Email, SMS
+  </Card>
+  <Card title="Customizable" icon="sliders" href="#step-1-create-payment-link">
+    Set custom expiry dates and pre-fill customer details
+  </Card>
+  <Card title="Secure" icon="shield-check" href="#step-3-track-payment-status">
+    Secure hosted payment page handled entirely by EximPe
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Merchant Account**: An active EximPe merchant account
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
+
+## Integration Steps
+
+1. **Create Payment Link**: Call the API to generate a link.
+2. **Share Link**: Send the link to your customer.
+3. **Track Status**: Monitor payment status via webhooks or API.
+
+## Step 1: Create Payment Link
+
+To create a payment link, you need to provide the payment details such as amount, currency, and customer information.
+
+```bash cURL
+curl -X POST https://api-pacb.eximpe.com/pg/payment-links/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+  "amount": "1500.00",
+  "currency": "INR",
+  "reference_id": "LINK_12345",
+  "expiry_date": "2024-12-31T23:59:59Z",
+  "buyer": {
+    "name": "Alice Smith",
+    "email": "alice@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "456 Park Avenue",
+      "city": "New York",
+      "state": "NY",
+      "postal_code": "10022",
+      "country_code": "US"
+    }
+  },
+  "product": {
+    "name": "Consulting Services",
+    "description": "Professional consulting for Q4",
+    "hs_code": "998311",
+    "hs_code_description": "Management consulting services",
+    "type_of_goods": "service"
+  },
+  "invoice": {
+    "number": "INV-2024-001",
+    "date": "2024-10-01"
+  }
+}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment link created successfully",
+  "data": {
+    "link_id": "pl_1234567890",
+    "payment_link": "https://checkout.eximpe.com/pay/pl_1234567890",
+    "status": "ACTIVE",
+    "expiry_date": "2024-12-31T23:59:59Z"
+  }
+}
+```
+
+<Note>
+  **Expiry Date**: You can set an optional `expiry_date` for the link. If not provided, it defaults to 1 year.
+</Note>
+
+<Card title="📚 API Reference" href="/api-reference/v3/payment-link/create">
+  **Create Payment Link API** - View complete documentation including all parameters.
+</Card>
+
+## Step 2: Share Payment Link
+
+Once you have the `payment_link` URL from the response, you can share it with your customer through any channel:
+
+- **Email**: Send it in an invoice email.
+- **SMS / WhatsApp**: Send it as a text message.
+- **Social Media**: Share it in DMs.
+- **QR Code**: Generate a QR code for the link.
+
+When the customer clicks the link, they will be taken to a secure EximPe payment page where they can complete the payment using their preferred method (Card, UPI, Net Banking).
+
+## Step 3: Track Payment Status
+
+Since the payment happens on a hosted page, you need to know when the payment is completed. You can do this via:
+
+### 1. Webhooks (Recommended)
+
+Listen for the `PAYMENT_SUCCESSFUL` webhook event to get real-time updates.
+
+```json
+{
+    "event_type": "PAYMENT_SUCCESSFUL",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
+    "data": {
+        "status": "captured",
+        "message": "Payment successful",
+        "mop_type": "upi",
+        "order_id": "OD3376378679",
+        "payment_id": "PR6938527534",
+        "bank_ref_num": "OD3376378679-PR6938527534",
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+    }
+}
+```
+
+### 2. Poll Status API
+
+You can also periodically check the status of the payment link or the order associated with it.
+
+<Card title="📚 API Reference" href="/api-reference/v3/payment-link/retrieve">
+  **Get Payment Link API** - Check the current status of a payment link.
+</Card>
+
+## Managing Payment Links
+
+EximPe provides APIs to manage the lifecycle of your payment links:
+
+- **[List Links](/api-reference/v3/payment-link/list)**: View all your generated payment links.
+- **[Retrieve Link](/api-reference/v3/payment-link/retrieve)**: Get details of a specific payment link.
+- **[Deactivate Link](/api-reference/v3/payment-link/deactivate)**: Cancel a link before it expires.

@@ -1,0 +1,238 @@
+---
+title: "BIN Lookup"
+description: "Identify card details before processing payments using BIN (Bank Identification Number) lookup"
+---
+
+# Introduction
+
+BIN Lookup allows you to retrieve card information by providing the first 8 digits of a card number. This helps you identify card network, type, bank, and issuance details before processing a payment, enabling better user experience and payment flow optimization.
+
+<CardGroup cols={3}>
+  <Card title="Card Network Detection" icon="credit-card" href="#card-network-detection">
+    Identify card network (visa, mastercard, rupay, etc.) instantly
+  </Card>
+  <Card title="Card Type Identification" icon="wallet" href="#card-type-identification">
+    Determine if the card is credit or debit
+  </Card>
+  <Card title="Bank Information" icon="building" href="#bank-information">
+    Get bank name and domestic/international status
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+- **Pre-validation**: Validate card details before submitting payment
+- **UI Enhancement**: Display card network logo or bank name as user types
+- **Payment Flow Optimization**: Determine payment method eligibility
+- **Fraud Prevention**: Identify potentially suspicious cards early
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your Client ID and Client Secret
+- **API Access**: BIN lookup endpoint access enabled for your account
+
+<Warning>
+**Production Requirement**: In production, this feature needs to be enabled for your account to receive BIN lookup values. Please contact support to enable BIN lookup functionality for your production environment.
+</Warning>
+
+## Step 1: Lookup BIN
+
+Send a POST request to `/pg/bin/` with the BIN code (first 8 digits of the card number).
+
+### Request Example
+
+```bash
+curl -X POST https://api-pacb-uat.eximpe.com/pg/bin/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: your-client-id" \
+  -H "X-Client-Secret: your-client-secret" \
+  -d '{
+    "bin": "41111111"
+  }'
+```
+
+### JavaScript Example
+
+```javascript
+async function lookupBIN(binCode) {
+  const response = await fetch('https://api-pacb-uat.eximpe.com/pg/bin/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Client-ID': getConfigValue('CLIENT_ID'),
+      'X-Client-Secret': getConfigValue('AUTH_KEY'),
+      ...(getConfigValue('IS_PSP') && getConfigValue('MERCHANT_ID') 
+        ? { 'X-Merchant-ID': getConfigValue('MERCHANT_ID') } 
+        : {})
+    },
+    body: JSON.stringify({
+      bin: binCode
+    })
+  });
+
+  const data = await response.json();
+  
+  if (data.success) {
+    const binData = data.data;
+    console.log('Network:', binData.network);
+    console.log('Card Type:', binData.card_type);
+    console.log('Bank:', binData.bank);
+    console.log('Domestic:', binData.is_domestic);
+    return binData;
+  } else {
+    throw new Error(data.error?.message || 'BIN lookup failed');
+  }
+}
+
+// Usage: Extract BIN from card number (first 8 digits)
+const cardNumber = '4111111111111111';
+const bin = cardNumber.substring(0, 8);
+lookupBIN(bin);
+```
+
+### Python Example
+
+```python
+import requests
+
+def lookup_bin(bin_code, client_id, client_secret, merchant_id=None):
+    url = "https://api-pacb-uat.eximpe.com/pg/bin/"
+    headers = {
+        "Content-Type": "application/json",
+        "X-Client-ID": client_id,
+        "X-Client-Secret": client_secret
+    }
+    
+    if merchant_id:
+        headers["X-Merchant-ID"] = merchant_id
+    
+    payload = {"bin": bin_code}
+    
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+    
+    if data.get("success"):
+        return data["data"]
+    else:
+        raise Exception(data.get("error", {}).get("message", "BIN lookup failed"))
+
+# Usage
+bin_code = "41111111"
+bin_data = lookup_bin(bin_code, "your-client-id", "your-client-secret")
+print(f"Network: {bin_data.get('network')}")
+print(f"Card Type: {bin_data.get('card_type')}")
+```
+
+## Step 2: Handle Response
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "message": "BIN lookup successful",
+  "data": {
+    "bank": "hdfc bank",
+    "network": "visa",
+    "card_type": "credit_card",
+    "is_domestic": true
+  }
+}
+```
+
+### Response Fields
+
+- **bank**: Bank name that issued the card
+- **network**: Card network - visa, mastercard, rupay, amex, diners, maestro, sbi_maestro
+- **card_type**: Card type - `credit_card` or `debit_card`
+- **is_domestic**: Boolean indicating if card is issued in India
+
+### Error Handling
+
+```javascript
+try {
+  const binData = await lookupBIN('41111111');
+  // Use binData.network, binData.card_type, etc.
+} catch (error) {
+  if (error.response?.status === 400) {
+    console.error('Invalid BIN code');
+  } else if (error.response?.status === 401) {
+    console.error('Authentication failed');
+  } else {
+    console.error('BIN lookup failed:', error.message);
+  }
+}
+```
+
+## Integration Example: Real-time Card Detection
+
+Here's a complete example of integrating BIN lookup in a card input form:
+
+```javascript
+// HTML: <input type="text" id="cardNumber" placeholder="Card Number" />
+
+document.getElementById('cardNumber').addEventListener('input', async function(e) {
+  const cardNumber = e.target.value.replace(/\s/g, '');
+  
+  // Extract BIN (first 8 digits)
+  if (cardNumber.length >= 6 && cardNumber.length <= 8) {
+    try {
+      const binData = await lookupBIN(cardNumber);
+      
+      // Display card network logo
+      if (binData.network) {
+        document.getElementById('cardNetwork').src = `/logos/${binData.network.toLowerCase()}.png`;
+        document.getElementById('cardNetwork').style.display = 'block';
+      }
+      
+      // Show card type
+      if (binData.card_type) {
+        document.getElementById('cardType').textContent = 
+          binData.card_type === 'credit_card' ? 'Credit Card' : 'Debit Card';
+      }
+      
+      // Display bank name
+      if (binData.bank) {
+        document.getElementById('bankName').textContent = 
+          binData.bank.charAt(0).toUpperCase() + binData.bank.slice(1);
+      }
+      
+      // Show domestic/international indicator
+      if (binData.is_domestic !== null) {
+        document.getElementById('cardIssuance').textContent = 
+          binData.is_domestic ? 'Domestic Card' : 'International Card';
+      }
+      
+    } catch (error) {
+      // Hide card info on error
+      document.getElementById('cardNetwork').style.display = 'none';
+      document.getElementById('cardType').textContent = '';
+      document.getElementById('bankName').textContent = '';
+    }
+  }
+});
+```
+
+## Best Practices
+
+1. **Debounce Requests**: Wait for user to stop typing before making BIN lookup requests
+2. **Cache Results**: Cache BIN lookup results to reduce API calls
+3. **Handle Errors Gracefully**: Don't block payment flow if BIN lookup fails
+4. **Validate BIN Format**: Ensure BIN is 8 digits before making request
+5. **Show Loading State**: Display loading indicator during lookup
+
+## Error Codes
+
+| Error Code | Description | Solution |
+|------------|-------------|----------|
+| `ERR_BIN_001` | Invalid BIN format | Ensure BIN is 8 digits |
+| `ERR_AUTH_000` | Missing credentials | Check Client ID and Secret |
+| `ERR_SERVICE_ERROR_000` | Service unavailable | Retry after a few seconds |
+
+## Related Documentation
+
+- [API Reference: BIN Lookup](/api-reference/v2/bin-lookup/lookup)
+- [S2S Card Payment](/integration-guide/v2/web-integration/s2s-card-payment)
+- [Save Card Token](/api-reference/card-tokens/save)

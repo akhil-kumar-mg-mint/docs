@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Eximpe Payment Gateway API",
-    "description": "API for payment processing and order management through Eximpe payment gateway. This specification includes both v1 and v2 API versions.",
+    "description": "API for payment processing and order management through Eximpe payment gateway. This specification includes v1, v2, and v3 API versions.",
     "license": {
       "name": "Proprietary"
     },
@@ -2817,6 +2817,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -2888,6 +2898,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -3010,6 +3030,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -3092,6 +3122,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -3163,6 +3203,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -3245,6 +3295,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -3327,6 +3387,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
                 }
               }
             }
@@ -4455,6 +4525,120 @@
         },
         "operationId": "v1_post_pg_payment-links_paymentLinkId_share_"
       }
+    },
+    "/pg/bin/": {
+      "post": {
+        "summary": "BIN Lookup",
+        "description": "Lookup card network, type, bank, and issuance information from BIN (Bank Identification Number). BIN is typically the first 6-8 digits of a card number. This endpoint helps identify card details before processing a payment.",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "BIN lookup request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v1_BINLookupRequest"
+              },
+              "example": {
+                "bin": "41111111"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "BIN lookup successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_BINLookupResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "BIN lookup successful",
+                  "data": {
+                    "bank": "hdfc bank",
+                    "network": "visa",
+                    "card_type": "credit_card",
+                    "is_domestic": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_BIN_001",
+                    "message": "Validation error",
+                    "details": {
+                      "bin": "BIN code must be 8 digits"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v1_post_pg_bin_"
+      }
     }
   },
   "components": {
@@ -5223,7 +5407,8 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "description": "Indicates if the request was successful"
+            "enum": [false],
+            "description": "Indicates if the request was successful. Always false for error responses."
           },
           "error": {
             "$ref": "#/components/schemas/v1_ErrorDetails"
@@ -8397,7 +8582,8 @@
         "properties": {
           "success": {
             "type": "boolean",
-            "description": "Indicates if the request was successful"
+            "enum": [false],
+            "description": "Indicates if the request was successful. Always false for error responses."
           },
           "error": {
             "$ref": "#/components/schemas/v2_ErrorDetails"
@@ -10891,6 +11077,3353 @@
             }
           }
         }
+      },
+      "v3_CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency",
+          "reference_id",
+          "buyer",
+          "product"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO currency code (e.g., INR, USD)",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique identifier for the order"
+          },
+          "return_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL to redirect after payment"
+          },
+          "collection_mode": {
+            "type": "string",
+            "description": "Payment collection mode",
+            "enum": [
+              "hosted_payment",
+              "s2s"
+            ]
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type (e.g., UPI)",
+            "enum": [
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
+            ]
+          },
+          "upi_flow_type": {
+            "type": "string",
+            "description": "UPI flow type (required when collection_mode is s2s and mop_type is UPI)",
+            "enum": [
+              "intent",
+              "collection"
+            ]
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/v3_Buyer"
+          },
+          "product": {
+            "$ref": "#/components/schemas/v3_Product"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/v3_Invoice"
+          },
+          "card_details": {
+            "$ref": "#/components/schemas/v3_CardDetails"
+          }
+        }
+      },
+      "v3_Buyer": {
+        "type": "object",
+        "required": [
+          "name",
+          "address",
+          "email",
+          "phone"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Buyer's full name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Buyer's email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Buyer's phone number with country code",
+            "pattern": "^\\+[1-9]\\d{1,14}$"
+          },
+          "address": {
+            "$ref": "#/components/schemas/v3_Address"
+          },
+          "ip_address": {
+            "type": "string",
+            "description": "Buyer's IP address (required for card payments)"
+          },
+          "user_agent": {
+            "type": "string",
+            "description": "Buyer's browser user agent (required for card payments)"
+          }
+        }
+      },
+      "v3_Address": {
+        "type": "object",
+        "required": [
+          "line_1",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "properties": {
+          "line_1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "line_2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name"
+          },
+          "state": {
+            "type": "string",
+            "description": "State name"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal/ZIP code"
+          }
+        }
+      },
+      "v3_Product": {
+        "type": "object",
+        "required": [
+          "name",
+          "type_of_goods"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description"
+          },
+          "hs_code": {
+            "type": "string",
+            "description": "Harmonized System code, required for physical goods"
+          },
+          "hs_code_description": {
+            "type": "string",
+            "description": "Description of the HS code"
+          },
+          "type_of_goods": {
+            "type": "string",
+            "description": "Type of goods (e.g., physical_goods)",
+            "enum": [
+              "physical_goods",
+              "digital_goods",
+              "service"
+            ]
+          }
+        }
+      },
+      "v3_Invoice": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Invoice number"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "Invoice date in YYYY-MM-DD format"
+          }
+        }
+      },
+      "v3_CardDetails": {
+        "type": "object",
+        "required": [
+          "number",
+          "cardholder_name",
+          "expiry_month",
+          "expiry_year",
+          "cvv",
+          "network",
+          "identifier"
+        ],
+        "properties": {
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname for easy identification"
+          },
+          "number": {
+            "type": "string",
+            "description": "Card number (will be tokenized for security)",
+            "pattern": "^[0-9]{13,19}$"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "expiry_month": {
+            "type": "string",
+            "description": "Card expiry month (MM format)",
+            "pattern": "^(0[1-9]|1[0-2])$"
+          },
+          "expiry_year": {
+            "type": "string",
+            "description": "Card expiry year (YYYY format)",
+            "pattern": "^[0-9]{4}$"
+          },
+          "cvv": {
+            "type": "string",
+            "description": "Card verification value",
+            "pattern": "^[0-9]{3,4}$"
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network (e.g., visa, mastercard)",
+            "enum": [
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
+            ]
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card"
+          }
+        }
+      },
+      "v3_SaveCardRequest": {
+        "type": "object",
+        "required": [
+          "identifier",
+          "card_number",
+          "cardholder_name",
+          "expiry_month",
+          "expiry_year",
+          "network",
+          "card_type"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          },
+          "card_number": {
+            "type": "string",
+            "description": "Card number (will be tokenized and securely stored)",
+            "pattern": "^[0-9]{13,19}$"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname for easy identification"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "expiry_month": {
+            "type": "integer",
+            "description": "Card expiry month (1-12)",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "expiry_year": {
+            "type": "integer",
+            "description": "Card expiry year (YYYY format)",
+            "minimum": 2024
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network",
+            "enum": [
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
+            ]
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Type of card",
+            "enum": [
+              "credit_card",
+              "debit_card"
+            ]
+          },
+          "authorization_reference_number": {
+            "type": "string",
+            "description": "Conditional parameter required for specific card networks: For Rupay cards - the authorization reference number received during authorization call. For AMEX cards - the AEVV (American Express Verification Value) received during authorization call. This parameter is mandatory for Rupay and AMEX cards only."
+          }
+        }
+      },
+      "v3_SaveCardResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "card_label",
+              "card_token"
+            ],
+            "properties": {
+              "card_label": {
+                "type": "string",
+                "description": "Display label for the saved card"
+              },
+              "card_token": {
+                "type": "string",
+                "description": "Unique token for the saved card"
+              }
+            }
+          }
+        }
+      },
+      "v3_ListCardsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_SavedCard"
+            }
+          }
+        }
+      },
+      "v3_SavedCard": {
+        "type": "object",
+        "required": [
+          "card_token",
+          "identifier",
+          "cardholder_name",
+          "card_type",
+          "network",
+          "masked_pan",
+          "expiry_month",
+          "expiry_year"
+        ],
+        "properties": {
+          "card_token": {
+            "type": "string",
+            "description": "Unique token for the saved card"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card"
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Card nickname"
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Type of card",
+            "enum": [
+              "credit_card",
+              "debit_card"
+            ]
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network",
+            "enum": [
+              "visa",
+              "mastercard",
+              "amex",
+              "discover",
+              "rupay"
+            ]
+          },
+          "masked_pan": {
+            "type": "string",
+            "description": "Masked card number for display purposes",
+            "pattern": "^X{8,15}[0-9]{4}$"
+          },
+          "expiry_month": {
+            "type": "integer",
+            "description": "Card expiry month (1-12)",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "expiry_year": {
+            "type": "integer",
+            "description": "Card expiry year",
+            "minimum": 2024
+          }
+        }
+      },
+      "v3_DeleteCardRequest": {
+        "type": "object",
+        "required": [
+          "card_token",
+          "identifier"
+        ],
+        "properties": {
+          "card_token": {
+            "type": "string",
+            "description": "Token of the card to delete"
+          },
+          "identifier": {
+            "type": "string",
+            "description": "Unique identifier for the card owner"
+          }
+        }
+      },
+      "v3_DeleteCardResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Empty object confirming deletion"
+          }
+        }
+      },
+      "v3_CreateOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_OrderData"
+          }
+        }
+      },
+      "v3_OrderData": {
+        "type": "object",
+        "required": [
+          "order_id"
+        ],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Unique session identifier for payment processing (for hosted payment mode)"
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Unique order identifier"
+          },
+          "intent_uri": {
+            "type": "string",
+            "description": "UPI intent URI for direct app opening (for S2S UPI Intent mode)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message (for S2S UPI Collection mode)"
+          },
+          "acs_template": {
+            "type": "string",
+            "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
+          }
+        }
+      },
+      "v3_OrderDetails": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "reference_id",
+          "amount",
+          "currency",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Unique order identifier"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique reference identifier for the order"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO currency code"
+          },
+          "opted_mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
+            ]
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "address"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer's phone number with country code"
+              },
+              "address": {
+                "$ref": "#/components/schemas/v3_Address"
+              },
+              "pan_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's PAN number"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Buyer's date of birth"
+              }
+            }
+          },
+          "product": {
+            "$ref": "#/components/schemas/v3_Product"
+          },
+          "invoice": {
+            "type": "object",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date in YYYY-MM-DD format"
+              },
+              "file": {
+                "type": "string",
+                "nullable": true,
+                "description": "Invoice file URL"
+              }
+            }
+          },
+          "air_waybills": {
+            "type": "array",
+            "description": "Array of air waybill information",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "string",
+                  "description": "Air waybill number"
+                },
+                "file": {
+                  "type": "string",
+                  "description": "Air waybill file URL"
+                }
+              }
+            }
+          },
+          "payments": {
+            "type": "array",
+            "description": "Array of payment request information",
+            "items": {
+              "$ref": "#/components/schemas/v3_PaymentRequest"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Order status",
+            "enum": [
+              "payment_pending",
+              "payment_successful",
+              "failed"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Order status message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Order creation timestamp"
+          }
+        }
+      },
+      "v3_ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [false],
+            "description": "Indicates if the request was successful. Always false for error responses."
+          },
+          "error": {
+            "$ref": "#/components/schemas/v3_ErrorDetails"
+          }
+        }
+      },
+      "v3_ErrorDetails": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code (e.g., ERR_ORDER_002)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "object",
+            "description": "Detailed validation error information with field-specific errors",
+            "additionalProperties": {
+              "type": "string",
+              "description": "Error message for the specific field"
+            }
+          }
+        }
+      },
+      "v3_GetOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_OrderDetails"
+          }
+        }
+      },
+      "v3_GetOrderStatusResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "order_id",
+              "status",
+              "created_at",
+              "updated_at"
+            ],
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "v3_UpdateOrderRequest": {
+        "type": "object",
+        "description": "Request body for updating order - only include fields to update",
+        "properties": {
+          "buyer": {
+            "type": "object",
+            "description": "Buyer information to update",
+            "properties": {
+              "pan_number": {
+                "type": "string",
+                "description": "Buyer's PAN number"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "description": "Buyer's date of birth (YYYY-MM-DD)"
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "description": "Invoice information to update",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date (YYYY-MM-DD)"
+              }
+            }
+          }
+        }
+      },
+      "v3_UpdateOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Nested response data",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "description": "Indicates if the order update was successful"
+              },
+              "message": {
+                "type": "string",
+                "description": "Success message for the order update"
+              },
+              "data": {
+                "type": "object",
+                "description": "Contains the updated order fields",
+                "properties": {
+                  "order_id": {
+                    "type": "string",
+                    "description": "The ID of the updated order"
+                  },
+                  "buyer": {
+                    "type": "object",
+                    "description": "Updated buyer information",
+                    "properties": {
+                      "pan_number": {
+                        "type": "string",
+                        "description": "Updated PAN number"
+                      },
+                      "dob": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Updated date of birth"
+                      }
+                    }
+                  },
+                  "invoice": {
+                    "type": "object",
+                    "description": "Updated invoice information",
+                    "properties": {
+                      "number": {
+                        "type": "string",
+                        "description": "Updated invoice number"
+                      },
+                      "date": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Updated invoice date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_UploadDocumentRequest": {
+        "type": "object",
+        "required": [
+          "identifier",
+          "document_type",
+          "file"
+        ],
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Identifier for the document (e.g., order ID)"
+          },
+          "document_type": {
+            "type": "string",
+            "description": "Type of document invoice or awb"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "The file to upload"
+          }
+        }
+      },
+      "v3_UploadDocumentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the document upload was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_OrderDetails"
+          }
+        }
+      },
+      "v3_ListPaymentsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "count",
+              "page",
+              "page_size",
+              "next",
+              "previous",
+              "results"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total number of payments"
+              },
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "Number of payments per page"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the next page of results"
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the previous page of results"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_PaymentInList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentInList": {
+        "type": "object",
+        "required": [
+          "id",
+          "merchant",
+          "reference_id",
+          "buyer",
+          "payment_id",
+          "amount",
+          "created_at",
+          "mop_type",
+          "status"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Unique payment request identifier"
+          },
+          "merchant": {
+            "type": "object",
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Merchant ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant name"
+              }
+            }
+          },
+          "order_id": {
+            "type": "string",
+            "description": "Order ID"
+          },
+          "invoice_number": {
+            "type": "string",
+            "description": "Invoice number"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Order reference identifier"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "email",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer's phone number with country code"
+              }
+            }
+          },
+          "amount": {
+            "type": "object",
+            "required": [
+              "amount",
+              "total_amount",
+              "currency"
+            ],
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Amount in decimal format (e.g., \"100.00\")",
+                "pattern": "^\\d+\\.\\d{2}$"
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "Total payment amount"
+              },
+              "currency": {
+                "type": "string",
+                "description": "3-letter ISO currency code"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment creation timestamp"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional comment or status message"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment",
+            "enum": [
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "pending",
+              "captured",
+              "failed"
+            ]
+          }
+        }
+      },
+      "v3_GetPaymentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_Payment"
+          }
+        }
+      },
+      "v3_CreateRefundRequest": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "refund_amount"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment to refund."
+          },
+          "refund_amount": {
+            "type": "string",
+            "description": "The amount to be refunded. Can be a partial amount."
+          }
+        }
+      },
+      "v3_GetRefundResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_Refund"
+          }
+        }
+      },
+      "v3_Refund": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "description": "Unique identifier for the refund."
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment that was refunded."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "The status of the refund."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "A message providing more detail about the refund status."
+          },
+          "bank_ref_num": {
+            "type": "string",
+            "nullable": true,
+            "description": "The bank reference number for the refund."
+          },
+          "refund_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "The refunded amount."
+          },
+          "refunded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the refund was completed."
+          }
+        }
+      },
+      "v3_ListRefundsResponse": {
+        "type": "object",
+        "required": [
+          "count",
+          "page",
+          "page_size",
+          "next",
+          "previous",
+          "results"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of refunds"
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of refunds per page"
+          },
+          "next": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL for the next page of results"
+          },
+          "previous": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL for the previous page of results"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_RefundInList"
+            }
+          }
+        }
+      },
+      "v3_RefundInList": {
+        "type": "object",
+        "required": [
+          "refund_id",
+          "refund_amount",
+          "refund_status",
+          "refunded_at",
+          "message",
+          "payment_id"
+        ],
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "description": "Unique identifier for the refund."
+          },
+          "refund_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "The refunded amount."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "The status of the refund."
+          },
+          "refunded_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the refund was completed."
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "A message providing more detail about the refund status."
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The ID of the payment that was refunded."
+          }
+        }
+      },
+      "v3_Settlement": {
+        "type": "object",
+        "properties": {
+          "settlement_id": {
+            "type": "string",
+            "description": "Unique identifier for the settlement."
+          },
+          "utr_number": {
+            "type": "string",
+            "description": "UTR (Unique Transaction Reference) number for the settlement."
+          },
+          "settlement_completed_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp of when the settlement was completed."
+          },
+          "forex_rate": {
+            "type": "integer",
+            "description": "Forex rate."
+          },
+          "settlement_amount": {
+            "type": "integer",
+            "description": "Settlement amount."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "description": "Currency code for the settlement amount."
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_SettlementTransaction"
+            }
+          }
+        }
+      },
+      "v3_SettlementTransaction": {
+        "type": "object",
+        "properties": {
+          "settlement_type": {
+            "type": "string",
+            "description": "Type of settlement transaction (e.g., capture, refund)"
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "Unique identifier for the transaction"
+          },
+          "transaction_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Transaction amount"
+          },
+          "merchant_service_fee": {
+            "type": "number",
+            "format": "float",
+            "description": "Merchant service fee"
+          },
+          "merchant_service_tax": {
+            "type": "number",
+            "format": "float",
+            "description": "Merchant service tax"
+          },
+          "merchant_net_amount": {
+            "type": "number",
+            "format": "float",
+            "description": "Net amount for merchant"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
+            ]
+          },
+          "transaction_currency": {
+            "type": "string",
+            "description": "Currency of the transaction"
+          },
+          "forex_rate": {
+            "type": "number",
+            "format": "float",
+            "description": "Forex rate applied to the transaction"
+          }
+        }
+      },
+      "v3_SettlementInList": {
+        "type": "object",
+        "properties": {
+          "settlement_id": {
+            "type": "string"
+          },
+          "utr_number": {
+            "type": "string"
+          },
+          "settlement_completed_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "forex_rate": {
+            "type": "number",
+            "format": "float"
+          },
+          "settlement_amount": {
+            "type": "number",
+            "format": "float"
+          },
+          "settlement_currency": {
+            "type": "string"
+          }
+        }
+      },
+      "v3_GetSettlementResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_Settlement"
+          }
+        }
+      },
+      "v3_ListSettlementsResponse": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_size": {
+            "type": "integer"
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_SettlementInList"
+            }
+          }
+        }
+      },
+      "v3_CreateMerchantRequest": {
+        "type": "object",
+        "required": [
+          "settlement_details",
+          "company_details"
+        ],
+        "properties": {
+          "settlement_details": {
+            "$ref": "#/components/schemas/v3_SettlementDetails"
+          },
+          "company_details": {
+            "$ref": "#/components/schemas/v3_CompanyDetails"
+          }
+        }
+      },
+      "v3_SettlementDetails": {
+        "type": "object",
+        "required": [
+          "bank_account_number",
+          "bank_account_name",
+          "bank_swift_code",
+          "bank_name",
+          "bank_branch_name",
+          "bank_address",
+          "bank_city",
+          "bank_state",
+          "bank_country",
+          "bank_pincode",
+          "routing_number"
+        ],
+        "properties": {
+          "bank_account_number": {
+            "type": "string",
+            "description": "Bank account number"
+          },
+          "bank_account_name": {
+            "type": "string",
+            "description": "Name on the bank account"
+          },
+          "bank_swift_code": {
+            "type": "string",
+            "description": "Bank SWIFT/BIC code"
+          },
+          "bank_name": {
+            "type": "string",
+            "description": "Name of the bank"
+          },
+          "bank_branch_name": {
+            "type": "string",
+            "description": "Bank branch name"
+          },
+          "bank_address": {
+            "type": "string",
+            "description": "Bank address"
+          },
+          "bank_city": {
+            "type": "string",
+            "description": "Bank city"
+          },
+          "bank_state": {
+            "type": "string",
+            "description": "Bank state"
+          },
+          "bank_country": {
+            "type": "string",
+            "description": "Bank country"
+          },
+          "bank_pincode": {
+            "type": "string",
+            "description": "Bank pincode/postal code"
+          },
+          "routing_number": {
+            "type": "string",
+            "description": "Bank routing number"
+          }
+        }
+      },
+      "v3_CompanyDetails": {
+        "type": "object",
+        "required": [
+          "legal_name",
+          "brand_name",
+          "registration_number",
+          "international_org_type",
+          "tax_id",
+          "website",
+          "monthly_avg_transaction_volume",
+          "registered_address",
+          "registered_city",
+          "registered_state",
+          "registered_country",
+          "registered_pincode",
+          "business_category",
+          "business_mode",
+          "category",
+          "description_of_products_and_services",
+          "agreement_details"
+        ],
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "Legal name of the company"
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand/trading name of the company"
+          },
+          "registration_number": {
+            "type": "string",
+            "description": "Company registration number"
+          },
+          "international_org_type": {
+            "type": "string",
+            "description": "Type of international organization",
+            "enum": [
+              "Private Limited Company",
+              "Public Limited Company",
+              "Limited Liability Company",
+              "Free Zone Company / Entity",
+              "Partnership / LLP",
+              "Sole Proprietorship",
+              "Other"
+            ]
+          },
+          "tax_id": {
+            "type": "string",
+            "description": "Tax identification number"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "Company website URL"
+          },
+          "monthly_avg_transaction_volume": {
+            "type": "string",
+            "description": "Average monthly transaction volume",
+            "enum": [
+              "LESS_THAN_5_K",
+              "BETWEEN_5_K_AND_20_K",
+              "BETWEEN_20_K_AND_50_K",
+              "BETWEEN_50_K_AND_100_K",
+              "BETWEEN_100_K_AND_250_K",
+              "BETWEEN_250_K_AND_500_K",
+              "ABOVE_500_K"
+            ]
+          },
+          "registered_address": {
+            "type": "string",
+            "description": "Registered address"
+          },
+          "registered_city": {
+            "type": "string",
+            "description": "Registered city"
+          },
+          "registered_state": {
+            "type": "string",
+            "description": "Registered state"
+          },
+          "registered_country": {
+            "type": "string",
+            "description": "Registered country"
+          },
+          "registered_pincode": {
+            "type": "string",
+            "description": "Registered pincode/postal code"
+          },
+          "same_as_registered_address": {
+            "type": "boolean",
+            "description": "Whether communication address is same as registered address, if provided communication address will be ignored"
+          },
+          "communication_address": {
+            "type": "string",
+            "description": "Communication address, required if same_as_registered_address is false or not provided"
+          },
+          "communication_city": {
+            "type": "string",
+            "description": "Communication city, required if same_as_registered_address is false or not provided"
+          },
+          "communication_state": {
+            "type": "string",
+            "description": "Communication state, required if same_as_registered_address is false or not provided"
+          },
+          "communication_country": {
+            "type": "string",
+            "description": "Communication country, required if same_as_registered_address is false or not provided"
+          },
+          "communication_pincode": {
+            "type": "string",
+            "description": "Communication pincode/postal code, required if same_as_registered_address is false or not provided"
+          },
+          "business_category": {
+            "type": "string",
+            "description": "Business category",
+            "enum": [
+              "goods_merchant",
+              "service_merchant"
+            ]
+          },
+          "business_mode": {
+            "type": "string",
+            "description": "Business mode",
+            "enum": [
+              "b2b",
+              "b2c"
+            ]
+          },
+          "hs_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Harmonized System codes for products/services, required for physical goods"
+          },
+          "category": {
+            "type": "string",
+            "description": "Business category description"
+          },
+          "description_of_products_and_services": {
+            "type": "string",
+            "description": "Detailed description of products and services"
+          },
+          "agreement_details": {
+            "type": "string",
+            "description": "Agreement details"
+          }
+        }
+      },
+      "v3_CreateMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_MerchantDetails"
+          }
+        }
+      },
+      "v3_ListMerchantsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_MerchantInList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_MerchantInList": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique merchant identifier"
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand/trading name of the merchant"
+          },
+          "kyc_status": {
+            "type": "string",
+            "description": "KYC verification status",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "created_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant creation timestamp"
+          }
+        }
+      },
+      "v3_GetMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_MerchantDetails"
+          }
+        }
+      },
+      "v3_MerchantDetails": {
+        "type": "object",
+        "required": [
+          "id",
+          "settlement_details",
+          "created_at",
+          "updated_at",
+          "invoice_file",
+          "company_details"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique merchant identifier"
+          },
+          "settlement_details": {
+            "$ref": "#/components/schemas/v3_SettlementDetails"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Merchant update timestamp"
+          },
+          "invoice_file": {
+            "type": "string",
+            "description": "Invoice file URL"
+          },
+          "company_details": {
+            "$ref": "#/components/schemas/v3_CompanyDetails"
+          }
+        }
+      },
+      "v3_UpdateMerchantRequest": {
+        "type": "object",
+        "description": "Request body for updating merchant - only include fields to update",
+        "properties": {
+          "company_details": {
+            "type": "object",
+            "description": "Company details to update",
+            "properties": {
+              "legal_name": {
+                "type": "string",
+                "description": "Updated legal name of the company"
+              },
+              "brand_name": {
+                "type": "string",
+                "description": "Updated brand/trading name of the company"
+              },
+              "registration_number": {
+                "type": "string",
+                "description": "Updated company registration number"
+              },
+              "international_org_type": {
+                "type": "string",
+                "description": "Updated type of international organization",
+                "enum": [
+                  "Private Limited Company",
+                  "Public Limited Company",
+                  "Limited Liability Company",
+                  "Free Zone Company / Entity",
+                  "Partnership / LLP",
+                  "Sole Proprietorship",
+                  "Other"
+                ]
+              },
+              "tax_id": {
+                "type": "string",
+                "description": "Updated tax identification number"
+              },
+              "website": {
+                "type": "string",
+                "format": "uri",
+                "description": "Updated company website URL"
+              },
+              "monthly_avg_transaction_volume": {
+                "type": "string",
+                "description": "Updated average monthly transaction volume"
+              },
+              "communication_address": {
+                "type": "string",
+                "description": "Updated communication address"
+              },
+              "communication_city": {
+                "type": "string",
+                "description": "Updated communication city"
+              },
+              "communication_state": {
+                "type": "string",
+                "description": "Updated communication state"
+              },
+              "communication_country": {
+                "type": "string",
+                "description": "Updated communication country"
+              },
+              "communication_pincode": {
+                "type": "string",
+                "description": "Updated communication pincode/postal code"
+              },
+              "same_as_registered_address": {
+                "type": "boolean",
+                "description": "Updated flag for same as registered address"
+              },
+              "registered_address": {
+                "type": "string",
+                "description": "Updated registered address"
+              },
+              "registered_city": {
+                "type": "string",
+                "description": "Updated registered city"
+              },
+              "registered_state": {
+                "type": "string",
+                "description": "Updated registered state"
+              },
+              "registered_country": {
+                "type": "string",
+                "description": "Updated registered country"
+              },
+              "registered_pincode": {
+                "type": "string",
+                "description": "Updated registered pincode/postal code"
+              },
+              "business_category": {
+                "type": "string",
+                "description": "Updated business category",
+                "enum": [
+                  "goods_merchant",
+                  "service_merchant"
+                ]
+              },
+              "business_mode": {
+                "type": "string",
+                "description": "Updated business mode",
+                "enum": [
+                  "b2b",
+                  "b2c"
+                ]
+              },
+              "hs_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Updated Harmonized System codes for products/services, required for physical goods"
+              },
+              "category": {
+                "type": "string",
+                "description": "Updated business category description"
+              },
+              "description_of_products_and_services": {
+                "type": "string",
+                "description": "Updated description of products and services"
+              },
+              "agreement_details": {
+                "type": "string",
+                "description": "Updated agreement details"
+              }
+            }
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Settlement details to update",
+            "properties": {
+              "bank_account_number": {
+                "type": "string",
+                "description": "Updated bank account number"
+              },
+              "bank_account_name": {
+                "type": "string",
+                "description": "Updated bank account name"
+              },
+              "bank_swift_code": {
+                "type": "string",
+                "description": "Updated bank SWIFT/BIC code"
+              },
+              "bank_name": {
+                "type": "string",
+                "description": "Updated name of the bank"
+              },
+              "bank_branch_name": {
+                "type": "string",
+                "description": "Updated bank branch name"
+              },
+              "bank_address": {
+                "type": "string",
+                "description": "Updated bank address"
+              },
+              "bank_city": {
+                "type": "string",
+                "description": "Updated bank city"
+              },
+              "bank_state": {
+                "type": "string",
+                "description": "Updated bank state"
+              },
+              "bank_country": {
+                "type": "string",
+                "description": "Updated bank country"
+              },
+              "bank_pincode": {
+                "type": "string",
+                "description": "Updated bank pincode/postal code"
+              },
+              "routing_number": {
+                "type": "string",
+                "description": "Updated bank routing number"
+              }
+            }
+          }
+        }
+      },
+      "v3_UpdateMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Contains the updated merchant fields",
+            "properties": {
+              "merchant_id": {
+                "type": "string",
+                "description": "The ID of the updated merchant"
+              },
+              "updated_fields": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentRequest": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "mop_type",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Payment request ID"
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment type",
+            "enum": [
+              "upi",
+              "credit_card",
+              "net_banking",
+              "debit_card",
+              "qr"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "pending",
+              "captured",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment status message"
+          },
+          "settlement": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Settlement status",
+                "enum": [
+                  "pending",
+                  "ready_for_settlement",
+                  "settled",
+                  "failed"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Settlement message"
+              },
+              "settlement_details": {
+                "type": "object",
+                "nullable": true,
+                "description": "Settlement details"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment request creation timestamp"
+          }
+        }
+      },
+      "v3_Payment": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "order",
+          "settlement",
+          "refund",
+          "collection_mode",
+          "mop_type",
+          "status",
+          "created_date"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Unique payment request identifier"
+          },
+          "order": {
+            "type": "object",
+            "required": [
+              "order_id",
+              "reference_id",
+              "amount",
+              "currency",
+              "status",
+              "created_at"
+            ],
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "Unique order identifier"
+              },
+              "reference_id": {
+                "type": "string",
+                "description": "Order reference identifier"
+              },
+              "amount": {
+                "type": "string",
+                "description": "Amount in decimal format (e.g., \"100.00\")",
+                "pattern": "^\\d+\\.\\d{2}$"
+              },
+              "currency": {
+                "type": "string",
+                "description": "3-letter ISO currency code"
+              },
+              "opted_mop_type": {
+                "type": "string",
+                "description": "Method of payment type",
+                "enum": [
+                  "upi",
+                  "credit_card",
+                  "net_banking",
+                  "debit_card",
+                  "qr"
+                ]
+              },
+              "buyer": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "address"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Buyer's full name"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Buyer's email address"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "description": "Buyer's phone number with country code"
+                  },
+                  "address": {
+                    "$ref": "#/components/schemas/v3_Address"
+                  },
+                  "pan_number": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Buyer's PAN number"
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date",
+                    "nullable": true,
+                    "description": "Buyer's date of birth"
+                  }
+                }
+              },
+              "product": {
+                "$ref": "#/components/schemas/v3_Product"
+              },
+              "status": {
+                "type": "string",
+                "description": "Order status",
+                "enum": [
+                  "payment_pending",
+                  "payment_successful",
+                  "failed"
+                ]
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Order status message"
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Order creation timestamp"
+              }
+            }
+          },
+          "settlement": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Settlement ID"
+              },
+              "settlement_id": {
+                "type": "string",
+                "description": "Unique settlement identifier"
+              },
+              "settlement_completed_date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement completion timestamp"
+              },
+              "settlement_amount": {
+                "type": "number",
+                "format": "float",
+                "description": "Settlement amount"
+              },
+              "settlement_currency": {
+                "type": "string",
+                "description": "Settlement currency"
+              },
+              "utr_number": {
+                "type": "string",
+                "description": "UTR number for the settlement"
+              },
+              "number_of_transactions": {
+                "type": "integer",
+                "description": "Number of transactions in settlement"
+              },
+              "created_date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement creation timestamp"
+              }
+            }
+          },
+          "refund": {
+            "type": "array",
+            "description": "Array of refunds associated with this payment",
+            "items": {
+              "$ref": "#/components/schemas/v3_Refund"
+            }
+          },
+          "collection_mode": {
+            "type": "string",
+            "description": "Payment collection mode",
+            "enum": [
+              "hosted_payment",
+              "s2s"
+            ]
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment",
+            "enum": [
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr"
+            ]
+          },
+          "bank_ref_num": {
+            "type": "string",
+            "nullable": true,
+            "description": "Bank reference number"
+          },
+          "mop_detail": {
+            "type": "object",
+            "nullable": true,
+            "description": "Method of payment specific details - structure varies based on mop_type",
+            "oneOf": [
+              {
+                "title": "UPI Details",
+                "type": "object",
+                "properties": {
+                  "upi_id": {
+                    "type": "string",
+                    "description": "UPI ID for UPI payments"
+                  }
+                },
+                "required": [
+                  "upi_id"
+                ]
+              },
+              {
+                "title": "Card Details",
+                "type": "object",
+                "properties": {
+                  "card_mask": {
+                    "type": "string",
+                    "description": "Masked card number"
+                  },
+                  "card_holder_name": {
+                    "type": "string",
+                    "description": "Name of the card holder"
+                  },
+                  "card_issuer_country": {
+                    "type": "string",
+                    "description": "Country of the card issuer"
+                  },
+                  "card_issuer_bank": {
+                    "type": "string",
+                    "description": "Bank that issued the card"
+                  }
+                },
+                "required": [
+                  "card_mask",
+                  "card_holder_name",
+                  "card_issuer_country",
+                  "card_issuer_bank"
+                ]
+              },
+              {
+                "title": "Net Banking Details",
+                "type": "object",
+                "properties": {
+                  "bank_ref_num": {
+                    "type": "string",
+                    "description": "Bank reference number"
+                  },
+                  "acq_id": {
+                    "type": "string",
+                    "description": "Acquirer ID"
+                  }
+                },
+                "required": [
+                  "bank_ref_num",
+                  "acq_id"
+                ]
+              }
+            ]
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Payment completion timestamp"
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status",
+            "enum": [
+              "pending",
+              "captured",
+              "failed"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment status message"
+          },
+          "created_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment creation timestamp"
+          }
+        }
+      },
+      "v3_StandingInstruction": {
+        "type": "object",
+        "description": "Standing instruction configuration for a subscription",
+        "properties": {
+          "billing_amount": {
+            "type": "string",
+            "description": "Billing amount per cycle"
+          },
+          "billing_currency": {
+            "type": "string",
+            "description": "Currency for billing amount"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "description": "Billing cycle (e.g. MONTHLY)"
+          },
+          "billing_interval": {
+            "type": "integer",
+            "description": "Interval between each billing cycle"
+          },
+          "payment_start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription start date (YYYY-MM-DD)"
+          },
+          "payment_end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription end date (YYYY-MM-DD)"
+          },
+          "billing_date": {
+            "type": "integer",
+            "description": "Day of month for billing"
+          },
+          "billing_limit": {
+            "type": "string",
+            "description": "Billing limit rule (e.g. BEFORE, AFTER)"
+          },
+          "billing_rule": {
+            "type": "string",
+            "description": "Billing rule (e.g. MAX)"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Subscription remarks"
+          },
+          "status": {
+            "type": "string",
+            "description": "Subscription status"
+          }
+        }
+      },
+      "v3_CreateSubscriptionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/v3_CreateOrderRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "standing_instruction": {
+                "$ref": "#/components/schemas/v3_StandingInstruction"
+              }
+            }
+          }
+        ]
+      },
+      "v3_CreateSubscriptionResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "intent_uri": {
+                "type": "string"
+              },
+              "acstemplate": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
+              "subscription": {
+                "$ref": "#/components/schemas/v3_StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "v3_CreateSubscriptionIntentRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/v3_CreateOrderRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "preferred_upi_flow_type",
+              "standing_instruction"
+            ],
+            "properties": {
+              "preferred_upi_flow_type": {
+                "type": "string",
+                "enum": [
+                  "INTENT"
+                ],
+                "description": "Must be 'INTENT' for Intent flow subscriptions"
+              },
+              "standing_instruction": {
+                "$ref": "#/components/schemas/v3_StandingInstruction"
+              }
+            }
+          }
+        ]
+      },
+      "v3_CreateSubscriptionIntentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "intent_uri": {
+                "type": "string",
+                "description": "UPI Intent URI for mandate approval"
+              },
+              "qr_code": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Full UPI URL for QR code scanning"
+                  },
+                  "base64": {
+                    "type": "string",
+                    "description": "Base64-encoded QR code image (PNG format)"
+                  }
+                }
+              },
+              "subscription": {
+                "$ref": "#/components/schemas/v3_StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "v3_GetSubscriptionOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "reference_id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "v3_GetSubscriptionMandateStatusResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_is_active": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "v3_ModifySubscriptionMandateRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "v3_ModifySubscriptionMandateResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_modified": {
+                "type": "boolean"
+              },
+              "updated_amount": {
+                "type": "string"
+              },
+              "updated_end_date": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        }
+      },
+      "v3_CancelSubscriptionMandateResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_cancelled": {
+                "type": "boolean"
+              },
+              "subscription_status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "v3_PreDebitNotificationRequest": {
+        "type": "object",
+        "required": [
+          "debit_date",
+          "amount"
+        ],
+        "properties": {
+          "debit_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "invoice_display_number": {
+            "type": "string",
+            "description": "Invoice display number. Required only for card payments, optional for other payment methods."
+          }
+        }
+      },
+      "v3_PreDebitNotificationResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "debit_date": {
+                "type": "string",
+                "format": "date"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "notification_sent": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "v3_RecurringPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "invoice_display_number": {
+            "type": "string",
+            "description": "Invoice display number for the recurring payment"
+          }
+        }
+      },
+      "v3_RecurringPaymentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "v3_CreatePaymentLinkRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "reference_id",
+          "buyer",
+          "product",
+          "invoice"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "float"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique identifier for the order"
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expiry date in UTC"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name",
+              "email",
+              "phone",
+              "address"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number with country code"
+              },
+              "send_sms": {
+                "type": "boolean",
+                "default": false
+              },
+              "send_email": {
+                "type": "boolean",
+                "default": false
+              },
+              "address": {
+                "$ref": "#/components/schemas/v3_Address"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "required": [
+              "name",
+              "type_of_goods"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "type_of_goods": {
+                "type": "string",
+                "enum": [
+                  "physical_goods",
+                  "digital_goods",
+                  "service"
+                ]
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "number"
+            ],
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Alphanumeric invoice number"
+              }
+            }
+          }
+        }
+      },
+      "v3_CreatePaymentLinkResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "payment_id": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string",
+                "format": "uri"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "v3_ListPaymentLinksResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "payment_id": {
+                      "type": "string"
+                    },
+                    "payment_link": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "reference_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "object",
+                      "properties": {
+                        "amount": {
+                          "type": "string"
+                        },
+                        "total_amount": {
+                          "type": "string"
+                        },
+                        "currency": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "buyer": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentLinkDetailsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "payment_id": {
+                "type": "string"
+              },
+              "reference_id": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "payment_link": {
+                "type": "string",
+                "format": "uri"
+              },
+              "status": {
+                "type": "string"
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "buyer": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "$ref": "#/components/schemas/v3_Address"
+                  },
+                  "pan_number": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dob": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "product": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hs_code": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hs_code_description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "type_of_goods": {
+                    "type": "string"
+                  }
+                }
+              },
+              "invoice": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "string"
+                  },
+                  "date": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "uri",
+                    "nullable": true
+                  }
+                }
+              },
+              "settlement": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "settlement_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "properties": {
+                      "settlement_id": {
+                        "type": "string"
+                      },
+                      "settlement_completed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "utr_number": {
+                        "type": "string"
+                      },
+                      "merchant_net_amount": {
+                        "type": "string"
+                      },
+                      "settlement_currency": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_SharePaymentLinkRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "phone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "v1_BINLookupRequest": {
+        "type": "object",
+        "required": [
+          "bin"
+        ],
+        "properties": {
+          "bin": {
+            "type": "string",
+            "description": "BIN code (first 6-8 digits of card number)",
+            "pattern": "^[0-9]{6,9}$",
+            "example": "41111111"
+          }
+        }
+      },
+      "v1_BINLookupResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v1_BINLookupData"
+          }
+        }
+      },
+      "v1_BINLookupData": {
+        "type": "object",
+        "properties": {
+          "bank": {
+            "type": "string",
+            "description": "Bank name that issued the card",
+            "example": "hdfc bank"
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network (visa, mastercard, rupay, amex, diners)",
+            "example": "visa"
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Card type (credit_card, debit_card)",
+            "example": "credit_card"
+          },
+          "is_domestic": {
+            "type": "boolean",
+            "description": "Whether the card is domestic (issued in India) or international",
+            "example": true
+          }
+        }
+      },
+      "v2_BINLookupRequest": {
+        "type": "object",
+        "required": [
+          "bin"
+        ],
+        "properties": {
+          "bin": {
+            "type": "string",
+            "description": "BIN code (first 6-8 digits of card number)",
+            "pattern": "^[0-9]{6,9}$",
+            "example": "41111111"
+          }
+        }
+      },
+      "v2_BINLookupResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v2_BINLookupData"
+          }
+        }
+      },
+      "v2_BINLookupData": {
+        "type": "object",
+        "properties": {
+          "bank": {
+            "type": "string",
+            "description": "Bank name that issued the card",
+            "example": "hdfc bank"
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network (visa, mastercard, rupay, amex, diners)",
+            "example": "visa"
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Card type (credit_card, debit_card)",
+            "example": "credit_card"
+          },
+          "is_domestic": {
+            "type": "boolean",
+            "description": "Whether the card is domestic (issued in India) or international",
+            "example": true
+          }
+        }
+      },
+      "v3_BINLookupRequest": {
+        "type": "object",
+        "required": [
+          "bin"
+        ],
+        "properties": {
+          "bin": {
+            "type": "string",
+            "description": "BIN code (first 6-8 digits of card number)",
+            "pattern": "^[0-9]{6,9}$",
+            "example": "41111111"
+          }
+        }
+      },
+      "v3_BINLookupResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_BINLookupData"
+          }
+        }
+      },
+      "v3_BINLookupData": {
+        "type": "object",
+        "properties": {
+          "bank": {
+            "type": "string",
+            "description": "Bank name that issued the card",
+            "example": "hdfc bank"
+          },
+          "network": {
+            "type": "string",
+            "description": "Card network (visa, mastercard, rupay, amex, diners)",
+            "example": "visa"
+          },
+          "card_type": {
+            "type": "string",
+            "description": "Card type (credit_card, debit_card)",
+            "example": "credit_card"
+          },
+          "is_domestic": {
+            "type": "boolean",
+            "description": "Whether the card is domestic (issued in India) or international",
+            "example": true
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -10922,9 +14455,9 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X' or '2.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
         "x-displayName": "API Version",
-        "x-example": "2.0.0"
+        "x-example": "3.0.0"
       }
     }
   },
