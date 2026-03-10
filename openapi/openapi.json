@@ -2926,6 +2926,155 @@
         "operationId": "v1_post_pg_subscriptions_"
       }
     },
+    "/pg/subscriptions/card/": {
+      "post": {
+        "summary": "Create Card Subscription",
+        "description": "Create a new card-based subscription order with standing instructions (SI).",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Card subscription creation request. Accepts the same fields as Create Order (S2S Card) plus a standing_instruction block.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v1_CreateSubscriptionRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "collection_mode": "s2s",
+                "currency": "INR",
+                "reference_id": "SUBCARD001",
+                "buyer": {
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "phone": "+919876543210",
+                  "address": {
+                    "line_1": "123 Main Street",
+                    "line_2": "Apt 4B",
+                    "city": "Mumbai",
+                    "state": "Maharashtra",
+                    "postal_code": "400001"
+                  },
+                  "ip_address": "192.168.1.100",
+                  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                },
+                "product": {
+                  "name": "Monthly Subscription Plan",
+                  "description": "Monthly subscription for premium services",
+                  "hs_code": "98051000",
+                  "hs_code_description": "Subscription services",
+                  "type_of_goods": "service"
+                },
+                "invoice": {
+                  "number": "INVCARD001",
+                  "date": "2025-12-15"
+                },
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2026-01-15",
+                  "payment_end_date": "2027-01-15",
+                  "billing_date": 1,
+                  "billing_limit": "AFTER",
+                  "billing_rule": "MAX",
+                  "remarks": "Monthly subscription for premium services"
+                },
+                "mop_type": "credit_card",
+                "card_details": {
+                  "card_number": "4111111111111111",
+                  "card_holder_name": "John Doe",
+                  "card_expiry_month": "12",
+                  "card_expiry_year": "2027",
+                  "card_cvv": "123"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Card Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_CreateSubscriptionResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Card Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_type": "CARD_RECURRING",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "acstemplate": "<html>...</html>",
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31",
+                      "status": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal / configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v1_post_pg_subscriptions_card_"
+      }
+    },
     "/pg/subscriptions/{subscription_id}/": {
       "get": {
         "summary": "Get Subscription Order Details",
@@ -4638,6 +4787,539 @@
           }
         },
         "operationId": "v1_post_pg_bin_"
+      }
+    },
+    "/v2/pg/subscriptions/intent/": {
+      "post": {
+        "summary": "Create UPI Subscription (Intent Flow) - v2",
+        "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront. Version 2.0.0 does not include pre-debit notification and recurring payment endpoints.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request with INTENT flow. Requires preferred_upi_flow_type to be 'INTENT'.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_CreateSubscriptionIntentRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "collection_mode": "s2s",
+                "currency": "INR",
+                "reference_id": "SUBGB37NP",
+                "buyer": {
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "phone": "+919876543210",
+                  "address": {
+                    "line_1": "123 Main Street",
+                    "line_2": "Apt 4B",
+                    "city": "Mumbai",
+                    "state": "Maharashtra",
+                    "postal_code": "400001"
+                  },
+                  "ip_address": "192.168.1.100",
+                  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                },
+                "product": {
+                  "name": "Monthly Subscription Plan",
+                  "description": "Monthly subscription for premium services",
+                  "hs_code": "98051000",
+                  "hs_code_description": "Subscription services",
+                  "type_of_goods": "service"
+                },
+                "invoice": {
+                  "number": "INVPUZWBY",
+                  "date": "2025-12-15"
+                },
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2026-01-15",
+                  "payment_end_date": "2027-01-15",
+                  "billing_date": 1,
+                  "billing_limit": "AFTER",
+                  "billing_rule": "MAX",
+                  "remarks": "Monthly subscription for premium services"
+                },
+                "mop_type": "UPI",
+                "upi_flow_type": "intent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_CreateSubscriptionIntentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "UPI Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "subscription_type": "UPI_RECURRING",
+                    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "qr_code": {
+                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+                    },
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31",
+                      "status": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_intent_"
+      }
+    },
+    "/v2/pg/subscriptions/": {
+      "post": {
+        "summary": "Create UPI Subscription - v2",
+        "description": "Create a new UPI subscription order with standing instructions (SI). Version 2.0.0 does not include pre-debit notification and recurring payment endpoints.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request. Accepts the same fields as Create Order (S2S UPI) plus a standing_instruction block.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_CreateSubscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_CreateSubscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal / configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU upstream failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_"
+      }
+    },
+    "/v2/pg/subscriptions/{subscription_id}/": {
+      "get": {
+        "summary": "Get Subscription Order Details - v2",
+        "description": "Retrieve order-level details for a subscription by subscription UID.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription order fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_GetSubscriptionOrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_get_pg_subscriptions_subscription_id_"
+      }
+    },
+    "/v2/pg/subscriptions/{subscription_id}/mandate_status/": {
+      "get": {
+        "summary": "Get Subscription Mandate Status - v2",
+        "description": "Fetch the current UPI mandate status for a subscription.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription mandate status fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_GetSubscriptionMandateStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Business validation error (e.g. mandate not yet created)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_get_pg_subscriptions_subscription_id_mandate_status_"
+      }
+    },
+    "/v2/pg/subscriptions/{subscription_id}/modify_mandate/": {
+      "post": {
+        "summary": "Modify Subscription Mandate - v2",
+        "description": "Update mandate amount and/or end date for a subscription.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Mandate modification payload. At least one of amount or end_date must be provided.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v2_ModifySubscriptionMandateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription mandate modification request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ModifySubscriptionMandateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_subscription_id_modify_mandate_"
+      }
+    },
+    "/v2/pg/subscriptions/{subscription_id}/cancel_mandate/": {
+      "post": {
+        "summary": "Cancel Subscription Mandate - v2",
+        "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription mandate cancel request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_CancelSubscriptionMandateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Business validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration / unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PayU API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v2_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_subscription_id_cancel_mandate_"
       }
     }
   },

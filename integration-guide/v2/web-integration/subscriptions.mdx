@@ -1,0 +1,416 @@
+---
+title: "Subscriptions"
+description: "Set up and manage UPI subscription mandates using EximPe Merchant APIs."
+---
+
+<Note>
+  UPI and card subscriptions let you collect recurring payments from customers using subscription mandates.
+  This guide walks through how to create and manage subscriptions using EximPe Merchant APIs.
+  
+  This version features automatic recurring payments. Once a mandate is active, the payment gateway automatically processes recurring debits and sends webhook notifications with the subscription ID for each payment.
+</Note>
+
+<CardGroup cols={3}>
+  <Card title="Create Subscription" icon="repeat" href="#step-1-create-subscription">
+    Create a subscription order with subscription mandate
+  </Card>
+  <Card title="Check Mandate Status" icon="clock" href="#step-2-check-mandate-status">
+    Verify that the UPI mandate is active before proceeding
+  </Card>
+  <Card title="Modify or Cancel Mandate" icon="edit" href="#step-3-modify-or-cancel-mandate">
+    Update mandate amount/end date or cancel the subscription
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
+- **UPI Subscription enablement**: UPI recurring subscription enabled and approved by EximPe.
+- **Server environment**: Ability to make HTTPS `POST` and `GET` requests from your backend.
+- **JSON & HTTP Client**: Familiarity with JSON request bodies and HTTP client libraries.
+
+## Integration Steps
+
+The integration consists of three steps:
+
+1. **Create Subscription**
+2. **Check Mandate Status**
+3. **Modify or Cancel Mandate**
+
+## Step 1: Create Subscription
+
+Use the **Create UPI Subscription** API to create a subscription order and standing instruction. You can use either Intent Flow (QR code/intent) or Card Flow (requires card details).
+
+### Intent Flow
+
+Use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment intent.
+
+#### Sample Request (Intent Flow)
+
+```json
+curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "amount": "1000.00",
+    "collection_mode": "s2s",
+    "currency": "INR",
+    "reference_id": "SUBR8QRLW",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210",
+        "address": {
+            "line_1": "123 Main Street",
+            "line_2": "Apt 4B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400001"
+        },
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+        "name": "Monthly Subscription Plan",
+        "description": "Monthly subscription for premium services",
+        "hs_code": "98051000",
+        "hs_code_description": "Subscription services",
+        "type_of_goods": "service"
+    },
+    "invoice": {
+        "number": "INVMVLSVW",
+        "date": "2025-12-15"
+    },
+    "standing_instruction": {
+        "billing_amount": "1000.00",
+        "billing_currency": "INR",
+        "billing_cycle": "MONTHLY",
+        "billing_interval": 1,
+        "payment_start_date": "2026-01-15",
+        "payment_end_date": "2027-01-15",
+        "billing_date": 1,
+        "billing_limit": "AFTER",
+        "billing_rule": "MAX",
+        "remarks": "Monthly subscription for premium services"
+    },
+    "mop_type": "UPI",
+    "upi_flow_type": "intent",
+    "upi_app_name": "others"
+}'
+```
+
+#### Response (Intent Flow)
+
+```json
+{
+  "success": true,
+  "message": "UPI Subscription created successfully",
+  "data": {
+    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+    "subscription_type": "UPI_RECURRING",
+    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+    "qr_code": {
+      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+    },
+    "subscription": {
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2025-01-01",
+      "payment_end_date": "2025-12-31",
+      "status": "PENDING"
+    }
+  }
+}
+```
+
+<Note>
+  **Key differences between Card and Intent flow:**
+
+  - **Card Flow**: Requires customer's card details upfront. Payment mandate is created using card information.
+  - **Intent Flow**: No VPA required. Customer approves mandate by scanning QR code or using payment intent. Returns QR code in base64 format for display.
+
+  The Intent flow is ideal when you want to let customers approve mandates without collecting their VPA first.
+</Note>
+
+#### Display QR Code
+
+The response includes a base64-encoded QR code that can be displayed directly:
+
+```html
+<img src="data:image/png;base64,{data.qr_code.base64}" alt="UPI Payment QR Code" />
+```
+
+Alternatively, you can use the `intent_uri` to generate a QR code client-side or use the provided `qr_code.url` for UPI app deep linking.
+
+For full request and response schema, see the [**Create UPI Subscription (Intent Flow)**](https://docs.eximpe.com/api-reference/v2/subscriptions/create-intent) endpoint in API Reference.
+
+### Card Flow
+
+Alternatively, you can use the **Card Flow** which requires the customer's card details upfront. The subscription mandate is created using the card information.
+
+To start with, the request is raised from the Merchant to EximPe with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request.
+
+#### Sample Request (Card Flow)
+
+```json
+curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/card/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "amount": "1000.00",
+    "collection_mode": "s2s",
+    "currency": "INR",
+    "reference_id": "SUB6ACIQ7",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210",
+        "address": {
+            "line_1": "123 Main Street",
+            "line_2": "Apt 4B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400001"
+        },
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+        "name": "Monthly Subscription Plan",
+        "description": "Monthly subscription for premium services",
+        "hs_code": "98051000",
+        "hs_code_description": "Subscription services",
+        "type_of_goods": "service"
+    },
+    "invoice": {
+        "number": "INVW72Z2G",
+        "date": "2025-12-12"
+    },
+    "standing_instruction": {
+        "billing_amount": "1000.00",
+        "billing_currency": "INR",
+        "billing_cycle": "MONTHLY",
+        "billing_interval": 1,
+        "payment_start_date": "2026-01-12",
+        "payment_end_date": "2027-01-12",
+        "billing_date": 1,
+        "billing_limit": "AFTER",
+        "billing_rule": "MAX",
+        "remarks": "Monthly subscription for premium services"
+    },
+    "mop_type": "credit_card",
+    "card_details": {
+        "card_number": "4111111111111111",
+        "card_holder_name": "John Doe",
+        "card_expiry_month": "12",
+        "card_expiry_year": "2027",
+        "card_cvv": "123"
+    }
+}'
+```
+
+#### Response (Card Flow)
+
+```json
+{
+  "success": true,
+  "message": "Card Subscription created successfully",
+  "data": {
+    "order_id": "ORD_xxx",
+    "subscription_type": "CARD_RECURRING",
+    "subscription_id": "SUB_xxx",
+    "acstemplate": "PCFET0NUWVBFIGh0bWw+CiAgICAgICAgPGh0....=",
+    "subscription": {
+            "billing_cycle": "MONTHLY",
+            "billing_interval": 1,
+            "payment_start_date": "2026-04-10",
+            "payment_end_date": "2027-04-10",
+            "status": "PENDING"
+        }
+  }
+}
+```
+
+<Note>
+  **3D Secure Authentication**: Card-based subscriptions may require 3D Secure authentication. If the response includes an `acstemplate`, render it on the client side to complete the authentication process before the subscription mandate becomes active.
+</Note>
+
+For full request and response schema, see the [**Create UPI Subscription**](https://docs.eximpe.com/api-reference/v2/subscriptions/create) endpoint in API Reference.
+
+## Step 2: Check Mandate Status
+
+After the customer approves the UPI mandate, use the [**Get Subscription Mandate Status**](https://docs.eximpe.com/api-reference/v2/subscriptions/mandate-status) API to verify that it is active.
+
+### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/mandate_status/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0"
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate status fetched successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_is_active": true,
+    "status": "INITIALIZED",
+    "amount": 1000,
+    "mandate_start_date": "2026-04-10T00:00:00+05:30",
+    "mandate_end_date": "2027-04-10T23:59:59+05:30"
+  }
+}
+```
+
+Only proceed with subscription management when `mandate_is_active` is `true`.
+
+## Automatic Recurring Payments
+
+<Note>
+  The recurring payments are processed automatically by the payment gateway based on the billing cycle defined in the standing instruction. You don't need to manually trigger recurring payments via API.
+</Note>
+
+Once the subscription mandate is active, the payment gateway will automatically debit the customer's payment method according to the billing cycle you configured (e.g., MONTHLY, WEEKLY, DAILY) in the `standing_instruction` block.
+
+### How Automatic Payments Work
+
+1. **Mandate Activation**: After the customer approves the mandate, it becomes active
+2. **Scheduled Debit**: On each billing date, the payment gateway automatically debits the specified amount
+3. **Webhook Notification**: Upon successful payment, you'll receive a webhook notification with the payment details
+
+### Monitoring Recurring Payments
+
+You can monitor recurring payments through:
+
+1. **Webhooks**: Real-time notifications for each successful/failed payment
+2. **Payment API**: Use the [Get Payment](https://docs.eximpe.com/api-reference/v2/payment/get) endpoint to fetch payment details
+3. **Order API**: Use the [Get Order](https://docs.eximpe.com/api-reference/v2/order/get) endpoint to check order status
+4. **Subscription Status Webhook**: Receive updates about subscription lifecycle events
+
+For webhook implementation details, see the [Webhooks](#webhooks) section below.
+
+## Step 3: Modify or Cancel Mandate
+
+### 3.1 Modify Mandate
+
+To change the billing amount or end date of an active subscription, use the [**Modify Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/modify-mandate) API.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_mandate/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "amount": 1500.00,
+    "end_date": "2025-12-31"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate modification request sent successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_modified": true,
+    "updated_amount": "1500.00",
+    "updated_end_date": "2025-12-31",
+    "subscription_status": "INITIALIZED"
+  }
+}
+```
+
+<Note>
+  At least one of `amount` or `end_date` must be provided to modify the mandate.
+</Note>
+
+### 3.2 Cancel Mandate
+
+To fully stop future debits and revoke the subscription mandate, use the [**Cancel Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/cancel-mandate) API.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/cancel_mandate/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0"
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate cancel request sent successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_cancelled": true,
+    "subscription_status": "CANCELLED"
+  }
+}
+```
+
+The subscription will be marked as `CANCELLED` on success.
+
+---
+
+## Webhooks
+
+EximPe sends webhook notifications for both subscription lifecycle events and recurring payment events. Configure webhooks to receive real-time updates.
+
+### Payment Successful Webhook (for Recurring Payments)
+
+For each automatic recurring payment, you'll receive a **Payment Successful** webhook. This webhook includes the `subscription_id` field, allowing you to track which subscription the payment belongs to.
+
+**Key Fields in Payment Webhook:**
+- `subscription_id`: The unique identifier of the subscription
+- `order_id`: The order ID for this specific payment
+- `payment_id`: The payment transaction ID
+- `amount`: The amount charged
+- `status`: Payment status (SUCCESS)
+
+For complete webhook payload details, see the [**Payment Successful Webhook**](https://docs.eximpe.com/api-reference/v2/webhooks/payment-successful) in API Reference.
+
+### Subscription Status Webhook
+
+The **Subscription Status** webhook is triggered when a subscription status changes or subscription information is updated. This allows you to track subscription lifecycle events and update your billing records accordingly.
+
+**Common Subscription Events:**
+- Mandate created/activated
+- Subscription paused or resumed
+- Mandate modified
+- Subscription cancelled
+
+For detailed webhook payload specifications, event types, and implementation details, refer to the [**Subscription Status Webhook**](https://docs.eximpe.com/api-reference/v2/webhooks/subscription-status) in API Reference.
+
+<Note>
+  For general webhook setup, security, and verification, see the [**Webhooks Integration Guide**](/integration-guide/v2/web-integration/webhooks).
+</Note>
+
+---

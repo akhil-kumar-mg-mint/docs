@@ -195,6 +195,7 @@
                     ]
                   },
                   "integration-guide/v2/web-integration/bin-lookup",
+                  "integration-guide/v2/web-integration/subscriptions",
                   "integration-guide/v2/web-integration/webhooks",
                   "integration-guide/v2/web-integration/test-data"
                 ]
@@ -249,6 +250,17 @@
                   "api-reference/v2/refunds/create",
                   "api-reference/v2/refunds/list",
                   "api-reference/v2/refunds/get"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "api-reference/v2/subscriptions/create-intent",
+                  "api-reference/v2/subscriptions/create-card-flow",
+                  "api-reference/v2/subscriptions/get",
+                  "api-reference/v2/subscriptions/modify-mandate",
+                  "api-reference/v2/subscriptions/mandate-status",
+                  "api-reference/v2/subscriptions/cancel-mandate"
                 ]
               },
               {

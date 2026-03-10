@@ -41,7 +41,7 @@ This webhook is triggered when a payment is marked FAILED (after a payment faile
 | `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
 
 **Signature verification (recommended):**  
-Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
 
 ---
 
