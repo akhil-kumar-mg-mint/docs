@@ -191,7 +191,8 @@
                     "group": "Server to Server",
                     "pages": [
                       "integration-guide/v2/web-integration/s2s-card-payment",
-                      "integration-guide/v2/web-integration/s2s-upi-intent"
+                      "integration-guide/v2/web-integration/s2s-upi-intent",
+                      "integration-guide/v2/web-integration/s2s-netbanking"
                     ]
                   },
                   "integration-guide/v2/web-integration/bin-lookup",
@@ -261,6 +262,12 @@
                 ]
               },
               {
+                "group": "Net Banking",
+                "pages": [
+                  "api-reference/v2/netbanking/create"
+                ]
+              },
+              {
                 "group": "Virtual Bank Accounts",
                 "pages": [
                   "api-reference/v2/vba/create",
@@ -321,7 +328,8 @@
                     "group": "Server to Server",
                     "pages": [
                       "integration-guide/v3/web-integration/s2s-card-payment",
-                      "integration-guide/v3/web-integration/s2s-upi-intent"
+                      "integration-guide/v3/web-integration/s2s-upi-intent",
+                      "integration-guide/v3/web-integration/s2s-netbanking"
                     ]
                   },
                   "integration-guide/v3/web-integration/bin-lookup",
@@ -387,6 +395,12 @@
                   "api-reference/v3/payment-link/list",
                   "api-reference/v3/payment-link/retrieve",
                   "api-reference/v3/payment-link/deactivate"
+                ]
+              },
+              {
+                "group": "Net Banking",
+                "pages": [
+                  "api-reference/v3/netbanking/create"
                 ]
               },
               {
