@@ -272,7 +272,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/mandate_
   "data": {
     "subscription_id": "SUB_xxx",
     "mandate_is_active": true,
-    "status": "INITIALIZED",
+    "status": "ACTIVE",
     "amount": 1000,
     "mandate_start_date": "2026-04-10T00:00:00+05:30",
     "mandate_end_date": "2027-04-10T23:59:59+05:30"
@@ -281,6 +281,23 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/mandate_
 ```
 
 Only proceed with subscription management when `mandate_is_active` is `true`.
+
+### Subscription Status Values
+
+A subscription can have the following statuses:
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Subscription created but mandate not yet approved by customer |
+| `ACTIVE` | Subscription mandate is active and recurring payments will be processed automatically |
+| `PAUSED` | Subscription temporarily paused, no recurring payments will be processed |
+| `CANCELLED` | Subscription mandate cancelled, no further payments will be processed |
+| `EXPIRED` | Subscription reached its end date |
+| `FAILED` | Subscription mandate creation or activation failed |
+
+<Note>
+  **Active Subscriptions**: Only subscriptions with `ACTIVE` status will have automatic recurring payments processed. Monitor the subscription status via webhooks to track lifecycle changes.
+</Note>
 
 ## Automatic Recurring Payments
 
@@ -402,10 +419,18 @@ For complete webhook payload details, see the [**Payment Successful Webhook**](h
 The **Subscription Status** webhook is triggered when a subscription status changes or subscription information is updated. This allows you to track subscription lifecycle events and update your billing records accordingly.
 
 **Common Subscription Events:**
-- Mandate created/activated
-- Subscription paused or resumed
-- Mandate modified
-- Subscription cancelled
+- `PENDING` → `ACTIVE`: Mandate created and activated successfully
+- `ACTIVE` → `PAUSED`: Subscription temporarily paused
+- `PAUSED` → `ACTIVE`: Subscription resumed
+- `ACTIVE` → `CANCELLED`: Subscription cancelled by merchant or customer
+- `ACTIVE` → `EXPIRED`: Subscription reached its end date
+- `PENDING` → `FAILED`: Mandate creation or activation failed
+
+**Status Transitions:**
+- New subscriptions start with `PENDING` status
+- Once mandate is approved, status changes to `ACTIVE`
+- Subscriptions can be paused/resumed or cancelled at any time
+- Subscriptions automatically expire when `payment_end_date` is reached
 
 For detailed webhook payload specifications, event types, and implementation details, refer to the [**Subscription Status Webhook**](https://docs.eximpe.com/api-reference/v2/webhooks/subscription-status) in API Reference.
 
