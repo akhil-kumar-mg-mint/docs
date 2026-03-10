@@ -197,6 +197,46 @@
                       "date": "2024-12-05"
                     }
                   }
+                },
+                "S2S Net Banking": {
+                  "summary": "S2S Net Banking",
+                  "description": "Server-to-server net banking payment. EximPe returns an ACS template that redirects the customer to their bank's net banking portal.",
+                  "value": {
+                    "amount": "1500.00",
+                    "currency": "INR",
+                    "reference_id": "S2SNB_REF123",
+                    "return_url": "https://yoursite.com/payment/callback/",
+                    "collection_mode": "s2s",
+                    "mop_type": "net_banking",
+                    "netbanking_details": {
+                      "bank_name": "Axis Bank"
+                    },
+                    "buyer": {
+                      "name": "Rahul Mehta",
+                      "email": "rahul.mehta@example.com",
+                      "phone": "+919876543210",
+                      "address": {
+                        "line_1": "12, MG Road",
+                        "line_2": "Indiranagar",
+                        "city": "Bangalore",
+                        "state": "Karnataka",
+                        "postal_code": "560038"
+                      },
+                      "ip_address": "103.25.64.10",
+                      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    },
+                    "product": {
+                      "name": "Laptop Stand",
+                      "description": "Adjustable aluminium laptop stand",
+                      "hs_code": "94033020",
+                      "hs_code_description": "Furniture of metal of a kind used in offices",
+                      "type_of_goods": "physical_goods"
+                    },
+                    "invoice": {
+                      "number": "INV_NB_2024_001",
+                      "date": "2025-09-04"
+                    }
+                  }
                 }
               }
             }
