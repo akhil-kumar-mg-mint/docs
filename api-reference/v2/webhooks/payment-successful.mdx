@@ -42,7 +42,7 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 | `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
 
 **Signature verification (recommended):**  
-Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
 
 ---
 
@@ -65,7 +65,8 @@ Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 req
     "bank_ref_num": "BANKREF123",
     "payment_completed_at": "2025-02-12T10:29:55.000000Z",
     "utr": "UTR123456",
-    "virtual_account_id": "USER09"
+    "virtual_account_id": "USER09",
+    "subscription_id": null
   }
 }
 ```
@@ -89,7 +90,7 @@ Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 req
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "1.0")
+      Envelope version (e.g. "2.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -99,7 +100,7 @@ Compute `HMAC-SHA256(api_key, raw_body)` where `raw_body` is the exact UTF-8 req
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Payment request details (payment_id, order_id, status, message, mop_type, bank_ref_num, payment_completed_at, utr, virtual_account_id)
+      Payment request details (payment_id, order_id, status, message, mop_type, bank_ref_num, payment_completed_at, utr, virtual_account_id, subscription_id)
     </ParamField>
   </Tab>
 
