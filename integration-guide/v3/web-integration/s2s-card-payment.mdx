@@ -301,11 +301,9 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
 
 | Status | Description |
 |--------|-------------|
-| `PENDING` | Payment initiated, awaiting completion |
-| `SUCCESS` | Payment completed successfully |
+| `PAYMENT_PENDING` | Payment initiated, awaiting completion |
+| `PAYMENT_SUCCESSFUL` | Payment completed successfully |
 | `FAILED` | Payment failed or was declined |
-| `CANCELLED` | Payment was cancelled by customer |
-| `EXPIRED` | Payment session expired |
 
 ## Step 4: Server-to-Server Callback Response
 
