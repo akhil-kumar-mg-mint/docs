@@ -53,7 +53,7 @@ POST /pg/orders/
   "collection_mode": "s2s",
   "mop_type": "net_banking",
   "netbanking_details": {
-    "bank_code": "3044"
+    "bank_name": "State Bank of India"
   },
   "buyer": {
     "name": "John Doe",
@@ -88,7 +88,7 @@ POST /pg/orders/
 
   - `collection_mode`: must be `"s2s"`
   - `mop_type`: must be `"net_banking"`
-  - `netbanking_details.bank_code`: 4-digit bank code (see [Supported Banks](#supported-banks))
+  - `netbanking_details.bank_name`: name of the selected bank (see [Supported Banks](#supported-banks))
   - `buyer.ip_address`: customer's device IP address (used for fraud prevention)
   - `buyer.user_agent`: customer's browser user-agent string (used for fraud prevention)
 </Note>
@@ -149,45 +149,49 @@ function handleACSTemplate(acsTemplate) {
 
 ## Step 3: Check Payment Transaction Status
 
-After the customer returns from the bank portal, query the Order Status API to confirm the payment outcome:
+Use the Order Status API to retrieve the current payment status:
 
 ```bash
-GET /pg/orders/{order_id}/status/
-X-Client-ID: YOUR_CLIENT_ID
-X-Client-Secret: YOUR_CLIENT_SECRET
-X-Merchant-ID: YOUR_MERCHANT_ID
-X-API-Version: 2.0.0
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-Merchant-ID: YOUR_MERCHANT_ID" \
+  -H "X-API-Version: 2.0.0"
 ```
+
+<Note>
+  For detailed parameters and response formats, see the [Get Order API](/api-reference/v2/order/get)
+</Note>
 
 ### Payment Status Values
 
 | Status | Description |
 |--------|-------------|
-| `PENDING` | Payment initiated, awaiting customer action |
+| `PENDING` | Payment initiated, awaiting completion |
 | `SUCCESS` | Payment completed successfully |
-| `FAILED` | Payment failed or was rejected by the bank |
-| `CANCELLED` | Payment was cancelled by the customer |
+| `FAILED` | Payment failed or was declined |
+| `CANCELLED` | Payment was cancelled by customer |
 | `EXPIRED` | Payment session expired |
 
 ## Step 4: Server-to-Server Callback Response
 
-EximPe sends a webhook notification to your configured callback URL when the payment status changes:
+EximPe sends real-time webhook notifications when payment status changes:
 
 ```json
 {
-  "event_type": "PAYMENT_SUCCESSFUL",
-  "event_time": "2024-02-15 16:53:15",
-  "version": "1.0",
-  "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
-  "data": {
-    "status": "captured",
-    "message": "Payment successful",
-    "mop_type": "net_banking",
-    "order_id": "OD9123456789",
-    "payment_id": "PR6938527534",
-    "bank_ref_num": "OD9123456789-PR6938527534",
-    "payment_completed_at": "2025-06-24T12:30:44.000000Z"
-  }
+    "event_type": "PAYMENT_SUCCESSFUL",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
+    "data": {
+        "status": "captured",
+        "message": "Payment successful",
+        "mop_type": "net_banking",
+        "order_id": "OD9123456789",
+        "payment_id": "PR6938527534",
+        "bank_ref_num": "OD9123456789-PR6938527534",
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+    }
 }
 ```
 
@@ -197,30 +201,24 @@ For more webhook details, see:
 
 ## Supported Banks
 
-| Bank Name | Bank Code |
-|-----------|-----------|
-| State Bank of India | `3044` |
-| ICICI Bank | `3022` |
-| HDFC Bank | `3021` |
-| Kotak Mahindra Bank | `3032` |
-| Axis Bank | `3003` |
-| Bank of India | `3006` |
-| Airtel Payments Bank | `3123` |
-| Yes Bank | `3058` |
-| Bank of Baroda | `3005` |
-| IndusInd Bank | `3028` |
-| Canara Bank | `3009` |
-| Union Bank of India | `3055` |
-| Federal Bank | `3020` |
-| RBL Bank | `3039` |
-| Punjab National Bank | `3038` |
-| UCO Bank | `3054` |
-| South Indian Bank | `3042` |
-| Karnataka Bank | `3030` |
-
-<Note>
-  Use bank code `3333` for testing in sandbox mode — it simulates a successful net banking payment without hitting a real bank.
-</Note>
+- State Bank of India
+- ICICI Bank
+- HDFC Bank
+- Kotak Mahindra Bank
+- Axis Bank
+- Bank of India
+- Airtel Payments Bank
+- Yes Bank
+- Bank of Baroda
+- IndusInd Bank
+- Canara Bank
+- Union Bank of India
+- Federal Bank
+- RBL Bank
+- Punjab National Bank
+- UCO Bank
+- South Indian Bank
+- Karnataka Bank
 
 ## Error Handling
 
@@ -229,7 +227,7 @@ For more webhook details, see:
 | `BANK_UNAVAILABLE` | Bank's net banking portal is down | Retry later or ask customer to choose another bank |
 | `SESSION_EXPIRED` | Net banking session timed out | Re-initiate the payment |
 | `PAYMENT_DECLINED` | Bank rejected the transaction | Customer should check account balance or try another bank |
-| `INVALID_BANK_CODE` | Unrecognised bank code | Use a valid code from the [Supported Banks](#supported-banks) table |
+| `INVALID_BANK_NAME` | Unrecognised bank name | Use a valid name from the [Supported Banks](#supported-banks) list |
 | `NETWORK_ERROR` | Connectivity issue | Retry the request |
 
 ## Next Steps
