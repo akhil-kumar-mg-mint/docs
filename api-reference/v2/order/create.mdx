@@ -152,9 +152,11 @@ Security:
 
 #### Net Banking Details
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| bank_name | string | Yes | Name of the selected bank (see [Supported Banks](/integration-guide/v2/web-integration/s2s-netbanking#supported-banks)) |
+Provide the following when `mop_type` is `net_banking`:
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| bank_name | string | Yes | Name of the customer's bank. | Must be one of the supported bank names — see [Supported Banks](/integration-guide/v2/web-integration/s2s-netbanking#supported-banks) |
 
 ## Response
 
