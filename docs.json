@@ -262,12 +262,6 @@
                 ]
               },
               {
-                "group": "Net Banking",
-                "pages": [
-                  "api-reference/v2/netbanking/create"
-                ]
-              },
-              {
                 "group": "Virtual Bank Accounts",
                 "pages": [
                   "api-reference/v2/vba/create",
@@ -395,12 +389,6 @@
                   "api-reference/v3/payment-link/list",
                   "api-reference/v3/payment-link/retrieve",
                   "api-reference/v3/payment-link/deactivate"
-                ]
-              },
-              {
-                "group": "Net Banking",
-                "pages": [
-                  "api-reference/v3/netbanking/create"
                 ]
               },
               {

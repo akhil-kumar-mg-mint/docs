@@ -11,6 +11,7 @@ After creating an order, the response depends on the selected mode:
 - Hosted Payment: returns a `session_id` and `order_id` for redirecting customers to the checkout page
 - S2S UPI Intent: returns an `order_id` and `intent_uri`
 - S2S Card: returns an `order_id` and an `acs_template` (Base64) for 3D Secure
+- S2S Net Banking: returns an `order_id` and an `acs_template` (Base64) for bank redirect
 
 ## Payment Collection Modes
 
@@ -24,6 +25,9 @@ Server-to-server UPI intent flow that generates a UPI intent link for direct app
 
 ### 3. S2S Card Payment
 Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/card-tokens/save) after successful payment.
+
+### 4. S2S Net Banking
+Server-to-server net banking flow. EximPe returns an ACS template (Base64-encoded HTML) that you render in the customer's browser, automatically redirecting them to their bank's net banking portal to authorise the payment.
 
 ## Request Parameters
 
@@ -41,6 +45,7 @@ Server-to-server card payment flow with 3D Secure authentication. For new cards,
 - `mop_type`: Method of payment (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`)
 - `upi_flow_type`: UPI flow type (`intent`) - required when using S2S with UPI
 - `card_details`: Card information object - required when `mop_type` is `credit_card` or `debit_card`
+- `netbanking_details`: Net banking details object - required when `mop_type` is `net_banking`
 
 ### Card Payment Specific Parameters
 When using card payments (`mop_type` is `credit_card` or `debit_card`), additional buyer information is required:
@@ -80,6 +85,7 @@ The following tables define all request parameters, including nested objects, ty
 | product | object | Yes | Product or service being purchased. | See Product object |
 | invoice | object | Yes | Invoice metadata. | See Invoice object |
 | card_details | object | Conditionally | Card details or token for card payments. | Required if `mop_type` is `credit_card` or `debit_card`; See Card Details |
+| netbanking_details | object | Conditionally | Net banking details. | Required if `mop_type` is `net_banking`; See Net Banking Details |
 
 Notes:
 - "Conditionally" required means the field is required only when the stated condition is met.
@@ -144,6 +150,12 @@ Provide one of the following variants when `mop_type` is `credit_card` or `debit
 Security:
 - Do not log or store raw PAN/CVV. Use HTTPS and comply with applicable PCI requirements.
 
+#### Net Banking Details
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| bank_name | string | Yes | Name of the selected bank (see [Supported Banks](/integration-guide/v3/web-integration/s2s-netbanking#supported-banks)) |
+
 ## Response
 
 ### Hosted Payment Response
@@ -162,6 +174,13 @@ For S2S Card Payment mode, the response includes:
 - `acs_template`: Base64-encoded HTML template for 3D Secure authentication
 
 **Important**: The `acs_template` must be decoded from Base64 and rendered in the customer's browser to complete the 3D Secure authentication process.
+
+### S2S Net Banking Response
+For S2S Net Banking mode, the response includes:
+- `order_id`: Unique order identifier
+- `acs_template`: Base64-encoded HTML form that redirects the customer to their bank's net banking portal
+
+**Important**: Decode the `acs_template` from Base64 and render it in the customer's browser. The embedded form auto-submits to the bank's portal.
 
 ## Examples
 
@@ -306,6 +325,45 @@ For S2S Card Payment mode, the response includes:
 }
 ```
 
+```json S2S Net Banking
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "S2SNB_REF123",
+  "return_url": "https://yourdomain.com/payment/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "net_banking",
+  "netbanking_details": {
+    "bank_name": "Axis Bank"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400001"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "physical_goods"
+  },
+  "invoice": {
+    "number": "INV_NB001",
+    "date": "2025-09-04"
+  }
+}
+```
+
 </CodeGroup>
 
 ## Response Examples
@@ -345,6 +403,17 @@ For S2S Card Payment mode, the response includes:
 }
 ```
 
+```json S2S Net Banking Response
+{
+  "success": true,
+  "message": "S2S Net Banking Payment Request created successfully",
+  "data": {
+    "order_id": "OD9123456789",
+    "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0..."
+  }
+}
+```
+
 </CodeGroup>
 
 ## Implementation Notes
@@ -367,6 +436,11 @@ For S2S Card Payment mode, the response includes:
 - **New Cards**: Require full card details and may trigger 3D Secure authentication
 - **Saved Cards**: Use tokens for faster processing, reduced 3D Secure requirements, and enhanced security
 - **Token Benefits**: No sensitive data exposure, faster checkout, improved conversion rates
+
+### Net Banking Payments
+- **ACS Template**: Decode the Base64 `acs_template` and render it in the customer's browser — the embedded form auto-submits to the bank's portal
+- **Required Fields**: `buyer.ip_address` and `buyer.user_agent` are required for fraud prevention
+- **Supported Banks**: See the [full list of supported banks](/integration-guide/v3/web-integration/s2s-netbanking#supported-banks)
 
 ### Security Considerations
 - **Card Data**: Never log or store card details in your application
