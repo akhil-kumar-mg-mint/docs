@@ -32,7 +32,7 @@ This endpoint is identical to [Create Order](/api-reference/v3/order/create) but
 | `return_url` | string | Yes | URL to redirect customer after bank authentication |
 | `collection_mode` | string | Yes | Must be `"s2s"` |
 | `mop_type` | string | Yes | Must be `"net_banking"` |
-| `netbanking_details.bank_name` | string | Yes | Name of the bank (see [Supported Banks](/integration-guide/v3/web-integration/s2s-netbanking#supported-banks)) |
+| `netbanking_details.bank_name` | string | Yes | Bank Name value from the [Supported Banks](/integration-guide/v3/web-integration/s2s-netbanking#supported-banks) list (e.g. `"Axis Bank"`) |
 | `buyer.name` | string | Yes | Full name of the customer |
 | `buyer.email` | string | Yes | Customer email address |
 | `buyer.phone` | string | Yes | Customer phone number with country code (e.g. `"+919876543210"`) |
