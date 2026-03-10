@@ -191,7 +191,8 @@
                     "group": "Server to Server",
                     "pages": [
                       "integration-guide/v2/web-integration/s2s-card-payment",
-                      "integration-guide/v2/web-integration/s2s-upi-intent"
+                      "integration-guide/v2/web-integration/s2s-upi-intent",
+                      "integration-guide/v2/web-integration/s2s-netbanking"
                     ]
                   },
                   "integration-guide/v2/web-integration/bin-lookup",
@@ -333,7 +334,8 @@
                     "group": "Server to Server",
                     "pages": [
                       "integration-guide/v3/web-integration/s2s-card-payment",
-                      "integration-guide/v3/web-integration/s2s-upi-intent"
+                      "integration-guide/v3/web-integration/s2s-upi-intent",
+                      "integration-guide/v3/web-integration/s2s-netbanking"
                     ]
                   },
                   "integration-guide/v3/web-integration/bin-lookup",
@@ -441,6 +443,7 @@
       "href": "https://merchant.eximpe.com"
     }
   },
+  "scripts": ["/ai-chat-buttons.js"],
   "footer": {
     "socials": {
       "facebook": "https://www.facebook.com/eximpe/",

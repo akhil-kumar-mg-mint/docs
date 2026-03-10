@@ -1,0 +1,277 @@
+---
+title: "S2S Net Banking Payment"
+description: "Accept net banking payments server-to-server with EximPe — get an ACS redirect template directly from your backend"
+---
+
+# Introduction
+
+The Server-to-Server (S2S) Net Banking integration lets you initiate net banking payments entirely from your backend. EximPe returns an ACS (Access Control Server) template that you render in the customer's browser, which automatically redirects them to their bank's net banking portal to authorise the payment.
+
+<CardGroup cols={3}>
+  <Card title="18+ Banks Supported" icon="university" href="#supported-banks">
+    SBI, HDFC, ICICI, Axis, Kotak and many more
+  </Card>
+  <Card title="ACS Redirect" icon="arrow-right-arrow-left" href="#step-2-render-acs-template">
+    Seamlessly redirect customers to their bank's portal via Base64-encoded HTML
+  </Card>
+  <Card title="Real-time Callbacks" icon="server" href="#step-4-server-to-server-callback">
+    Receive instant payment status updates via server-to-server webhooks
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain in the EximPe dashboard
+- **Webhook URL**: A secure endpoint to receive payment status updates
+- **Callback URL**: A publicly accessible URL configured in your EximPe dashboard for server-to-server callbacks
+- **HTTPS Endpoint**: All S2S endpoints must be served over HTTPS
+
+The following steps allow you to integrate S2S net banking payments:
+
+1. **Initiate payment** with the customer's selected bank code
+2. **Render the ACS template** to redirect the customer to their bank
+3. **Check payment transaction status**
+4. **EximPe sends Server-to-Server callback response**
+
+## Step 1: Initiate Payment
+
+Send a `POST` request to the Create Order endpoint with `collection_mode` set to `"s2s"` and `mop_type` set to `"net_banking"`. Include the customer's chosen bank code in `netbanking_details`.
+
+```bash
+POST /pg/orders/
+```
+
+```json
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "S2SNB_REF123",
+  "return_url": "https://yoursite.com/payment/callback/",
+  "collection_mode": "s2s",
+  "mop_type": "net_banking",
+  "netbanking_details": {
+    "bank_name": "Axis Bank"
+  },
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400001"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Sample Product",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "physical_goods"
+  },
+  "invoice": {
+    "number": "INV_NB001",
+    "date": "2025-09-04"
+  }
+}
+```
+
+<Note>
+  Required parameters for S2S Net Banking:
+
+  - `collection_mode`: must be `"s2s"`
+  - `mop_type`: must be `"net_banking"`
+  - `netbanking_details.bank_name`: name of the selected bank (see [Supported Banks](#supported-banks))
+  - `buyer.ip_address`: customer's device IP address (used for fraud prevention)
+  - `buyer.user_agent`: customer's browser user-agent string (used for fraud prevention)
+</Note>
+
+### Request Headers
+
+```bash
+X-Client-ID: YOUR_CLIENT_ID
+X-Client-Secret: YOUR_CLIENT_SECRET
+X-Merchant-ID: YOUR_MERCHANT_ID   # Required for PSP merchants
+X-API-Version: 3.0.0
+Content-Type: application/json
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "S2S Net Banking Payment Request created successfully",
+  "data": {
+    "order_id": "OD9123456789",
+    "acs_template": "PGh0bWw+PGJvZHk+PGZvcm0gbmFtZT0icGF5bWVudF9wb3N0..."
+  }
+}
+```
+
+- `order_id`: Unique order identifier for tracking the transaction
+- `acs_template`: Base64-encoded HTML form that redirects the customer to their bank's net banking portal
+
+## Step 2: Render ACS Template
+
+Decode the Base64 `acs_template` and render it in the customer's browser. The embedded form auto-submits and takes the customer directly to their bank's authentication page.
+
+```javascript
+function handleACSTemplate(acsTemplate) {
+  // Decode Base64 HTML
+  const decodedHTML = atob(acsTemplate);
+
+  // Open in a new window or write into the current page
+  const authWindow = window.open('', 'NetBanking_Auth', 'width=800,height=600');
+  authWindow.document.write(decodedHTML);
+  authWindow.document.close();
+
+  // Poll for window close (customer completed / cancelled payment)
+  const checkClosed = setInterval(() => {
+    if (authWindow.closed) {
+      clearInterval(checkClosed);
+      checkPaymentStatus();
+    }
+  }, 1000);
+}
+```
+
+<Warning>
+  Always decode and render the ACS template in a secure HTTPS context. Never modify the decoded HTML before rendering — doing so may break the bank redirect.
+</Warning>
+
+## Step 3: Check Payment Transaction Status
+
+Use the Order Status API to retrieve the current payment status:
+
+```bash
+curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-Merchant-ID: YOUR_MERCHANT_ID" \
+  -H "X-API-Version: 3.0.0"
+```
+
+<Note>
+  For detailed parameters and response formats, see the [Get Order API](/api-reference/v3/order/get)
+</Note>
+
+### Payment Status Values
+
+| Status | Description |
+|--------|-------------|
+| `payment_pending` | Payment initiated, awaiting completion |
+| `payment_successful` | Payment completed successfully |
+| `failed` | Payment failed or was declined |
+
+## Step 4: Server-to-Server Callback Response
+
+EximPe sends real-time webhook notifications when payment status changes:
+
+```json
+{
+    "event_type": "PAYMENT_SUCCESSFUL",
+    "event_time": "2024-02-15 16:53:15",
+    "version": "1.0",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
+    "data": {
+        "status": "captured",
+        "message": "Payment successful",
+        "mop_type": "net_banking",
+        "order_id": "OD9123456789",
+        "payment_id": "PR6938527534",
+        "bank_ref_num": "OD9123456789-PR6938527534",
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+    }
+}
+```
+
+For more webhook details, see:
+- [Payment Successful](/api-reference/v3/webhooks/payment-successful)
+- [Payment Failed](/api-reference/v3/webhooks/payment-failed)
+
+## Supported Banks
+
+- Axis Bank
+- Bank of India
+- Bank of Maharashtra
+- Central Bank Of India
+- Corporation Bank
+- Development Credit Bank
+- Federal Bank
+- HDFC Bank
+- ICICI Netbanking
+- Industrial Development Bank of India
+- Indian Bank
+- IndusInd Bank
+- Indian Overseas Bank
+- Jammu and Kashmir Bank
+- Karnataka Bank
+- Karur Vysya
+- State Bank of Bikaner and Jaipur
+- State Bank of Hyderabad
+- State Bank of India
+- State Bank of Mysore
+- State Bank of Travancore
+- South Indian Bank
+- Union Bank of India
+- United Bank Of India
+- Vijaya Bank
+- Yes Bank
+- CityUnion
+- Canara Bank
+- State Bank of Patiala
+- Citi Bank NetBanking
+- Deutsche Bank
+- Kotak Bank
+- Dhanalaxmi Bank
+- ING Vysya Bank
+- Andhra Bank
+- Punjab National Bank CORPORATE
+- Punjab National Bank
+- Bank of Baroda
+- Catholic Syrian Bank
+- Oriental Bank Of Commerce
+- Standard Chartered Bank
+- Tamilnad Mercantile Bank
+- Saraswat Bank
+- Syndicate Bank
+- UCO Bank
+- Bank of Baroda Corporate
+- Allahabad Bank
+- Bank of Bahrain and Kuwait
+- Janata Sahakari Bank
+- Lakshmi Vilas Bank Corporate
+- Lakshmi Vilas Bank Retail
+- North Kanara GSB
+- Punjab and Maharashtra Coop Bank
+- Punjab and Sind Bank
+- Ratnakar Bank
+- Royal Bank of Scotland
+- Shamrao Vithal Coop Bank
+- Tamil Nadu State Apex Coop Bank
+- DENA Bank
+- COSMOS Bank
+- DBS Bank Ltd
+- DCB BANK Business
+- SVC Cooperative Bank
+- Bharat Bank
+- Karur Vysya Corporate Banking
+- Union Bank Corporate Banking
+- IDFC Bank
+- The Nainital Bank
+- Airtel Payments Bank
+
+## Next Steps
+
+- **Go Live**: Switch to production credentials after thorough testing
+- **Monitor**: Track success rates and error patterns via your EximPe dashboard
+
+For additional support, see the [API Reference](/api-reference/v3/) or contact our integration team.
