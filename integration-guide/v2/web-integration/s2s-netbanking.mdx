@@ -286,16 +286,6 @@ For more webhook details, see:
 - Yes Bank Ltd
 - Zoroastrian Co-Operative Bank Ltd
 
-## Error Handling
-
-| Error | Description | Resolution |
-|-------|-------------|------------|
-| `BANK_UNAVAILABLE` | Bank's net banking portal is down | Retry later or ask customer to choose another bank |
-| `SESSION_EXPIRED` | Net banking session timed out | Re-initiate the payment |
-| `PAYMENT_DECLINED` | Bank rejected the transaction | Customer should check account balance or try another bank |
-| `INVALID_BANK_NAME` | Unrecognised bank name | Use a valid name from the [Supported Banks](#supported-banks) list |
-| `NETWORK_ERROR` | Connectivity issue | Retry the request |
-
 ## Next Steps
 
 - **Test Integration**: Use bank code `3333` with sandbox credentials to validate your flow
