@@ -123,7 +123,7 @@
                 "group": "Subscriptions",
                 "pages": [
                   "api-reference/v1/subscriptions/create-intent",
-                  "api-reference/v1/subscriptions/create",
+                  "api-reference/v1/subscriptions/create-card",
                   "api-reference/v1/subscriptions/get",
                   "api-reference/v1/subscriptions/modify-mandate",
                   "api-reference/v1/subscriptions/mandate-status",
