@@ -129,7 +129,8 @@
                   "api-reference/v1/subscriptions/mandate-status",
                   "api-reference/v1/subscriptions/cancel-mandate",
                   "api-reference/v1/subscriptions/pre-debit-notification",
-                  "api-reference/v1/subscriptions/recurring-payment"
+                  "api-reference/v1/subscriptions/recurring-payment",
+                  "api-reference/v1/subscriptions/payments"
                 ]
               },
               {
@@ -262,7 +263,10 @@
                   "api-reference/v2/subscriptions/get",
                   "api-reference/v2/subscriptions/modify-mandate",
                   "api-reference/v2/subscriptions/mandate-status",
-                  "api-reference/v2/subscriptions/cancel-mandate"
+                  "api-reference/v2/subscriptions/cancel-mandate",
+                  "api-reference/v2/subscriptions/payments",
+                  "api-reference/v2/subscriptions/pg-payments",
+                  "api-reference/v2/subscriptions/simulate-payment"
                 ]
               },
               {

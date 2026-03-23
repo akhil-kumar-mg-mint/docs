@@ -8,7 +8,7 @@ description: "Set up and manage UPI and card subscription mandates using EximPe 
   This guide walks through how to create and manage subscriptions using EximPe Merchant APIs.
 </Note>
 
-<CardGroup cols={4}>
+<CardGroup cols={5}>
   <Card title="Create Subscription" icon="repeat" href="#step-1-create-subscription">
     Create a subscription order with subscription mandate
   </Card>
@@ -20,6 +20,9 @@ description: "Set up and manage UPI and card subscription mandates using EximPe 
   </Card>
   <Card title="Modify or Cancel Mandate" icon="edit" href="#step-4-modify-or-cancel-mandate">
     Update mandate amount/end date or cancel the subscription
+  </Card>
+  <Card title="View Payments" icon="list" href="#step-5-view-subscription-payments">
+    Fetch all payments associated with a subscription
   </Card>
 </CardGroup>
 
@@ -36,12 +39,13 @@ Before you begin, ensure you have:
 
 ## Integration Steps
 
-The integration consists of four steps:
+The integration consists of five steps:
 
 1. **Create Subscription**
 2. **Check Mandate Status**
 3. **Trigger Recurring Payment**
 4. **Modify or Cancel Mandate**
+5. **View Subscription Payments**
 
 ## Step 1: Create Subscription
 
@@ -430,6 +434,52 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/cancel_mandat
 ```
 
 The subscription will be marked as `CANCELLED` on success.
+
+## Step 5: View Subscription Payments
+
+Use the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) API to fetch all payments associated with a subscription from the internal system. This is available for **all payment gateways** and **all environments** (including production).
+
+### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "dpr_abc123",
+      "order_id": "ord_xyz789",
+      "reference_id": "SUBPAY-sub123-cf456",
+      "amount": 1000.00,
+      "currency": "INR",
+      "status": "CAPTURED",
+      "payment_type": "RECURRING",
+      "payment_gateway": "CASHFREE",
+      "mop_type": "UPI",
+      "transaction_id": "cf_order_abc",
+      "cf_payment_id": "cf_pay_123",
+      "bank_ref_num": "BANK123456",
+      "status_message": null,
+      "created_at": "2025-03-20T10:30:00Z",
+      "payment_completed_at": "2025-03-20T10:30:05Z"
+    }
+  ]
+}
+```
+
+The response returns an array of all payment records for the subscription, including details such as the payment status, amount, mode of payment, and timestamps. Use this to build payment history views, reconcile billing records, or track installment statuses.
+
+For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) endpoint in API Reference.
 
 ---
 

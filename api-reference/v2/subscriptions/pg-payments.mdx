@@ -1,0 +1,56 @@
+---
+title: 'Fetch PG Payments'
+description: 'Fetch all payments for a subscription directly from the payment gateway.'
+api: 'GET /pg/subscriptions/{subscription_id}/pg_payments/'
+---
+
+Fetch all payments for a subscription directly from the payment gateway. Currently supported for **Cashfree** only.
+
+<Warning>This endpoint is not available in production.</Warning>
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "message": "PG payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "pay_abc123",
+      "status": "SUCCESS"
+    }
+  ]
+}
+```
+
+```json 403 - Production environment
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_ERROR",
+    "message": "This endpoint is not available in production",
+    "details": {
+      "error": "This endpoint is not available in production"
+    }
+  }
+}
+```
+
+```json 503 - PG API error
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_API_ERROR",
+    "message": "Payment gateway API error",
+    "details": {
+      "error": "..."
+    }
+  }
+}
+```
+</ResponseExample>
