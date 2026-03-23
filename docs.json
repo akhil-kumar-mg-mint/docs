@@ -264,6 +264,7 @@
                   "api-reference/v2/subscriptions/modify-mandate",
                   "api-reference/v2/subscriptions/mandate-status",
                   "api-reference/v2/subscriptions/cancel-mandate",
+                  "api-reference/v2/subscriptions/recurring-payment",
                   "api-reference/v2/subscriptions/payments",
                   "api-reference/v2/subscriptions/pg-payments",
                   "api-reference/v2/subscriptions/simulate-payment"

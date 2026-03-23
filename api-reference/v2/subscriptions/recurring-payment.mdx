@@ -1,5 +1,113 @@
 ---
 title: 'Trigger Recurring Payment'
-description: 'Trigger a recurring payment installment for a UPI subscription via the Partner API.'
-openapi: 'POST /pg/subscriptions/{subscription_id}/recurring_payment/'
+description: 'Trigger a recurring payment for a Cashfree ADHOC subscription.'
+api: 'POST /pg/subscriptions/{subscription_id}/recurring_payment/'
 ---
+
+Trigger a charge on an active Cashfree **ADHOC** subscription. The API call initiates the payment with Cashfree — the actual payment outcome (success, failure, or cancellation) is delivered asynchronously via webhooks, at which point the order and payment records are created in the system.
+
+<Info>
+This endpoint only supports **Cashfree ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered.
+</Info>
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+### Request Body
+
+<ParamField body="invoice_display_number" type="string" required>
+  A unique display number for this recurring charge. This is mandatory for all recurring payments.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Amount to charge for this recurring execution. If not provided, the subscription's `billing_amount` is used. Must be less than or equal to the subscription's `billing_amount`.
+</ParamField>
+
+<ParamField body="transaction_id" type="string">
+  Unique transaction ID for this recurring payment (max 64 characters). If omitted, a `REC`-prefixed ID is auto-generated.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="subscription_id" type="string">
+  The subscription identifier.
+</ResponseField>
+
+<ResponseField name="payment_id" type="string">
+  The payment identifier sent to Cashfree. Auto-generated with `REC-` prefix if not provided.
+</ResponseField>
+
+<ResponseField name="cf_payment_id" type="string">
+  Cashfree's internal payment identifier for tracking.
+</ResponseField>
+
+<ResponseField name="payment_amount" type="number">
+  The amount charged for this recurring payment.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status of the API call. `success` means the payment was initiated — not that it has been captured.
+</ResponseField>
+
+<ResponseExample>
+```json 200 - Payment initiated
+{
+  "success": true,
+  "message": "Recurring payment triggered successfully",
+  "data": {
+    "subscription_id": "sub_abc123",
+    "payment_id": "REC-sub_abc123-a1b2c3d4",
+    "cf_payment_id": "cf_pay_789",
+    "payment_amount": 500.00,
+    "status": "success",
+    "message": "Cashfree ADHOC recurring payment initiated successfully"
+  }
+}
+```
+
+```json 400 - Validation error
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Validation error",
+    "details": {
+      "invoice_display_number": [
+        "This field is required."
+      ]
+    }
+  }
+}
+```
+
+```json 400 - Amount exceeds billing amount
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Validation error",
+    "details": {
+      "amount": [
+        "Recurring amount must be less than or equal to the subscription billing amount"
+      ]
+    }
+  }
+}
+```
+
+```json 503 - Cashfree API error
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_API_ERROR",
+    "message": "Payment gateway API error",
+    "details": {
+      "message": "Failed to trigger recurring payment with Cashfree"
+    }
+  }
+}
+```
+</ResponseExample>
