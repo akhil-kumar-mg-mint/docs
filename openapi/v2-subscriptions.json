@@ -1,0 +1,703 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Eximpe Payment Gateway API - V2 Subscriptions",
+    "description": "V2 subscription creation endpoints with simplified standing instruction fields.",
+    "license": {
+      "name": "Proprietary"
+    },
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-pacb-uat.eximpe.com",
+      "description": "Payment Gateway Sandbox URL"
+    }
+  ],
+  "security": [
+    {
+      "clientAuth": [],
+      "clientSecretAuth": [],
+      "apiVersionHeader": []
+    }
+  ],
+  "paths": {
+    "/pg/subscriptions/intent/": {
+      "post": {
+        "summary": "Create UPI Subscription (Intent Flow)",
+        "description": "Create a new UPI subscription order with standing instructions (SI) using Intent flow. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment link, without requiring their VPA upfront.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Subscription creation request with INTENT flow. Requires preferred_upi_flow_type to be 'INTENT'.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionIntentRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "collection_mode": "s2s",
+                "currency": "INR",
+                "reference_id": "SUBGB37NP",
+                "buyer": {
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "phone": "+919876543210",
+                  "address": {
+                    "line_1": "123 Main Street",
+                    "line_2": "Apt 4B",
+                    "city": "Mumbai",
+                    "state": "Maharashtra",
+                    "postal_code": "400001"
+                  },
+                  "ip_address": "192.168.1.100",
+                  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                },
+                "product": {
+                  "name": "Monthly Subscription Plan",
+                  "description": "Monthly subscription for premium services",
+                  "hs_code": "98051000",
+                  "hs_code_description": "Subscription services",
+                  "type_of_goods": "service"
+                },
+                "invoice": {
+                  "number": "INVPUZWBY",
+                  "date": "2025-12-15"
+                },
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2026-01-15",
+                  "payment_end_date": "2027-01-15",
+                  "remarks": "Monthly subscription for premium services"
+                },
+                "mop_type": "UPI",
+                "upi_flow_type": "intent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "UPI Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionIntentResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "UPI Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "subscription_type": "UPI_RECURRING",
+                    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "qr_code": {
+                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+                    },
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_intent_"
+      }
+    },
+    "/pg/subscriptions/card/": {
+      "post": {
+        "summary": "Create Card Subscription",
+        "description": "Create a new card-based subscription order with standing instructions (SI).",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Card subscription creation request. Accepts the same fields as Create Order (S2S Card) plus a standing_instruction block.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionRequest"
+              },
+              "example": {
+                "amount": "1000.00",
+                "collection_mode": "s2s",
+                "currency": "INR",
+                "reference_id": "SUBCARD001",
+                "buyer": {
+                  "name": "John Doe",
+                  "email": "john.doe@example.com",
+                  "phone": "+919876543210",
+                  "address": {
+                    "line_1": "123 Main Street",
+                    "line_2": "Apt 4B",
+                    "city": "Mumbai",
+                    "state": "Maharashtra",
+                    "postal_code": "400001"
+                  },
+                  "ip_address": "192.168.1.100",
+                  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                },
+                "product": {
+                  "name": "Monthly Subscription Plan",
+                  "description": "Monthly subscription for premium services",
+                  "hs_code": "98051000",
+                  "hs_code_description": "Subscription services",
+                  "type_of_goods": "service"
+                },
+                "invoice": {
+                  "number": "INVCARD001",
+                  "date": "2025-12-15"
+                },
+                "standing_instruction": {
+                  "billing_amount": "1000.00",
+                  "billing_currency": "INR",
+                  "billing_cycle": "MONTHLY",
+                  "billing_interval": 1,
+                  "payment_start_date": "2026-01-15",
+                  "payment_end_date": "2027-01-15",
+                  "remarks": "Monthly subscription for premium services"
+                },
+                "mop_type": "credit_card",
+                "card_details": {
+                  "card_number": "4111111111111111",
+                  "card_holder_name": "John Doe",
+                  "card_expiry_month": "12",
+                  "card_expiry_year": "2027",
+                  "card_cvv": "123"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Card Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSubscriptionResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Card Subscription created successfully",
+                  "data": {
+                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "subscription_type": "CARD_RECURRING",
+                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "acstemplate": "<html>...</html>",
+                    "subscription": {
+                      "billing_cycle": "MONTHLY",
+                      "billing_interval": 1,
+                      "payment_start_date": "2024-01-01",
+                      "payment_end_date": "2024-12-31"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business errors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal / configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_card_"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StandingInstruction": {
+        "type": "object",
+        "description": "Standing instruction configuration for a subscription",
+        "properties": {
+          "billing_amount": {
+            "type": "string",
+            "description": "Billing amount per cycle"
+          },
+          "billing_currency": {
+            "type": "string",
+            "description": "Currency for billing amount (provide the ISO code)"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "description": "Billing cycle",
+            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+          },
+          "billing_interval": {
+            "type": "integer",
+            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year."
+          },
+          "payment_start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription start date (YYYY-MM-DD)"
+          },
+          "payment_end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription end date (YYYY-MM-DD)"
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Subscription remarks"
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency",
+          "reference_id",
+          "buyer",
+          "product",
+          "invoice"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Order amount"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code (e.g. INR)"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique merchant reference ID"
+          },
+          "collection_mode": {
+            "type": "string",
+            "description": "Payment collection mode (must be 's2s' for subscriptions)",
+            "enum": [
+              "s2s"
+            ]
+          },
+          "buyer": {
+            "type": "object",
+            "description": "Buyer details",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Full name of the buyer"
+              },
+              "email": {
+                "type": "string",
+                "description": "Email of the buyer"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Phone number with country code"
+              },
+              "address": {
+                "type": "object",
+                "description": "Buyer address",
+                "properties": {
+                  "line_1": {
+                    "type": "string",
+                    "description": "Address line 1"
+                  },
+                  "line_2": {
+                    "type": "string",
+                    "description": "Address line 2"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "City"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "State/Province"
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "description": "Postal/ZIP code"
+                  }
+                }
+              },
+              "ip_address": {
+                "type": "string",
+                "description": "Customer IP address"
+              },
+              "user_agent": {
+                "type": "string",
+                "description": "Browser/device user agent"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "description": "Product details",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Product or service name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Description of the product/service"
+              },
+              "hs_code": {
+                "type": "string",
+                "description": "8-digit HS Code"
+              },
+              "hs_code_description": {
+                "type": "string",
+                "description": "HS Code description"
+              },
+              "type_of_goods": {
+                "type": "string",
+                "description": "Nature of goods/services",
+                "enum": [
+                  "digital_goods",
+                  "physical_goods",
+                  "service"
+                ]
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "description": "Invoice details",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date (YYYY-MM-DD)"
+              }
+            }
+          }
+        }
+      },
+      "CreateSubscriptionRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreateOrderRequest"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "standing_instruction": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+              },
+              "card_details": {
+                "type": "object",
+                "description": "Card details for card-based subscriptions",
+                "properties": {
+                  "card_number": {
+                    "type": "string",
+                    "description": "Card number"
+                  },
+                  "card_holder_name": {
+                    "type": "string",
+                    "description": "Name on the card"
+                  },
+                  "card_expiry_month": {
+                    "type": "string",
+                    "description": "Card expiry month (MM)"
+                  },
+                  "card_expiry_year": {
+                    "type": "string",
+                    "description": "Card expiry year (YYYY)"
+                  },
+                  "card_cvv": {
+                    "type": "string",
+                    "description": "Card CVV"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateSubscriptionResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
+              "acstemplate": {
+                "type": "string",
+                "description": "Base64-encoded ACS template for 3D Secure authentication"
+              },
+              "subscription": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "CreateSubscriptionIntentRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CreateOrderRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "standing_instruction"
+            ],
+            "properties": {
+              "standing_instruction": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["UPI"]
+              },
+              "upi_flow_type": {
+                "type": "string",
+                "description": "UPI flow type (must be 'intent')",
+                "enum": [
+                  "intent"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "CreateSubscriptionIntentResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "order_id": {
+                "type": "string"
+              },
+              "subscription_id": {
+                "type": "string"
+              },
+              "subscription_type": {
+                "type": "string"
+              },
+              "intent_uri": {
+                "type": "string",
+                "description": "UPI Intent URI for mandate approval"
+              },
+              "qr_code": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Full UPI URL for QR code scanning"
+                  },
+                  "base64": {
+                    "type": "string",
+                    "description": "Base64-encoded QR code image (PNG format)"
+                  }
+                }
+              },
+              "subscription": {
+                "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "clientAuth": {
+        "type": "apiKey",
+        "name": "X-Client-ID",
+        "in": "header",
+        "description": "**Client Application ID** - Your unique application identifier used to authenticate API requests. You can find your Client ID in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client ID",
+        "x-example": "your-client-id"
+      },
+      "clientSecretAuth": {
+        "type": "apiKey",
+        "name": "X-Client-Secret",
+        "in": "header",
+        "description": "**Client Secret Key** - Your secret key used alongside the Client ID for secure authentication. Keep this confidential and never expose it in client-side code. Available in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client Secret",
+        "x-example": "your-client-secret"
+      },
+      "merchantAuth": {
+        "type": "apiKey",
+        "name": "X-Merchant-ID",
+        "in": "header",
+        "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
+        "x-displayName": "Merchant ID",
+        "x-example": "your-merchant-id"
+      },
+      "apiVersionHeader": {
+        "type": "apiKey",
+        "name": "X-API-Version",
+        "in": "header",
+        "description": "**API Version** - Specifies which version of the API to use (e.g., '2.X.X'). This header allows you to control which API version your integration uses.",
+        "x-displayName": "API Version"
+      }
+    }
+  }
+}

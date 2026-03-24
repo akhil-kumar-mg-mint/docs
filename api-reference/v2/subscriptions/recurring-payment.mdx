@@ -1,13 +1,13 @@
 ---
 title: 'Trigger Recurring Payment'
-description: 'Trigger a recurring payment for a Cashfree ADHOC subscription.'
+description: 'Trigger a recurring payment for a ADHOC subscription.'
 api: 'POST /pg/subscriptions/{subscription_id}/recurring_payment/'
 ---
 
-Trigger a charge on an active Cashfree **ADHOC** subscription. The API call initiates the payment with Cashfree — the actual payment outcome (success, failure, or cancellation) is delivered asynchronously via webhooks, at which point the order and payment records are created in the system.
+Trigger a charge on an active **ADHOC** subscription. The API call initiates the payment — the actual payment outcome (success, failure, or cancellation) is delivered asynchronously via webhooks, at which point the order and payment records are created in the system.
 
 <Info>
-This endpoint only supports **Cashfree ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered.
+This endpoint only supports **ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered.
 </Info>
 
 ### Path Parameters
@@ -37,11 +37,7 @@ This endpoint only supports **Cashfree ADHOC** subscriptions. The subscription m
 </ResponseField>
 
 <ResponseField name="payment_id" type="string">
-  The payment identifier sent to Cashfree. Auto-generated with `REC-` prefix if not provided.
-</ResponseField>
-
-<ResponseField name="cf_payment_id" type="string">
-  Cashfree's internal payment identifier for tracking.
+  Auto-generated with `REC-` prefix if not provided.
 </ResponseField>
 
 <ResponseField name="payment_amount" type="number">
@@ -63,7 +59,7 @@ This endpoint only supports **Cashfree ADHOC** subscriptions. The subscription m
     "cf_payment_id": "cf_pay_789",
     "payment_amount": 500.00,
     "status": "success",
-    "message": "Cashfree ADHOC recurring payment initiated successfully"
+    "message": "ADHOC recurring payment initiated successfully"
   }
 }
 ```
@@ -98,14 +94,14 @@ This endpoint only supports **Cashfree ADHOC** subscriptions. The subscription m
 }
 ```
 
-```json 503 - Cashfree API error
+```json 503 - API error
 {
   "success": false,
   "error": {
     "code": "PAYMENT_GATEWAY_API_ERROR",
     "message": "Payment gateway API error",
     "details": {
-      "message": "Failed to trigger recurring payment with Cashfree"
+      "message": "Failed to trigger recurring payment"
     }
   }
 }

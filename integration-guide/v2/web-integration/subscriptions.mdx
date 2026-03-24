@@ -107,9 +107,6 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
         "billing_interval": 1,
         "payment_start_date": "2026-01-15",
         "payment_end_date": "2027-01-15",
-        "billing_date": 1,
-        "billing_limit": "AFTER",
-        "billing_rule": "MAX",
         "remarks": "Monthly subscription for premium services"
     },
     "mop_type": "UPI",
@@ -137,8 +134,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
       "billing_cycle": "MONTHLY",
       "billing_interval": 1,
       "payment_start_date": "2025-01-01",
-      "payment_end_date": "2025-12-31",
-      "status": "PENDING"
+      "payment_end_date": "2025-12-31"
     }
   }
 }
@@ -217,9 +213,6 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/card/ \
         "billing_interval": 1,
         "payment_start_date": "2026-01-12",
         "payment_end_date": "2027-01-12",
-        "billing_date": 1,
-        "billing_limit": "AFTER",
-        "billing_rule": "MAX",
         "remarks": "Monthly subscription for premium services"
     },
     "mop_type": "credit_card",
@@ -248,8 +241,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/card/ \
             "billing_cycle": "MONTHLY",
             "billing_interval": 1,
             "payment_start_date": "2026-04-10",
-            "payment_end_date": "2027-04-10",
-            "status": "PENDING"
+            "payment_end_date": "2027-04-10"
         }
   }
 }
@@ -414,16 +406,16 @@ The subscription will be marked as `CANCELLED` on success.
 
 ## Step 4: Trigger Adhoc Recurring Payment
 
-For **Cashfree ADHOC** subscriptions, recurring payments are not automatic — you must trigger each charge via the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) API. The subscription must have an active mandate before a payment can be triggered.
+For **ADHOC** subscriptions, recurring payments are not automatic — you must trigger each charge via the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) API. The subscription must have an active mandate before a payment can be triggered.
 
 <Info>
-This step applies only to **Cashfree ADHOC** subscriptions. For standard billing cycle subscriptions (MONTHLY, WEEKLY, DAILY), payments are processed automatically — see [Automatic Recurring Payments](#automatic-recurring-payments).
+This step applies only to **ADHOC** subscriptions. For standard billing cycle subscriptions (MONTHLY, WEEKLY, DAILY), payments are processed automatically — see [Automatic Recurring Payments](#automatic-recurring-payments).
 </Info>
 
 ### How Adhoc Payments Work
 
 1. **Initiate Payment** — Call the recurring payment API with an `invoice_display_number` and optional `amount`
-2. **Asynchronous Processing** — Cashfree processes the payment (scheduled for T+1)
+2. **Asynchronous Processing** — Payments will Made one day after the api is called.
 3. **Webhook Delivery** — The payment outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) is delivered via webhook, at which point the order and payment records are created in the system
 
 ### Sample Request
@@ -450,10 +442,9 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   "data": {
     "subscription_id": "sub_abc123",
     "payment_id": "REC-sub_abc123-a1b2c3d4",
-    "cf_payment_id": "cf_pay_789",
     "payment_amount": 500.00,
     "status": "success",
-    "message": "Cashfree ADHOC recurring payment initiated successfully"
+    "message": "ADHOC recurring payment initiated successfully"
   }
 }
 ```
@@ -500,10 +491,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
       "currency": "INR",
       "status": "CAPTURED",
       "payment_type": "RECURRING",
-      "payment_gateway": "CASHFREE",
       "mop_type": "UPI",
-      "transaction_id": "cf_order_abc",
-      "cf_payment_id": "cf_pay_123",
       "bank_ref_num": "BANK123456",
       "status_message": null,
       "created_at": "2025-03-20T10:30:00Z",
