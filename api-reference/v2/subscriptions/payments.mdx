@@ -49,20 +49,8 @@ Fetch all payments from the internal system associated with the given subscripti
   - `MANDATE` — Mandate/authorization payment
 </ResponseField>
 
-<ResponseField name="payment_gateway" type="string">
-  Payment gateway used. One of: `PAYU`, `CASHFREE`, `HYPERPG`, `PAY10`, `EXIMPE`.
-</ResponseField>
-
 <ResponseField name="mop_type" type="string">
   Mode of payment. One of: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`, `EMI`, `BNPL`, `CARD`, `VBA_TRANSFER`.
-</ResponseField>
-
-<ResponseField name="transaction_id" type="string">
-  Transaction identifier from the payment gateway.
-</ResponseField>
-
-<ResponseField name="cf_payment_id" type="string">
-  Cashfree-specific payment identifier (null for other gateways).
 </ResponseField>
 
 <ResponseField name="bank_ref_num" type="string">
@@ -95,10 +83,7 @@ Fetch all payments from the internal system associated with the given subscripti
       "currency": "INR",
       "status": "CAPTURED",
       "payment_type": "RECURRING",
-      "payment_gateway": "CASHFREE",
       "mop_type": "UPI",
-      "transaction_id": "cf_order_abc",
-      "cf_payment_id": "cf_pay_123",
       "bank_ref_num": "BANK123456",
       "status_message": null,
       "created_at": "2025-03-20T10:30:00Z",

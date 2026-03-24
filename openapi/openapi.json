@@ -8074,15 +8074,16 @@
           },
           "billing_currency": {
             "type": "string",
-            "description": "Currency for billing amount"
+            "description": "Currency for billing amount (provide the ISO code)"
           },
           "billing_cycle": {
             "type": "string",
-            "description": "Billing cycle (e.g. MONTHLY)"
+            "description": "Billing cycle",
+            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
           },
           "billing_interval": {
             "type": "integer",
-            "description": "Interval between each billing cycle"
+            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year."
           },
           "payment_start_date": {
             "type": "string",
@@ -8124,6 +8125,16 @@
           {
             "type": "object",
             "properties": {
+              "collection_mode": {
+                "type": "string",
+                "description": "Payment collection mode (must be 's2s' for subscriptions)",
+                "enum": ["s2s"]
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+              },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v1_StandingInstruction"
               }
@@ -8182,6 +8193,16 @@
               "standing_instruction"
             ],
             "properties": {
+              "collection_mode": {
+                "type": "string",
+                "description": "Payment collection mode (must be 's2s' for subscriptions)",
+                "enum": ["s2s"]
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["UPI"]
+              },
               "preferred_upi_flow_type": {
                 "type": "string",
                 "enum": [
@@ -11251,15 +11272,16 @@
           },
           "billing_currency": {
             "type": "string",
-            "description": "Currency for billing amount"
+            "description": "Currency for billing amount (provide the ISO code)"
           },
           "billing_cycle": {
             "type": "string",
-            "description": "Billing cycle (e.g. MONTHLY)"
+            "description": "Billing cycle",
+            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
           },
           "billing_interval": {
             "type": "integer",
-            "description": "Interval between each billing cycle"
+            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year."
           },
           "payment_start_date": {
             "type": "string",
@@ -11301,6 +11323,16 @@
           {
             "type": "object",
             "properties": {
+              "collection_mode": {
+                "type": "string",
+                "description": "Payment collection mode (must be 's2s' for subscriptions)",
+                "enum": ["s2s"]
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+              },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v2_StandingInstruction"
               }
@@ -11359,6 +11391,16 @@
               "standing_instruction"
             ],
             "properties": {
+              "collection_mode": {
+                "type": "string",
+                "description": "Payment collection mode (must be 's2s' for subscriptions)",
+                "enum": ["s2s"]
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment",
+                "enum": ["UPI"]
+              },
               "preferred_upi_flow_type": {
                 "type": "string",
                 "enum": [
@@ -14420,15 +14462,16 @@
           },
           "billing_currency": {
             "type": "string",
-            "description": "Currency for billing amount"
+            "description": "Currency for billing amount (provide the ISO code)"
           },
           "billing_cycle": {
             "type": "string",
-            "description": "Billing cycle (e.g. MONTHLY)"
+            "description": "Billing cycle",
+            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
           },
           "billing_interval": {
             "type": "integer",
-            "description": "Interval between each billing cycle"
+            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year."
           },
           "payment_start_date": {
             "type": "string",
