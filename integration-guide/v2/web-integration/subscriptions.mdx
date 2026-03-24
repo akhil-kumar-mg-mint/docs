@@ -20,6 +20,15 @@ description: "Set up and manage UPI subscription mandates using EximPe Merchant 
   <Card title="Modify or Cancel Mandate" icon="edit" href="#step-3-modify-or-cancel-mandate">
     Update mandate amount/end date or cancel the subscription
   </Card>
+  <Card title="Adhoc Recurring Payment" icon="credit-card" href="#step-4-trigger-adhoc-recurring-payment">
+    Trigger a recurring payment for ADHOC subscriptions
+  </Card>
+  <Card title="View Payments" icon="list" href="#step-5-view-subscription-payments">
+    Fetch all payments associated with a subscription
+  </Card>
+  <Card title="Sandbox Testing" icon="flask" href="#step-6-sandbox-testing">
+    Simulate payments and fetch PG payments in sandbox
+  </Card>
 </CardGroup>
 
 ## Prerequisites
@@ -35,11 +44,14 @@ Before you begin, ensure you have:
 
 ## Integration Steps
 
-The integration consists of three steps:
+The integration consists of six steps:
 
 1. **Create Subscription**
 2. **Check Mandate Status**
 3. **Modify or Cancel Mandate**
+4. **Trigger Adhoc Recurring Payment**
+5. **View Subscription Payments**
+6. **Sandbox Testing**
 
 ## Step 1: Create Subscription
 
@@ -320,11 +332,16 @@ You can monitor recurring payments through:
 1. **Webhooks**: Real-time notifications for each successful/failed payment
 2. **Payment API**: Use the [Get Payment](https://docs.eximpe.com/api-reference/v2/payment/get) endpoint to fetch payment details
 3. **Order API**: Use the [Get Order](https://docs.eximpe.com/api-reference/v2/order/get) endpoint to check order status
-4. **Subscription Status Webhook**: Receive updates about subscription lifecycle events
+4. **Subscription Payments API**: Use the [Get Subscription Payments](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) endpoint to list all payments for a subscription
+5. **Subscription Status Webhook**: Receive updates about subscription lifecycle events
 
 For webhook implementation details, see the [Webhooks](#webhooks) section below.
 
 ## Step 3: Modify or Cancel Mandate
+
+<Note>
+  **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
+</Note>
 
 ### 3.1 Modify Mandate
 
@@ -394,6 +411,198 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/cancel_
 ```
 
 The subscription will be marked as `CANCELLED` on success.
+
+## Step 4: Trigger Adhoc Recurring Payment
+
+For **Cashfree ADHOC** subscriptions, recurring payments are not automatic — you must trigger each charge via the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) API. The subscription must have an active mandate before a payment can be triggered.
+
+<Info>
+This step applies only to **Cashfree ADHOC** subscriptions. For standard billing cycle subscriptions (MONTHLY, WEEKLY, DAILY), payments are processed automatically — see [Automatic Recurring Payments](#automatic-recurring-payments).
+</Info>
+
+### How Adhoc Payments Work
+
+1. **Initiate Payment** — Call the recurring payment API with an `invoice_display_number` and optional `amount`
+2. **Asynchronous Processing** — Cashfree processes the payment (scheduled for T+1)
+3. **Webhook Delivery** — The payment outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) is delivered via webhook, at which point the order and payment records are created in the system
+
+### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_payment/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "invoice_display_number": "INV-2025-0042",
+    "amount": 500.00
+  }'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Recurring payment triggered successfully",
+  "data": {
+    "subscription_id": "sub_abc123",
+    "payment_id": "REC-sub_abc123-a1b2c3d4",
+    "cf_payment_id": "cf_pay_789",
+    "payment_amount": 500.00,
+    "status": "success",
+    "message": "Cashfree ADHOC recurring payment initiated successfully"
+  }
+}
+```
+
+<Note>
+  A `success` response means the payment was **initiated**, not captured. The actual payment outcome arrives asynchronously via webhooks (`SUBSCRIPTION_PAYMENT_SUCCESS`, `SUBSCRIPTION_PAYMENT_FAILED`, or `SUBSCRIPTION_PAYMENT_CANCELLED`).
+</Note>
+
+### Constraints
+
+- Only **ADHOC** billing cycle subscriptions are supported
+- `invoice_display_number` is mandatory for all recurring payments
+- If `amount` is provided, it must not exceed the subscription's `billing_amount`
+- You can optionally pass a `transaction_id` (max 64 chars); otherwise a `REC`-prefixed ID is auto-generated
+
+For full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in API Reference.
+
+## Step 5: View Subscription Payments
+
+Use the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) API to fetch all payments associated with a subscription from the internal system. This is available for **all payment gateways** and **all environments** (including production).
+
+### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0"
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "dpr_abc123",
+      "order_id": "ord_xyz789",
+      "reference_id": "SUBPAY-sub123-cf456",
+      "amount": 1000.00,
+      "currency": "INR",
+      "status": "CAPTURED",
+      "payment_type": "RECURRING",
+      "payment_gateway": "CASHFREE",
+      "mop_type": "UPI",
+      "transaction_id": "cf_order_abc",
+      "cf_payment_id": "cf_pay_123",
+      "bank_ref_num": "BANK123456",
+      "status_message": null,
+      "created_at": "2025-03-20T10:30:00Z",
+      "payment_completed_at": "2025-03-20T10:30:05Z"
+    }
+  ]
+}
+```
+
+The response returns an array of all payment records for the subscription, including details such as the payment status, amount, mode of payment, and timestamps. Use this to build payment history views, reconcile billing records, or track installment statuses.
+
+For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) endpoint in API Reference.
+
+## Step 6: Sandbox Testing
+
+The following endpoints are available only in **sandbox/UAT environments**. Use them to test subscription payment flows without processing real transactions.
+
+<Warning>These endpoints are not available in production.</Warning>
+
+### Testing Flow
+
+To test subscription payments in sandbox, follow this sequence:
+
+1. **Fetch PG Payments** — List all payments from the payment gateway for the subscription
+2. **Identify pending payments** — Find payments with `PENDING` status in the response
+3. **Simulate Payment** — Pass the `payment_id` of a pending payment to simulate `SUCCESS` or `FAILED`
+
+### 5.1 Fetch PG Payments
+
+First, use the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) API to fetch all payments for a subscription directly from the payment gateway.
+
+#### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pg_payments/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0"
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "PG payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "pay_abc123",
+      "status": "PENDING"
+    },
+    {
+      "payment_id": "pay_def456",
+      "status": "SUCCESS"
+    }
+  ]
+}
+```
+
+From the response, identify payments with `PENDING` status. Use their `payment_id` in the next step to simulate a payment outcome.
+
+For full response schema, see the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) endpoint in API Reference.
+
+### 5.2 Simulate Payment
+
+Once you have a `payment_id` with `PENDING` status from the PG payments response, use the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) API to simulate a success or failure for that payment.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/simulate_payment/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "payment_status": "SUCCESS",
+    "payment_id": "pay_abc123"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment simulation triggered successfully",
+  "data": {
+    "payment_id": "pay_abc123",
+    "payment_status": "SUCCESS"
+  }
+}
+```
+
+The `payment_status` field accepts `SUCCESS` or `FAILED`. The `payment_id` should be a pending payment obtained from the [Fetch PG Payments](#51-fetch-pg-payments) response.
+
+For full request and response schema, see the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) endpoint in API Reference.
 
 ---
 

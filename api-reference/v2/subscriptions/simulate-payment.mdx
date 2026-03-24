@@ -1,0 +1,79 @@
+---
+title: 'Simulate Payment'
+description: 'Simulate a subscription payment success or failure via the payment gateway sandbox.'
+api: 'POST /pg/subscriptions/{subscription_id}/simulate_payment/'
+---
+
+Simulate a subscription payment success or failure via the payment gateway's sandbox/UAT environment. Currently supported for **Cashfree** only.
+
+<Warning>This endpoint is not available in production.</Warning>
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+### Request Body
+
+<ParamField body="payment_status" type="string" required>
+  The desired payment outcome to simulate. Must be one of:
+  - `SUCCESS`
+  - `FAILED`
+</ParamField>
+
+<ParamField body="payment_id" type="string">
+  Optional payment ID to simulate against a specific payment. If omitted, the gateway determines the target payment.
+</ParamField>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "message": "Payment simulation triggered successfully",
+  "data": {
+    "payment_id": "pay_abc123",
+    "payment_status": "SUCCESS"
+  }
+}
+```
+
+```json 400 - Invalid payment_status
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Invalid payment_status",
+    "details": {
+      "payment_status": "Must be one of: SUCCESS, FAILED"
+    }
+  }
+}
+```
+
+```json 403 - Production environment
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_ERROR",
+    "message": "This endpoint is not available in production",
+    "details": {
+      "error": "This endpoint is not available in production"
+    }
+  }
+}
+```
+
+```json 503 - PG API error
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_API_ERROR",
+    "message": "Payment gateway API error",
+    "details": {
+      "error": "..."
+    }
+  }
+}
+```
+</ResponseExample>
