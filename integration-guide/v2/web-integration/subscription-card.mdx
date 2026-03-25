@@ -1,0 +1,128 @@
+---
+title: "Subscription Card Payment"
+description: "Create card-based subscription mandates using EximPe Merchant APIs."
+---
+
+<Note>
+  Card subscriptions let you collect recurring payments from customers using card-based subscription mandates.
+  This guide walks through how to create a card subscription where the mandate is created using the customer's card details.
+
+  Once the mandate is active, the payment gateway automatically processes recurring debits based on the billing cycle.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Create Subscription" icon="credit-card" href="#create-subscription">
+    Create a card subscription order with standing instruction
+  </Card>
+  <Card title="3D Secure Auth" icon="shield" href="#3d-secure-authentication">
+    Handle 3D Secure authentication for card mandates
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your Client ID and Client Secret
+- **Domain Whitelist**: Whitelisted your website domain for integration
+- **Webhook URL**: A secure endpoint to receive payment status updates
+- **Server environment**: Ability to make HTTPS `POST` and `GET` requests from your backend.
+- **JSON & HTTP Client**: Familiarity with JSON request bodies and HTTP client libraries.
+
+## Create Subscription
+
+Use the **Card Flow** to create subscriptions using the customer's card details. The request is sent from your server to EximPe with the required transaction parameters. This needs to be a server-to-server curl call request.
+
+### Sample Request
+
+```json
+curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/card/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 2.0.0" \
+  -d '{
+    "amount": "1000.00",
+    "collection_mode": "s2s",
+    "currency": "INR",
+    "reference_id": "SUB6ACIQ7",
+    "buyer": {
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+919876543210",
+        "address": {
+            "line_1": "123 Main Street",
+            "line_2": "Apt 4B",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "postal_code": "400001"
+        },
+        "ip_address": "192.168.1.100",
+        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    },
+    "product": {
+        "name": "Monthly Subscription Plan",
+        "description": "Monthly subscription for premium services",
+        "hs_code": "98051000",
+        "hs_code_description": "Subscription services",
+        "type_of_goods": "service"
+    },
+    "invoice": {
+        "number": "INVW72Z2G",
+        "date": "2025-12-12"
+    },
+    "standing_instruction": {
+        "billing_amount": "1000.00",
+        "billing_currency": "INR",
+        "billing_cycle": "MONTHLY",
+        "billing_interval": 1,
+        "payment_start_date": "2026-01-12",
+        "payment_end_date": "2027-01-12",
+        "remarks": "Monthly subscription for premium services"
+    },
+    "mop_type": "credit_card",
+    "card_details": {
+        "card_number": "4111111111111111",
+        "card_holder_name": "John Doe",
+        "card_expiry_month": "12",
+        "card_expiry_year": "2027",
+        "card_cvv": "123"
+    }
+}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Card Subscription created successfully",
+  "data": {
+    "order_id": "ORD_xxx",
+    "subscription_type": "CARD_RECURRING",
+    "subscription_id": "SUB_xxx",
+    "acstemplate": "PCFET0NUWVBFIGh0bWw+CiAgICAgICAgPGh0....=",
+    "subscription": {
+            "billing_cycle": "MONTHLY",
+            "billing_interval": 1,
+            "payment_start_date": "2026-04-10",
+            "payment_end_date": "2027-04-10"
+        }
+  }
+}
+```
+
+## 3D Secure Authentication
+
+<Note>
+  **3D Secure Authentication**: Card-based subscriptions may require 3D Secure authentication. If the response includes an `acstemplate`, render it on the client side to complete the authentication process before the subscription mandate becomes active.
+</Note>
+
+---
+
+## Next Steps
+
+Once the subscription is created, proceed to [**Manage Subscriptions**](/integration-guide/v2/web-integration/manage-subscriptions) to check mandate status, modify or cancel mandates, and view payment history.
+
+For full request and response schema, see the [**Create Card Subscription**](https://docs.eximpe.com/api-reference/v2/subscriptions/create-card-flow) endpoint in API Reference.
