@@ -1,259 +1,36 @@
 ---
-title: "Subscriptions"
-description: "Set up and manage UPI subscription mandates using EximPe Merchant APIs."
+title: "Manage Subscriptions"
+description: "Check mandate status, manage recurring payments, modify or cancel mandates, test in sandbox, and view subscription payments."
 ---
 
 <Note>
-  UPI and card subscriptions let you collect recurring payments from customers using subscription mandates.
-  This guide walks through how to create and manage subscriptions using EximPe Merchant APIs.
-  
+  This guide covers how to manage subscriptions after creation — including checking mandate status, managing recurring payments, modifying or cancelling mandates, and viewing payment history.
+
   This version features automatic recurring payments. Once a mandate is active, the payment gateway automatically processes recurring debits and sends webhook notifications with the subscription ID for each payment.
 </Note>
 
 <CardGroup cols={3}>
-  <Card title="Create Subscription" icon="repeat" href="#step-1-create-subscription">
-    Create a subscription order with subscription mandate
+  <Card title="Check Mandate Status" icon="clock" href="#check-mandate-status">
+    Verify that the mandate is active before proceeding
   </Card>
-  <Card title="Check Mandate Status" icon="clock" href="#step-2-check-mandate-status">
-    Verify that the UPI mandate is active before proceeding
+  <Card title="Automatic Payments" icon="rotate" href="#automatic-recurring-payments">
+    Recurring payments processed automatically
   </Card>
-  <Card title="Modify or Cancel Mandate" icon="edit" href="#step-3-modify-or-cancel-mandate">
-    Update mandate amount/end date or cancel the subscription
+  <Card title="Modify or Cancel" icon="edit" href="#modify-or-cancel-mandate">
+    Update mandate amount/end date or cancel
   </Card>
-  <Card title="Adhoc Recurring Payment" icon="credit-card" href="#step-4-trigger-adhoc-recurring-payment">
+  <Card title="Adhoc Payment" icon="credit-card" href="#trigger-adhoc-recurring-payment">
     Trigger a recurring payment for ADHOC subscriptions
   </Card>
-  <Card title="View Payments" icon="list" href="#step-5-view-subscription-payments">
+  <Card title="View Payments" icon="list" href="#view-subscription-payments">
     Fetch all payments associated with a subscription
   </Card>
-  <Card title="Sandbox Testing" icon="flask" href="#step-6-sandbox-testing">
+  <Card title="Sandbox Testing" icon="flask" href="#sandbox-testing">
     Simulate payments and fetch PG payments in sandbox
   </Card>
 </CardGroup>
 
-## Prerequisites
-
-Before you begin, ensure you have:
-
-- **Credentials**: Your Client ID and Client Secret
-- **Domain Whitelist**: Whitelisted your website domain for integration
-- **Webhook URL**: A secure endpoint to receive payment status updates
-- **UPI Subscription enablement**: UPI recurring subscription enabled and approved by EximPe.
-- **Server environment**: Ability to make HTTPS `POST` and `GET` requests from your backend.
-- **JSON & HTTP Client**: Familiarity with JSON request bodies and HTTP client libraries.
-
-## Integration Steps
-
-The integration consists of six steps:
-
-1. **Create Subscription**
-2. **Check Mandate Status**
-3. **Modify or Cancel Mandate**
-4. **Trigger Adhoc Recurring Payment**
-5. **View Subscription Payments**
-6. **Sandbox Testing**
-
-## Step 1: Create Subscription
-
-Use the **Create UPI Subscription** API to create a subscription order and standing instruction. You can use either Intent Flow (QR code/intent) or Card Flow (requires card details).
-
-### Intent Flow
-
-Use the **Intent Flow** to create subscriptions without requiring the customer's VPA upfront. The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment intent.
-
-#### Sample Request (Intent Flow)
-
-```json
-curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
-  -H "Content-Type: application/json" \
-  -H "X-Client-ID: <your-client-id>" \
-  -H "X-Client-Secret: <your-client-secret>" \
-  -H "X-Merchant-ID: <your-merchant-id>" \
-  -H "X-API-Version: 2.0.0" \
-  -d '{
-    "amount": "1000.00",
-    "collection_mode": "s2s",
-    "currency": "INR",
-    "reference_id": "SUBR8QRLW",
-    "buyer": {
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "phone": "+919876543210",
-        "address": {
-            "line_1": "123 Main Street",
-            "line_2": "Apt 4B",
-            "city": "Mumbai",
-            "state": "Maharashtra",
-            "postal_code": "400001"
-        },
-        "ip_address": "192.168.1.100",
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    },
-    "product": {
-        "name": "Monthly Subscription Plan",
-        "description": "Monthly subscription for premium services",
-        "hs_code": "98051000",
-        "hs_code_description": "Subscription services",
-        "type_of_goods": "service"
-    },
-    "invoice": {
-        "number": "INVMVLSVW",
-        "date": "2025-12-15"
-    },
-    "standing_instruction": {
-        "billing_amount": "1000.00",
-        "billing_currency": "INR",
-        "billing_cycle": "MONTHLY",
-        "billing_interval": 1,
-        "payment_start_date": "2026-01-15",
-        "payment_end_date": "2027-01-15",
-        "remarks": "Monthly subscription for premium services"
-    },
-    "mop_type": "UPI",
-    "upi_flow_type": "intent",
-    "upi_app_name": "others"
-}'
-```
-
-#### Response (Intent Flow)
-
-```json
-{
-  "success": true,
-  "message": "UPI Subscription created successfully",
-  "data": {
-    "order_id": "550e8400-e29b-41d4-a716-446655440000",
-    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
-    "subscription_type": "UPI_RECURRING",
-    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
-    "qr_code": {
-      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
-      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
-    },
-    "subscription": {
-      "billing_cycle": "MONTHLY",
-      "billing_interval": 1,
-      "payment_start_date": "2025-01-01",
-      "payment_end_date": "2025-12-31"
-    }
-  }
-}
-```
-
-<Note>
-  **Key differences between Card and Intent flow:**
-
-  - **Card Flow**: Requires customer's card details upfront. Payment mandate is created using card information.
-  - **Intent Flow**: No VPA required. Customer approves mandate by scanning QR code or using payment intent. Returns QR code in base64 format for display.
-
-  The Intent flow is ideal when you want to let customers approve mandates without collecting their VPA first.
-</Note>
-
-#### Display QR Code
-
-The response includes a base64-encoded QR code that can be displayed directly:
-
-```html
-<img src="data:image/png;base64,{data.qr_code.base64}" alt="UPI Payment QR Code" />
-```
-
-Alternatively, you can use the `intent_uri` to generate a QR code client-side or use the provided `qr_code.url` for UPI app deep linking.
-
-For full request and response schema, see the [**Create UPI Subscription (Intent Flow)**](https://docs.eximpe.com/api-reference/v2/subscriptions/create-intent) endpoint in API Reference.
-
-### Card Flow
-
-Alternatively, you can use the **Card Flow** which requires the customer's card details upfront. The subscription mandate is created using the card information.
-
-To start with, the request is raised from the Merchant to EximPe with the required transaction mandatory/optional parameters. This needs to be a server-to-server curl call request.
-
-#### Sample Request (Card Flow)
-
-```json
-curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/card/ \
-  -H "Content-Type: application/json" \
-  -H "X-Client-ID: <your-client-id>" \
-  -H "X-Client-Secret: <your-client-secret>" \
-  -H "X-Merchant-ID: <your-merchant-id>" \
-  -H "X-API-Version: 2.0.0" \
-  -d '{
-    "amount": "1000.00",
-    "collection_mode": "s2s",
-    "currency": "INR",
-    "reference_id": "SUB6ACIQ7",
-    "buyer": {
-        "name": "John Doe",
-        "email": "john.doe@example.com",
-        "phone": "+919876543210",
-        "address": {
-            "line_1": "123 Main Street",
-            "line_2": "Apt 4B",
-            "city": "Mumbai",
-            "state": "Maharashtra",
-            "postal_code": "400001"
-        },
-        "ip_address": "192.168.1.100",
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    },
-    "product": {
-        "name": "Monthly Subscription Plan",
-        "description": "Monthly subscription for premium services",
-        "hs_code": "98051000",
-        "hs_code_description": "Subscription services",
-        "type_of_goods": "service"
-    },
-    "invoice": {
-        "number": "INVW72Z2G",
-        "date": "2025-12-12"
-    },
-    "standing_instruction": {
-        "billing_amount": "1000.00",
-        "billing_currency": "INR",
-        "billing_cycle": "MONTHLY",
-        "billing_interval": 1,
-        "payment_start_date": "2026-01-12",
-        "payment_end_date": "2027-01-12",
-        "remarks": "Monthly subscription for premium services"
-    },
-    "mop_type": "credit_card",
-    "card_details": {
-        "card_number": "4111111111111111",
-        "card_holder_name": "John Doe",
-        "card_expiry_month": "12",
-        "card_expiry_year": "2027",
-        "card_cvv": "123"
-    }
-}'
-```
-
-#### Response (Card Flow)
-
-```json
-{
-  "success": true,
-  "message": "Card Subscription created successfully",
-  "data": {
-    "order_id": "ORD_xxx",
-    "subscription_type": "CARD_RECURRING",
-    "subscription_id": "SUB_xxx",
-    "acstemplate": "PCFET0NUWVBFIGh0bWw+CiAgICAgICAgPGh0....=",
-    "subscription": {
-            "billing_cycle": "MONTHLY",
-            "billing_interval": 1,
-            "payment_start_date": "2026-04-10",
-            "payment_end_date": "2027-04-10"
-        }
-  }
-}
-```
-
-<Note>
-  **3D Secure Authentication**: Card-based subscriptions may require 3D Secure authentication. If the response includes an `acstemplate`, render it on the client side to complete the authentication process before the subscription mandate becomes active.
-</Note>
-
-For full request and response schema, see the [**Create UPI Subscription**](https://docs.eximpe.com/api-reference/v2/subscriptions/create) endpoint in API Reference.
-
-## Step 2: Check Mandate Status
+## Check Mandate Status
 
 After the customer approves the UPI mandate, use the [**Get Subscription Mandate Status**](https://docs.eximpe.com/api-reference/v2/subscriptions/mandate-status) API to verify that it is active.
 
@@ -329,13 +106,13 @@ You can monitor recurring payments through:
 
 For webhook implementation details, see the [Webhooks](#webhooks) section below.
 
-## Step 3: Modify or Cancel Mandate
+## Modify or Cancel Mandate
 
 <Note>
   **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
 </Note>
 
-### 3.1 Modify Mandate
+### Modify Mandate
 
 To change the billing amount or end date of an active subscription, use the [**Modify Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/modify-mandate) API.
 
@@ -374,7 +151,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_
   At least one of `amount` or `end_date` must be provided to modify the mandate.
 </Note>
 
-### 3.2 Cancel Mandate
+### Cancel Mandate
 
 To fully stop future debits and revoke the subscription mandate, use the [**Cancel Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/cancel-mandate) API.
 
@@ -404,7 +181,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/cancel_
 
 The subscription will be marked as `CANCELLED` on success.
 
-## Step 4: Trigger Adhoc Recurring Payment
+## Trigger Adhoc Recurring Payment
 
 For **ADHOC** subscriptions, recurring payments are not automatic — you must trigger each charge via the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) API. The subscription must have an active mandate before a payment can be triggered.
 
@@ -462,7 +239,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 
 For full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in API Reference.
 
-## Step 5: View Subscription Payments
+## View Subscription Payments
 
 Use the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) API to fetch all payments associated with a subscription from the internal system. This is available for **all payment gateways** and **all environments** (including production).
 
@@ -505,7 +282,7 @@ The response returns an array of all payment records for the subscription, inclu
 
 For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) endpoint in API Reference.
 
-## Step 6: Sandbox Testing
+## Sandbox Testing
 
 The following endpoints are available only in **sandbox/UAT environments**. Use them to test subscription payment flows without processing real transactions.
 
@@ -519,7 +296,7 @@ To test subscription payments in sandbox, follow this sequence:
 2. **Identify pending payments** — Find payments with `PENDING` status in the response
 3. **Simulate Payment** — Pass the `payment_id` of a pending payment to simulate `SUCCESS` or `FAILED`
 
-### 5.1 Fetch PG Payments
+### Fetch PG Payments
 
 First, use the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) API to fetch all payments for a subscription directly from the payment gateway.
 
@@ -556,7 +333,7 @@ From the response, identify payments with `PENDING` status. Use their `payment_i
 
 For full response schema, see the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) endpoint in API Reference.
 
-### 5.2 Simulate Payment
+### Simulate Payment
 
 Once you have a `payment_id` with `PENDING` status from the PG payments response, use the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) API to simulate a success or failure for that payment.
 
@@ -588,7 +365,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/simulate_paym
 }
 ```
 
-The `payment_status` field accepts `SUCCESS` or `FAILED`. The `payment_id` should be a pending payment obtained from the [Fetch PG Payments](#51-fetch-pg-payments) response.
+The `payment_status` field accepts `SUCCESS` or `FAILED`. The `payment_id` should be a pending payment obtained from the [Fetch PG Payments](#fetch-pg-payments) response.
 
 For full request and response schema, see the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) endpoint in API Reference.
 
@@ -634,5 +411,3 @@ For detailed webhook payload specifications, event types, and implementation det
 <Note>
   For general webhook setup, security, and verification, see the [**Webhooks Integration Guide**](/integration-guide/v2/web-integration/webhooks).
 </Note>
-
----

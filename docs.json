@@ -60,7 +60,14 @@
                     ]
                   },
                   "integration-guide/v1/web-integration/bin-lookup",
-                  "integration-guide/v1/web-integration/subscriptions",
+                  {
+                    "group": "Subscriptions",
+                    "pages": [
+                      "integration-guide/v1/web-integration/subscription-card",
+                      "integration-guide/v1/web-integration/subscription-upi-intent",
+                      "integration-guide/v1/web-integration/manage-subscriptions"
+                    ]
+                  },
                   "integration-guide/v1/web-integration/webhooks",
                   "integration-guide/v1/web-integration/test-data"
                 ]
@@ -198,7 +205,14 @@
                     ]
                   },
                   "integration-guide/v2/web-integration/bin-lookup",
-                  "integration-guide/v2/web-integration/subscriptions",
+                  {
+                    "group": "Subscriptions",
+                    "pages": [
+                      "integration-guide/v2/web-integration/subscription-card",
+                      "integration-guide/v2/web-integration/subscription-upi-intent",
+                      "integration-guide/v2/web-integration/manage-subscriptions"
+                    ]
+                  },
                   "integration-guide/v2/web-integration/webhooks",
                   "integration-guide/v2/web-integration/test-data"
                 ]

@@ -1,0 +1,263 @@
+---
+title: "Manage Subscriptions"
+description: "Check mandate status, trigger recurring payments, modify or cancel mandates, and view subscription payments."
+---
+
+<Note>
+  This guide covers how to manage subscriptions after creation — including checking mandate status, triggering recurring payments, modifying or cancelling mandates, and viewing payment history.
+</Note>
+
+<CardGroup cols={4}>
+  <Card title="Check Mandate Status" icon="clock" href="#check-mandate-status">
+    Verify that the mandate is active before proceeding
+  </Card>
+  <Card title="Trigger Recurring Payment" icon="credit-card" href="#trigger-recurring-payment">
+    Send pre-debit notification and trigger recurring payment
+  </Card>
+  <Card title="Modify or Cancel Mandate" icon="edit" href="#modify-or-cancel-mandate">
+    Update mandate amount/end date or cancel the subscription
+  </Card>
+  <Card title="View Payments" icon="list" href="#view-subscription-payments">
+    Fetch all payments associated with a subscription
+  </Card>
+</CardGroup>
+
+## Check Mandate Status
+
+After the customer approves the UPI mandate, use the [**Get Subscription Mandate Status**](https://docs.eximpe.com/api-reference/v1/subscriptions/mandate-status) API to verify that it is active.
+
+### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/mandate_status/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate status fetched successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_is_active": true
+  }
+}
+```
+
+Only proceed to debit the customer when `mandate_is_active` is `true`.
+
+## Trigger Recurring Payment
+
+### Send Pre-Debit Notification
+
+Use the [**Pre-Debit Notification**](https://docs.eximpe.com/api-reference/v1/subscriptions/pre-debit-notification) API to inform the customer about an upcoming debit, in line with UPI subscription compliance. This should be sent at least **48 hours** before triggering the actual recurring payment. If the billing cycle is daily, the notification should be sent at least **24 hours** before triggering the payment.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_notification/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
+  -d '{
+    "debit_date": "2025-06-10",
+    "amount": 1000.00,
+    "invoice_display_number": "inv"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Pre-debit notification triggered successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "debit_date": "2025-06-10",
+    "amount": "1000.00",
+    "notification_sent": true
+  }
+}
+```
+
+### Trigger Payment
+
+<Note>
+  **Test/Sandbox Environment**: In test/sandbox environment, the recurring payment can be called immediately after the pre-debit notification is sent. The 48-hour (or 24-hour for daily billing) waiting period requirement applies only to production environment.
+</Note>
+
+On the scheduled billing date, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v1/subscriptions/recurring-payment) API.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_payment/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
+  -d '{
+    "amount": 1000.00,
+    "invoice_display_number": "INV-2025-001"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Recurring payment triggered successfully",
+  "data": {
+    "order_id": "ORD_xxx",
+    "message": "UPI Collection request sent to somevpa@upi"
+  }
+}
+```
+
+Use the standard [**Get Payment**](https://docs.eximpe.com/api-reference/v1/payment/get) or [**Get Order**](https://docs.eximpe.com/api-reference/v1/order/get) APIs or webhooks to track installment success and failures.
+
+## Modify or Cancel Mandate
+
+<Note>
+  **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
+</Note>
+
+### Modify Mandate
+
+To change the billing amount or end date of an active subscription, use the [**Modify Subscription Mandate**](https://docs.eximpe.com/api-reference/v1/subscriptions/modify-mandate) API.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/modify_mandate/" \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0" \
+  -d '{
+    "amount": 1500.00,
+    "end_date": "2025-12-31"
+  }'
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate modification request sent successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_modified": true,
+    "updated_amount": "1500.00",
+    "updated_end_date": "2025-12-31"
+  }
+}
+```
+
+<Note>
+  At least one of `amount` or `end_date` must be provided to modify the mandate.
+</Note>
+
+### Cancel Mandate
+
+To fully stop future debits and revoke the subscription mandate, use the [**Cancel Subscription Mandate**](https://docs.eximpe.com/api-reference/v1/subscriptions/cancel-mandate) API.
+
+#### Sample Request
+
+```json
+curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/cancel_mandate/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate cancel request sent successfully",
+  "data": {
+    "subscription_id": "SUB_xxx",
+    "mandate_cancelled": true,
+    "subscription_status": "CANCELLED"
+  }
+}
+```
+
+The subscription will be marked as `CANCELLED` on success.
+
+## View Subscription Payments
+
+Use the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) API to fetch all payments associated with a subscription from the internal system. This is available for **all payment gateways** and **all environments** (including production).
+
+### Sample Request
+
+```json
+curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
+  -H "X-Client-ID: <your-client-id>" \
+  -H "X-Client-Secret: <your-client-secret>" \
+  -H "X-Merchant-ID: <your-merchant-id>" \
+  -H "X-API-Version: 1.0.0"
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Subscription payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "dpr_abc123",
+      "order_id": "ord_xyz789",
+      "reference_id": "SUBPAY-sub123-cf456",
+      "amount": 1000.00,
+      "currency": "INR",
+      "status": "CAPTURED",
+      "payment_type": "RECURRING",
+      "payment_gateway": "CASHFREE",
+      "mop_type": "UPI",
+      "transaction_id": "cf_order_abc",
+      "cf_payment_id": "cf_pay_123",
+      "bank_ref_num": "BANK123456",
+      "status_message": null,
+      "created_at": "2025-03-20T10:30:00Z",
+      "payment_completed_at": "2025-03-20T10:30:05Z"
+    }
+  ]
+}
+```
+
+The response returns an array of all payment records for the subscription, including details such as the payment status, amount, mode of payment, and timestamps. Use this to build payment history views, reconcile billing records, or track installment statuses.
+
+For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) endpoint in API Reference.
+
+---
+
+## Webhooks
+
+EximPe sends webhook notifications when subscription status changes occur. You can configure webhooks to receive real-time updates about subscription lifecycle events.
+
+### Subscription Status Webhook
+
+The **Subscription Status** webhook is triggered when a subscription status changes or subscription information is updated. This allows you to track subscription lifecycle events and update your billing records accordingly.
+
+For detailed webhook payload specifications, event types, and implementation details, refer to the [**Subscription Status Webhook**](https://docs.eximpe.com/api-reference/v1/webhooks/subscription-status) in API Reference.
+
+<Note>
+  For general webhook setup, security, and verification, see the [**Webhooks Integration Guide**](/integration-guide/v1/web-integration/webhooks).
+</Note>
