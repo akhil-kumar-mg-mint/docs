@@ -155,15 +155,10 @@ To target a specific app, use the following schemes:
 | UPI App      | Android Package Name (for Intent URL)    | iOS URL Scheme Prefix |
 | ------------ | ---------------------------------------- | --------------------- |
 | Google Pay   | `com.google.android.apps.nbu.paisa.user` | `gpay://upi/mandate?`     |
-| PhonePe      | `com.phonepe.app`                        | `phonepe://upi/mandate?`  |
+| PhonePe      | `com.phonepe.app`                        | `phonepe://mandate?`  |
 | BHIM         | `in.org.npci.upiapp`                     | `bhim://upi/mandate?`     |
-| Paytm        | `net.one97.paytm`                        | `paytmmp://upi/mandate?`  |
-| Amazon Pay   | `in.amazon.mShop.android.shopping`       | `amazonpay://upi/mandate?`|
-| CRED         | `com.dreamplug.androidapp`               | `credpay://upi/mandate?`  |
-| Supermoney   | `money.super.payments`                   | `super://mandate?`        |
-| Fi Money     | `com.fi.money`                           | `fi://upi/mandate?`       |
-| Jupiter      | `money.jupiter`                          | `jupiter://upi/mandate?`  |
-| Slice        | `indwin.c3.shareapp`                     | `slice://upi/mandate?`    |
+| Paytm        | `net.one97.paytm`                        | `paytmmp://mandate?`  |
+| Amazon Pay   | `in.amazon.mShop.android.shopping`       | `intent://mandate?`|
 
 <Note>
   **App Support**: Major UPI apps (Google Pay, PhonePe, BHIM, Paytm) support mandate creation via deep links. Some apps may not support the app-specific `/mandate` scheme. In such cases, use the generic `upi://mandate?` scheme or display the QR code returned in the API response as a fallback.
@@ -207,7 +202,7 @@ gpay://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
 ```
 
 ```text PhonePe
-phonepe://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+phonepe://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
 ```
 
 ```text BHIM
@@ -215,7 +210,7 @@ bhim://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
 ```
 
 ```text Paytm
-paytmmp://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+paytmmp://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
 ```
 </CodeGroup>
 
