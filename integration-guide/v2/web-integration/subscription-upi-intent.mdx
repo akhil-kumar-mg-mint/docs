@@ -152,8 +152,8 @@ Use the `intent_uri` to directly launch the customer's UPI application for manda
 
 To target a specific app, use the following schemes:
 
-| UPI App      | Android Package Name (for Intent URL)    | iOS URL Scheme Prefix |
-| ------------ | ---------------------------------------- | --------------------- |
+| UPI App      | Android Package Name (for Intent URL)    | Scheme Prefix |
+| ------------ | ---------------------------------------- | ------------- |
 | Google Pay   | `com.google.android.apps.nbu.paisa.user` | `gpay://upi/mandate?`     |
 | PhonePe      | `com.phonepe.app`                        | `phonepe://mandate?`  |
 | BHIM         | `in.org.npci.upiapp`                     | `bhim://upi/mandate?`     |
@@ -166,26 +166,26 @@ To target a specific app, use the following schemes:
 
 **Android Specific App Format:**
 ```
-intent://mandate?<intent_uri>#Intent;scheme=upi;package=<package_name>;end;
+<scheme_prefix><intent_uri>#Intent;scheme=upi;package=<package_name>;end;
 ```
 
 **Examples:**
 
 <CodeGroup>
 ```text Google Pay
-intent://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end;
+gpay://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end;
 ```
 
 ```text PhonePe
-intent://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.phonepe.app;end;
+phonepe://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.phonepe.app;end;
 ```
 
 ```text BHIM
-intent://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=in.org.npci.upiapp;end;
+bhim://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=in.org.npci.upiapp;end;
 ```
 
 ```text Paytm
-intent://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=net.one97.paytm;end;
+paytmmp://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=net.one97.paytm;end;
 ```
 </CodeGroup>
 
