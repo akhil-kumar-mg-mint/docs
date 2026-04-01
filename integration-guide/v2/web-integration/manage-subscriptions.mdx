@@ -114,7 +114,7 @@ For webhook implementation details, see the [Webhooks](#webhooks) section below.
 
 ### Modify Mandate
 
-To change the billing amount or end date of an active subscription, use the [**Modify Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/modify-mandate) API.
+To change the billing amount of an active subscription, use the [**Modify Subscription Mandate**](https://docs.eximpe.com/api-reference/v2/subscriptions/modify-mandate) API.
 
 #### Sample Request
 
@@ -126,8 +126,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_
   -H "X-Merchant-ID: <your-merchant-id>" \
   -H "X-API-Version: 2.0.0" \
   -d '{
-    "amount": 1500.00,
-    "end_date": "2025-12-31"
+    "amount": 1500.00
   }'
 ```
 
@@ -141,14 +140,13 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_
     "subscription_id": "SUB_xxx",
     "mandate_modified": true,
     "updated_amount": "1500.00",
-    "updated_end_date": "2025-12-31",
     "subscription_status": "INITIALIZED"
   }
 }
 ```
 
 <Note>
-  At least one of `amount` or `end_date` must be provided to modify the mandate.
+  The `amount` field is required to modify the mandate.
 </Note>
 
 ### Cancel Mandate
@@ -191,7 +189,7 @@ This step applies only to **ADHOC** subscriptions. For standard billing cycle su
 
 ### How Adhoc Payments Work
 
-1. **Initiate Payment** — Call the recurring payment API with an `invoice_display_number` and optional `amount`
+1. **Initiate Payment** — Call the recurring payment API with an optional `amount`
 2. **Asynchronous Processing** — Payments will Made one day after the api is called.
 3. **Webhook Delivery** — The payment outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) is delivered via webhook, at which point the order and payment records are created in the system
 
@@ -205,7 +203,6 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   -H "X-Merchant-ID: <your-merchant-id>" \
   -H "X-API-Version: 2.0.0" \
   -d '{
-    "invoice_display_number": "INV-2025-0042",
     "amount": 500.00
   }'
 ```
@@ -233,9 +230,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 ### Constraints
 
 - Only **ADHOC** billing cycle subscriptions are supported
-- `invoice_display_number` is mandatory for all recurring payments
 - If `amount` is provided, it must not exceed the subscription's `billing_amount`
-- You can optionally pass a `transaction_id` (max 64 chars); otherwise a `REC`-prefixed ID is auto-generated
 
 For full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in API Reference.
 

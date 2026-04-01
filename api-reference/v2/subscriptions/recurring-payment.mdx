@@ -18,16 +18,8 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
 
 ### Request Body
 
-<ParamField body="invoice_display_number" type="string" required>
-  A unique display number for this recurring charge. This is mandatory for all recurring payments.
-</ParamField>
-
 <ParamField body="amount" type="number">
   Amount to charge for this recurring execution. If not provided, the subscription's `billing_amount` is used. Must be less than or equal to the subscription's `billing_amount`.
-</ParamField>
-
-<ParamField body="transaction_id" type="string">
-  Unique transaction ID for this recurring payment (max 64 characters). If omitted, a `REC`-prefixed ID is auto-generated.
 </ParamField>
 
 ### Response Fields
@@ -60,21 +52,6 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
     "payment_amount": 500.00,
     "status": "success",
     "message": "ADHOC recurring payment initiated successfully"
-  }
-}
-```
-
-```json 400 - Validation error
-{
-  "success": false,
-  "error": {
-    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
-    "message": "Validation error",
-    "details": {
-      "invoice_display_number": [
-        "This field is required."
-      ]
-    }
   }
 }
 ```

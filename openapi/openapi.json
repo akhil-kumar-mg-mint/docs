@@ -5371,7 +5371,7 @@
     "/v2/pg/subscriptions/{subscription_id}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate - v2",
-        "description": "Update mandate amount and/or end date for a subscription.",
+        "description": "Update mandate amount for a subscription.",
         "tags": [
           "Subscriptions"
         ],
@@ -5395,7 +5395,7 @@
           }
         ],
         "requestBody": {
-          "description": "Mandate modification payload. At least one of amount or end_date must be provided.",
+          "description": "Mandate modification payload. The amount field is required.",
           "required": true,
           "content": {
             "application/json": {
@@ -11538,10 +11538,6 @@
             "type": "string",
             "description": "Amount in decimal format (e.g., \"100.00\")",
             "pattern": "^\\d+\\.\\d{2}$"
-          },
-          "end_date": {
-            "type": "string",
-            "format": "date"
           }
         }
       },
@@ -11570,10 +11566,6 @@
               },
               "updated_amount": {
                 "type": "string"
-              },
-              "updated_end_date": {
-                "type": "string",
-                "format": "date"
               }
             }
           }

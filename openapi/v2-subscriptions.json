@@ -82,7 +82,8 @@
                   "billing_interval": 1,
                   "payment_start_date": "2026-01-15",
                   "payment_end_date": "2027-01-15",
-                  "remarks": "Monthly subscription for premium services"
+                  "remarks": "Monthly subscription for premium services",
+                  "auto_refund_mandate": false
                 },
                 "mop_type": "UPI",
                 "upi_flow_type": "intent"
@@ -165,6 +166,98 @@
         "operationId": "v2_post_pg_subscriptions_intent_"
       }
     },
+    "/pg/subscriptions/{subscription_id}/modify_mandate/": {
+      "post": {
+        "summary": "Modify Subscription Mandate",
+        "description": "Update mandate amount for a subscription.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Mandate modification payload. The amount field is required.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModifySubscriptionMandateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Subscription mandate modification request sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModifySubscriptionMandateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation / business error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v2_post_pg_subscriptions_subscription_id_modify_mandate_"
+      }
+    },
     "/pg/subscriptions/card/": {
       "post": {
         "summary": "Create Card Subscription",
@@ -225,7 +318,8 @@
                   "billing_interval": 1,
                   "payment_start_date": "2026-01-15",
                   "payment_end_date": "2027-01-15",
-                  "remarks": "Monthly subscription for premium services"
+                  "remarks": "Monthly subscription for premium services",
+                  "auto_refund_mandate": false
                 },
                 "mop_type": "credit_card",
                 "card_details": {
@@ -347,6 +441,10 @@
           "remarks": {
             "type": "string",
             "description": "Subscription remarks"
+          },
+          "auto_refund_mandate": {
+            "type": "boolean",
+            "description": "Whether to automatically refund the mandate order amount"
           }
         }
       },
@@ -638,6 +736,50 @@
               },
               "subscription": {
                 "$ref": "#/components/schemas/StandingInstruction"
+              }
+            }
+          }
+        }
+      },
+      "ModifySubscriptionMandateRequest": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          }
+        }
+      },
+      "ModifySubscriptionMandateResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "mandate_modified": {
+                "type": "boolean"
+              },
+              "updated_amount": {
+                "type": "string"
+              },
+              "subscription_status": {
+                "type": "string"
               }
             }
           }
