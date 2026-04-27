@@ -1984,7 +1984,9 @@
                   "category": "Enterprise Software and Cloud Services",
                   "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
                   "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15"
-                }
+                },
+                "email": "merchant@example.com",
+                "phone_number": "+919876543210"
               }
             }
           },
@@ -7133,7 +7135,9 @@
         "type": "object",
         "required": [
           "settlement_details",
-          "company_details"
+          "company_details",
+          "email",
+          "phone_number"
         ],
         "properties": {
           "settlement_details": {
@@ -7141,6 +7145,20 @@
           },
           "company_details": {
             "$ref": "#/components/schemas/v1_CompanyDetails"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number for the sub-merchant (e.g., +919876543210)"
+          },
+          "country_code": {
+            "type": "string",
+            "description": "ISO 3166-1 alpha-2 country code (e.g., IN, US)",
+            "example": "IN"
           }
         }
       },
@@ -8079,7 +8097,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",
@@ -8128,12 +8153,17 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+                "enum": [
+                  "CREDIT_CARD",
+                  "DEBIT_CARD"
+                ]
               },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v1_StandingInstruction"
@@ -8196,12 +8226,16 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["UPI"]
+                "enum": [
+                  "UPI"
+                ]
               },
               "preferred_upi_flow_type": {
                 "type": "string",
@@ -11277,7 +11311,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",
@@ -11326,12 +11367,17 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+                "enum": [
+                  "CREDIT_CARD",
+                  "DEBIT_CARD"
+                ]
               },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v2_StandingInstruction"
@@ -11394,12 +11440,16 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["UPI"]
+                "enum": [
+                  "UPI"
+                ]
               },
               "preferred_upi_flow_type": {
                 "type": "string",
@@ -14459,7 +14509,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",
