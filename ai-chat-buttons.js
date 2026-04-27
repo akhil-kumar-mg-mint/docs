@@ -17,7 +17,7 @@
 
   var CHEVRON_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
 
-  var SPARKLE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>';
+  var SPARKLE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a9 9 0 0 0-9 9c0 3.9 3.1 7.1 5 8.5V21a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-1.5c1.9-1.4 5-4.6 5-8.5a9 9 0 0 0-9-9z"/><path d="M9 22h6"/><path d="M12 2v4"/><path d="M8 8c0 2.2 1.8 4 4 4"/><path d="M16 8c0 2.2-1.8 4-4 4"/></svg>';
 
   function injectStyles() {
     if (document.getElementById("ai-chat-styles")) return;

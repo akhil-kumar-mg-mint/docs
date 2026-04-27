@@ -300,15 +300,15 @@ When EximPe redirects to your `return_url`, it sends payment details via POST re
 ```bash
 curl '{return_url}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'order_id=OD6567064038&payment_id=PR2352113376&status=payment_successful&message=Payment+captured+successfully&mop_type=UPI&bank_ref_num=OD6567064038-PR2352113376&payment_completed_at=2025-06-25+12%3A15%3A48%2B00%3A00&hash=078692abdb83a5873a5e17d416f326a4589ed6ac02aed36739a5900fd8b5650f'
+  --data-raw 'order_id=OD6567064038&payment_id=PR2352113376&status=captured&message=Payment+captured+successfully&mop_type=UPI&bank_ref_num=OD6567064038-PR2352113376&payment_completed_at=2025-06-25+12%3A15%3A48%2B00%3A00&hash=078692abdb83a5873a5e17d416f326a4589ed6ac02aed36739a5900fd8b5650f'
 ```
 
 **Callback Parameters:**
 - `order_id`: Your order identifier
 - `payment_id`: EximPe's payment transaction ID
-- `status`: Payment status (payment_successful, payment_failed, etc.)
+- `status`: Payment status (captured, failed)
 - `message`: Human-readable status message
-- `mop_type`: Method of payment (UPI, CARD, etc.)
+- `mop_type`: Method of payment (UPI, CREDIT_CARD, etc.)
 - `bank_ref_num`: Bank reference number
 - `payment_completed_at`: Payment completion timestamp
 - `hash`: Security hash for verification
