@@ -1963,7 +1963,7 @@
                   "international_org_type": "Private Limited Company",
                   "tax_id": "94-8765432",
                   "website": "https://www.innovatetech.com",
-                  "monthly_avg_transaction_volume": "485",
+                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                   "communication_address": "Suite 1200, 101 California Street",
                   "communication_city": "San Francisco",
                   "communication_state": "CA",
@@ -1975,15 +1975,16 @@
                   "registered_state": "CA",
                   "registered_country": "United States",
                   "registered_pincode": "94103",
-                  "business_category": "goods_merchant",
+                  "business_category": "E-commerce (physical goods & cross-border shipping)",
                   "business_mode": "b2b",
                   "hs_codes": [
                     "85234910",
                     "84715000"
                   ],
-                  "category": "Enterprise Software and Cloud Services",
                   "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
-                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15"
+                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
+                  "email": "merchant@example.com",
+                  "phone_number": "+919876543210"
                 }
               }
             }
@@ -2018,8 +2019,6 @@
                       "settlement_currency": "USD"
                     },
                     "created_at": "2025-01-15T10:30:00.000000Z",
-                    "updated_at": "2025-01-15T10:30:00.000000Z",
-                    "invoice_file": null,
                     "company_details": {
                       "legal_name": "GlobalTech Solutions Inc.",
                       "brand_name": "GlobalTech",
@@ -2027,7 +2026,7 @@
                       "international_org_type": "Private Limited Company",
                       "tax_id": "94-1234567",
                       "website": "https://www.globaltech.io",
-                      "monthly_avg_transaction_volume": "300",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                       "communication_address": "500 Mission Street, Suite 2400",
                       "communication_city": "San Francisco",
                       "communication_state": "CA",
@@ -2039,16 +2038,20 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94043",
-                      "business_category": "goods_merchant",
+                      "business_category": "E-commerce (physical goods & cross-border shipping)",
                       "business_mode": "b2b",
                       "hs_codes": [
                         "85234910",
                         "84715000"
                       ],
-                      "category": "Enterprise SaaS",
                       "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
-                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients"
-                    }
+                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
+                      "email": "contact@example.com",
+                      "phone_number": "+919876543210",
+                      "business_category_other": null
+                    },
+                    "last_updated_at": "2025-01-15T10:30:00.000000Z",
+                    "kyc_status": "PENDING"
                   }
                 }
               }
@@ -2153,8 +2156,6 @@
                       "settlement_currency": "USD"
                     },
                     "created_at": "2025-06-19T18:06:05.523720Z",
-                    "updated_at": "2025-06-19T18:06:05.523752Z",
-                    "invoice_file": null,
                     "company_details": {
                       "legal_name": "InnovateTech Solutions Private Limited",
                       "brand_name": "InnovateTech Solutions",
@@ -2162,7 +2163,7 @@
                       "international_org_type": "Private Limited Company",
                       "tax_id": "94-8765432",
                       "website": "https://www.innovatetech.com",
-                      "monthly_avg_transaction_volume": "100",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                       "communication_address": "123 Tech Street",
                       "communication_city": "San Francisco",
                       "communication_state": "CA",
@@ -2174,16 +2175,20 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94105",
-                      "business_category": "goods_merchant",
+                      "business_category": "E-commerce (physical goods & cross-border shipping)",
                       "business_mode": "b2b",
                       "hs_codes": [
                         "84713010",
                         "85423100"
                       ],
-                      "category": "E-commerce",
                       "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                      "agreement_details": "global_company aggrement"
-                    }
+                      "agreement_details": "global_company aggrement",
+                      "email": "contact@example.com",
+                      "phone_number": "+919876543210",
+                      "business_category_other": null
+                    },
+                    "last_updated_at": "2025-06-19T18:06:05.523752Z",
+                    "kyc_status": "PENDING"
                   }
                 }
               }
@@ -2242,10 +2247,9 @@
                   "international_org_type": "Private Limited Company",
                   "tax_id": "29AABCT1234D1Z9",
                   "website": "https://www.shaktiexpress.in",
-                  "monthly_avg_transaction_volume": "120",
-                  "business_category": "goods_merchant",
+                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+                  "business_category": "E-commerce (physical goods & cross-border shipping)",
                   "business_mode": "b2b",
-                  "category": "Logistics & Manufacturing Support",
                   "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
                   "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
                   "communication_address": "Plot No. 56, Electronic City Phase 1",
@@ -7209,6 +7213,8 @@
       "v1_CompanyDetails": {
         "type": "object",
         "required": [
+          "email",
+          "phone_number",
           "legal_name",
           "brand_name",
           "registration_number",
@@ -7216,16 +7222,15 @@
           "tax_id",
           "website",
           "monthly_avg_transaction_volume",
+          "business_category",
+          "business_mode",
+          "description_of_products_and_services",
           "registered_address",
           "registered_city",
           "registered_state",
           "registered_country",
           "registered_pincode",
-          "business_category",
-          "business_mode",
-          "category",
-          "description_of_products_and_services",
-          "agreement_details"
+          "same_as_registered_address"
         ],
         "properties": {
           "legal_name": {
@@ -7242,16 +7247,17 @@
           },
           "international_org_type": {
             "type": "string",
-            "description": "Type of international organization",
             "enum": [
               "Private Limited Company",
               "Public Limited Company",
               "Limited Liability Company",
+              "Joint Stock Company",
               "Free Zone Company / Entity",
               "Partnership / LLP",
               "Sole Proprietorship",
               "Other"
-            ]
+            ],
+            "description": "Type of organization"
           },
           "tax_id": {
             "type": "string",
@@ -7260,11 +7266,10 @@
           "website": {
             "type": "string",
             "format": "uri",
-            "description": "Company website URL"
+            "description": "Company website URL (must include https://)"
           },
           "monthly_avg_transaction_volume": {
             "type": "string",
-            "description": "Average monthly transaction volume",
             "enum": [
               "LESS_THAN_5_K",
               "BETWEEN_5_K_AND_20_K",
@@ -7273,7 +7278,8 @@
               "BETWEEN_100_K_AND_250_K",
               "BETWEEN_250_K_AND_500_K",
               "ABOVE_500_K"
-            ]
+            ],
+            "description": "Expected monthly transaction volume range"
           },
           "registered_address": {
             "type": "string",
@@ -7321,19 +7327,16 @@
           },
           "business_category": {
             "type": "string",
-            "description": "Business category",
-            "enum": [
-              "goods_merchant",
-              "service_merchant"
-            ]
+            "description": "Business category (comma-separated for multiple). Values: E-commerce (physical goods & cross-border shipping), Digital goods / software / downloads, SaaS / subscriptions / recurring billing, Services (delivered cross-border), Marketplace / platform (multiple sellers), Other"
           },
           "business_mode": {
             "type": "string",
-            "description": "Business mode",
             "enum": [
               "b2b",
-              "b2c"
-            ]
+              "b2c",
+              "marketplace"
+            ],
+            "description": "Mode of business"
           },
           "hs_codes": {
             "type": "array",
@@ -7342,10 +7345,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -7353,6 +7352,23 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format (e.g., +919876543210)"
+          },
+          "mcc": {
+            "type": "string",
+            "description": "Comma-separated 4-digit Merchant Category Codes (e.g., 5411,5812)"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
           }
         }
       },
@@ -7432,6 +7448,8 @@
             "description": "KYC verification status",
             "enum": [
               "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
               "APPROVED",
               "REJECTED"
             ]
@@ -7468,9 +7486,9 @@
           "id",
           "settlement_details",
           "created_at",
-          "updated_at",
-          "invoice_file",
-          "company_details"
+          "company_details",
+          "last_updated_at",
+          "kyc_status"
         ],
         "properties": {
           "id": {
@@ -7485,17 +7503,24 @@
             "format": "date-time",
             "description": "Merchant creation timestamp"
           },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Merchant update timestamp"
-          },
-          "invoice_file": {
-            "type": "string",
-            "description": "Invoice file URL"
-          },
           "company_details": {
             "$ref": "#/components/schemas/v1_CompanyDetails"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last updated timestamp"
+          },
+          "kyc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "description": "Current KYC/onboarding status"
           }
         }
       },
@@ -7593,8 +7618,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -7611,10 +7640,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
@@ -8079,7 +8104,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",
@@ -8128,12 +8160,17 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+                "enum": [
+                  "CREDIT_CARD",
+                  "DEBIT_CARD"
+                ]
               },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v1_StandingInstruction"
@@ -8196,12 +8233,16 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["UPI"]
+                "enum": [
+                  "UPI"
+                ]
               },
               "preferred_upi_flow_type": {
                 "type": "string",
@@ -10421,9 +10462,10 @@
           "registered_pincode",
           "business_category",
           "business_mode",
-          "category",
           "description_of_products_and_services",
-          "agreement_details"
+          "agreement_details",
+          "email",
+          "phone_number"
         ],
         "properties": {
           "legal_name": {
@@ -10521,8 +10563,12 @@
             "type": "string",
             "description": "Business category",
             "enum": [
-              "goods_merchant",
-              "service_merchant"
+              "E-commerce (physical goods & cross-border shipping)",
+              "Digital goods / software / downloads",
+              "SaaS / subscriptions / recurring billing",
+              "Services (delivered cross-border)",
+              "Marketplace / platform (multiple sellers)",
+              "Other"
             ]
           },
           "business_mode": {
@@ -10540,10 +10586,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -10551,6 +10593,19 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format"
           }
         }
       },
@@ -10630,6 +10685,8 @@
             "description": "KYC verification status",
             "enum": [
               "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
               "APPROVED",
               "REJECTED"
             ]
@@ -10666,9 +10723,9 @@
           "id",
           "settlement_details",
           "created_at",
-          "updated_at",
-          "invoice_file",
-          "company_details"
+          "company_details",
+          "last_updated_at",
+          "kyc_status"
         ],
         "properties": {
           "id": {
@@ -10683,17 +10740,24 @@
             "format": "date-time",
             "description": "Merchant creation timestamp"
           },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Merchant update timestamp"
-          },
-          "invoice_file": {
-            "type": "string",
-            "description": "Invoice file URL"
-          },
           "company_details": {
             "$ref": "#/components/schemas/v2_CompanyDetails"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last updated timestamp"
+          },
+          "kyc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "description": "Current KYC/onboarding status"
           }
         }
       },
@@ -10791,8 +10855,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -10809,10 +10877,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
@@ -11277,7 +11341,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",
@@ -11326,12 +11397,17 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["CREDIT_CARD", "DEBIT_CARD"]
+                "enum": [
+                  "CREDIT_CARD",
+                  "DEBIT_CARD"
+                ]
               },
               "standing_instruction": {
                 "$ref": "#/components/schemas/v2_StandingInstruction"
@@ -11394,12 +11470,16 @@
               "collection_mode": {
                 "type": "string",
                 "description": "Payment collection mode (must be 's2s' for subscriptions)",
-                "enum": ["s2s"]
+                "enum": [
+                  "s2s"
+                ]
               },
               "mop_type": {
                 "type": "string",
                 "description": "Method of payment",
-                "enum": ["UPI"]
+                "enum": [
+                  "UPI"
+                ]
               },
               "preferred_upi_flow_type": {
                 "type": "string",
@@ -13603,9 +13683,10 @@
           "registered_pincode",
           "business_category",
           "business_mode",
-          "category",
           "description_of_products_and_services",
-          "agreement_details"
+          "agreement_details",
+          "email",
+          "phone_number"
         ],
         "properties": {
           "legal_name": {
@@ -13703,8 +13784,12 @@
             "type": "string",
             "description": "Business category",
             "enum": [
-              "goods_merchant",
-              "service_merchant"
+              "E-commerce (physical goods & cross-border shipping)",
+              "Digital goods / software / downloads",
+              "SaaS / subscriptions / recurring billing",
+              "Services (delivered cross-border)",
+              "Marketplace / platform (multiple sellers)",
+              "Other"
             ]
           },
           "business_mode": {
@@ -13722,10 +13807,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -13733,6 +13814,19 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format"
           }
         }
       },
@@ -13812,6 +13906,8 @@
             "description": "KYC verification status",
             "enum": [
               "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
               "APPROVED",
               "REJECTED"
             ]
@@ -13848,9 +13944,9 @@
           "id",
           "settlement_details",
           "created_at",
-          "updated_at",
-          "invoice_file",
-          "company_details"
+          "company_details",
+          "last_updated_at",
+          "kyc_status"
         ],
         "properties": {
           "id": {
@@ -13865,17 +13961,24 @@
             "format": "date-time",
             "description": "Merchant creation timestamp"
           },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Merchant update timestamp"
-          },
-          "invoice_file": {
-            "type": "string",
-            "description": "Invoice file URL"
-          },
           "company_details": {
             "$ref": "#/components/schemas/v3_CompanyDetails"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last updated timestamp"
+          },
+          "kyc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "description": "Current KYC/onboarding status"
           }
         }
       },
@@ -13973,8 +14076,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -13991,10 +14098,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
@@ -14459,7 +14562,14 @@
           "billing_cycle": {
             "type": "string",
             "description": "Billing cycle",
-            "enum": ["ONCE", "ADHOC", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"]
+            "enum": [
+              "ONCE",
+              "ADHOC",
+              "DAILY",
+              "WEEKLY",
+              "MONTHLY",
+              "YEARLY"
+            ]
           },
           "billing_interval": {
             "type": "integer",

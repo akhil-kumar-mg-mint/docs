@@ -3,3 +3,106 @@ title: 'Get Merchant'
 description: 'Retrieve the details of a specific merchant by its ID.'
 openapi: 'GET /partners/merchants/{merchant_id}/'
 ---
+
+## Overview
+
+Retrieve the full details of a specific sub-merchant by its ID, including company information, settlement details, and current KYC status.
+
+## Request Parameters
+
+#### Path Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| merchant_id | string | Yes | The unique identifier of the sub-merchant (e.g., `6692437779`) |
+
+## Response
+
+The response includes the same fields as [Create Merchant](/api-reference/v1/merchant/create) and [Update Merchant](/api-reference/v1/merchant/update) responses.
+
+| Name | Type | Description |
+|---|---|---|
+| id | string | Unique merchant identifier |
+| company_details | object | Company registration, business, and contact details |
+| settlement_details | object | Bank settlement details including settlement currency |
+| kyc_status | string | Current KYC/onboarding status (`PENDING`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`) |
+| created_at | string | ISO 8601 timestamp of creation |
+| last_updated_at | string | ISO 8601 timestamp of last update |
+
+## Response Example
+
+<CodeGroup>
+
+```json Success
+{
+  "success": true,
+  "message": "Sub-merchant details retrieved successfully",
+  "data": {
+    "id": "6692437779",
+    "company_details": {
+      "legal_name": "Acme Corp Pvt Ltd",
+      "brand_name": "Acme",
+      "email": "contact@acme.com",
+      "phone_number": "+919876543210",
+      "registration_number": "U12345MH2020PTC123456",
+      "international_org_type": "Private Limited Company",
+      "tax_id": "AACCA1234A",
+      "website": "https://acme.com",
+      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+      "communication_address": "123 Business Park",
+      "communication_city": "Mumbai",
+      "communication_state": "Maharashtra",
+      "communication_country": "India",
+      "communication_pincode": "400001",
+      "same_as_registered_address": true,
+      "registered_address": "123 Business Park",
+      "registered_city": "Mumbai",
+      "registered_state": "Maharashtra",
+      "registered_country": "India",
+      "registered_pincode": "400001",
+      "business_category": "Digital goods / software / downloads",
+      "business_category_other": null,
+      "business_mode": "b2b",
+      "hs_codes": ["84713010"],
+      "description_of_products_and_services": "Software development and IT consulting services",
+      "agreement_details": "Service agreement dated 2024-01-15"
+    },
+    "settlement_details": {
+      "bank_account_number": "1234567890",
+      "bank_account_name": "Acme Corp",
+      "bank_swift_code": "SBININBB",
+      "bank_name": "State Bank of India",
+      "bank_branch_name": "Main Branch",
+      "bank_address": "123 Bank Street",
+      "bank_city": "Mumbai",
+      "bank_state": "Maharashtra",
+      "bank_country": "India",
+      "bank_pincode": "400001",
+      "routing_number": "SBIN0001234",
+      "settlement_currency": "USD"
+    },
+    "kyc_status": "PENDING",
+    "created_at": "2026-04-28T07:54:33.468589Z",
+    "last_updated_at": "2026-04-28T09:39:10.007872Z"
+  }
+}
+```
+
+```json Not Found
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "Validation error",
+    "details": "Not found."
+  }
+}
+```
+
+</CodeGroup>
+
+## Error Codes
+
+| Code | Message | Description |
+|---|---|---|
+| ERR_MERCHANT_001 | Validation error | Merchant not found or access denied |

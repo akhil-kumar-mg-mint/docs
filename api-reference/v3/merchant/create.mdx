@@ -2,4 +2,322 @@
 title: 'Create Merchant'
 description: 'Create a new merchant with settlement and company details.'
 openapi: 'POST /partners/merchants/'
---- 
+---
+
+## Overview
+
+The Create Merchant endpoint allows Payment Aggregators (PSPs) to programmatically onboard sub-merchants. It creates a new merchant account with company details, settlement bank information, and contact details.
+
+After creation, the sub-merchant status depends on the environment:
+- **Production**: Status is set to `PENDING` (requires approval)
+- **Non-production**: Status is set to `APPROVED` (auto-approved for testing)
+
+## Request Parameters
+
+### Required Parameters
+- `company_details`: Company registration, business information, and contact details
+- `settlement_details`: Bank account details for settlements
+
+### Parameter Definitions
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| company_details | object | Yes | Company, business, and contact details. | See Company Details |
+| settlement_details | object | Yes | Bank account details for settlements. | See Settlement Details |
+
+#### Company Details
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| email | string | Yes | Contact email for the sub-merchant. | RFC 5322 email format |
+| phone_number | string | Yes | Contact phone number with country code. | E.164 format (e.g., `+919876543210`) |
+| legal_name | string | Yes | Legal name of the company. | Max 255 chars |
+| brand_name | string | Yes | Brand/trade name. | Max 255 chars |
+| registration_number | string | Yes | Company registration number. | Alphanumeric with dashes |
+| international_org_type | string | Yes | Type of organization. | Enum: `Private Limited Company`, `Public Limited Company`, `Limited Liability Company`, `Joint Stock Company`, `Free Zone Company / Entity`, `Partnership / LLP`, `Sole Proprietorship`, `Other` |
+| tax_id | string | Yes | Tax identification number. | Alphanumeric with dashes |
+| website | string | Yes | Company website URL. | Must include `https://` prefix |
+| monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | Enum: `LESS_THAN_5_K`, `BETWEEN_5_K_AND_20_K`, `BETWEEN_20_K_AND_50_K`, `BETWEEN_50_K_AND_100_K`, `BETWEEN_100_K_AND_250_K`, `BETWEEN_250_K_AND_500_K`, `ABOVE_500_K` |
+| business_category | string | Yes | Business category (comma-separated for multiple). | Enum: `E-commerce (physical goods & cross-border shipping)`, `Digital goods / software / downloads`, `SaaS / subscriptions / recurring billing`, `Services (delivered cross-border)`, `Marketplace / platform (multiple sellers)`, `Other` |
+| business_category_other | string | Conditionally | Description when category includes "Other". | Required if `business_category` includes `Other` |
+| business_mode | string | Yes | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
+| description_of_products_and_services | string | Yes | Detailed description of products/services. | Max 1024 chars |
+| mcc | string | No | Merchant Category Codes. | Comma-separated 4-digit codes (e.g., `5411,5812`) |
+| hs_codes | array | No | HS codes for goods traded. | Array of HS code strings |
+| agreement_details | string | No | Agreement details with the merchant. | Max 1024 chars |
+| registered_address | string | Yes | Registered office address. | Max 255 chars |
+| registered_city | string | Yes | Registered office city. | Max 255 chars |
+| registered_state | string | Yes | Registered office state/province. | Max 255 chars |
+| registered_country | string | Yes | Registered office country. | Full country name (e.g., `India`, `United States`) |
+| registered_pincode | string | Yes | Registered office postal code. | Max 20 chars |
+| same_as_registered_address | boolean | Yes | Whether communication address matches registered. | `true` or `false` |
+| communication_address | string | Conditionally | Communication address. | Required if `same_as_registered_address` is `false` |
+| communication_city | string | Conditionally | Communication city. | Required if `same_as_registered_address` is `false` |
+| communication_state | string | Conditionally | Communication state. | Required if `same_as_registered_address` is `false` |
+| communication_country | string | Conditionally | Communication country. | Required if `same_as_registered_address` is `false` |
+| communication_pincode | string | Conditionally | Communication postal code. | Required if `same_as_registered_address` is `false` |
+
+Notes:
+- When `same_as_registered_address` is `true`, communication address fields are auto-populated from registered address.
+- Multiple business categories can be comma-separated (e.g., `"E-commerce (physical goods & cross-border shipping),SaaS / subscriptions / recurring billing"`).
+
+#### Settlement Details
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| bank_account_number | string | Yes | Bank account number. | Alphanumeric |
+| bank_account_name | string | Yes | Name on the bank account. | Max 255 chars |
+| bank_swift_code | string | Yes | SWIFT/BIC code. | Standard SWIFT format |
+| bank_name | string | Yes | Name of the bank. | Max 255 chars |
+| bank_branch_name | string | Yes | Branch name. | Max 255 chars |
+| bank_address | string | Yes | Bank branch address. | Max 255 chars |
+| bank_city | string | Yes | Bank city. | Max 255 chars |
+| bank_state | string | Yes | Bank state/province. | Max 255 chars |
+| bank_country | string | Yes | Bank country. | Full country name (e.g., `India`, `United States`) |
+| bank_pincode | string | Yes | Bank postal code. | Max 20 chars |
+| routing_number | string | Yes | Routing/IFSC number. | Alphanumeric |
+
+## Examples
+
+<CodeGroup>
+
+```json Software Company (B2B)
+{
+  "company_details": {
+    "email": "contact@acmetech.com",
+    "phone_number": "+919876543210",
+    "legal_name": "Acme Technologies Pvt Ltd",
+    "brand_name": "AcmeTech",
+    "registration_number": "U72200MH2020PTC123456",
+    "international_org_type": "Private Limited Company",
+    "tax_id": "AACCA1234A",
+    "website": "https://acmetech.com",
+    "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+    "business_category": "Digital goods / software / downloads",
+    "business_mode": "b2b",
+    "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
+    "mcc": "5734",
+    "registered_address": "Tower A, Techpark, Whitefield",
+    "registered_city": "Bangalore",
+    "registered_state": "Karnataka",
+    "registered_country": "India",
+    "registered_pincode": "560066",
+    "same_as_registered_address": true,
+    "communication_address": "Tower A, Techpark, Whitefield",
+    "communication_city": "Bangalore",
+    "communication_state": "Karnataka",
+    "communication_country": "India",
+    "communication_pincode": "560066"
+  },
+  "settlement_details": {
+    "bank_account_number": "1234567890123456",
+    "bank_account_name": "Acme Technologies Pvt Ltd",
+    "bank_swift_code": "HDFCINBB",
+    "bank_name": "HDFC Bank",
+    "bank_branch_name": "Whitefield Branch",
+    "bank_address": "100 Feet Road, Whitefield",
+    "bank_city": "Bangalore",
+    "bank_state": "Karnataka",
+    "bank_country": "India",
+    "bank_pincode": "560066",
+    "routing_number": "HDFC0001234"
+  }
+}
+```
+
+```json E-commerce (B2C, US)
+{
+  "company_details": {
+    "email": "ops@globalshop.com",
+    "phone_number": "+14155551234",
+    "legal_name": "GlobalShop Inc",
+    "brand_name": "GlobalShop",
+    "registration_number": "US-CORP-2024-GS789456",
+    "international_org_type": "Limited Liability Company",
+    "tax_id": "94-8765432",
+    "website": "https://globalshop.com",
+    "monthly_avg_transaction_volume": "BETWEEN_100_K_AND_250_K",
+    "business_category": "E-commerce (physical goods & cross-border shipping),SaaS / subscriptions / recurring billing",
+    "business_mode": "b2c",
+    "description_of_products_and_services": "Multi-category e-commerce platform selling electronics, apparel, and home goods with subscription box services",
+    "mcc": "5411,5812",
+    "hs_codes": ["85234910", "84715000"],
+    "agreement_details": "Master Service Agreement dated 2024-03-15",
+    "registered_address": "Suite 1200, 101 California Street",
+    "registered_city": "San Francisco",
+    "registered_state": "CA",
+    "registered_country": "United States",
+    "registered_pincode": "94111",
+    "same_as_registered_address": false,
+    "communication_address": "1455 Market Street, Suite 1600",
+    "communication_city": "San Francisco",
+    "communication_state": "CA",
+    "communication_country": "United States",
+    "communication_pincode": "94103"
+  },
+  "settlement_details": {
+    "bank_account_number": "6789123450987654",
+    "bank_account_name": "GlobalShop Inc",
+    "bank_swift_code": "CHASINUS33XXX",
+    "bank_name": "JPMorgan Chase Bank",
+    "bank_branch_name": "Financial District Branch",
+    "bank_address": "270 Park Avenue, New York",
+    "bank_city": "New York",
+    "bank_state": "NY",
+    "bank_country": "United States",
+    "bank_pincode": "10017",
+    "routing_number": "021000021"
+  }
+}
+```
+
+```json Other Category (UAE)
+{
+  "company_details": {
+    "email": "finance@innovate.io",
+    "phone_number": "+971501234567",
+    "legal_name": "Innovate FZE",
+    "brand_name": "Innovate",
+    "registration_number": "FZ-2024-INV-001",
+    "international_org_type": "Free Zone Company / Entity",
+    "tax_id": "TRN100123456",
+    "website": "https://innovate.io",
+    "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
+    "business_category": "Other",
+    "business_category_other": "AI-powered supply chain optimization and logistics analytics platform",
+    "business_mode": "b2b",
+    "description_of_products_and_services": "AI-driven logistics optimization platform that helps enterprises reduce shipping costs and delivery times",
+    "mcc": "7372",
+    "registered_address": "Office 1205, Business Bay Tower",
+    "registered_city": "Dubai",
+    "registered_state": "Dubai",
+    "registered_country": "United Arab Emirates",
+    "registered_pincode": "00000",
+    "same_as_registered_address": true,
+    "communication_address": "Office 1205, Business Bay Tower",
+    "communication_city": "Dubai",
+    "communication_state": "Dubai",
+    "communication_country": "United Arab Emirates",
+    "communication_pincode": "00000"
+  },
+  "settlement_details": {
+    "bank_account_number": "AE070331234567890123456",
+    "bank_account_name": "Innovate FZE",
+    "bank_swift_code": "ABORAEADXXX",
+    "bank_name": "Arab Bank",
+    "bank_branch_name": "Dubai Main Branch",
+    "bank_address": "Sheikh Zayed Road, Dubai",
+    "bank_city": "Dubai",
+    "bank_state": "Dubai",
+    "bank_country": "United Arab Emirates",
+    "bank_pincode": "00000",
+    "routing_number": "ABOR0000001"
+  }
+}
+```
+
+</CodeGroup>
+
+## Response Examples
+
+<CodeGroup>
+
+```json Success
+{
+  "success": true,
+  "message": "Sub-merchant created successfully",
+  "data": {
+    "id": "6182929449",
+    "company_details": {
+      "legal_name": "Acme Technologies Pvt Ltd",
+      "brand_name": "AcmeTech",
+      "email": "contact@acmetech.com",
+      "phone_number": "+919876543210",
+      "registration_number": "U72200MH2020PTC123456",
+      "international_org_type": "Private Limited Company",
+      "tax_id": "AACCA1234A",
+      "website": "https://acmetech.com",
+      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+      "communication_address": "Tower A, Techpark, Whitefield",
+      "communication_city": "Bangalore",
+      "communication_state": "Karnataka",
+      "communication_country": "India",
+      "communication_pincode": "560066",
+      "same_as_registered_address": true,
+      "registered_address": "Tower A, Techpark, Whitefield",
+      "registered_city": "Bangalore",
+      "registered_state": "Karnataka",
+      "registered_country": "India",
+      "registered_pincode": "560066",
+      "business_category": "Digital goods / software / downloads",
+      "business_category_other": null,
+      "business_mode": "b2b",
+      "hs_codes": [],
+      "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
+      "agreement_details": null
+    },
+    "settlement_details": {
+      "bank_account_number": "1234567890123456",
+      "bank_account_name": "Acme Technologies Pvt Ltd",
+      "bank_swift_code": "HDFCINBB",
+      "bank_name": "HDFC Bank",
+      "bank_branch_name": "Whitefield Branch",
+      "bank_address": "100 Feet Road, Whitefield",
+      "bank_city": "Bangalore",
+      "bank_state": "Karnataka",
+      "bank_country": "India",
+      "bank_pincode": "560066",
+      "routing_number": "HDFC0001234",
+      "settlement_currency": "USD"
+    },
+    "kyc_status": "PENDING",
+    "created_at": "2026-04-28T06:30:00.000000Z",
+    "last_updated_at": "2026-04-28T06:30:00.000000Z"
+  }
+}
+```
+
+```json Validation Error
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "Validation error",
+    "details": {
+      "company_details": {
+        "monthly_avg_transaction_volume": "\"500\" is not a valid choice.",
+        "business_mode": "\"invalid\" is not a valid choice.",
+        "registered_country": "Invalid country name"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Error Codes
+
+| Code | Message | Description |
+|---|---|---|
+| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
+
+## Implementation Notes
+
+### Merchant Status Flow
+- **PENDING** → Created, awaiting approval
+- **IN_REVIEW** → Under compliance review
+- **APPROVED** → Active, can process payments
+- **CHANGES_REQUESTED** → Additional information required
+- **REJECTED** → Application rejected
+
+### Country Names
+Country fields (`registered_country`, `communication_country`, `bank_country`) must use the full country name (e.g., `"India"`, `"United States"`, `"United Arab Emirates"`).
+
+### Phone Number Format
+Phone numbers must include the country code in E.164 format (e.g., `+919876543210`, `+14155551234`).
+
+### Business Category
+Multiple categories can be comma-separated. When `"Other"` is included, `business_category_other` must provide a description.

@@ -1,19 +1,10 @@
 /* Custom styles for EximPe Docs */
 
-/* Desktop-only styles for sidebar width */
+/* Desktop-only styles for sidebar */
 @media (min-width: 1024px) {
 
-    #sidebar-content,
-    .sidebar,
-    [class*="Sidebar"] {
-        width: 340px !important;
-        min-width: 340px !important;
+    #sidebar {
         border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
-    }
-
-    main,
-    #main-content {
-        margin-left: 340px !important;
     }
 }
 

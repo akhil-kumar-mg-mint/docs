@@ -2,4 +2,232 @@
 title: 'Update Merchant'
 description: 'Update specific fields of an existing merchant.'
 openapi: 'PATCH /partners/merchants/{merchant_id}/'
---- 
+---
+
+## Overview
+
+The Update Merchant endpoint allows Payment Aggregators (PSPs) to update an existing sub-merchant's company details, settlement information, contact details, and business information.
+
+This is a **partial update** (PATCH) — only include the fields you want to change. Fields not included in the request will remain unchanged.
+
+**Important**: Updates are only allowed when the sub-merchant is in `PENDING` or `CHANGES_REQUESTED` status. Merchants in other statuses (APPROVED, IN_REVIEW, REJECTED) cannot be edited.
+
+## Request Parameters
+
+The request structure mirrors the [Create Merchant](/api-reference/v1/merchant/create) endpoint. All fields are optional for partial updates.
+
+### Parameter Definitions
+
+#### Top-level
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| company_details | object | No | Company and contact details to update. See Company Details |
+| settlement_details | object | No | Bank account details to update. See Settlement Details |
+
+#### Company Details
+
+All fields from the [Create Merchant](/api-reference/v1/merchant/create#company-details) are accepted, but none are required. Only include fields you want to change.
+
+Key fields:
+| Name | Type | Description | Constraints |
+|---|---|---|---|
+| email | string | Contact email. | RFC 5322 email format |
+| phone_number | string | Contact phone number. | E.164 format (e.g., `+919876543210`) |
+| legal_name | string | Legal name of the company. | Max 255 chars |
+| brand_name | string | Brand/trade name. | Max 255 chars |
+| website | string | Company website URL. | Must include `https://` prefix |
+| international_org_type | string | Type of organization. | Same enum as Create |
+| monthly_avg_transaction_volume | string | Transaction volume range. | Same enum as Create |
+| business_category | string | Business category. | Same values as Create |
+| business_category_other | string | Required when category includes "Other". | |
+| business_mode | string | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
+| mcc | string | Merchant Category Codes. | Comma-separated 4-digit codes |
+
+For the complete field reference, see [Create Merchant — Company Details](/api-reference/v1/merchant/create#company-details).
+
+#### Settlement Details
+
+All fields from the [Create Merchant](/api-reference/v1/merchant/create#settlement-details) are accepted. Only include fields you want to change.
+
+## Examples
+
+<CodeGroup>
+
+```json Update Company Details
+{
+  "company_details": {
+    "brand_name": "AcmeTech Global",
+    "website": "https://acmetech-global.com",
+    "business_category": "Digital goods / software / downloads,SaaS / subscriptions / recurring billing",
+    "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
+    "description_of_products_and_services": "Updated: Enterprise SaaS platform for supply chain management"
+  }
+}
+```
+
+```json Update Contact Details
+{
+  "company_details": {
+    "email": "new-contact@acmetech.com",
+    "phone_number": "+919876500000"
+  }
+}
+```
+
+```json Update Settlement Details
+{
+  "settlement_details": {
+    "bank_account_number": "9876543210123456",
+    "bank_account_name": "AcmeTech Global Pvt Ltd",
+    "bank_swift_code": "ABORINBB",
+    "bank_name": "RBL Bank",
+    "bank_branch_name": "BKC Branch",
+    "bank_address": "One BKC, Bandra Kurla Complex",
+    "bank_city": "Mumbai",
+    "bank_state": "Maharashtra",
+    "bank_country": "India",
+    "bank_pincode": "400051",
+    "routing_number": "RATN0000001"
+  }
+}
+```
+
+```json Update Address
+{
+  "company_details": {
+    "registered_address": "New Tower B, IT Park",
+    "registered_city": "Pune",
+    "registered_state": "Maharashtra",
+    "registered_country": "India",
+    "registered_pincode": "411057",
+    "same_as_registered_address": true,
+    "communication_address": "New Tower B, IT Park",
+    "communication_city": "Pune",
+    "communication_state": "Maharashtra",
+    "communication_country": "India",
+    "communication_pincode": "411057"
+  }
+}
+```
+
+</CodeGroup>
+
+## Response Examples
+
+<CodeGroup>
+
+```json Success
+{
+  "success": true,
+  "message": "Sub-merchant updated successfully",
+  "data": {
+    "id": "6182929449",
+    "company_details": {
+      "legal_name": "Acme Technologies Pvt Ltd",
+      "brand_name": "AcmeTech Global",
+      "email": "new-contact@acmetech.com",
+      "phone_number": "+919876500000",
+      "registration_number": "U72200MH2020PTC123456",
+      "international_org_type": "Private Limited Company",
+      "tax_id": "AACCA1234A",
+      "website": "https://acmetech-global.com",
+      "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
+      "communication_address": "Tower A, Techpark, Whitefield",
+      "communication_city": "Bangalore",
+      "communication_state": "Karnataka",
+      "communication_country": "India",
+      "communication_pincode": "560066",
+      "same_as_registered_address": true,
+      "registered_address": "Tower A, Techpark, Whitefield",
+      "registered_city": "Bangalore",
+      "registered_state": "Karnataka",
+      "registered_country": "India",
+      "registered_pincode": "560066",
+      "business_category": "Digital goods / software / downloads,SaaS / subscriptions / recurring billing",
+      "business_category_other": null,
+      "business_mode": "b2b",
+      "hs_codes": [],
+      "description_of_products_and_services": "Updated: Enterprise SaaS platform for supply chain management",
+      "agreement_details": null
+    },
+    "settlement_details": {
+      "bank_account_number": "9876543210123456",
+      "bank_account_name": "AcmeTech Global Pvt Ltd",
+      "bank_swift_code": "ABORINBB",
+      "bank_name": "RBL Bank",
+      "bank_branch_name": "BKC Branch",
+      "bank_address": "One BKC, Bandra Kurla Complex",
+      "bank_city": "Mumbai",
+      "bank_state": "Maharashtra",
+      "bank_country": "India",
+      "bank_pincode": "400051",
+      "routing_number": "RATN0000001",
+      "settlement_currency": "USD"
+    },
+    "kyc_status": "PENDING",
+    "created_at": "2026-04-28T06:30:00.000000Z",
+    "last_updated_at": "2026-04-28T09:15:00.000000Z"
+  }
+}
+```
+
+```json Status Not Editable
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "Validation error",
+    "details": {
+      "kyc_status": "Sub-merchant can only be edited in PENDING or CHANGES_REQUESTED status, current status is APPROVED"
+    }
+  }
+}
+```
+
+```json Validation Error
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "Validation error",
+    "details": {
+      "company_details": {
+        "website": "Enter a valid URL.",
+        "business_mode": "\"invalid\" is not a valid choice."
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Error Codes
+
+| Code | Message | Description |
+|---|---|---|
+| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
+
+## Implementation Notes
+
+### Editable Statuses
+Only sub-merchants in these statuses can be updated:
+- **PENDING** — Initial state after creation
+- **CHANGES_REQUESTED** — After review, when additional information is needed
+
+Sub-merchants in APPROVED, IN_REVIEW, or REJECTED status will return a validation error.
+
+### Partial Updates
+This endpoint supports partial updates — only send the fields you want to change. Omitted fields retain their current values.
+
+### Address Handling
+When `same_as_registered_address` is set to `true`, communication address fields are automatically copied from registered address fields. If you update registered address fields and want communication to match, include `same_as_registered_address: true`.
+
+### Validation
+All the same validations from the [Create Merchant](/api-reference/v1/merchant/create) endpoint apply:
+- `website` must include `https://` prefix
+- `phone_number` must be E.164 format
+- `business_category`, `business_mode`, `international_org_type`, `monthly_avg_transaction_volume` must use valid enum values
+- `mcc` must be comma-separated 4-digit codes
+- `business_category_other` is required when category includes "Other"
