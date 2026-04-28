@@ -15,9 +15,7 @@ After creation, the sub-merchant status depends on the environment:
 ## Request Parameters
 
 ### Required Parameters
-- `email`: Contact email for the sub-merchant
-- `phone_number`: Contact phone with country code (E.164 format)
-- `company_details`: Company registration and business information
+- `company_details`: Company registration, business information, and contact details
 - `settlement_details`: Bank account details for settlements
 
 ### Parameter Definitions
@@ -26,15 +24,15 @@ After creation, the sub-merchant status depends on the environment:
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| email | string | Yes | Contact email for the sub-merchant. | RFC 5322 email format |
-| phone_number | string | Yes | Contact phone number with country code. | E.164 format (e.g., `+919876543210`) |
-| company_details | object | Yes | Company registration and business details. | See Company Details |
+| company_details | object | Yes | Company, business, and contact details. | See Company Details |
 | settlement_details | object | Yes | Bank account details for settlements. | See Settlement Details |
 
 #### Company Details
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
+| email | string | Yes | Contact email for the sub-merchant. | RFC 5322 email format |
+| phone_number | string | Yes | Contact phone number with country code. | E.164 format (e.g., `+919876543210`) |
 | legal_name | string | Yes | Legal name of the company. | Max 255 chars |
 | brand_name | string | Yes | Brand/trade name. | Max 255 chars |
 | registration_number | string | Yes | Company registration number. | Alphanumeric with dashes |
@@ -88,9 +86,9 @@ Notes:
 
 ```json Software Company (B2B)
 {
-  "email": "contact@acmetech.com",
-  "phone_number": "+919876543210",
   "company_details": {
+    "email": "contact@acmetech.com",
+    "phone_number": "+919876543210",
     "legal_name": "Acme Technologies Pvt Ltd",
     "brand_name": "AcmeTech",
     "registration_number": "U72200MH2020PTC123456",
@@ -133,9 +131,9 @@ Notes:
 
 ```json E-commerce (B2C, US)
 {
-  "email": "ops@globalshop.com",
-  "phone_number": "+14155551234",
   "company_details": {
+    "email": "ops@globalshop.com",
+    "phone_number": "+14155551234",
     "legal_name": "GlobalShop Inc",
     "brand_name": "GlobalShop",
     "registration_number": "US-CORP-2024-GS789456",
@@ -180,9 +178,9 @@ Notes:
 
 ```json Other Category (UAE)
 {
-  "email": "finance@innovate.io",
-  "phone_number": "+971501234567",
   "company_details": {
+    "email": "finance@innovate.io",
+    "phone_number": "+971501234567",
     "legal_name": "Innovate FZE",
     "brand_name": "Innovate",
     "registration_number": "FZ-2024-INV-001",
