@@ -1963,7 +1963,7 @@
                   "international_org_type": "Private Limited Company",
                   "tax_id": "94-8765432",
                   "website": "https://www.innovatetech.com",
-                  "monthly_avg_transaction_volume": "485",
+                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                   "communication_address": "Suite 1200, 101 California Street",
                   "communication_city": "San Francisco",
                   "communication_state": "CA",
@@ -1975,18 +1975,17 @@
                   "registered_state": "CA",
                   "registered_country": "United States",
                   "registered_pincode": "94103",
-                  "business_category": "goods_merchant",
+                  "business_category": "E-commerce (physical goods & cross-border shipping)",
                   "business_mode": "b2b",
                   "hs_codes": [
                     "85234910",
                     "84715000"
                   ],
-                  "category": "Enterprise Software and Cloud Services",
                   "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
-                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15"
-                },
-                "email": "merchant@example.com",
-                "phone_number": "+919876543210"
+                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
+                  "email": "merchant@example.com",
+                  "phone_number": "+919876543210"
+                }
               }
             }
           },
@@ -2027,7 +2026,7 @@
                       "international_org_type": "Private Limited Company",
                       "tax_id": "94-1234567",
                       "website": "https://www.globaltech.io",
-                      "monthly_avg_transaction_volume": "300",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                       "communication_address": "500 Mission Street, Suite 2400",
                       "communication_city": "San Francisco",
                       "communication_state": "CA",
@@ -2039,15 +2038,17 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94043",
-                      "business_category": "goods_merchant",
+                      "business_category": "E-commerce (physical goods & cross-border shipping)",
                       "business_mode": "b2b",
                       "hs_codes": [
                         "85234910",
                         "84715000"
                       ],
-                      "category": "Enterprise SaaS",
                       "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
-                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients"
+                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
+                      "email": "contact@example.com",
+                      "phone_number": "+919876543210",
+                      "business_category_other": null
                     },
                     "last_updated_at": "2025-01-15T10:30:00.000000Z",
                     "kyc_status": "PENDING"
@@ -2162,7 +2163,7 @@
                       "international_org_type": "Private Limited Company",
                       "tax_id": "94-8765432",
                       "website": "https://www.innovatetech.com",
-                      "monthly_avg_transaction_volume": "100",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
                       "communication_address": "123 Tech Street",
                       "communication_city": "San Francisco",
                       "communication_state": "CA",
@@ -2174,15 +2175,17 @@
                       "registered_state": "CA",
                       "registered_country": "United States",
                       "registered_pincode": "94105",
-                      "business_category": "goods_merchant",
+                      "business_category": "E-commerce (physical goods & cross-border shipping)",
                       "business_mode": "b2b",
                       "hs_codes": [
                         "84713010",
                         "85423100"
                       ],
-                      "category": "E-commerce",
                       "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                      "agreement_details": "global_company aggrement"
+                      "agreement_details": "global_company aggrement",
+                      "email": "contact@example.com",
+                      "phone_number": "+919876543210",
+                      "business_category_other": null
                     },
                     "last_updated_at": "2025-06-19T18:06:05.523752Z",
                     "kyc_status": "PENDING"
@@ -2244,10 +2247,9 @@
                   "international_org_type": "Private Limited Company",
                   "tax_id": "29AABCT1234D1Z9",
                   "website": "https://www.shaktiexpress.in",
-                  "monthly_avg_transaction_volume": "120",
-                  "business_category": "goods_merchant",
+                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+                  "business_category": "E-commerce (physical goods & cross-border shipping)",
                   "business_mode": "b2b",
-                  "category": "Logistics & Manufacturing Support",
                   "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
                   "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
                   "communication_address": "Plot No. 56, Electronic City Phase 1",
@@ -7616,8 +7618,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -7634,10 +7640,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
@@ -10460,9 +10462,10 @@
           "registered_pincode",
           "business_category",
           "business_mode",
-          "category",
           "description_of_products_and_services",
-          "agreement_details"
+          "agreement_details",
+          "email",
+          "phone_number"
         ],
         "properties": {
           "legal_name": {
@@ -10560,8 +10563,12 @@
             "type": "string",
             "description": "Business category",
             "enum": [
-              "goods_merchant",
-              "service_merchant"
+              "E-commerce (physical goods & cross-border shipping)",
+              "Digital goods / software / downloads",
+              "SaaS / subscriptions / recurring billing",
+              "Services (delivered cross-border)",
+              "Marketplace / platform (multiple sellers)",
+              "Other"
             ]
           },
           "business_mode": {
@@ -10579,10 +10586,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -10590,6 +10593,19 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format"
           }
         }
       },
@@ -10839,8 +10855,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -10857,10 +10877,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
@@ -13667,9 +13683,10 @@
           "registered_pincode",
           "business_category",
           "business_mode",
-          "category",
           "description_of_products_and_services",
-          "agreement_details"
+          "agreement_details",
+          "email",
+          "phone_number"
         ],
         "properties": {
           "legal_name": {
@@ -13767,8 +13784,12 @@
             "type": "string",
             "description": "Business category",
             "enum": [
-              "goods_merchant",
-              "service_merchant"
+              "E-commerce (physical goods & cross-border shipping)",
+              "Digital goods / software / downloads",
+              "SaaS / subscriptions / recurring billing",
+              "Services (delivered cross-border)",
+              "Marketplace / platform (multiple sellers)",
+              "Other"
             ]
           },
           "business_mode": {
@@ -13786,10 +13807,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -13797,6 +13814,19 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format"
           }
         }
       },
@@ -14046,8 +14076,12 @@
                 "type": "string",
                 "description": "Updated business category",
                 "enum": [
-                  "goods_merchant",
-                  "service_merchant"
+                  "E-commerce (physical goods & cross-border shipping)",
+                  "Digital goods / software / downloads",
+                  "SaaS / subscriptions / recurring billing",
+                  "Services (delivered cross-border)",
+                  "Marketplace / platform (multiple sellers)",
+                  "Other"
                 ]
               },
               "business_mode": {
@@ -14064,10 +14098,6 @@
                   "type": "string"
                 },
                 "description": "Updated Harmonized System codes for products/services, required for physical goods"
-              },
-              "category": {
-                "type": "string",
-                "description": "Updated business category description"
               },
               "description_of_products_and_services": {
                 "type": "string",
