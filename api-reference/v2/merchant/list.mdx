@@ -2,4 +2,83 @@
 title: 'List Merchants'
 description: 'Retrieve a list of merchants with pagination.'
 openapi: 'GET /partners/merchants/'
---- 
+---
+
+## Overview
+
+Retrieve a paginated list of all sub-merchants under the authenticated PSP account.
+
+## Request Parameters
+
+#### Query Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| page | integer | No | Page number (default: 1) |
+| page_size | integer | No | Number of results per page (default: 10) |
+| search | string | No | Search by brand name or legal name |
+| ordering | string | No | Sort field. Prefix with `-` for descending. Options: `created_at`, `last_updated_at` |
+
+## Response
+
+| Name | Type | Description |
+|---|---|---|
+| id | string | Unique merchant identifier |
+| brand_name | string | Brand/trade name of the sub-merchant |
+| kyc_status | string | Current KYC status (`PENDING`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`) |
+| created_at | string | ISO 8601 timestamp of creation |
+
+## Response Example
+
+<CodeGroup>
+
+```json Success
+{
+  "success": true,
+  "message": "Request processed successfully.",
+  "data": {
+    "count": 3,
+    "page": 1,
+    "page_size": 10,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "id": "6692437779",
+        "brand_name": "Acme",
+        "kyc_status": "PENDING",
+        "created_at": "2026-04-28T07:54:33.468589Z"
+      },
+      {
+        "id": "6182929449",
+        "brand_name": "GlobalShop",
+        "kyc_status": "APPROVED",
+        "created_at": "2026-04-27T10:30:00.000000Z"
+      },
+      {
+        "id": "5813168537",
+        "brand_name": "Innovate",
+        "kyc_status": "CHANGES_REQUESTED",
+        "created_at": "2026-04-26T14:20:00.000000Z"
+      }
+    ]
+  }
+}
+```
+
+```json Empty List
+{
+  "success": true,
+  "message": "Request processed successfully.",
+  "data": {
+    "count": 0,
+    "page": 1,
+    "page_size": 10,
+    "next": null,
+    "previous": null,
+    "results": []
+  }
+}
+```
+
+</CodeGroup>
