@@ -5183,9 +5183,7 @@
         "type": "object",
         "required": [
           "settlement_details",
-          "company_details",
-          "email",
-          "phone_number"
+          "company_details"
         ],
         "properties": {
           "settlement_details": {
@@ -5193,20 +5191,6 @@
           },
           "company_details": {
             "$ref": "#/components/schemas/v3_CompanyDetails"
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "description": "Contact email for the sub-merchant"
-          },
-          "phone_number": {
-            "type": "string",
-            "description": "Contact phone number for the sub-merchant (e.g., +919876543210)"
-          },
-          "country_code": {
-            "type": "string",
-            "description": "ISO 3166-1 alpha-2 country code (e.g., IN, US)",
-            "example": "IN"
           }
         }
       },
@@ -5275,6 +5259,8 @@
       "v3_CompanyDetails": {
         "type": "object",
         "required": [
+          "email",
+          "phone_number",
           "legal_name",
           "brand_name",
           "registration_number",
@@ -5282,16 +5268,15 @@
           "tax_id",
           "website",
           "monthly_avg_transaction_volume",
+          "business_category",
+          "business_mode",
+          "description_of_products_and_services",
           "registered_address",
           "registered_city",
           "registered_state",
           "registered_country",
           "registered_pincode",
-          "business_category",
-          "business_mode",
-          "category",
-          "description_of_products_and_services",
-          "agreement_details"
+          "same_as_registered_address"
         ],
         "properties": {
           "legal_name": {
@@ -5308,16 +5293,17 @@
           },
           "international_org_type": {
             "type": "string",
-            "description": "Type of international organization",
             "enum": [
               "Private Limited Company",
               "Public Limited Company",
               "Limited Liability Company",
+              "Joint Stock Company",
               "Free Zone Company / Entity",
               "Partnership / LLP",
               "Sole Proprietorship",
               "Other"
-            ]
+            ],
+            "description": "Type of organization"
           },
           "tax_id": {
             "type": "string",
@@ -5326,11 +5312,10 @@
           "website": {
             "type": "string",
             "format": "uri",
-            "description": "Company website URL"
+            "description": "Company website URL (must include https://)"
           },
           "monthly_avg_transaction_volume": {
             "type": "string",
-            "description": "Average monthly transaction volume",
             "enum": [
               "LESS_THAN_5_K",
               "BETWEEN_5_K_AND_20_K",
@@ -5339,7 +5324,8 @@
               "BETWEEN_100_K_AND_250_K",
               "BETWEEN_250_K_AND_500_K",
               "ABOVE_500_K"
-            ]
+            ],
+            "description": "Expected monthly transaction volume range"
           },
           "registered_address": {
             "type": "string",
@@ -5387,19 +5373,16 @@
           },
           "business_category": {
             "type": "string",
-            "description": "Business category",
-            "enum": [
-              "goods_merchant",
-              "service_merchant"
-            ]
+            "description": "Business category (comma-separated for multiple). Values: E-commerce (physical goods & cross-border shipping), Digital goods / software / downloads, SaaS / subscriptions / recurring billing, Services (delivered cross-border), Marketplace / platform (multiple sellers), Other"
           },
           "business_mode": {
             "type": "string",
-            "description": "Business mode",
             "enum": [
               "b2b",
-              "b2c"
-            ]
+              "b2c",
+              "marketplace"
+            ],
+            "description": "Mode of business"
           },
           "hs_codes": {
             "type": "array",
@@ -5408,10 +5391,6 @@
             },
             "description": "Harmonized System codes for products/services, required for physical goods"
           },
-          "category": {
-            "type": "string",
-            "description": "Business category description"
-          },
           "description_of_products_and_services": {
             "type": "string",
             "description": "Detailed description of products and services"
@@ -5419,6 +5398,23 @@
           "agreement_details": {
             "type": "string",
             "description": "Agreement details"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email for the sub-merchant"
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format (e.g., +919876543210)"
+          },
+          "mcc": {
+            "type": "string",
+            "description": "Comma-separated 4-digit Merchant Category Codes (e.g., 5411,5812)"
+          },
+          "business_category_other": {
+            "type": "string",
+            "description": "Required when business_category includes Other"
           }
         }
       },
