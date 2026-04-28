@@ -1900,7 +1900,6 @@
                       "settlement_currency": "USD"
                     },
                     "created_at": "2025-01-15T10:30:00.000000Z",
-                    "updated_at": "2025-01-15T10:30:00.000000Z",
                     "company_details": {
                       "legal_name": "GlobalTech Solutions Inc.",
                       "brand_name": "GlobalTech",
@@ -1929,7 +1928,9 @@
                       "category": "Enterprise SaaS",
                       "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
                       "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients"
-                    }
+                    },
+                    "last_updated_at": "2025-01-15T10:30:00.000000Z",
+                    "kyc_status": "PENDING"
                   }
                 }
               }
@@ -2034,7 +2035,6 @@
                       "settlement_currency": "USD"
                     },
                     "created_at": "2025-06-19T18:06:05.523720Z",
-                    "updated_at": "2025-06-19T18:06:05.523752Z",
                     "company_details": {
                       "legal_name": "InnovateTech Solutions Private Limited",
                       "brand_name": "InnovateTech Solutions",
@@ -2063,7 +2063,9 @@
                       "category": "E-commerce",
                       "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
                       "agreement_details": "global_company aggrement"
-                    }
+                    },
+                    "last_updated_at": "2025-06-19T18:06:05.523752Z",
+                    "kyc_status": "PENDING"
                   }
                 }
               }
@@ -5528,8 +5530,9 @@
           "id",
           "settlement_details",
           "created_at",
-          "updated_at",
-          "company_details"
+          "company_details",
+          "last_updated_at",
+          "kyc_status"
         ],
         "properties": {
           "id": {
@@ -5544,13 +5547,24 @@
             "format": "date-time",
             "description": "Merchant creation timestamp"
           },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Merchant update timestamp"
-          },
           "company_details": {
             "$ref": "#/components/schemas/v3_CompanyDetails"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last updated timestamp"
+          },
+          "kyc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_REVIEW",
+              "CHANGES_REQUESTED",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "description": "Current KYC/onboarding status"
           }
         }
       },
