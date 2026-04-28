@@ -269,21 +269,9 @@ Notes:
     "details": {
       "company_details": {
         "monthly_avg_transaction_volume": "\"500\" is not a valid choice.",
-        "business_mode": "\"invalid\" is not a valid choice."
+        "business_mode": "\"invalid\" is not a valid choice.",
+        "registered_country": "Invalid country name"
       }
-    }
-  }
-}
-```
-
-```json Invalid Country
-{
-  "success": false,
-  "error": {
-    "code": 40188,
-    "message": "Invalid country name",
-    "details": {
-      "message": "Invalid country name"
     }
   }
 }
@@ -296,8 +284,6 @@ Notes:
 | Code | Message | Description |
 |---|---|---|
 | ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
-| ERR_MERCHANT_002 | Merchant not found | Parent merchant account not found |
-| 40188 | Invalid country name | Country name does not match any known country |
 
 ## Implementation Notes
 
