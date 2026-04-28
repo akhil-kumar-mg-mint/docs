@@ -123,7 +123,7 @@ All fields from the [Create Merchant](/api-reference/v1/merchant/create#settleme
   "message": "Sub-merchant updated successfully",
   "data": {
     "id": "6182929449",
-    "company_details": {
+    "global_company": {
       "legal_name": "Acme Technologies Pvt Ltd",
       "brand_name": "AcmeTech Global",
       "email": "new-contact@acmetech.com",
@@ -165,9 +165,9 @@ All fields from the [Create Merchant](/api-reference/v1/merchant/create#settleme
       "routing_number": "RATN0000001",
       "settlement_currency": "USD"
     },
-    "kyc_status": "PENDING",
     "created_at": "2026-04-28T06:30:00.000000Z",
-    "last_updated_at": "2026-04-28T09:15:00.000000Z"
+    "last_updated_at": "2026-04-28T09:15:00.000000Z",
+    "invoice_file": null
   }
 }
 ```
@@ -176,8 +176,8 @@ All fields from the [Create Merchant](/api-reference/v1/merchant/create#settleme
 {
   "success": false,
   "error": {
-    "code": "ERR_MERCHANT_001",
-    "message": "Validation error",
+    "code": 40000,
+    "message": "Invalid request",
     "details": {
       "kyc_status": "Sub-merchant can only be edited in PENDING or CHANGES_REQUESTED status, current status is APPROVED"
     }
@@ -189,8 +189,8 @@ All fields from the [Create Merchant](/api-reference/v1/merchant/create#settleme
 {
   "success": false,
   "error": {
-    "code": "ERR_MERCHANT_001",
-    "message": "Validation error",
+    "code": 40000,
+    "message": "Invalid request",
     "details": {
       "company_details": {
         "website": "Enter a valid URL.",
@@ -207,7 +207,7 @@ All fields from the [Create Merchant](/api-reference/v1/merchant/create#settleme
 
 | Code | Message | Description |
 |---|---|---|
-| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
+| 40000 | Invalid request | Request validation failed — check `details` for field-level errors |
 
 ## Implementation Notes
 
