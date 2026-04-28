@@ -43,7 +43,6 @@ After creation, the sub-merchant status depends on the environment:
 | business_category | string | Yes | Business category (comma-separated for multiple). | Enum: `E-commerce (physical goods & cross-border shipping)`, `Digital goods / software / downloads`, `SaaS / subscriptions / recurring billing`, `Services (delivered cross-border)`, `Marketplace / platform (multiple sellers)`, `Other` |
 | business_category_other | string | Conditionally | Description when category includes "Other". | Required if `business_category` includes `Other` |
 | business_mode | string | Yes | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
-| category | string | Yes | Description of the business vertical. | Max 255 chars |
 | description_of_products_and_services | string | Yes | Detailed description of products/services. | Max 1024 chars |
 | mcc | string | No | Merchant Category Codes. | Comma-separated 4-digit codes (e.g., `5411,5812`) |
 | hs_codes | array | No | HS codes for goods traded. | Array of HS code strings |
@@ -98,7 +97,6 @@ Notes:
     "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
     "business_category": "Digital goods / software / downloads",
     "business_mode": "b2b",
-    "category": "Enterprise Software",
     "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
     "mcc": "5734",
     "registered_address": "Tower A, Techpark, Whitefield",
@@ -143,7 +141,6 @@ Notes:
     "monthly_avg_transaction_volume": "BETWEEN_100_K_AND_250_K",
     "business_category": "E-commerce (physical goods & cross-border shipping),SaaS / subscriptions / recurring billing",
     "business_mode": "b2c",
-    "category": "Online Retail and Subscription Commerce",
     "description_of_products_and_services": "Multi-category e-commerce platform selling electronics, apparel, and home goods with subscription box services",
     "mcc": "5411,5812",
     "hs_codes": ["85234910", "84715000"],
@@ -191,7 +188,6 @@ Notes:
     "business_category": "Other",
     "business_category_other": "AI-powered supply chain optimization and logistics analytics platform",
     "business_mode": "b2b",
-    "category": "Supply Chain Technology",
     "description_of_products_and_services": "AI-driven logistics optimization platform that helps enterprises reduce shipping costs and delivery times",
     "mcc": "7372",
     "registered_address": "Office 1205, Business Bay Tower",
@@ -233,9 +229,7 @@ Notes:
   "success": true,
   "message": "Sub-merchant created successfully",
   "data": {
-    "id": "2782567086",
-    "legal_name": "Acme Technologies Pvt Ltd",
-    "trade_name": "AcmeTech",
+    "id": "6182929449",
     "company_details": {
       "legal_name": "Acme Technologies Pvt Ltd",
       "brand_name": "AcmeTech",
@@ -246,16 +240,42 @@ Notes:
       "tax_id": "AACCA1234A",
       "website": "https://acmetech.com",
       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+      "communication_address": "Tower A, Techpark, Whitefield",
+      "communication_city": "Bangalore",
+      "communication_state": "Karnataka",
+      "communication_country": "India",
+      "communication_pincode": "560066",
+      "same_as_registered_address": true,
+      "registered_address": "Tower A, Techpark, Whitefield",
+      "registered_city": "Bangalore",
+      "registered_state": "Karnataka",
+      "registered_country": "India",
+      "registered_pincode": "560066",
       "business_category": "Digital goods / software / downloads",
-      "business_mode": "b2b"
+      "business_category_other": null,
+      "business_mode": "b2b",
+      "hs_codes": [],
+      "mcc": "5734",
+      "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
+      "agreement_details": null
     },
     "settlement_details": {
+      "bank_account_number": "1234567890123456",
       "bank_account_name": "Acme Technologies Pvt Ltd",
       "bank_swift_code": "HDFCINBB",
       "bank_name": "HDFC Bank",
-      "bank_country": "India"
+      "bank_branch_name": "Whitefield Branch",
+      "bank_address": "100 Feet Road, Whitefield",
+      "bank_city": "Bangalore",
+      "bank_state": "Karnataka",
+      "bank_country": "India",
+      "bank_pincode": "560066",
+      "routing_number": "HDFC0001234",
+      "settlement_currency": "USD"
     },
-    "created_at": "2026-04-28T06:30:00.000000Z"
+    "kyc_status": "PENDING",
+    "created_at": "2026-04-28T06:30:00.000000Z",
+    "last_updated_at": "2026-04-28T06:30:00.000000Z"
   }
 }
 ```
