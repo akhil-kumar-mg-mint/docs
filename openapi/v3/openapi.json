@@ -1901,7 +1901,6 @@
                     },
                     "created_at": "2025-01-15T10:30:00.000000Z",
                     "updated_at": "2025-01-15T10:30:00.000000Z",
-                    "invoice_file": null,
                     "company_details": {
                       "legal_name": "GlobalTech Solutions Inc.",
                       "brand_name": "GlobalTech",
@@ -2036,7 +2035,6 @@
                     },
                     "created_at": "2025-06-19T18:06:05.523720Z",
                     "updated_at": "2025-06-19T18:06:05.523752Z",
-                    "invoice_file": null,
                     "company_details": {
                       "legal_name": "InnovateTech Solutions Private Limited",
                       "brand_name": "InnovateTech Solutions",
@@ -5531,7 +5529,6 @@
           "settlement_details",
           "created_at",
           "updated_at",
-          "invoice_file",
           "company_details"
         ],
         "properties": {
@@ -5551,10 +5548,6 @@
             "type": "string",
             "format": "date-time",
             "description": "Merchant update timestamp"
-          },
-          "invoice_file": {
-            "type": "string",
-            "description": "Invoice file URL"
           },
           "company_details": {
             "$ref": "#/components/schemas/v3_CompanyDetails"
