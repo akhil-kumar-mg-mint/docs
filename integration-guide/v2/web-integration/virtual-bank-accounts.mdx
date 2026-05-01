@@ -63,6 +63,7 @@ Before you begin, ensure you have:
 1. **Create VBA**: Call the API to create a virtual bank account for a customer or merchant.
 2. **Share Account Details**: Share the account number, IFSC, and bank name with your customer.
 3. **Track Payments**: List payments or fetch by UTR via API, or use webhooks for real-time updates.
+4. **Simulate a Transfer (Sandbox)**: Test the end-to-end flow by simulating an incoming bank transfer to your VBA.
 
 ## Step 1: Create VBA
 
@@ -120,6 +121,18 @@ Fetch a single payment using the UTR (reference number) from the bank transfer.
   **Get VBA Payment by UTR API** – Query by UTR.
 </Card>
 
+## Step 4: Simulate a Transfer (Sandbox)
+
+In the sandbox environment, you can simulate an incoming bank transfer to your VBA to test the end-to-end flow — including webhooks and payment reconciliation — without making a real bank transfer.
+
+Pass the `virtual_account_id` along with simulated remitter details (amount, UTR, remitter name, account, and IFSC). The `utr` value must be unique across simulations.
+
+<Warning>This endpoint is available only in the sandbox/staging environment, not in production.</Warning>
+
+<Card title="📚 API Reference" href="/api-reference/v2/vba/simulate-transfer">
+  **Simulate VBA Transfer API** – Simulate a payment to a VBA in sandbox.
+</Card>
+
 ## Managing VBAs
 
 EximPe provides APIs to manage the lifecycle of your virtual bank accounts:
@@ -129,3 +142,4 @@ EximPe provides APIs to manage the lifecycle of your virtual bank accounts:
 - **[Manage VBA Status](/api-reference/v2/vba/manage)**: Activate or deactivate a VBA.
 - **[List VBA Payments](/api-reference/v2/vba/list-payments)**: List all payments for a VBA.
 - **[Get Payment by UTR](/api-reference/v2/vba/get-payment-by-utr)**: Get a single payment by UTR.
+- **[Simulate VBA Transfer](/api-reference/v2/vba/simulate-transfer)**: Simulate an incoming transfer to a VBA in sandbox.
