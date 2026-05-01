@@ -301,7 +301,8 @@
                   "api-reference/v2/vba/edit",
                   "api-reference/v2/vba/manage",
                   "api-reference/v2/vba/list-payments",
-                  "api-reference/v2/vba/get-payment-by-utr"
+                  "api-reference/v2/vba/get-payment-by-utr",
+                  "api-reference/v2/vba/simulate-transfer"
                 ]
               },
               {
