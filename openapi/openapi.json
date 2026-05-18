@@ -3611,7 +3611,7 @@
     "/pg/vba/": {
       "post": {
         "summary": "Create VBA",
-        "description": "Create one or more Virtual Bank Accounts for the authenticated merchant. VBA details (email, name, phone, virtual_account_id) are derived from the merchant account. At most one ACTIVE VBA is allowed per merchant; if one already exists, the request fails with 400. No request body required.",
+        "description": "Create a Virtual Bank Account for the authenticated merchant. VBA details (email, name, phone, virtual_account_id) are derived from the merchant account. From v2.0.0 onwards, a merchant can have multiple ACTIVE VBAs simultaneously. The request body is optional — both `remitter_lock_details` and `amount_lock_details` are independently optional and can be omitted, sent individually, or sent together. When omitted, the corresponding field is returned as `null` and the VBA accepts transfers from any remitter / for any amount.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -3623,6 +3623,80 @@
             "apiVersionHeader": []
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "remitter_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Omit to allow transfers from any remitter. When supplied, restricts the VBA to accept transfers only from the listed remitter accounts. Persisted on the VBA and echoed back on every read.",
+                    "properties": {
+                      "allowed_remitters": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "account_number",
+                            "ifsc"
+                          ],
+                          "properties": {
+                            "account_number": {
+                              "type": "string",
+                              "minLength": 9,
+                              "maxLength": 30,
+                              "description": "Remitter bank account number (9–30 chars).",
+                              "example": "26291800001191"
+                            },
+                            "ifsc": {
+                              "type": "string",
+                              "description": "Remitter bank IFSC.",
+                              "example": "YESB0000262"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "amount_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Omit to allow transfers of any amount. When supplied, restricts the VBA to accept transfers within the given range.",
+                    "properties": {
+                      "min_amount": {
+                        "type": "number",
+                        "description": "Minimum allowed transfer amount.",
+                        "example": 1000
+                      },
+                      "max_amount": {
+                        "type": "number",
+                        "description": "Maximum allowed transfer amount.",
+                        "example": 5000
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "remitter_lock_details": {
+                  "allowed_remitters": [
+                    {
+                      "account_number": "26291800001191",
+                      "ifsc": "YESB0000262"
+                    }
+                  ]
+                },
+                "amount_lock_details": {
+                  "min_amount": 1000,
+                  "max_amount": 5000
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "VBA created successfully",
@@ -3646,11 +3720,11 @@
                         "properties": {
                           "virtual_account_id": {
                             "type": "string",
-                            "example": "a1b2c3d4"
+                            "example": "24586202"
                           },
                           "vba_account_name": {
                             "type": "string",
-                            "example": "My Trade Name"
+                            "example": "Acme Imports"
                           },
                           "vba_bank_code": {
                             "type": "string",
@@ -3658,26 +3732,90 @@
                           },
                           "vba_account_number": {
                             "type": "string",
-                            "example": "12345678901234"
+                            "example": "9461257424586202"
                           },
                           "vba_ifsc": {
                             "type": "string",
-                            "example": "UTIB0001234"
+                            "example": "UTIB0CCH274"
                           },
                           "vba_status": {
                             "type": "string",
                             "example": "ACTIVE"
+                          },
+                          "remitter_lock_details": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The remitter lock applied at creation time, persisted from the gateway response. `null` when no lock was supplied.",
+                            "properties": {
+                              "allowed_remitters": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "account_number": {
+                                      "type": "string",
+                                      "example": "1234567891"
+                                    },
+                                    "ifsc": {
+                                      "type": "string",
+                                      "example": "SBIN0005943"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "amount_lock_details": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "The amount lock applied at creation time. `null` when no lock was supplied.",
+                            "properties": {
+                              "min_amount": {
+                                "type": "number",
+                                "example": 100
+                              },
+                              "max_amount": {
+                                "type": "number",
+                                "example": 10000
+                              }
+                            }
                           }
                         }
                       }
                     }
                   }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA created successfully",
+                  "data": [
+                    {
+                      "virtual_account_id": "24586202",
+                      "vba_account_name": "Acme Imports",
+                      "vba_bank_code": "UTIB",
+                      "vba_account_number": "9461257424586202",
+                      "vba_ifsc": "UTIB0CCH274",
+                      "vba_status": "ACTIVE",
+                      "remitter_lock_details": {
+                        "allowed_remitters": [
+                          {
+                            "account_number": "1234567891",
+                            "ifsc": "SBIN0005943"
+                          }
+                        ]
+                      },
+                      "amount_lock_details": {
+                        "min_amount": 100,
+                        "max_amount": 10000
+                      }
+                    }
+                  ]
                 }
               }
             }
           },
           "400": {
-            "description": "Merchant account not identified, active VBA already exists, email required, or notification group error",
+            "description": "Validation error — invalid lock details, merchant account not identified, email required, or notification group error",
             "content": {
               "application/json": {
                 "schema": {
@@ -4145,11 +4283,11 @@
                       "properties": {
                         "uid": {
                           "type": "string",
-                          "example": "550e8400-e29b-41d4-a716-446655440000"
+                          "example": "VBA5977751432"
                         },
                         "virtual_account_id": {
                           "type": "string",
-                          "example": "a1b2c3d4"
+                          "example": "24586202"
                         },
                         "vba_bank_code": {
                           "type": "string",
@@ -4157,11 +4295,11 @@
                         },
                         "vba_account_number": {
                           "type": "string",
-                          "example": "12345678901234"
+                          "example": "9461257424586202"
                         },
                         "vba_ifsc": {
                           "type": "string",
-                          "example": "UTIB0001234"
+                          "example": "UTIB0CCH274"
                         },
                         "vba_status": {
                           "type": "string",
@@ -4169,7 +4307,45 @@
                         },
                         "vba_account_name": {
                           "type": "string",
-                          "example": "My Trade Name"
+                          "example": "Acme Imports"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "Remitter lock persisted at creation. `null` when no lock was applied.",
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "1234567891"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "SBIN0005943"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "amount_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "Amount lock persisted at creation. `null` when no lock was applied.",
+                          "properties": {
+                            "min_amount": {
+                              "type": "number",
+                              "example": 100
+                            },
+                            "max_amount": {
+                              "type": "number",
+                              "example": 10000
+                            }
+                          }
                         }
                       }
                     }
@@ -4179,13 +4355,25 @@
                   "success": true,
                   "message": "VBA details fetched successfully",
                   "data": {
-                    "uid": "550e8400-e29b-41d4-a716-446655440000",
-                    "virtual_account_id": "a1b2c3d4",
+                    "uid": "VBA5977751432",
+                    "virtual_account_id": "24586202",
                     "vba_bank_code": "UTIB",
-                    "vba_account_number": "12345678901234",
-                    "vba_ifsc": "UTIB0001234",
+                    "vba_account_number": "9461257424586202",
+                    "vba_ifsc": "UTIB0CCH274",
                     "vba_status": "ACTIVE",
-                    "vba_account_name": "My Trade Name"
+                    "vba_account_name": "Acme Imports",
+                    "remitter_lock_details": {
+                      "allowed_remitters": [
+                        {
+                          "account_number": "1234567891",
+                          "ifsc": "SBIN0005943"
+                        }
+                      ]
+                    },
+                    "amount_lock_details": {
+                      "min_amount": 100,
+                      "max_amount": 10000
+                    }
                   }
                 }
               }
@@ -4256,7 +4444,7 @@
       },
       "patch": {
         "summary": "Manage VBA Status",
-        "description": "Sets the VBA status to ACTIVE or INACTIVE. Only one ACTIVE VBA is allowed per merchant; activating a second VBA returns 400.",
+        "description": "Sets the VBA status to ACTIVE or INACTIVE. From v2.0.0 onwards, a merchant can have multiple ACTIVE VBAs simultaneously.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -4351,6 +4539,42 @@
                         "vba_status": {
                           "type": "string",
                           "example": "INACTIVE"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "026291800001191"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "YESB0000262"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "amount_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "min_amount": {
+                              "type": "number",
+                              "example": 1000
+                            },
+                            "max_amount": {
+                              "type": "number",
+                              "example": 5000
+                            }
+                          }
                         }
                       }
                     }
@@ -4366,14 +4590,16 @@
                     "vba_bank_code": "UTIB",
                     "vba_account_number": "12345678901234",
                     "vba_ifsc": "UTIB0001234",
-                    "vba_status": "INACTIVE"
+                    "vba_status": "INACTIVE",
+                    "remitter_lock_details": null,
+                    "amount_lock_details": null
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid status (not ACTIVE or INACTIVE) or activating when another active VBA exists",
+            "description": "Invalid status (not ACTIVE or INACTIVE)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4492,28 +4718,53 @@
                       "properties": {
                         "payment_id": {
                           "type": "string",
-                          "example": "550e8400-e29b-41d4-a716-446655440001"
+                          "description": "EximPe payment identifier (UID). Stable, use as primary key.",
+                          "example": "pmt_01HXYZABCDEF"
                         },
                         "order_id": {
                           "type": "string",
-                          "example": "660e8400-e29b-41d4-a716-446655440002"
+                          "description": "EximPe order UID this payment belongs to.",
+                          "example": "ord_01HXYZABCDEF"
                         },
                         "status": {
                           "type": "string",
-                          "example": "SUCCESS"
+                          "enum": [
+                            "PENDING",
+                            "CAPTURED",
+                            "FAILED",
+                            "INVALID"
+                          ],
+                          "description": "Effective payment status. `PENDING` — created, awaiting completion. `CAPTURED` — money received. `FAILED` — failed or expired past `expiry_date`. `INVALID` — marked invalid by the gateway.",
+                          "example": "CAPTURED"
                         },
                         "amount": {
                           "type": "number",
-                          "example": 100.5
+                          "nullable": true,
+                          "description": "Order amount in major units (INR). May be `null` if the order is missing.",
+                          "example": 12500.0
                         },
                         "payment_utr": {
                           "type": "string",
-                          "example": "UTR123456789012"
+                          "description": "Bank UTR / transaction reference. Empty string if not yet known.",
+                          "example": "SBIN0123456789"
+                        },
+                        "buyer_account_number": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Remitter (buyer) bank account number captured from the Cashfree VBA success webhook. `null` when not provided by the bank.",
+                          "example": "1234567890"
+                        },
+                        "buyer_ifsc": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Remitter (buyer) bank IFSC code captured from the same webhook. `null` when not provided.",
+                          "example": "SBIN0001234"
                         },
                         "created_at": {
                           "type": "string",
                           "format": "date-time",
-                          "example": "2025-02-10T14:30:00Z"
+                          "description": "Payment creation timestamp (UTC). Format: `YYYY-MM-DDTHH:MM:SS.ffffffZ`.",
+                          "example": "2026-05-15T18:30:00.000000Z"
                         }
                       }
                     }
@@ -4523,12 +4774,14 @@
                   "success": true,
                   "message": "VBA payment retrieved successfully",
                   "data": {
-                    "payment_id": "550e8400-e29b-41d4-a716-446655440001",
-                    "order_id": "660e8400-e29b-41d4-a716-446655440002",
-                    "status": "SUCCESS",
-                    "amount": 100.5,
-                    "payment_utr": "UTR123456789012",
-                    "created_at": "2025-02-10T14:30:00Z"
+                    "payment_id": "pmt_01HXYZABCDEF",
+                    "order_id": "ord_01HXYZABCDEF",
+                    "status": "CAPTURED",
+                    "amount": 12500.0,
+                    "payment_utr": "SBIN0123456789",
+                    "buyer_account_number": "1234567890",
+                    "buyer_ifsc": "SBIN0001234",
+                    "created_at": "2026-05-15T18:30:00.000000Z"
                   }
                 }
               }
@@ -4591,7 +4844,7 @@
     "/pg/vba/{virtual_account_id}/payments/": {
       "get": {
         "summary": "List VBA Payments",
-        "description": "Get a paginated list of payments collected on a Virtual Bank Account for the authenticated merchant.",
+        "description": "Get a paginated list of payments collected on a Virtual Bank Account for the authenticated merchant, sorted by `created_at` descending. Supports incremental sync via time-window filters (`created_at_*` / `updated_at_*`) and a cursor (`since_id` — payment_id of the last record already synced).",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -4620,7 +4873,8 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 1
             }
           },
           {
@@ -4633,6 +4887,55 @@
               "minimum": 1,
               "maximum": 1000,
               "default": 250
+            }
+          },
+          {
+            "name": "created_at_start",
+            "in": "query",
+            "description": "Include payments with `created_at >= value`. ISO 8601 datetime, e.g. `2026-05-12T00:00:00Z`.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "created_at_end",
+            "in": "query",
+            "description": "Include payments with `created_at <= value`. ISO 8601 datetime.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "updated_at_start",
+            "in": "query",
+            "description": "Include payments with `last_updated_at >= value`. ISO 8601 datetime.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "updated_at_end",
+            "in": "query",
+            "description": "Include payments with `last_updated_at <= value`. ISO 8601 datetime.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "since_id",
+            "in": "query",
+            "description": "Cursor: `payment_id` of the last record already synced. Only payments created strictly after that one are returned. If `since_id` doesn't match a payment under this VBA, the API returns `400`.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -4686,28 +4989,53 @@
                             "properties": {
                               "payment_id": {
                                 "type": "string",
-                                "example": "550e8400-e29b-41d4-a716-446655440001"
+                                "description": "EximPe payment identifier (UID). Stable, use as primary key.",
+                                "example": "pmt_01HXYZABCDEF"
                               },
                               "order_id": {
                                 "type": "string",
-                                "example": "660e8400-e29b-41d4-a716-446655440002"
+                                "description": "EximPe order UID this payment belongs to.",
+                                "example": "ord_01HXYZABCDEF"
                               },
                               "status": {
                                 "type": "string",
-                                "example": "SUCCESS"
+                                "enum": [
+                                  "PENDING",
+                                  "CAPTURED",
+                                  "FAILED",
+                                  "INVALID"
+                                ],
+                                "description": "Effective payment status. `PENDING` — created, awaiting completion. `CAPTURED` — money received. `FAILED` — failed or expired past `expiry_date`. `INVALID` — marked invalid by the gateway.",
+                                "example": "CAPTURED"
                               },
                               "amount": {
                                 "type": "number",
-                                "example": 100.5
+                                "nullable": true,
+                                "description": "Order amount in major units (INR). May be `null` if the order is missing.",
+                                "example": 12500.0
                               },
                               "payment_utr": {
                                 "type": "string",
-                                "example": "UTR123456789012"
+                                "description": "Bank UTR / transaction reference. Empty string if not yet known.",
+                                "example": "SBIN0123456789"
+                              },
+                              "buyer_account_number": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Remitter (buyer) bank account number captured from the Cashfree VBA success webhook. `null` when not provided by the bank.",
+                                "example": "1234567890"
+                              },
+                              "buyer_ifsc": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Remitter (buyer) bank IFSC code captured from the same webhook. `null` when not provided.",
+                                "example": "SBIN0001234"
                               },
                               "created_at": {
                                 "type": "string",
                                 "format": "date-time",
-                                "example": "2025-02-10T14:30:00Z"
+                                "description": "Payment creation timestamp (UTC). Format: `YYYY-MM-DDTHH:MM:SS.ffffffZ`.",
+                                "example": "2026-05-15T18:30:00.000000Z"
                               }
                             }
                           }
@@ -4720,19 +5048,21 @@
                   "success": true,
                   "message": "VBA payments retrieved successfully",
                   "data": {
-                    "count": 42,
+                    "count": 138,
                     "page": 1,
-                    "page_size": 10,
-                    "next": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2&page_size=10",
+                    "page_size": 250,
+                    "next": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2",
                     "previous": null,
                     "results": [
                       {
-                        "payment_id": "550e8400-e29b-41d4-a716-446655440001",
-                        "order_id": "660e8400-e29b-41d4-a716-446655440002",
-                        "status": "SUCCESS",
-                        "amount": 100.5,
-                        "payment_utr": "UTR123456789012",
-                        "created_at": "2025-02-10T14:30:00Z"
+                        "payment_id": "pmt_01HXYZABCDEF",
+                        "order_id": "ord_01HXYZABCDEF",
+                        "status": "CAPTURED",
+                        "amount": 12500.0,
+                        "payment_utr": "SBIN0123456789",
+                        "buyer_account_number": "1234567890",
+                        "buyer_ifsc": "SBIN0001234",
+                        "created_at": "2026-05-15T18:30:00.000000Z"
                       }
                     ]
                   }
@@ -4741,7 +5071,7 @@
             }
           },
           "400": {
-            "description": "Invalid pagination (e.g. page out of range) or virtual_account_id missing in path",
+            "description": "Validation error. Examples: `created_at_start` / `created_at_end` / `updated_at_start` / `updated_at_end` not a valid ISO 8601 datetime, `since_id` does not match any payment for this VBA, invalid pagination, or `virtual_account_id` missing in path.",
             "content": {
               "application/json": {
                 "schema": {
