@@ -41,6 +41,10 @@ Before you begin, ensure you have:
   **Production Only**: Intent Flow can be tested only in production environment. This feature is not available in test/sandbox environments.
 </Note>
 
+<Warning>
+  **Billing Cycle**: For UPI Intent subscriptions, the only supported `billing_cycle` is `ADHOC`.
+</Warning>
+
 The Intent flow allows customers to approve the mandate by scanning a QR code or using a UPI payment intent.
 
 ### Sample Request
@@ -72,8 +76,8 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
         "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     },
     "product": {
-        "name": "Monthly Subscription Plan",
-        "description": "Monthly subscription for premium services",
+        "name": "Premium Subscription Plan",
+        "description": "Subscription for premium services",
         "hs_code": "98051000",
         "hs_code_description": "Subscription services",
         "type_of_goods": "service"
@@ -85,14 +89,9 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
     "standing_instruction": {
         "billing_amount": "1000.00",
         "billing_currency": "INR",
-        "billing_cycle": "MONTHLY",
-        "billing_interval": 1,
+        "billing_cycle": "ADHOC",
         "payment_start_date": "2026-01-15",
-        "payment_end_date": "2027-01-15",
-        "billing_date": 1,
-        "billing_limit": "AFTER",
-        "billing_rule": "MAX",
-        "remarks": "Monthly subscription for premium services"
+        "payment_end_date": "2027-01-15"
     },
     "mop_type": "UPI",
     "upi_flow_type": "intent",
@@ -116,7 +115,7 @@ curl -X POST https://api-pacb.eximpe.com/pg/subscriptions/intent/ \
       "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
     },
     "subscription": {
-      "billing_cycle": "MONTHLY",
+      "billing_cycle": "ADHOC",
       "billing_interval": 1,
       "payment_start_date": "2025-01-01",
       "payment_end_date": "2025-12-31",
