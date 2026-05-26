@@ -2798,14 +2798,9 @@
                 "standing_instruction": {
                   "billing_amount": "1000.00",
                   "billing_currency": "INR",
-                  "billing_cycle": "MONTHLY",
-                  "billing_interval": 1,
+                  "billing_cycle": "ADHOC",
                   "payment_start_date": "2026-01-15",
-                  "payment_end_date": "2027-01-15",
-                  "billing_date": 1,
-                  "billing_limit": "AFTER",
-                  "billing_rule": "MAX",
-                  "remarks": "Monthly subscription for premium services"
+                  "payment_end_date": "2027-01-15"
                 },
                 "mop_type": "UPI",
                 "upi_flow_type": "intent"
@@ -2834,11 +2829,9 @@
                       "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
                     },
                     "subscription": {
-                      "billing_cycle": "MONTHLY",
-                      "billing_interval": 1,
+                      "billing_cycle": "ADHOC",
                       "payment_start_date": "2024-01-01",
-                      "payment_end_date": "2024-12-31",
-                      "status": "PENDING"
+                      "payment_end_date": "2024-12-31"
                     }
                   }
                 }
@@ -8623,6 +8616,37 @@
           }
         }
       },
+      "v1_IntentStandingInstruction": {
+        "type": "object",
+        "description": "Standing instruction configuration for a UPI Intent subscription. Only the ADHOC billing cycle is supported for the UPI Intent flow.",
+        "properties": {
+          "billing_amount": {
+            "type": "string",
+            "description": "Billing amount per cycle"
+          },
+          "billing_currency": {
+            "type": "string",
+            "description": "Currency for billing amount (provide the ISO code)"
+          },
+          "billing_cycle": {
+            "type": "string",
+            "description": "Billing cycle. For UPI Intent subscriptions, only ADHOC is supported.",
+            "enum": [
+              "ADHOC"
+            ]
+          },
+          "payment_start_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription start date (YYYY-MM-DD)"
+          },
+          "payment_end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Subscription end date (YYYY-MM-DD)"
+          }
+        }
+      },
       "v1_StandingInstruction": {
         "type": "object",
         "description": "Standing instruction configuration for a subscription",
@@ -8755,7 +8779,71 @@
       "v1_CreateSubscriptionIntentRequest": {
         "allOf": [
           {
-            "$ref": "#/components/schemas/v1_CreateOrderRequest"
+            "type": "object",
+            "required": [
+              "amount",
+              "currency",
+              "reference_id",
+              "buyer",
+              "product"
+            ],
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Amount in decimal format (e.g., \"100.00\")",
+                "pattern": "^\\d+\\.\\d{2}$"
+              },
+              "currency": {
+                "type": "string",
+                "description": "3-letter ISO currency code (e.g., INR, USD)",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "reference_id": {
+                "type": "string",
+                "description": "Unique identifier for the order"
+              },
+              "return_url": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to redirect after payment"
+              },
+              "collection_mode": {
+                "type": "string",
+                "description": "Payment collection mode",
+                "enum": [
+                  "hosted_payment",
+                  "s2s"
+                ]
+              },
+              "mop_type": {
+                "type": "string",
+                "description": "Method of payment type (e.g., UPI)",
+                "enum": [
+                  "upi",
+                  "credit_card",
+                  "net_banking",
+                  "debit_card",
+                  "qr"
+                ]
+              },
+              "upi_flow_type": {
+                "type": "string",
+                "description": "UPI flow type (required when collection_mode is s2s and mop_type is UPI)",
+                "enum": [
+                  "intent",
+                  "collection"
+                ]
+              },
+              "buyer": {
+                "$ref": "#/components/schemas/v1_Buyer"
+              },
+              "product": {
+                "$ref": "#/components/schemas/v1_Product"
+              },
+              "invoice": {
+                "$ref": "#/components/schemas/v1_Invoice"
+              }
+            }
           },
           {
             "type": "object",
@@ -8786,7 +8874,7 @@
                 "description": "Must be 'INTENT' for Intent flow subscriptions"
               },
               "standing_instruction": {
-                "$ref": "#/components/schemas/v1_StandingInstruction"
+                "$ref": "#/components/schemas/v1_IntentStandingInstruction"
               }
             }
           }
@@ -8836,7 +8924,7 @@
                 }
               },
               "subscription": {
-                "$ref": "#/components/schemas/v1_StandingInstruction"
+                "$ref": "#/components/schemas/v1_IntentStandingInstruction"
               }
             }
           }
