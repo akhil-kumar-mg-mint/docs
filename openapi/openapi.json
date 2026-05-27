@@ -4058,7 +4058,7 @@
     "/pg/vba/{virtual_account_id}/": {
       "put": {
         "summary": "Edit VBA",
-        "description": "Update an existing Virtual Bank Account. Only the virtual_account_name field is editable.",
+        "description": "Edit an existing Cashfree Virtual Bank Account for the authenticated merchant. Editable fields: `virtual_account_name`, `virtual_account_email`, `virtual_account_phone`, `remitter_lock_details`, `amount_lock_details`. Only provided fields are forwarded to Cashfree; omitted fields are left unchanged. Lock-detail shapes match Create VBA. Editing is only supported for Cashfree VBAs — ICICI VBAs are rejected.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -4091,11 +4091,81 @@
                   "virtual_account_name": {
                     "type": "string",
                     "description": "Display name for the VBA."
+                  },
+                  "virtual_account_email": {
+                    "type": "string",
+                    "description": "Contact email for the VBA."
+                  },
+                  "virtual_account_phone": {
+                    "type": "string",
+                    "description": "Contact phone for the VBA."
+                  },
+                  "remitter_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Replaces the existing remitter lock with the supplied allowed-remitters list. Same shape as Create VBA.",
+                    "properties": {
+                      "allowed_remitters": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "account_number",
+                            "ifsc"
+                          ],
+                          "properties": {
+                            "account_number": {
+                              "type": "string",
+                              "minLength": 9,
+                              "maxLength": 30,
+                              "description": "Remitter bank account number (9–30 chars).",
+                              "example": "26291800001191"
+                            },
+                            "ifsc": {
+                              "type": "string",
+                              "description": "Remitter bank IFSC.",
+                              "example": "YESB0000262"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "amount_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Replaces the existing amount lock with the supplied range. `min_amount` and `max_amount` must be non-negative numbers and `min_amount` must be less than or equal to `max_amount`.",
+                    "properties": {
+                      "min_amount": {
+                        "type": "number",
+                        "description": "Minimum allowed transfer amount.",
+                        "example": 1000
+                      },
+                      "max_amount": {
+                        "type": "number",
+                        "description": "Maximum allowed transfer amount.",
+                        "example": 5000
+                      }
+                    }
                   }
                 }
               },
               "example": {
-                "virtual_account_name": "Updated Trade Name"
+                "virtual_account_name": "Updated Trade Name",
+                "virtual_account_email": "ops@acme-imports.com",
+                "virtual_account_phone": "9876543210",
+                "remitter_lock_details": {
+                  "allowed_remitters": [
+                    {
+                      "account_number": "26291800001191",
+                      "ifsc": "YESB0000262"
+                    }
+                  ]
+                },
+                "amount_lock_details": {
+                  "min_amount": 1000,
+                  "max_amount": 5000
+                }
               }
             }
           }
@@ -4146,6 +4216,44 @@
                         "vba_status": {
                           "type": "string",
                           "example": "ACTIVE"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "Canonical remitter lock after the edit, as returned by Cashfree. `null` when no lock is set.",
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "26291800001191"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "YESB0000262"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "amount_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "Canonical amount lock after the edit, as returned by Cashfree. `null` when no lock is set.",
+                          "properties": {
+                            "min_amount": {
+                              "type": "number",
+                              "example": 1000
+                            },
+                            "max_amount": {
+                              "type": "number",
+                              "example": 5000
+                            }
+                          }
                         }
                       }
                     }
@@ -4161,14 +4269,26 @@
                     "vba_bank_code": "UTIB",
                     "vba_account_number": "12345678901234",
                     "vba_ifsc": "UTIB0001234",
-                    "vba_status": "ACTIVE"
+                    "vba_status": "ACTIVE",
+                    "remitter_lock_details": {
+                      "allowed_remitters": [
+                        {
+                          "account_number": "26291800001191",
+                          "ifsc": "YESB0000262"
+                        }
+                      ]
+                    },
+                    "amount_lock_details": {
+                      "min_amount": 1000,
+                      "max_amount": 5000
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "No editable fields provided",
+            "description": "Validation error — invalid lock details, no editable fields provided, or the VBA is not a Cashfree VBA (editing is Cashfree-only)",
             "content": {
               "application/json": {
                 "schema": {
