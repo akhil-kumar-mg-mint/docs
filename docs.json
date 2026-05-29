@@ -115,7 +115,8 @@
                 "group": "Settlement",
                 "pages": [
                   "api-reference/v1/settlement/list",
-                  "api-reference/v1/settlement/get"
+                  "api-reference/v1/settlement/get",
+                  "api-reference/v1/settlement/recon"
                 ]
               },
               {
@@ -258,7 +259,8 @@
                 "group": "Settlement",
                 "pages": [
                   "api-reference/v2/settlement/list",
-                  "api-reference/v2/settlement/get"
+                  "api-reference/v2/settlement/get",
+                  "api-reference/v2/settlement/recon"
                 ]
               },
               {
@@ -404,7 +406,8 @@
                 "group": "Settlement",
                 "pages": [
                   "api-reference/v3/settlement/list",
-                  "api-reference/v3/settlement/get"
+                  "api-reference/v3/settlement/get",
+                  "api-reference/v3/settlement/recon"
                 ]
               },
               {
