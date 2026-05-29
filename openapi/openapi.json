@@ -1678,6 +1678,164 @@
         "operationId": "v1_get_pg_refunds_refund_id_"
       }
     },
+    "/pg/settlements/{uid}/recon/": {
+      "get": {
+        "summary": "Settlement Reconciliation",
+        "description": "Returns a paginated list of the individual transactions (captures, refunds, and chargebacks) that make up a single settlement batch.\n\nUse this endpoint for reconciliation when a settlement contains too many transactions to fetch in one response. The settlement detail endpoint (`GET /pg/settlements/{settlement_id}/`) returns every transaction in one unpaginated payload; this endpoint returns the same transactions paginated, with a trimmed field set.\n\nTransactions across all three types are merged into a single stream ordered by `created_at` descending. For a PSP, supply the optional `X-Merchant-ID` header to scope the response to a single sub-merchant.",
+        "tags": [
+          "Settlements"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Settlement unique identifier (e.g. `ST6937597440`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Transactions per page (max 1000).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "X-Merchant-ID",
+            "in": "header",
+            "description": "PSP only. When supplied, scopes the response to the named sub-merchant. When omitted, a PSP sees its own and all sub-merchants' transactions.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of settlement transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_SettlementReconResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Settlement transactions retrieved successfully",
+                  "data": {
+                    "count": 412,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": "https://api.eximpe.com/pg/settlements/ST6937597440/recon/?page=2",
+                    "previous": null,
+                    "results": [
+                      {
+                        "settlement_type": "capture",
+                        "transaction_id": "PR7041820005",
+                        "settlement_id": "ST6937597440",
+                        "settlement_completed_at": "2026-05-28T11:20:33Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "100.00",
+                        "merchant_net_amount": "95.00",
+                        "total_processing_fee": "3.00",
+                        "total_service_tax": "0.54",
+                        "mop_type": "UPI",
+                        "transaction_currency": "INR"
+                      },
+                      {
+                        "settlement_type": "refund",
+                        "transaction_id": "RF1533204282",
+                        "settlement_id": "ST6937597440",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "20.00",
+                        "merchant_net_amount": "-20.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "mop_type": "UPI",
+                        "transaction_currency": "INR"
+                      },
+                      {
+                        "settlement_type": "chargeback",
+                        "transaction_id": "CB4611686552",
+                        "settlement_id": "ST6937597440",
+                        "settlement_completed_at": "2026-05-28T11:20:33Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "50.00",
+                        "merchant_net_amount": "-50.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "mop_type": "CREDIT_CARD",
+                        "transaction_currency": "INR"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_001",
+                    "message": "Invalid credentials"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Settlement does not exist or does not belong to the authenticated merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SETTLEMENT_002",
+                    "message": "Settlement not found",
+                    "details": {
+                      "settlement_id": "Settlement not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v1_get_pg_settlements_uid_recon_"
+      }
+    },
     "/pg/settlements/": {
       "get": {
         "summary": "List Settlements",
@@ -7498,6 +7656,111 @@
           "payment_id": {
             "type": "string",
             "description": "The ID of the payment that was refunded."
+          }
+        }
+      },
+      "v1_SettlementReconTransaction": {
+        "type": "object",
+        "properties": {
+          "settlement_type": {
+            "type": "string",
+            "description": "The kind of transaction in the settlement.",
+            "enum": [
+              "capture",
+              "refund",
+              "chargeback"
+            ]
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "The transaction's unique identifier (payment `PR...`, refund `RF...`, chargeback `CB...`)."
+          },
+          "settlement_id": {
+            "type": "string",
+            "description": "The parent settlement UID."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement completed. Not present on refund rows."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "description": "Currency the settlement is paid out in."
+          },
+          "transaction_amount": {
+            "type": "string",
+            "description": "Gross transaction amount, returned as a decimal string (e.g. \"100.00\")."
+          },
+          "merchant_net_amount": {
+            "type": "string",
+            "description": "Net amount to the merchant, as a decimal string. Negative for refunds and chargebacks (money out)."
+          },
+          "total_processing_fee": {
+            "type": "string",
+            "description": "Processing fee, as a decimal string. Always \"0.00\" for refunds and chargebacks."
+          },
+          "total_service_tax": {
+            "type": "string",
+            "description": "Service tax on the fee, as a decimal string. Always \"0.00\" for refunds and chargebacks."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mode of payment, e.g. UPI, CREDIT_CARD, DEBIT_CARD, NET_BANKING, WALLET, CARD. May be null if the mode of payment was not recorded."
+          },
+          "transaction_currency": {
+            "type": "string",
+            "description": "Currency the buyer was charged in."
+          }
+        }
+      },
+      "v1_SettlementReconData": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of transactions in this settlement (for the authenticated merchant)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number."
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of items per page."
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL for the next page, or null on the last page."
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL for the previous page, or null on the first page."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v1_SettlementReconTransaction"
+            }
+          }
+        }
+      },
+      "v1_SettlementReconResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v1_SettlementReconData"
           }
         }
       },
