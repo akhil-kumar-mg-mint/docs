@@ -4058,7 +4058,7 @@
     "/pg/vba/{virtual_account_id}/": {
       "put": {
         "summary": "Edit VBA",
-        "description": "Edit an existing Cashfree Virtual Bank Account for the authenticated merchant. Editable fields: `virtual_account_name`, `remitter_lock_details`. Only provided fields are forwarded to Cashfree; omitted fields are left unchanged. The remitter-lock shape matches Create VBA. Editing is only supported for Cashfree VBAs — ICICI VBAs are rejected.",
+        "description": "Update an existing Virtual Bank Account for the authenticated merchant. Editable fields: `virtual_account_name`, `remitter_lock_details`. Only provided fields are forwarded; omitted fields are left unchanged. The remitter-lock shape matches Create VBA.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -4189,7 +4189,7 @@
                         "remitter_lock_details": {
                           "type": "object",
                           "nullable": true,
-                          "description": "Canonical remitter lock after the edit, as returned by Cashfree. `null` when no lock is set.",
+                          "description": "Canonical remitter lock after the update. `null` when no lock is set.",
                           "properties": {
                             "allowed_remitters": {
                               "type": "array",
@@ -4238,7 +4238,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid remitter lock details, no editable fields provided, or the VBA is not a Cashfree VBA (editing is Cashfree-only)",
+            "description": "Validation error — invalid remitter lock details or no editable fields provided",
             "content": {
               "application/json": {
                 "schema": {
