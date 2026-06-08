@@ -74,7 +74,7 @@ You can optionally lock a VBA at creation time:
 - **Remitter lock** — restrict the VBA to accept transfers only from a specific list of remitter bank accounts (each identified by account number and IFSC).
 - **Amount lock** — restrict the VBA to accept transfers within a `min_amount`/`max_amount` range.
 
-Both locks are persisted on the VBA and echoed back on every read.
+Both locks are persisted on the VBA and echoed back on every read. The remitter lock can also be updated after creation via the [Update VBA API](/api-reference/v2/vba/edit).
 
 <Card title="📚 API Reference" href="/api-reference/v2/vba/create">
   **Create VBA API** – View full request/response and error codes.
@@ -146,7 +146,7 @@ EximPe provides APIs to manage the lifecycle of your virtual bank accounts:
 
 - **[Create VBA](/api-reference/v2/vba/create)**: Create a new VBA, optionally with remitter and/or amount locks.
 - **[Get VBA Details](/api-reference/v2/vba/get)**: Fetch details of an existing VBA.
-- **[Edit VBA](/api-reference/v2/vba/edit)**: Update name, email, or phone associated with the VBA.
+- **[Edit VBA](/api-reference/v2/vba/edit)**: Update name, email, phone, or remitter lock associated with the VBA.
 - **[Manage VBA Status](/api-reference/v2/vba/manage)**: Activate or deactivate a VBA.
 - **[List VBA Payments](/api-reference/v2/vba/list-payments)**: List all payments for a VBA.
 - **[Get Payment by UTR](/api-reference/v2/vba/get-payment-by-utr)**: Get a single payment by UTR.

@@ -4216,7 +4216,7 @@
     "/pg/vba/{virtual_account_id}/": {
       "put": {
         "summary": "Edit VBA",
-        "description": "Update an existing Virtual Bank Account. Only the virtual_account_name field is editable.",
+        "description": "Update an existing Virtual Bank Account for the authenticated merchant. Editable fields: `virtual_account_name`, `remitter_lock_details`. Only provided fields are forwarded; omitted fields are left unchanged. The remitter-lock shape matches Create VBA.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -4249,11 +4249,50 @@
                   "virtual_account_name": {
                     "type": "string",
                     "description": "Display name for the VBA."
+                  },
+                  "remitter_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Replaces the existing remitter lock with the supplied allowed-remitters list. Same shape as Create VBA.",
+                    "properties": {
+                      "allowed_remitters": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "account_number",
+                            "ifsc"
+                          ],
+                          "properties": {
+                            "account_number": {
+                              "type": "string",
+                              "minLength": 9,
+                              "maxLength": 30,
+                              "description": "Remitter bank account number (9–30 chars).",
+                              "example": "26291800001191"
+                            },
+                            "ifsc": {
+                              "type": "string",
+                              "description": "Remitter bank IFSC.",
+                              "example": "YESB0000262"
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               },
               "example": {
-                "virtual_account_name": "Updated Trade Name"
+                "virtual_account_name": "Updated Trade Name",
+                "remitter_lock_details": {
+                  "allowed_remitters": [
+                    {
+                      "account_number": "26291800001191",
+                      "ifsc": "YESB0000262"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -4304,6 +4343,29 @@
                         "vba_status": {
                           "type": "string",
                           "example": "ACTIVE"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "Canonical remitter lock after the update. `null` when no lock is set.",
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "26291800001191"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "YESB0000262"
+                                  }
+                                }
+                              }
+                            }
+                          }
                         }
                       }
                     }
@@ -4319,14 +4381,22 @@
                     "vba_bank_code": "UTIB",
                     "vba_account_number": "12345678901234",
                     "vba_ifsc": "UTIB0001234",
-                    "vba_status": "ACTIVE"
+                    "vba_status": "ACTIVE",
+                    "remitter_lock_details": {
+                      "allowed_remitters": [
+                        {
+                          "account_number": "26291800001191",
+                          "ifsc": "YESB0000262"
+                        }
+                      ]
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "No editable fields provided",
+            "description": "Validation error — invalid remitter lock details or no editable fields provided",
             "content": {
               "application/json": {
                 "schema": {
