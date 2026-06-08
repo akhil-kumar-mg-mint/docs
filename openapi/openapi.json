@@ -4057,7 +4057,7 @@
     },
     "/pg/vba/{virtual_account_id}/": {
       "put": {
-        "summary": "Update VBA",
+        "summary": "Edit VBA",
         "description": "Update an existing Virtual Bank Account for the authenticated merchant. Editable fields: `virtual_account_name`, `remitter_lock_details`. Only provided fields are forwarded; omitted fields are left unchanged. The remitter-lock shape matches Create VBA.",
         "tags": [
           "Virtual Bank Accounts"
