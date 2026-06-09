@@ -1,0 +1,117 @@
+---
+title: "DISPUTE UPDATED"
+description: "Technical reference for the DISPUTE_UPDATED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+## Event Overview
+
+**Event Type**: `DISPUTE_UPDATED`  
+**Category**: Dispute  
+**Description**: A dispute (chargeback) has been raised or its status has changed
+
+This webhook is triggered whenever a dispute or chargeback is raised against a payment, or when the status of an existing dispute changes. Use it to keep your records in sync with the latest chargeback lifecycle state and to act before the response deadline.
+
+## Merchant Action Required
+
+When you receive a `DISPUTE_UPDATED` event, respond before the deadline:
+
+1. Log in to the [EximPe Dashboard](https://merchant.eximpe.com).
+2. Open the **Chargebacks** section.
+3. Locate the dispute using the `chargeback_id` from the payload.
+4. Upload your supporting documents and submit your response **before the `reply_before` time**.
+
+<Warning>
+  If no response is provided before `reply_before`, the dispute is automatically **closed in the customer's favour** (`chargeback_status` → `CLOSED_CUSTOMER_FAVOUR`) and the disputed amount is debited from the merchant.
+</Warning>
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "order_id": "OD3842521856",
+    "raised_on": "2026-06-09T03:53:48+00:00",
+    "event_type": "DISPUTE_UPDATED",
+    "payment_id": "PR1795628984",
+    "reply_before": "2026-06-11T18:30:00+00:00",
+    "chargeback_id": "CB9442851393",
+    "chargeback_type": "CHARGEBACK",
+    "chargeback_amount": 721,
+    "chargeback_status": "CLOSED_CUSTOMER_FAVOUR",
+    "reason_description": "Goods or Services Not Provided / Not Received"
+}
+```
+
+</CodeGroup>
+
+## Field Specifications
+
+<ParamField path="event_type" type="string" required>
+  Always `"DISPUTE_UPDATED"` for this webhook event
+</ParamField>
+
+<ParamField path="order_id" type="string" required>
+  Order ID associated with the disputed payment
+
+  **Example**: `"OD3842521856"`
+</ParamField>
+
+<ParamField path="payment_id" type="string" required>
+  Payment request ID against which the dispute was raised
+
+  **Example**: `"PR1795628984"`
+</ParamField>
+
+<ParamField path="chargeback_id" type="string" required>
+  Unique identifier for the dispute/chargeback
+
+  **Example**: `"CB9442851393"`
+</ParamField>
+
+<ParamField path="chargeback_type" type="string" required>
+  Type of dispute raised
+
+  **Example**: `"CHARGEBACK"`
+</ParamField>
+
+<ParamField path="chargeback_amount" type="number" required>
+  Amount under dispute, in the payment currency
+
+  **Example**: `721`
+</ParamField>
+
+<ParamField path="chargeback_status" type="string" required>
+  Current status of the dispute. One of:
+
+  | Status | Description |
+  | --- | --- |
+  | `NEW` | Dispute has just been raised |
+  | `PENDING_RESPONSE` | Awaiting a response/evidence from the merchant |
+  | `PENDING_DOC_REVIEW` | Submitted documents are under review |
+  | `SUBMITTED_TO_BANK` | Merchant's response has been submitted to the bank |
+  | `INSUFFICIENT_DOCUMENT` | Submitted documents were insufficient |
+  | `CLOSED_CUSTOMER_FAVOUR` | Dispute closed in the customer's favour |
+  | `CLOSED_IN_MERCHANT_FAVOUR` | Dispute closed in the merchant's favour |
+  | `CLOSED_UNDER_FRAUD_LIABILITY` | Dispute closed under fraud liability |
+
+  **Example**: `"CLOSED_CUSTOMER_FAVOUR"`
+</ParamField>
+
+<ParamField path="raised_on" type="string" required>
+  Timestamp when the dispute was raised, in ISO 8601 format
+
+  **Example**: `"2026-06-09T03:53:48+00:00"`
+</ParamField>
+
+<ParamField path="reply_before" type="string">
+  Deadline by which the merchant must submit a response/evidence, in ISO 8601 format. May be `null` for disputes that are already in a closed state
+
+  **Example**: `"2026-06-11T18:30:00+00:00"`
+</ParamField>
+
+<ParamField path="reason_description" type="string" required>
+  Human-readable reason for the dispute
+
+  **Example**: `"Goods or Services Not Provided / Not Received"`
+</ParamField>
