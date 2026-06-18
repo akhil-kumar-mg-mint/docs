@@ -1,0 +1,118 @@
+---
+title: "REFUND FAILED"
+description: "Technical reference for the REFUND_FAILED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+## Event Overview
+
+**Event Type**: `REFUND_FAILED`  
+**Category**: Payment  
+**Description**: Refund could not be completed
+
+This webhook is triggered when a refund fails to process or its final status could not be confirmed through EximPe.
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "data": {
+        "refunds": [
+            {
+                "bank_arn": null,
+                "comments": "Refund failed or status unknown",
+                "order_id": "OD7104928365",
+                "refund_id": "RF2859613470",
+                "payment_id": "PR3947261085",
+                "refund_amount": 799,
+                "refund_completed_at": null
+            }
+        ]
+    },
+    "version": "3.0.0",
+    "event_time": "2026-06-03T14:30:02.854654",
+    "event_type": "REFUND_FAILED",
+    "sequence_number": "f8b260a7-31c4-49de-90af-6b52d7e1aa39"
+}
+```
+
+</CodeGroup>
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"REFUND_FAILED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in ISO 8601 format
+      
+      **Example**: `"2026-06-03T14:30:02.854654"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "3.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"f8b260a7-31c4-49de-90af-6b52d7e1aa39"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing refund details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.refunds" type="array" required>
+      Array of refund objects containing the failed refund information
+    </ParamField>
+
+    <ParamField path="data.refunds[].order_id" type="string" required>
+      Order ID associated with the refund
+      
+      **Example**: `"OD7104928365"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_id" type="string" required>
+      Unique refund identifier
+      
+      **Example**: `"RF2859613470"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].payment_id" type="string" required>
+      Original payment ID that the refund was attempted against
+      
+      **Example**: `"PR3947261085"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_amount" type="number" required>
+      Refund amount that failed to process
+      
+      **Example**: `799`
+    </ParamField>
+
+    <ParamField path="data.refunds[].comments" type="string">
+      Human-readable reason describing why the refund failed or could not be confirmed
+      
+      **Example**: `"Refund failed or status unknown"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].bank_arn" type="string">
+      Bank ARN (Acquirer Reference Number) - `null` when the refund did not reach the bank
+      
+      **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_completed_at" type="string">
+      Timestamp when the refund completed - `null` for a failed refund
+      
+      **Example**: `null`
+    </ParamField>
+  </Tab>
+</Tabs>

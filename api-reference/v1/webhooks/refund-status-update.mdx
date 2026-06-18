@@ -1,0 +1,152 @@
+---
+title: "REFUND STATUS UPDATE"
+description: "Technical reference for the REFUND_STATUS_UPDATE webhook event, including payload schema, field specifications, and implementation details."
+---
+
+## Event Overview
+
+**Event Type**: `REFUND_STATUS_UPDATE`  
+**Category**: Payment  
+**Description**: Refund status has changed
+
+This webhook is triggered whenever a refund transitions to a new status (for example, while it is being processed) through EximPe.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `REFUND_STATUS_UPDATE` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "data": {
+        "refunds": [
+            {
+                "bank_arn": null,
+                "comments": "Refund is in progress",
+                "order_id": "OD5128740396",
+                "refund_id": "RF8043512967",
+                "payment_id": "PR6271908354",
+                "refund_amount": 320,
+                "refund_status": "PROCESSING",
+                "refund_completed_at": null
+            }
+        ]
+    },
+    "version": "1.0.0",
+    "event_time": "2026-05-27T14:30:01.359434",
+    "event_type": "REFUND_STATUS_UPDATE",
+    "sequence_number": "b3e91f47-20ad-4c85-9f31-6d0a87145e2b"
+}
+```
+
+</CodeGroup>
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"REFUND_STATUS_UPDATE"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      Timestamp when the event occurred in ISO 8601 format
+      
+      **Example**: `"2026-05-27T14:30:01.359434"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Webhook payload version (currently "1.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for the event instance
+      
+      **Example**: `"b3e91f47-20ad-4c85-9f31-6d0a87145e2b"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing refund details
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.refunds" type="array" required>
+      Array of refund objects containing the refund information
+    </ParamField>
+
+    <ParamField path="data.refunds[].order_id" type="string" required>
+      Order ID associated with the refund
+      
+      **Example**: `"OD5128740396"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_id" type="string" required>
+      Unique refund identifier
+      
+      **Example**: `"RF8043512967"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].payment_id" type="string" required>
+      Original payment ID that the refund was attempted against
+      
+      **Example**: `"PR6271908354"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_amount" type="number" required>
+      Refund amount
+      
+      **Example**: `320`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_status" type="string" required>
+      Current status of the refund
+      
+      **Example**: `"PROCESSING"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].comments" type="string">
+      Human-readable note describing the current refund status
+      
+      **Example**: `"Refund is in progress"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].bank_arn" type="string">
+      Bank ARN (Acquirer Reference Number) - `null` until the refund reaches the bank
+      
+      **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_completed_at" type="string">
+      Timestamp when the refund completed - `null` while the refund is still in progress
+      
+      **Example**: `null`
+    </ParamField>
+  </Tab>
+</Tabs>

@@ -165,6 +165,8 @@
                   "api-reference/v1/webhooks/payment-successful",
                   "api-reference/v1/webhooks/payment-failed",
                   "api-reference/v1/webhooks/payment-refunded",
+                  "api-reference/v1/webhooks/refund-failed",
+                  "api-reference/v1/webhooks/refund-status-update",
                   "api-reference/v1/webhooks/payment-settled",
                   "api-reference/v1/webhooks/subscription-status",
                   "api-reference/v1/webhooks/dispute-updated"
@@ -321,6 +323,8 @@
                   "api-reference/v2/webhooks/payment-successful",
                   "api-reference/v2/webhooks/payment-failed",
                   "api-reference/v2/webhooks/payment-refunded",
+                  "api-reference/v2/webhooks/refund-failed",
+                  "api-reference/v2/webhooks/refund-status-update",
                   "api-reference/v2/webhooks/payment-settled",
                   "api-reference/v2/webhooks/subscription-status",
                   "api-reference/v2/webhooks/payment-details-missing",
@@ -442,6 +446,8 @@
                   "api-reference/v3/webhooks/payment-successful",
                   "api-reference/v3/webhooks/payment-failed",
                   "api-reference/v3/webhooks/payment-refunded",
+                  "api-reference/v3/webhooks/refund-failed",
+                  "api-reference/v3/webhooks/refund-status-update",
                   "api-reference/v3/webhooks/payment-settled",
                   "api-reference/v3/webhooks/subscription-status",
                   "api-reference/v3/webhooks/dispute-updated"
