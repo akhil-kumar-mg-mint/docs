@@ -378,28 +378,6 @@
             "tab": "API Reference",
             "groups": [
               {
-                "group": "Order",
-                "pages": [
-                  "api-reference/v3/order/create",
-                  "api-reference/v3/order/get-status",
-                  "api-reference/v3/order/get"
-                ]
-              },
-              {
-                "group": "Payment",
-                "pages": [
-                  "api-reference/v3/payment/list",
-                  "api-reference/v3/payment/get"
-                ]
-              },
-              {
-                "group": "Card Tokens",
-                "pages": [
-                  "api-reference/v3/card-tokens/list",
-                  "api-reference/v3/card-tokens/delete"
-                ]
-              },
-              {
                 "group": "Merchant",
                 "pages": [
                   "api-reference/v3/merchant/create",
@@ -422,21 +400,6 @@
                   "api-reference/v3/refunds/create",
                   "api-reference/v3/refunds/list",
                   "api-reference/v3/refunds/get"
-                ]
-              },
-              {
-                "group": "Payment Links",
-                "pages": [
-                  "api-reference/v3/payment-link/create",
-                  "api-reference/v3/payment-link/list",
-                  "api-reference/v3/payment-link/retrieve",
-                  "api-reference/v3/payment-link/deactivate"
-                ]
-              },
-              {
-                "group": "Utilities",
-                "pages": [
-                  "api-reference/v3/bin-lookup/lookup"
                 ]
               },
               {
