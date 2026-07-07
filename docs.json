@@ -413,6 +413,14 @@
                 ]
               },
               {
+                "group": "LRS",
+                "pages": [
+                  "api-reference/v3/lrs/verify-pan",
+                  "api-reference/v3/lrs/quote",
+                  "api-reference/v3/lrs/submit-verification"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
