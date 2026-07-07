@@ -2437,7 +2437,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it; education-loan-funded remittances are exempt. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2535,12 +2535,12 @@
                         "tcs_inr": {
                           "type": "string",
                           "description": "TCS due on this remittance (INR).",
-                          "example": "40000.00"
+                          "example": "4000.00"
                         },
                         "total_payable_inr": {
                           "type": "string",
                           "description": "All-in total the buyer pays (remittance + TCS).",
-                          "example": "1240000.00"
+                          "example": "1204000.00"
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
@@ -2564,8 +2564,8 @@
                     "committed_inr": "0.00",
                     "remittance_inr": "1200000.00",
                     "taxable_inr": "200000.00",
-                    "tcs_inr": "40000.00",
-                    "total_payable_inr": "1240000.00",
+                    "tcs_inr": "4000.00",
+                    "total_payable_inr": "1204000.00",
                     "tcs_threshold_breached_before": false,
                     "tcs_threshold_breached_after": true
                   }
@@ -2892,7 +2892,7 @@
                   "tcs": {
                     "type": "number",
                     "description": "TCS collected from the buyer, in INR rupees.",
-                    "example": 40000
+                    "example": 4000
                   },
                   "declarations": {
                     "type": "object",
@@ -2996,7 +2996,7 @@
                   "email": "john@example.com",
                   "mobile": "9876543210"
                 },
-                "tcs": 40000,
+                "tcs": 4000,
                 "declarations": {
                   "resident_in_india": true,
                   "lrs": true,

@@ -10,7 +10,9 @@ description: 'EximPe is an API-only cross-border collection rail. Collect an Ind
 
 ## Overview
 
-This is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
+This is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. A bank partner (an **Authorised Dealer**, or "AD bank") performs the actual outward remittance. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
+
+You own the entire customer-facing experience and the customer relationship; EximPe is the embedded India collection and settlement engine underneath. You onboard the universities you serve as sub-merchants — collections, settlements, and balances are tracked **per university**.
 
 <Info>
   Need a hosted checkout, payment links, or S2S card/UPI/net-banking collection instead? Those are earlier-version flows — switch versions from the selector at the top to see their guides.
@@ -78,6 +80,8 @@ EximPe operates under the RBI **PA-CB** guidelines. Key constraints to design fo
 - **LRS TCS threshold**: TCS is nil up to ₹10,00,000 of a remitter's cumulative LRS in a financial year, and applies only to the amount above it (per person, platform-wide, resets each 1 April).
 - **Purpose codes**: every payment carries a FEMA purpose code from the settling entity's allowlist.
 - **Documentation**: a digital invoice and supporting documents are required for each remittance; a full audit trail is maintained.
+
+For the full rules — eligibility, the buyer declarations, TCS mechanics, and the education purpose codes and documents — see [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance).
 
 <Info>
   **Ready to start?** Follow [Steps to Integrate](/integration-guide/v3/getting-started/steps-to-integrate) to onboard, issue a VBA, and collect your first payment.

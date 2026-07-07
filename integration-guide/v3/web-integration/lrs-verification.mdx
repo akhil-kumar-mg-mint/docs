@@ -9,6 +9,10 @@ Every credit into a VBA creates a payment in **Action Required**. Under the **Li
   **PSP callers must send `X-Merchant-ID`** on every LRS call, naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.
 </Note>
 
+<Info>
+  New to the LRS rules, declarations, and required documents? Read [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance) first — this page is the API walk-through.
+</Info>
+
 ## Step 1 — Verify the buyer's PAN
 
 The remitter is identified by **PAN**, not by the bank sender on the credit. [Verify PAN](/api-reference/v3/lrs/verify-pan) checks the PAN against income-tax records and matches the name and date of birth. A verified PAN is the gateway to everything else.
@@ -25,7 +29,7 @@ A non-matching or rejected PAN returns `verified: false` with a `reason` (e.g. `
 
 ## Step 2 — Quote the TCS
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the TCS due and the all-in total the buyer pays. TCS is **nil up to ₹10,00,000** of the remitter's cumulative LRS this financial year and applies only to the slice above it (education-loan-funded remittances are exempt). This quotes against the LRS usage EximPe can see and reserves nothing.
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the TCS due and the all-in total the buyer pays. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. This quotes against the LRS usage EximPe can see and reserves nothing.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
@@ -49,7 +53,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
   -F 'file=@offer_letter.pdf'
 ```
 
-Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa`.
+Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa`. See the [document matrix](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for which documents each purpose code requires.
 
 ## Step 4 — Submit verification details
 
