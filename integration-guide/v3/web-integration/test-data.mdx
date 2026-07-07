@@ -1,40 +1,50 @@
 ---
 title: "Test Data"
-description: "Use test data on this page to test payments across various payment modes."
+description: "Test the V3 collection and LRS flow in the sandbox — simulate VBA credits and exercise PAN and LRS verification."
 ---
 
-## Test Cards
+V3 has no card / UPI / net-banking checkout, so there are no test cards or VPAs. Instead you drive a rupee **credit** into a Virtual Bank Account with the sandbox simulate API, then exercise the LRS flow.
 
-Use the following card details to test card payments in the sandbox environment.
+## Simulate a VBA credit
 
-### Credit Cards
+Use [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) to land a credit into a VBA without a real bank transfer. It is **sandbox-only** (403 in production) and works for both Cashfree and ICICI VBAs.
 
-| Card Number       | Network    | Expiry | CVV | Status  |
-| ----------------- | ---------- | ------ | --- | ------- |
-| 4000000000001091  | Visa       | 05/30  | 123 | Success |
-
-
-## Test Net Banking
-
-Only **Axis Bank** is supported for net banking testing in the sandbox environment.
-
-| Parameter | Value      |
+| Field | Notes |
 | :--- | :--- |
-| **Bank Name** | Axis Bank |
+| `virtual_account_id` | A VBA you created for the merchant. |
+| `amount` | Credit amount in INR. Keep it ≤ ₹2,50,000 (per-transaction limit). |
+| `utr` | **Must be unique** across simulations — reusing a UTR is treated as a duplicate. |
+| `remitter_name`, `remitter_account`, `remitter_ifsc` | The bank sender (payer instrument). |
 
-## Test UPI VPA
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "virtual_account_id": "24586202",
+    "vba_simulation": {
+      "amount": 150000,
+      "utr": "TESTUTR0001",
+      "remitter_name": "John Doe",
+      "remitter_account": "123456789012",
+      "remitter_ifsc": "YESB0CMSNOC"
+    }
+  }'
+```
 
-Use the following VPAs to test UPI transactions.
+This creates a payment in **Action Required** and fires the payment webhook.
 
-| VPA | Description | Result |
-| :--- | :--- | :--- |
-| `success@upi` | Simulates a successful payment | **Success** |
-| `failure@upi` | Simulates a failed payment | **Failure** |
+## PAN & LRS verification
 
-<Tip>
-  When using the `intent` flow in the **sandbox environment**, the API response will include a `test_simulator_url` parameter. You can open this URL in a browser to simulate the payment flow and complete the transaction without needing a real UPI app.
-</Tip>
+- **PAN format** must be valid (`AAAAA9999A`), e.g. `ABCDE1234F`. [Verify PAN](/api-reference/v3/lrs/verify-pan) records the result; a mismatch returns `verified: false` with a `reason`.
+- **Purpose codes** must be from your settling entity's allowlist — ask the EximPe team to enable the codes you need in Sandbox.
+- **Documents** — upload any file of an accepted `type` (e.g. `offer_letter`, `fee_invoice`, `passport`) via [Upload LRS Document](/api-reference/v3/lrs/upload-document); the returned `ref` is used on submit.
+
+<Note>
+  Sandbox PAN verification is backed by a test provider. Ask the EximPe team for the specific test PAN / name / DOB combinations that return each outcome (verified, name mismatch, inoperative) for your account.
+</Note>
 
 <Warning>
-  These credentials are only for the **Sandbox Environment**. Do not use them in Production.
+  This data is only for the **Sandbox Environment**. Do not use it in Production.
 </Warning>

@@ -355,19 +355,11 @@
                 ]
               },
               {
-                "group": "Payment Integration",
+                "group": "Collecting Payments",
                 "pages": [
-                  "integration-guide/v3/web-integration/hosted-checkout",
-                  "integration-guide/v3/web-integration/payment-links",
-                  {
-                    "group": "Server to Server",
-                    "pages": [
-                      "integration-guide/v3/web-integration/s2s-card-payment",
-                      "integration-guide/v3/web-integration/s2s-upi-intent",
-                      "integration-guide/v3/web-integration/s2s-netbanking"
-                    ]
-                  },
-                  "integration-guide/v3/web-integration/bin-lookup",
+                  "integration-guide/v3/web-integration/collection-overview",
+                  "integration-guide/v3/web-integration/virtual-accounts",
+                  "integration-guide/v3/web-integration/lrs-verification",
                   "integration-guide/v3/web-integration/webhooks",
                   "integration-guide/v3/web-integration/test-data"
                 ]

@@ -1,108 +1,84 @@
 ---
 title: 'Introduction'
-description: 'EximPe is a cross-border payment solution that enables international merchants to accept payments from Indian customers without establishing a physical presence in India. We handle the complexity of Indian payment methods, regulatory compliance, and currency conversion, so you can focus on growing your business.'
+description: 'EximPe V3 is an API-only cross-border collection rail. Collect an Indian buyer''s rupees into an EximPe-issued virtual account and have the funds settled to you abroad — with LRS compliance handled through the API. EximPe shows the buyer no screen.'
 ---
 
 
-<Button href="/integration-guide/getting-started/register-merchant" variant="primary" size="lg">
-  Get Started with EximPe
+<Button href="/integration-guide/v3/getting-started/steps-to-integrate" variant="primary" size="lg">
+  Get Started with EximPe V3
 </Button>
 
-## Why Choose EximPe?
+## What V3 Is
+
+V3 is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
+
+<Info>
+  Looking for a hosted checkout, payment links, or S2S card/UPI/net-banking collection? Those are **Version 1 / Version 2** flows. V3 does not expose them.
+</Info>
+
+## Who Uses V3
 
 <CardGroup cols={2}>
-  <Card title="Multi-Currency Support" icon="money-bill">
-    Accept payments in INR and receive settlements in your native currency
+  <Card title="PSP" icon="sitemap">
+    An integrator that calls the API on behalf of the **sub-merchants** it onboards. A PSP never holds a VBA or funds itself.
   </Card>
-  <Card title="Local Payment Methods" icon="credit-card">
-    Support for popular Indian payment methods: Cards, Net Banking, and UPI
+  <Card title="Sub-merchant" icon="store">
+    A merchant created under a PSP. Holds VBAs and collected funds; is the entity that gets settled (the "settling entity").
   </Card>
-  <Card title="Fast Settlements" icon="clock">
-    Faster settlement times (T+2 days) compared to traditional cross-border solutions
+  <Card title="Direct merchant" icon="building">
+    A merchant with no parent PSP — holds its own VBAs and funds and is its own API caller.
   </Card>
-  <Card title="No Local Entity" icon="building">
-    No need for Indian business entity or complex regulatory setup
+  <Card title="Remitter (Buyer)" icon="user">
+    The person in India paying, uniquely identified by **PAN**. LRS limits apply per person, platform-wide.
   </Card>
 </CardGroup>
 
 ## How It Works
 
-EximPe operates as per Payment Aggregator Cross Border under RBI guidelines, allowing overseas merchants to:
+<Steps>
+  <Step title="Onboard merchants">
+    A PSP registers, then creates sub-merchants via the API. Each is approved before it can collect.
+  </Step>
+  <Step title="Issue a Virtual Bank Account">
+    Create a VBA for the settling entity. Indian buyers transfer rupees into it — a single VBA can receive credits from many remitters.
+  </Step>
+  <Step title="Receive a credit">
+    When money lands in the VBA, EximPe creates a payment in **Action Required** and notifies you by webhook.
+  </Step>
+  <Step title="Assert LRS compliance">
+    Verify the buyer's PAN, quote the TCS, upload supporting documents, and submit the remitter / purpose / declarations. The payment advances to **Under Review**.
+  </Step>
+  <Step title="Settle abroad">
+    Cleared funds are settled to the beneficiary and reported via the settlement APIs and the Payment Settled webhook.
+  </Step>
+</Steps>
+
+## Why EximPe
 
 <CardGroup cols={2}>
-  <Card title="1. Collect Payments" icon="credit-card">
-    Accept payments from Indian consumers using local payment methods
+  <Card title="No Local Entity" icon="building">
+    Collect in India without an Indian business entity or banking setup.
   </Card>
-  <Card title="2. Handle Compliance" icon="shield-check">
-    We manage all regulatory requirements and documentation
+  <Card title="Compliance Built In" icon="shield-check">
+    LRS limits, TCS, purpose codes, and documentation are handled through the API and by EximPe.
   </Card>
-  <Card title="3. Convert & Settle" icon="right-left">
-    Receive funds in your preferred currency with competitive exchange rates
+  <Card title="Multi-Currency Settlement" icon="money-bill">
+    Rupees collected in India, settled to you abroad in your currency.
   </Card>
-  <Card title="4. Scale Quickly" icon="rocket">
-    Start accepting Indian payments within days, not months
+  <Card title="Fully API-Driven" icon="code">
+    No buyer-facing screens — embed collection and compliance directly in your product.
   </Card>
 </CardGroup>
 
 ## Regulatory Framework
 
-This service operates as per the RBI PA-CB guideline, ensuring full compliance with Indian financial regulations.
+V3 operates under the RBI **PA-CB** guidelines. Key constraints to design for:
 
-### Transaction Requirements
-
-- **Maximum transaction limit**: ₹2.5 lakhs per transaction
-- **Digital invoice required** for each transaction
-- **Air Waybill (AWB) required** once products are shipped
-- **Full transaction audit trail** maintained
-
-## Key Benefits For Merchants and PSP's (Payment Service Provider)
-
-<CardGroup cols={2}>
-  <Card title="Simplified Market Entry" icon="door-open">
-    Eliminate operational complexities of entering the Indian market
-  </Card>
-  <Card title="Higher Success Rates" icon="chart-line">
-    Access local payment processing with better transaction success rates
-  </Card>
-  <Card title="Reduced Settlement Time" icon="clock">
-    Funds settled within T+2 days
-  </Card>
-  <Card title="Direct Support" icon="headset">
-    Reconciliation and settlement queries handled directly by EximPe
-  </Card>
-</CardGroup>
-
-## Key Benefits For Indian Customers
-
-<CardGroup cols={3}>
-  <Card title="Familiar Payment Methods" icon="mobile-screen-button">
-    Pay using UPI, Indian debit cards and Net Banking 
-  </Card>
-  <Card title="Secure Transactions" icon="lock">
-    All transactions processed through secure, compliant infrastructure
-  </Card>
-  <Card title="Local Currency" icon="indian-rupee-sign">
-    No confusion with foreign currency conversions
-  </Card>
-</CardGroup>
-
-## Supported Payment Methods
-
-<CardGroup cols={2}>
-  <Card title="Cards" icon="credit-card">
-    Visa, Mastercard, RuPay (debit and credit cards)
-  </Card>
-  <Card title="Net Banking" icon="building-columns">
-    All major Indian banks
-  </Card>
-  <Card title="UPI" icon="mobile-screen-button">
-    Real-time payments through UPI apps
-  </Card>
-  <Card title="Future: UPI AutoPay" icon="repeat">
-    Recurring payments (post-integration)
-  </Card>
-</CardGroup>
+- **Per-transaction limit**: ₹2,50,000 per transaction.
+- **LRS TCS threshold**: TCS is nil up to ₹10,00,000 of a remitter's cumulative LRS in a financial year, and applies only to the amount above it (per person, platform-wide, resets each 1 April).
+- **Purpose codes**: every payment carries a FEMA purpose code from the settling entity's allowlist.
+- **Documentation**: a digital invoice and supporting documents are required for each remittance; a full audit trail is maintained.
 
 <Info>
-  **Ready to start?** Follow our [Steps to Integrate](/integration-guide/getting-started/steps-to-integrate) to get your merchant account set up and begin accepting payments from Indian customers.
+  **Ready to start?** Follow [Steps to Integrate](/integration-guide/v3/getting-started/steps-to-integrate) to onboard, issue a VBA, and collect your first payment.
 </Info>

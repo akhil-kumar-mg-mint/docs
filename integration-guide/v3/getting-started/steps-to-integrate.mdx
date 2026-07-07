@@ -1,32 +1,66 @@
 ---
 title: "Steps to Integrate"
-description: "Follow these steps to register and collect payments from customer in India"
+description: "Onboard, issue a virtual account, and collect a compliant cross-border payment with EximPe V3."
 ---
 
-## Register for EximPe Account
+This is the end-to-end path for a V3 integration. The collection model is **virtual-account based**: buyers transfer rupees into an EximPe-issued VBA, and you assert LRS compliance through the API.
 
-In order to collect Payments from Indian Buyers as a foreign merchant or PA collecting payments on behalf of your merchants, first you need to [Register](/integration-guide/getting-started/register-merchant) on EximPe to get your API Access key and token.
+## 1. Register for an EximPe Account
 
-To start the development, you can signup to [Merchant Sandbox](https://merchant-uat.eximpe.com/). Please ensure to select **PSP** or **Merchant** based on your business requirement while creating the account.
+To collect payments from Indian buyers as a foreign merchant, or as a **PSP** collecting on behalf of the merchants you onboard, first [register](/integration-guide/v3/getting-started/register-merchant) on EximPe to get your API access credentials.
 
-## Get API Credentials
+To start development, sign up on the [Merchant Sandbox](https://merchant-uat.eximpe.com/). Select **PSP** or **Merchant** based on your business model when creating the account.
 
-Grab your `client_id` and `client_secret` to start making secure API calls.\
-Refer to [Get Credentials for Web Checkout & API Access](./test-credentials) to complete this step.
+## 2. Get API Credentials
+
+Grab your `client_id` and `client_secret` to make secure API calls. See [Get Credentials for API Access](/integration-guide/v3/getting-started/test-credentials).
+
+Every V3 request is authenticated with these headers:
+
+| Header | Purpose |
+| :--- | :--- |
+| `X-Client-ID` | Your client ID |
+| `X-Client-Secret` | Your client secret |
+| `X-API-Version` | API channel/version (e.g. `3.0.0`) |
+| `X-Merchant-ID` | The settling sub-merchant. Required for PSP callers on merchant-scoped calls (VBA, LRS). |
 
 <Note>
-  After signup, please share your `client_id` with the EximPe team to configure your account and approve your webhooks and merchant IP in the Sandbox environment.
+  After signup, share your `client_id` with the EximPe team so we can configure your account, purpose-code allowlist, and approve your webhook URL and IPs in Sandbox.
 </Note>
 
-## Configure Webhooks & IP Whitelisting
+## 3. Onboard Sub-merchants (PSP)
 
-Webhooks are **real-time server-to-server (S2S) notifications** that EximPe sends to your backend when important events occur.
+If you are a PSP, create each sub-merchant with the [Create Merchant](/api-reference/v3/merchant/create) API. A sub-merchant must be **approved** before it can hold a VBA or collect. You are notified when it is live via the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved) webhook. See [Adding Merchants](/integration-guide/v3/getting-started/adding-merchants).
 
-### Setup Guide
+Direct merchants (no parent PSP) skip this step and act as their own settling entity.
 
-1.  **Prepare Your Endpoint**: Ensure your server has a **public HTTPS URL** accessible from the internet.
-2.  **Configure Webhook URL**: Log into your **EximPe Dashboard**, navigate to the **Developer Section**, and enter your webhook URL.
-3.  **Whitelist IPs**: Configure your firewall to only accept webhooks from EximPe's IP ranges (found in the Developer Section).
+## 4. Configure Webhooks & IP Whitelisting
 
-For detailed setup instructions, security verification, and supported events, refer to the [Webhooks Guide](../web-integration/webhooks).
+Webhooks are **real-time server-to-server notifications** for merchant, payment, settlement, and refund events.
 
+1. **Prepare your endpoint** — a public HTTPS URL that returns `200 OK`.
+2. **Configure the webhook URL** in your EximPe Dashboard → Developer Section.
+3. **Whitelist IPs** — restrict your firewall to EximPe's IP ranges (listed in the Developer Section).
+
+See the [Webhooks Guide](/integration-guide/v3/web-integration/webhooks).
+
+## 5. Collect & Comply
+
+<Steps>
+  <Step title="Issue a Virtual Bank Account">
+    Create a VBA for the settling entity and share its account number + IFSC with the buyer. See [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts).
+  </Step>
+  <Step title="Receive the credit">
+    When the buyer transfers rupees in, EximPe creates a payment in **Action Required** and fires a payment webhook.
+  </Step>
+  <Step title="Complete LRS verification">
+    Verify the buyer's PAN, quote the TCS, upload documents, and submit the remitter/purpose/declarations. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+  </Step>
+  <Step title="Settle & reconcile">
+    Track settlement via the [Settlement APIs](/api-reference/v3/settlement/list) and the [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
+  </Step>
+</Steps>
+
+<Info>
+  New to the flow? Start with the [Collection Overview](/integration-guide/v3/web-integration/collection-overview) for the full picture and the roles involved.
+</Info>

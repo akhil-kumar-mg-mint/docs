@@ -1,0 +1,78 @@
+---
+title: "Collection Overview"
+description: "The end-to-end V3 flow: issue a virtual account, receive a rupee credit, assert LRS compliance, and settle abroad."
+---
+
+V3 is an **API-only** cross-border collection rail. Unlike V1/V2 (hosted checkout, cards, UPI), the buyer never sees an EximPe screen — they simply transfer rupees into a **Virtual Bank Account (VBA)**, and you assert the compliance details through the API.
+
+## Roles
+
+| Term | Who it is |
+| :--- | :--- |
+| **PSP** | Integrator that calls the API for the sub-merchants it onboards. Holds no VBA or funds. |
+| **Sub-merchant** | A merchant created under a PSP. Holds VBAs and collected funds; the entity that gets settled. |
+| **Direct merchant** | A merchant with no parent PSP — holds its own VBAs and is its own API caller. |
+| **Settling entity** | The account that holds the VBA and funds — a sub-merchant or a direct merchant, never a PSP. |
+| **Remitter (Buyer)** | The person in India paying, uniquely identified by **PAN**. |
+
+<Note>
+  A single VBA can receive credits from **many** remitters — it is not tied to one buyer. Because of this, an inbound credit does **not** by itself tell you who paid; the remitter (PAN) is asserted by you afterwards during LRS verification.
+</Note>
+
+## The Flow
+
+<Steps>
+  <Step title="Onboard (PSP only)">
+    Create and get approval for each sub-merchant. See [Create Merchant](/api-reference/v3/merchant/create) and the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved) webhook.
+  </Step>
+  <Step title="Issue a VBA">
+    Create a Virtual Bank Account for the settling entity and share its account number + IFSC with the buyer. See [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts).
+  </Step>
+  <Step title="Buyer transfers rupees">
+    The buyer sends money to the VBA from their bank. When the credit lands, EximPe creates a payment and fires a payment webhook. The payment starts in **Action Required** — its compliance details are not yet supplied.
+  </Step>
+  <Step title="Verify the buyer's PAN">
+    Verify the remitter's PAN before you can quote or submit. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+  </Step>
+  <Step title="Quote TCS (optional but recommended)">
+    Quote the TCS and all-in total for the remittance against the buyer's LRS usage.
+  </Step>
+  <Step title="Upload documents & submit verification">
+    Upload the supporting documents, then submit the remitter, purpose code, invoice, declarations, and collected TCS. The payment moves to **Under Review** (or stays in **Action Required** / goes **On Hold** if something is missing).
+  </Step>
+  <Step title="Settle & reconcile">
+    Once cleared, funds are settled to the beneficiary abroad. Track via the [Settlement APIs](/api-reference/v3/settlement/list) and [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
+  </Step>
+</Steps>
+
+## Payment Lifecycle
+
+A collected payment moves through these compliance states:
+
+| State | Meaning |
+| :--- | :--- |
+| `ACTION_REQUIRED` | Credit received; compliance details not yet supplied (or something is missing). |
+| `UNDER_REVIEW` | Verification submitted and posted to the buyer's LRS counter; awaiting bank processing. |
+| `ON_HOLD` | Needs manual attention — e.g. the sender is not the PAN holder. |
+| `SETTLED` | Funds settled to the beneficiary. |
+
+## What You'll Build Against
+
+<CardGroup cols={2}>
+  <Card title="Merchant APIs" icon="store" href="/api-reference/v3/merchant/create">
+    Onboard and manage sub-merchants (PSP).
+  </Card>
+  <Card title="Virtual Bank Accounts" icon="building-columns" href="/api-reference/v3/vba/create">
+    Create, list, and read VBAs and their payments.
+  </Card>
+  <Card title="LRS APIs" icon="shield-check" href="/api-reference/v3/lrs/verify-pan">
+    PAN verify, TCS quote, document upload, and verification submit.
+  </Card>
+  <Card title="Settlement & Refund" icon="money-bill-transfer" href="/api-reference/v3/settlement/list">
+    Track settlements and issue refunds.
+  </Card>
+</CardGroup>
+
+<Info>
+  Ready for detail? Continue to [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts) and [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+</Info>

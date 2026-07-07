@@ -1,0 +1,93 @@
+---
+title: "Virtual Bank Accounts"
+description: "Issue a Virtual Bank Account (VBA) for a settling entity, receive rupee credits, and simulate transfers in the sandbox."
+---
+
+A **Virtual Bank Account (VBA)** is a persistent Indian bank account (account number + IFSC) issued to a settling entity. Buyers transfer rupees into it, and every credit that lands creates a payment you then verify for LRS.
+
+<Note>
+  A VBA is **not** bound to a single buyer — it can receive credits from many remitters. From v2.0.0 onward, a settling entity can have multiple ACTIVE VBAs at once.
+</Note>
+
+## Create a VBA
+
+Use [Create VBA](/api-reference/v3/vba/create). The account name, email, phone, and `virtual_account_id` are derived from the merchant account, so the request body is minimal — you optionally supply lock rules.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
+  -H 'X-Client-ID: <client_id>' \
+  -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{}'
+```
+
+The response carries the `vba_account_number`, `vba_ifsc`, `vba_bank_code`, `vba_status`, and `vba_provider`. **Share the account number and IFSC with the buyer** — that is where they transfer the rupees.
+
+### Optional lock rules
+
+You can restrict what a VBA will accept:
+
+- **Remitter lock** — accept transfers only from specific remitter account(s). Omit to accept from any remitter.
+- **Amount lock** — restrict to specific amount(s). Omit to accept any amount.
+
+Both are independent and optional; when omitted they return as `null` and impose no restriction.
+
+## List & read VBAs
+
+<CardGroup cols={2}>
+  <Card title="List VBAs" icon="list" href="/api-reference/v3/vba/list">
+    Paginated list for the merchant, filterable by `vba_status` and `vba_provider`.
+  </Card>
+  <Card title="Get VBA" icon="magnifying-glass" href="/api-reference/v3/vba/get">
+    Fetch a single VBA by `virtual_account_id`.
+  </Card>
+  <Card title="List Payments" icon="arrow-down-to-line" href="/api-reference/v3/vba/list-payments">
+    Payments (credits) collected on a VBA.
+  </Card>
+  <Card title="Payment by UTR" icon="hashtag" href="/api-reference/v3/vba/get-payment-by-utr">
+    Look up a single credit by its bank UTR.
+  </Card>
+</CardGroup>
+
+## Receiving a credit
+
+When a buyer transfers rupees into the VBA:
+
+1. EximPe records the **credit** (amount, sender account + IFSC, payer name, UTR).
+2. A payment is created in **Action Required** — the remitter's PAN is not derived from the credit.
+3. You receive a payment webhook. Proceed to [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) to make it compliant.
+
+<Warning>
+  The sender bank account on a credit is the **payer instrument**, not the **remitter identity**. You must assert the remitter (by PAN) during LRS verification — do not assume the bank sender is the PAN holder.
+</Warning>
+
+## Simulate a transfer (Sandbox)
+
+Real bank credits can't be produced on demand in a test environment, so use [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) to drive a credit into a VBA. It works for both **Cashfree** and **ICICI** VBAs (for ICICI it runs the real credit-posting processor), and is **sandbox-only** (403 in production). The `utr` must be unique across simulations.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
+  -H 'X-Client-ID: <client_id>' \
+  -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "virtual_account_id": "24586202",
+    "vba_simulation": {
+      "amount": 150000,
+      "utr": "TESTUTR0001",
+      "remitter_name": "John Doe",
+      "remitter_account": "123456789012",
+      "remitter_ifsc": "YESB0CMSNOC"
+    }
+  }'
+```
+
+This creates a payment in **Action Required** and fires the payment webhook — exactly as a real credit would — so you can exercise the full LRS flow end-to-end.
+
+<Info>
+  Next: make the collected payment compliant in [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+</Info>
