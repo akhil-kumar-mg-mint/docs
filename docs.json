@@ -408,7 +408,8 @@
                   "api-reference/v3/vba/create",
                   "api-reference/v3/vba/get",
                   "api-reference/v3/vba/list-payments",
-                  "api-reference/v3/vba/get-payment-by-utr"
+                  "api-reference/v3/vba/get-payment-by-utr",
+                  "api-reference/v3/vba/simulate-transfer"
                 ]
               },
               {

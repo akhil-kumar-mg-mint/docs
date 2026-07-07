@@ -1827,6 +1827,203 @@
         },
         "operationId": "v2_get_pg_vba_virtual_account_id_payment_by_utr_"
       }
+    },
+    "/pg/vba/simulate-transfer/": {
+      "post": {
+        "summary": "Simulate VBA Transfer",
+        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer.\n\n**Sandbox only** — this endpoint returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` is not accepted from the client; it is derived from the target VBA.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "virtual_account_id",
+                  "vba_simulation"
+                ],
+                "properties": {
+                  "virtual_account_id": {
+                    "type": "string",
+                    "description": "Virtual account ID of the VBA to simulate a transfer into.",
+                    "example": "24586202"
+                  },
+                  "vba_simulation": {
+                    "type": "object",
+                    "required": [
+                      "amount",
+                      "utr",
+                      "remitter_name",
+                      "remitter_account",
+                      "remitter_ifsc"
+                    ],
+                    "properties": {
+                      "amount": {
+                        "type": "number",
+                        "description": "Amount to credit to the VBA.",
+                        "example": 1500
+                      },
+                      "utr": {
+                        "type": "string",
+                        "description": "Unique UTR (Unique Transaction Reference) for the simulated transfer. Must be unique across simulations.",
+                        "example": "TESTUTRA136UG"
+                      },
+                      "remitter_name": {
+                        "type": "string",
+                        "description": "Name of the remitter (sender).",
+                        "example": "John"
+                      },
+                      "remitter_account": {
+                        "type": "string",
+                        "description": "Bank account number of the remitter.",
+                        "example": "123456789012"
+                      },
+                      "remitter_ifsc": {
+                        "type": "string",
+                        "description": "IFSC code of the remitter's bank.",
+                        "example": "YESB0CMSNOC"
+                      },
+                      "phone": {
+                        "type": "string",
+                        "description": "Phone number of the remitter (optional).",
+                        "example": "9876543210"
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "virtual_account_id": "24586202",
+                "vba_simulation": {
+                  "amount": 1500,
+                  "utr": "TESTUTRA136UG",
+                  "remitter_name": "John",
+                  "remitter_account": "123456789012",
+                  "remitter_ifsc": "YESB0CMSNOC",
+                  "phone": "9876543210"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VBA transfer simulation successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "VBA transfer simulation successful"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "simulation_id": {
+                          "type": "string",
+                          "example": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW"
+                        },
+                        "entity": {
+                          "type": "string",
+                          "example": "VBA_TRANSFER"
+                        },
+                        "entity_id": {
+                          "type": "string",
+                          "example": "9461257424586202"
+                        },
+                        "entity_simulation": {
+                          "type": "object",
+                          "properties": {
+                            "payment_status": {
+                              "type": "string",
+                              "example": "Payment processed successfully"
+                            },
+                            "payment_error_code": {
+                              "type": "string",
+                              "example": ""
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA transfer simulation successful",
+                  "data": {
+                    "simulation_id": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW",
+                    "entity": "VBA_TRANSFER",
+                    "entity_id": "9461257424586202",
+                    "entity_simulation": {
+                      "payment_status": "Payment processed successfully",
+                      "payment_error_code": ""
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — missing required fields or duplicate UTR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "VBA simulation is only available in non-production environments, or the VBA feature is not enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Virtual bank account not found for this merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_vba_simulate_transfer_"
+      }
     }
   },
   "components": {
