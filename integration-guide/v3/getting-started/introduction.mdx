@@ -1,22 +1,22 @@
 ---
 title: 'Introduction'
-description: 'EximPe V3 is an API-only cross-border collection rail. Collect an Indian buyer''s rupees into an EximPe-issued virtual account and have the funds settled to you abroad — with LRS compliance handled through the API. EximPe shows the buyer no screen.'
+description: 'EximPe is an API-only cross-border collection rail. Collect an Indian buyer''s rupees into an EximPe-issued virtual account and have the funds settled to you abroad — with LRS compliance handled through the API. EximPe shows the buyer no screen.'
 ---
 
 
 <Button href="/integration-guide/v3/getting-started/steps-to-integrate" variant="primary" size="lg">
-  Get Started with EximPe V3
+  Get Started with EximPe
 </Button>
 
-## What V3 Is
+## Overview
 
-V3 is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
+This is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
 
 <Info>
-  Looking for a hosted checkout, payment links, or S2S card/UPI/net-banking collection? Those are **Version 1 / Version 2** flows. V3 does not expose them.
+  Need a hosted checkout, payment links, or S2S card/UPI/net-banking collection instead? Those are earlier-version flows — switch versions from the selector at the top to see their guides.
 </Info>
 
-## Who Uses V3
+## Who Uses It
 
 <CardGroup cols={2}>
   <Card title="PSP" icon="sitemap">
@@ -72,7 +72,7 @@ V3 is a **headless, API-only** rail for collecting an Indian buyer's rupees into
 
 ## Regulatory Framework
 
-V3 operates under the RBI **PA-CB** guidelines. Key constraints to design for:
+EximPe operates under the RBI **PA-CB** guidelines. Key constraints to design for:
 
 - **Per-transaction limit**: ₹2,50,000 per transaction.
 - **LRS TCS threshold**: TCS is nil up to ₹10,00,000 of a remitter's cumulative LRS in a financial year, and applies only to the amount above it (per person, platform-wide, resets each 1 April).
