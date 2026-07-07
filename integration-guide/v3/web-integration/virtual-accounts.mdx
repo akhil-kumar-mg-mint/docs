@@ -1,17 +1,56 @@
 ---
 title: "Virtual Bank Accounts"
-description: "Issue a Virtual Bank Account (VBA) for a settling entity, receive rupee credits, and simulate transfers in the sandbox."
+description: "Collect rupees from Indian buyers via local bank transfers into a dedicated virtual account — no SWIFT, no forex hassle for your customers."
 ---
 
-A **Virtual Bank Account (VBA)** is a persistent Indian bank account (account number + IFSC) issued to a settling entity. Buyers transfer rupees into it, and every credit that lands creates a payment you then verify for LRS.
+# Introduction
+
+Collecting money from India is hard. Your buyers face SWIFT fees, complex forex processes, and unfamiliar international wire workflows — all of which create friction, delay payments, and increase drop-off.
+
+Virtual Bank Accounts (VBAs) solve this by giving a settling entity a dedicated Indian bank account. The buyer simply transfers rupees using methods they already know and trust — NEFT, RTGS, or IMPS — just like paying any local vendor. EximPe handles the regulatory compliance, currency conversion, and settlement to your preferred currency.
+
+<CardGroup cols={3}>
+  <Card title="Local for the buyer" icon="building-columns" href="#how-it-works">
+    Buyers pay by familiar domestic transfer — no SWIFT, no intermediary banks
+  </Card>
+  <Card title="Real-time tracking" icon="bolt" href="#step-3-track-payments">
+    Instant webhook notifications on every incoming credit
+  </Card>
+  <Card title="Compliance built in" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-compliance">
+    LRS eligibility, TCS, and documents are handled through the API
+  </Card>
+</CardGroup>
+
+## How It Works
+
+1. **You get an Indian bank account** — EximPe issues a virtual bank account with a unique account number and IFSC for the settling entity.
+2. **Your buyer pays locally** — they initiate a standard domestic transfer (NEFT, RTGS, or IMPS) to the VBA. No international wires, no SWIFT.
+3. **You get notified instantly** — EximPe creates a payment from the credit and sends a real-time webhook.
+4. **Compliance is handled** — you assert the LRS details (remitter, purpose, documents) via API to meet RBI's cross-border rules.
+5. **Settlement in your currency** — cleared funds are converted and settled to your international bank account.
 
 <Note>
-  A VBA is **not** bound to a single buyer — it can receive credits from many remitters. From v2.0.0 onward, a settling entity can have multiple ACTIVE VBAs at once.
+  A VBA is **not** bound to a single buyer — it can receive credits from many remitters. From v2.0.0 onwards, a settling entity can have multiple **ACTIVE** VBAs at once.
 </Note>
 
-## Create a VBA
+## Prerequisites
 
-Use [Create VBA](/api-reference/v3/vba/create). The account name, email, phone, and `virtual_account_id` are derived from the merchant account, so the request body is minimal — you optionally supply lock rules.
+Before you begin, ensure you have:
+
+- **Merchant account**: an active, approved settling entity (sub-merchant or direct merchant) with the VBA feature enabled.
+- **Credentials**: your `X-Client-ID` and `X-Client-Secret` (PSP callers also send `X-Merchant-ID` for the settling sub-merchant).
+- **Webhook URL**: a secure endpoint to receive VBA payment notifications, configured on your credentials.
+
+## Integration Steps
+
+1. **Create VBA** — issue a virtual bank account for the settling entity.
+2. **Share account details** — pass the account number and IFSC to the buyer.
+3. **Track payments** — list payments or fetch by UTR, or use webhooks for real-time updates.
+4. **Simulate a transfer (sandbox)** — test the end-to-end flow without a real bank transfer.
+
+## Step 1: Create VBA
+
+Create a Virtual Bank Account for the settling entity. The account name, email, phone, and `virtual_account_id` are derived from the merchant account, so the request body is minimal — you optionally supply lock rules.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
@@ -23,53 +62,49 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
   -d '{}'
 ```
 
-The response carries the `vba_account_number`, `vba_ifsc`, `vba_bank_code`, `vba_status`, and `vba_provider`. **Share the account number and IFSC with the buyer** — that is where they transfer the rupees.
+You can optionally lock a VBA at creation time:
+
+- **Remitter lock** — restrict the VBA to accept transfers only from a specific list of remitter bank accounts (each identified by account number and IFSC).
+- **Amount lock** — restrict the VBA to accept transfers within an amount range.
+
+Both locks are optional and independent; when omitted they return as `null` and impose no restriction.
+
+<Card title="📚 API Reference" href="/api-reference/v3/vba/create">
+  **Create VBA API** — full request/response and error codes.
+</Card>
+
+## Step 2: Share Account Details
+
+The response returns `vba_account_number`, `vba_ifsc`, `vba_bank_code`, `vba_status`, and `vba_provider`. Share the account number and IFSC with the buyer so they can initiate a NEFT, RTGS, or IMPS transfer into the virtual account.
 
 <Note>
   For ICICI-provider VBAs, the account number is a 16-character number in a fixed pattern: the `INRACC` prefix + a 3-character partner shortcode + a 7-digit identifier — e.g. `INRACCNEX1234567`. The IFSC is fixed per client code.
 </Note>
 
-### Optional lock rules
+## Step 3: Track Payments
 
-You can restrict what a VBA will accept:
-
-- **Remitter lock** — accept transfers only from specific remitter account(s). Omit to accept from any remitter.
-- **Amount lock** — restrict to specific amount(s). Omit to accept any amount.
-
-Both are independent and optional; when omitted they return as `null` and impose no restriction.
-
-## List & read VBAs
-
-<CardGroup cols={2}>
-  <Card title="List VBAs" icon="list" href="/api-reference/v3/vba/list">
-    Paginated list for the merchant, filterable by `vba_status` and `vba_provider`.
-  </Card>
-  <Card title="Get VBA" icon="magnifying-glass" href="/api-reference/v3/vba/get">
-    Fetch a single VBA by `virtual_account_id`.
-  </Card>
-  <Card title="List Payments" icon="arrow-down-to-line" href="/api-reference/v3/vba/list-payments">
-    Payments (credits) collected on a VBA.
-  </Card>
-  <Card title="Payment by UTR" icon="hashtag" href="/api-reference/v3/vba/get-payment-by-utr">
-    Look up a single credit by its bank UTR.
-  </Card>
-</CardGroup>
-
-## Receiving a credit
-
-When a buyer transfers rupees into the VBA:
+When a credit lands in the VBA, EximPe creates a payment and sends webhooks to your registered URL so you can process it in real time:
 
 1. EximPe records the **credit** (amount, sender account + IFSC, payer name, UTR).
 2. A payment is created in **Action Required** — the remitter's PAN is not derived from the credit.
-3. You receive a payment webhook. Proceed to [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) to make it compliant.
+3. You receive a payment webhook. Proceed to [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) to make the payment compliant.
 
 <Warning>
   The sender bank account on a credit is the **payer instrument**, not the **remitter identity**. You must assert the remitter (by PAN) during LRS verification — do not assume the bank sender is the PAN holder.
 </Warning>
 
-## Simulate a transfer (Sandbox)
+<CardGroup cols={2}>
+  <Card title="📚 List VBA Payments" href="/api-reference/v3/vba/list-payments">
+    Paginated list of payments collected on a VBA.
+  </Card>
+  <Card title="📚 Get Payment by UTR" href="/api-reference/v3/vba/get-payment-by-utr">
+    Fetch a single credit by its bank UTR.
+  </Card>
+</CardGroup>
 
-Real bank credits can't be produced on demand in a test environment, so use [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) to drive a credit into a VBA. It works for both **Cashfree** and **ICICI** VBAs (for ICICI it runs the real credit-posting processor), and is **sandbox-only** (403 in production). The `utr` must be unique across simulations.
+## Step 4: Simulate a Transfer (Sandbox)
+
+In the sandbox environment, you can simulate an incoming bank transfer to a VBA to test the end-to-end flow — webhooks, payment creation, and the LRS flow — without a real bank transfer. It works for both **Cashfree** and **ICICI** VBAs (for ICICI it runs the real credit-posting processor). The `utr` must be unique across simulations.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
@@ -90,7 +125,22 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
   }'
 ```
 
-This creates a payment in **Action Required** and fires the payment webhook — exactly as a real credit would — so you can exercise the full LRS flow end-to-end.
+<Warning>This endpoint is available only in the sandbox environment, not in production.</Warning>
+
+<Card title="📚 API Reference" href="/api-reference/v3/vba/simulate-transfer">
+  **Simulate VBA Transfer API** — simulate a payment to a VBA in sandbox.
+</Card>
+
+## Managing VBAs
+
+EximPe provides APIs to manage the lifecycle of your virtual bank accounts:
+
+- **[Create VBA](/api-reference/v3/vba/create)** — create a new VBA, optionally with remitter and/or amount locks.
+- **[List VBAs](/api-reference/v3/vba/list)** — paginated list, filterable by `vba_status` and `vba_provider`.
+- **[Get VBA Details](/api-reference/v3/vba/get)** — fetch details of an existing VBA.
+- **[List VBA Payments](/api-reference/v3/vba/list-payments)** — list all payments for a VBA.
+- **[Get Payment by UTR](/api-reference/v3/vba/get-payment-by-utr)** — get a single payment by UTR.
+- **[Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer)** — simulate an incoming transfer to a VBA in sandbox.
 
 <Info>
   Next: make the collected payment compliant in [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
