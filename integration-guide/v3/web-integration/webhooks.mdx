@@ -31,29 +31,29 @@ Webhooks are **real-time server-to-server (S2S) notifications** that EximPe send
 EximPe sends webhooks for these key events:
 
 <CardGroup cols={2}>
+  <Card title="Merchant Approved" icon="user-check">
+    **When:** A sub-merchant is approved<br/>
+    **Use Case:** Enable the merchant to hold VBAs and collect
+  </Card>
   <Card title="Payment Successful" icon="check">
-    **When:** Customer completes payment<br/>
-    **Use Case:** Update order status, send confirmation
+    **When:** A credit lands in a VBA and a payment is created<br/>
+    **Use Case:** Begin LRS verification for the credit
   </Card>
   <Card title="Payment Failed" icon="x">
-    **When:** Payment attempt fails<br/>
-    **Use Case:** Retry payment, notify customer
+    **When:** A credit could not be processed<br/>
+    **Use Case:** Investigate and reconcile
+  </Card>
+  <Card title="Payment Settled" icon="money-bill">
+    **When:** Funds are settled to the beneficiary<br/>
+    **Use Case:** Update accounting and reconciliation records
   </Card>
   <Card title="Payment Refunded" icon="rotate-left">
-    **When:** Refund is processed<br/>
-    **Use Case:** Update inventory, notify customer
+    **When:** A refund is processed<br/>
+    **Use Case:** Update your ledger, notify the buyer
   </Card>
-  <Card title="Merchant Approved" icon="user-check">
-    **When:** Merchant account activated<br/>
-    **Use Case:** Enable payment collection
-  </Card>
-  <Card title="Settlement Completed" icon="money-bill">
-    **When:** Funds transferred to merchant<br/>
-    **Use Case:** Update accounting records
-  </Card>
-    <Card title="Subscription Status" icon="repeat">
-    **When:** Subscription status changes or updates<br/>
-    **Use Case:** Track subscription lifecycle, update billing records
+  <Card title="Refund / Dispute Updates" icon="scale-balanced">
+    **When:** A refund status changes or a dispute is updated<br/>
+    **Use Case:** Track refund and dispute lifecycles
   </Card>
 </CardGroup>
 

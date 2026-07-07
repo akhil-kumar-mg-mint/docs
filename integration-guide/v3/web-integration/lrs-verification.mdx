@@ -1,0 +1,94 @@
+---
+title: "LRS Verification"
+description: "Make a collected payment compliant: verify the buyer's PAN, quote TCS, upload documents, and submit the remitter and purpose details under the Liberalised Remittance Scheme."
+---
+
+Every credit into a VBA creates a payment in **Action Required**. Under the **Liberalised Remittance Scheme (LRS)**, you make it compliant by asserting who the remitter is, why they are paying, and that the required tax and documents are in place. This guide walks the four LRS APIs in order.
+
+<Note>
+  **PSP callers must send `X-Merchant-ID`** on every LRS call, naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.
+</Note>
+
+## Step 1 — Verify the buyer's PAN
+
+The remitter is identified by **PAN**, not by the bank sender on the credit. [Verify PAN](/api-reference/v3/lrs/verify-pan) checks the PAN against income-tax records and matches the name and date of birth. A verified PAN is the gateway to everything else.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/pan/verify/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{ "pan": "ABCDE1234F", "name": "John Doe", "dob": "1990-01-01" }'
+```
+
+A non-matching or rejected PAN returns `verified: false` with a `reason` (e.g. `NAME_MISMATCH`, `INOPERATIVE_PAN`) to resolve with the buyer before proceeding.
+
+## Step 2 — Quote the TCS
+
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the TCS due and the all-in total the buyer pays. TCS is **nil up to ₹10,00,000** of the remitter's cumulative LRS this financial year and applies only to the slice above it (education-loan-funded remittances are exempt). This quotes against the LRS usage EximPe can see and reserves nothing.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305", "tcs_threshold_breached": false }'
+```
+
+The `purpose_code` must be one your settling entity is enabled for (its allowlist).
+
+## Step 3 — Upload supporting documents
+
+Upload each supporting document with [Upload LRS Document](/api-reference/v3/lrs/upload-document) (`multipart/form-data`: `file` + `type`). Each upload returns a `ref` you pass in the next step. Documents are uploaded up front, decoupled from any payment.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -F 'type=offer_letter' \
+  -F 'file=@offer_letter.pdf'
+```
+
+Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa`.
+
+## Step 4 — Submit verification details
+
+Finally, [Submit LRS Verification](/api-reference/v3/lrs/submit-verification) ties it together: the payment, remitter, purpose code, invoice, address, contact, declarations, collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "payment_id": "PAY_1a2b3c4d5e",
+    "purpose_code": "S0305",
+    "remitter": { "pan": "ABCDE1234F", "name": "John Doe", "dob": "1990-01-01", "relation": "SELF" },
+    "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
+    "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
+    "contact": { "email": "john@example.com", "mobile": "9876543210" },
+    "tcs": 40000,
+    "declarations": { "resident_in_india": true, "lrs": true, "tcs": true, "source_of_funds": true },
+    "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
+  }'
+```
+
+### Result statuses
+
+| `status` | Meaning |
+| :--- | :--- |
+| `under_review` | Checks passed; posted to the LRS counter and awaiting bank processing. |
+| `action_required` | Something is missing — see the `missing` array and `outstanding` amount, fix, and resubmit. |
+| `on_hold` | Needs manual attention (e.g. the sender is not the PAN holder). |
+
+<Warning>
+  When the remitter's `relation` is not `SELF` (e.g. a parent paying for a student), you must also include `primary_person` (name, dob, passport number) for the person the remittance is for.
+</Warning>
+
+<Info>
+  Topping up an earlier payment? Pass `linked_payment_id` and a `reason` (`REMAINING_AMOUNT` or `TCS_PAYMENT`) on submit. `reason` is only valid together with `linked_payment_id`.
+</Info>
+
+## After submission
+
+Once the payment clears review, funds are settled to the beneficiary abroad. Track settlement via the [Settlement APIs](/api-reference/v3/settlement/list) and the [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
