@@ -418,6 +418,7 @@
                 "pages": [
                   "api-reference/v3/lrs/verify-pan",
                   "api-reference/v3/lrs/quote",
+                  "api-reference/v3/lrs/upload-document",
                   "api-reference/v3/lrs/submit-verification"
                 ]
               },
