@@ -2254,7 +2254,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it; education-loan-funded remittances are exempt. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2414,10 +2414,126 @@
         "operationId": "v3_post_pg_lrs_quote_"
       }
     },
+    "/pg/lrs/documents/": {
+      "post": {
+        "summary": "Upload a supporting document",
+        "description": "Upload one LRS supporting document (offer letter, passport, fee invoice, ...) and get back a `ref`. Pass that `ref` together with its `type` in the `documents` array of **Submit LRS Verification**. Documents are uploaded up front, decoupled from any payment. The file's type, size and encryption are validated on upload.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file",
+                  "type"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The document file to upload."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Document type. Must be a known LRS document type for the purpose codes you are enabled for.",
+                    "enum": [
+                      "fee_invoice",
+                      "offer_letter",
+                      "passport",
+                      "relationship_declaration",
+                      "student_id_or_visa",
+                      "student_id"
+                    ],
+                    "example": "offer_letter"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Document uploaded"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ref": {
+                          "type": "string",
+                          "description": "Reference to pass as `documents[].ref` in Submit LRS Verification.",
+                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                        },
+                        "type": {
+                          "type": "string",
+                          "example": "offer_letter"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Document uploaded",
+                  "data": {
+                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                    "type": "offer_letter"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — unknown document type, or the file failed type/size/encryption validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error uploading the document.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_lrs_documents_"
+      }
+    },
     "/pg/lrs/verify/": {
       "post": {
         "summary": "Submit a payment's LRS verification details",
-        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). `primary_person` is required when the remitter's `relation` is not `SELF`.",
+        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
         "tags": [
           "LRS"
         ],
@@ -2467,13 +2583,26 @@
                     "type": "object",
                     "required": [
                       "pan",
+                      "name",
+                      "dob",
                       "relation"
                     ],
                     "properties": {
                       "pan": {
                         "type": "string",
-                        "description": "Verified PAN of the remitter.",
+                        "description": "Remitter PAN. Verified inline (needs name + dob) if not already verified.",
                         "example": "ABCDE1234F"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Remitter's full name as per PAN.",
+                        "example": "John Doe"
+                      },
+                      "dob": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "Remitter's date of birth (YYYY-MM-DD).",
+                        "example": "1990-01-01"
                       },
                       "relation": {
                         "type": "string",
@@ -2612,7 +2741,7 @@
                   },
                   "documents": {
                     "type": "array",
-                    "description": "Supporting documents required for the purpose code.",
+                    "description": "Supporting documents for the purpose code. Upload each via POST /pg/lrs/documents first, then reference it here.",
                     "items": {
                       "type": "object",
                       "required": [
@@ -2622,12 +2751,21 @@
                       "properties": {
                         "type": {
                           "type": "string",
-                          "example": "INVOICE"
+                          "description": "Document type (same value used at upload).",
+                          "enum": [
+                            "fee_invoice",
+                            "offer_letter",
+                            "passport",
+                            "relationship_declaration",
+                            "student_id_or_visa",
+                            "student_id"
+                          ],
+                          "example": "offer_letter"
                         },
                         "ref": {
                           "type": "string",
-                          "description": "Reference/handle of the uploaded document.",
-                          "example": "DOC_9f8e7d6c"
+                          "description": "`ref` returned by the document upload.",
+                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
                         }
                       }
                     }
@@ -2645,7 +2783,7 @@
                       "TCS_PAYMENT"
                     ],
                     "nullable": true,
-                    "description": "Why this credit is a top-up of an earlier payment (audit label). Used with `linked_payment_id`.",
+                    "description": "Why this credit is a top-up of an earlier payment (audit label). Only valid together with `linked_payment_id` — sending `reason` without it returns 400.",
                     "example": null
                   }
                 }
@@ -2656,6 +2794,8 @@
                 "tcs_threshold_breached": false,
                 "remitter": {
                   "pan": "ABCDE1234F",
+                  "name": "John Doe",
+                  "dob": "1990-01-01",
                   "relation": "SELF"
                 },
                 "invoice": {
@@ -2682,8 +2822,12 @@
                 },
                 "documents": [
                   {
-                    "type": "INVOICE",
-                    "ref": "DOC_9f8e7d6c"
+                    "type": "offer_letter",
+                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                  },
+                  {
+                    "type": "fee_invoice",
+                    "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
                   }
                 ]
               }
