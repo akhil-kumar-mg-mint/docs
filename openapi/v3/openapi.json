@@ -911,6 +911,189 @@
       }
     },
     "/pg/vba/": {
+      "get": {
+        "summary": "List Virtual Bank Accounts",
+        "description": "Return a paginated list of Virtual Bank Accounts for the authenticated merchant or sub-merchant. Supports optional filtering by `vba_status` and `vba_provider`, and pagination via `page`.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vba_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
+            },
+            "description": "Filter by VBA status."
+          },
+          {
+            "name": "vba_provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "CASHFREE",
+                "ICICI"
+              ]
+            },
+            "description": "Filter by VBA provider."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Page number for pagination."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of virtual bank accounts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Request processed successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "page": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "page_size": {
+                          "type": "integer",
+                          "example": 250
+                        },
+                        "next": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": null
+                        },
+                        "previous": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": null
+                        },
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "uid": {
+                                "type": "string",
+                                "example": "VBA_7d1f9a2b3c"
+                              },
+                              "virtual_account_id": {
+                                "type": "string",
+                                "example": "24586202"
+                              },
+                              "vba_account_name": {
+                                "type": "string",
+                                "example": "Acme Imports"
+                              },
+                              "vba_bank_code": {
+                                "type": "string",
+                                "example": "UTIB"
+                              },
+                              "vba_account_number": {
+                                "type": "string",
+                                "example": "9461257424586202"
+                              },
+                              "vba_ifsc": {
+                                "type": "string",
+                                "example": "UTIB0CCH274"
+                              },
+                              "vba_status": {
+                                "type": "string",
+                                "enum": [
+                                  "ACTIVE",
+                                  "INACTIVE"
+                                ],
+                                "example": "ACTIVE"
+                              },
+                              "vba_provider": {
+                                "type": "string",
+                                "enum": [
+                                  "CASHFREE",
+                                  "ICICI"
+                                ],
+                                "example": "ICICI"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Request processed successfully.",
+                  "data": {
+                    "count": 2,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "uid": "VBA_7d1f9a2b3c",
+                        "virtual_account_id": "24586202",
+                        "vba_account_name": "Acme Imports",
+                        "vba_bank_code": "UTIB",
+                        "vba_account_number": "9461257424586202",
+                        "vba_ifsc": "UTIB0CCH274",
+                        "vba_status": "ACTIVE",
+                        "vba_provider": "ICICI"
+                      },
+                      {
+                        "uid": "VBA_8e2a0b3c4d",
+                        "virtual_account_id": "24586203",
+                        "vba_account_name": "Acme Imports",
+                        "vba_bank_code": "YESB",
+                        "vba_account_number": "9461257424586203",
+                        "vba_ifsc": "YESB0CMSNOC",
+                        "vba_status": "INACTIVE",
+                        "vba_provider": "CASHFREE"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_pg_vba_list"
+      },
       "post": {
         "summary": "Create VBA",
         "description": "Create a Virtual Bank Account for the authenticated merchant. VBA details (email, name, phone, virtual_account_id) are derived from the merchant account. From v2.0.0 onwards, a merchant can have multiple ACTIVE VBAs simultaneously. The request body is optional — both `remitter_lock_details` and `amount_lock_details` are independently optional and can be omitted, sent individually, or sent together. When omitted, the corresponding field is returned as `null` and the VBA accepts transfers from any remitter / for any amount.",
