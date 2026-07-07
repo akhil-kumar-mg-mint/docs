@@ -1831,7 +1831,7 @@
     "/pg/vba/simulate-transfer/": {
       "post": {
         "summary": "Simulate VBA Transfer",
-        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer.\n\n**Sandbox only** — this endpoint returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` is not accepted from the client; it is derived from the target VBA.",
+        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for both **Cashfree** and **ICICI** VBAs; the provider is resolved from the target VBA.\n\n- **Cashfree** VBAs call the Cashfree sandbox simulate API.\n- **ICICI** VBAs have no bank-side sandbox and the live credit-posting webhook is encrypted, so this synthesises the decrypted credit-posting payload and runs the real processor — creating the payment (in Action Required) and firing the partner webhook, skipping only the envelope crypto and MSG Hold.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -1898,6 +1898,21 @@
                         "type": "string",
                         "description": "Phone number of the remitter (optional).",
                         "example": "9876543210"
+                      },
+                      "payment_date": {
+                        "type": "string",
+                        "description": "ICICI only (optional). Payer payment date; maps to PayerPaymentDate.",
+                        "example": "2026-07-07"
+                      },
+                      "bank_txn_number": {
+                        "type": "string",
+                        "description": "ICICI only (optional). Maps to BankInternalTransactionNumber.",
+                        "example": "ICICITXN00012345"
+                      },
+                      "sender_remark": {
+                        "type": "string",
+                        "description": "ICICI only (optional). Free-text narration; maps to SenderRemark.",
+                        "example": "Invoice INV-2025-0091"
                       }
                     }
                   }
@@ -1919,7 +1934,7 @@
         },
         "responses": {
           "200": {
-            "description": "VBA transfer simulation successful",
+            "description": "VBA transfer simulation processed (response shape depends on the VBA's provider).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1965,16 +1980,43 @@
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "message": "VBA transfer simulation successful",
-                  "data": {
-                    "simulation_id": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW",
-                    "entity": "VBA_TRANSFER",
-                    "entity_id": "9461257424586202",
-                    "entity_simulation": {
-                      "payment_status": "Payment processed successfully",
-                      "payment_error_code": ""
+                "examples": {
+                  "cashfree": {
+                    "summary": "Cashfree VBA",
+                    "value": {
+                      "success": true,
+                      "message": "VBA transfer simulation successful",
+                      "data": {
+                        "simulation_id": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW",
+                        "entity": "VBA_TRANSFER",
+                        "entity_id": "9461257424586202",
+                        "entity_simulation": {
+                          "payment_status": "Payment processed successfully",
+                          "payment_error_code": ""
+                        }
+                      }
+                    }
+                  },
+                  "icici": {
+                    "summary": "ICICI VBA (runs the real credit-posting processor)",
+                    "value": {
+                      "success": true,
+                      "message": "ICICI VBA transfer simulation processed",
+                      "data": {
+                        "result": {
+                          "Response": "Success",
+                          "Code": "11"
+                        },
+                        "error": null,
+                        "error_kind": null,
+                        "payment": {
+                          "payment_request_uid": "PR_7d1f9a2b3c",
+                          "order_uid": "ORD_5e6f7a8b9c",
+                          "reference_id": "REF-2026-0042",
+                          "status": "PENDING",
+                          "settlement_status": "ACTION_REQUIRED"
+                        }
+                      }
                     }
                   }
                 }
