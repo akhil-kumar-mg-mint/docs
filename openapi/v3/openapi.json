@@ -2024,6 +2024,771 @@
         },
         "operationId": "v3_post_pg_vba_simulate_transfer_"
       }
+    },
+    "/pg/pan/verify/": {
+      "post": {
+        "summary": "Verify a buyer's PAN",
+        "description": "Verify a buyer's PAN against income-tax records — validity, individual-vs-company, active-vs-inoperative, and whether the supplied name and date of birth match. The result is recorded against the PAN. This is the gateway to the LRS buyer flow: a verified PAN is required before you can quote or submit LRS verification details. A non-matching or rejected PAN returns `verified: false` with a `reason` to resolve with the buyer.",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pan",
+                  "name",
+                  "dob"
+                ],
+                "properties": {
+                  "pan": {
+                    "type": "string",
+                    "description": "Buyer PAN (AAAAA9999A format).",
+                    "example": "ABCDE1234F"
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "description": "Buyer's full name as per PAN.",
+                    "example": "John Doe"
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Buyer's date of birth (YYYY-MM-DD).",
+                    "example": "1990-01-01"
+                  }
+                }
+              },
+              "example": {
+                "pan": "ABCDE1234F",
+                "name": "John Doe",
+                "dob": "1990-01-01"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PAN verification processed (check the `verified` flag).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "PAN verified"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "pan_id": {
+                          "type": "string",
+                          "example": "PAN_8f3a2b1c9d"
+                        },
+                        "verified": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "pan_status": {
+                          "type": "string",
+                          "enum": [
+                            "VALID",
+                            "INVALID",
+                            "INOPERATIVE"
+                          ],
+                          "nullable": true,
+                          "example": "VALID"
+                        },
+                        "entity_type": {
+                          "type": "string",
+                          "enum": [
+                            "INDIVIDUAL",
+                            "COMPANY",
+                            "OTHER"
+                          ],
+                          "nullable": true,
+                          "example": "INDIVIDUAL"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "INVALID_PAN",
+                            "NON_INDIVIDUAL_PAN",
+                            "INOPERATIVE_PAN",
+                            "NAME_MISMATCH",
+                            "DOB_MISMATCH"
+                          ],
+                          "nullable": true,
+                          "example": null
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "verified": {
+                    "summary": "Verified",
+                    "value": {
+                      "success": true,
+                      "message": "PAN verified",
+                      "data": {
+                        "pan_id": "PAN_8f3a2b1c9d",
+                        "verified": true,
+                        "pan_status": "VALID",
+                        "entity_type": "INDIVIDUAL",
+                        "reason": null
+                      }
+                    }
+                  },
+                  "not_verified": {
+                    "summary": "Name mismatch",
+                    "value": {
+                      "success": true,
+                      "message": "PAN verification did not pass",
+                      "data": {
+                        "pan_id": "PAN_8f3a2b1c9d",
+                        "verified": false,
+                        "pan_status": "VALID",
+                        "entity_type": "INDIVIDUAL",
+                        "reason": "NAME_MISMATCH"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — bad PAN format or missing fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PAN verification provider error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error during PAN verification.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_pan_verify_"
+      }
+    },
+    "/pg/lrs/quote/": {
+      "post": {
+        "summary": "Quote TCS and all-in total for a remittance",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pan",
+                  "amount",
+                  "purpose_code",
+                  "tcs_threshold_breached"
+                ],
+                "properties": {
+                  "pan": {
+                    "type": "string",
+                    "description": "Verified buyer PAN.",
+                    "example": "ABCDE1234F"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "description": "Proposed remittance amount in INR rupees.",
+                    "example": 1200000
+                  },
+                  "purpose_code": {
+                    "type": "string",
+                    "description": "FEMA purpose code; must be one the sub-merchant is enabled for.",
+                    "example": "S0305"
+                  },
+                  "tcs_threshold_breached": {
+                    "type": "boolean",
+                    "description": "Buyer's self-declaration that they have already crossed Rs.10L of LRS this FY elsewhere. When true, the full remittance is taxed.",
+                    "example": false
+                  }
+                }
+              },
+              "example": {
+                "pan": "ABCDE1234F",
+                "amount": 1200000,
+                "purpose_code": "S0305",
+                "tcs_threshold_breached": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TCS and total quoted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "LRS amount quoted"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "financial_year": {
+                          "type": "integer",
+                          "description": "Financial year the quote applies to (start year).",
+                          "example": 2025
+                        },
+                        "committed_inr": {
+                          "type": "string",
+                          "description": "Cumulative LRS already used this FY (INR).",
+                          "example": "0.00"
+                        },
+                        "remittance_inr": {
+                          "type": "string",
+                          "description": "The proposed remittance (INR).",
+                          "example": "1200000.00"
+                        },
+                        "taxable_inr": {
+                          "type": "string",
+                          "description": "Portion of the remittance subject to TCS (INR).",
+                          "example": "200000.00"
+                        },
+                        "tcs_inr": {
+                          "type": "string",
+                          "description": "TCS due on this remittance (INR).",
+                          "example": "40000.00"
+                        },
+                        "total_payable_inr": {
+                          "type": "string",
+                          "description": "All-in total the buyer pays (remittance + TCS).",
+                          "example": "1240000.00"
+                        },
+                        "tcs_threshold_breached_before": {
+                          "type": "boolean",
+                          "description": "Whether the Rs.10L threshold was already crossed before this remittance.",
+                          "example": false
+                        },
+                        "tcs_threshold_breached_after": {
+                          "type": "boolean",
+                          "description": "Whether this remittance crosses the Rs.10L threshold.",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "LRS amount quoted",
+                  "data": {
+                    "financial_year": 2025,
+                    "committed_inr": "0.00",
+                    "remittance_inr": "1200000.00",
+                    "taxable_inr": "200000.00",
+                    "tcs_inr": "40000.00",
+                    "total_payable_inr": "1240000.00",
+                    "tcs_threshold_breached_before": false,
+                    "tcs_threshold_breached_after": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — validation error, unverified PAN, or purpose code not enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error while quoting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_lrs_quote_"
+      }
+    },
+    "/pg/lrs/verify/": {
+      "post": {
+        "summary": "Submit a payment's LRS verification details",
+        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). `primary_person` is required when the remitter's `relation` is not `SELF`.",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payment_id",
+                  "purpose_code",
+                  "remitter",
+                  "invoice",
+                  "address",
+                  "contact",
+                  "tcs",
+                  "declarations",
+                  "documents"
+                ],
+                "properties": {
+                  "payment_id": {
+                    "type": "string",
+                    "description": "ID of the payment created for the credit.",
+                    "example": "PAY_1a2b3c4d5e"
+                  },
+                  "purpose_code": {
+                    "type": "string",
+                    "description": "FEMA purpose code for the remittance.",
+                    "example": "S0305"
+                  },
+                  "tcs_threshold_breached": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Buyer's self-declaration that Rs.10L LRS was already crossed this FY.",
+                    "example": false
+                  },
+                  "remitter": {
+                    "type": "object",
+                    "required": [
+                      "pan",
+                      "relation"
+                    ],
+                    "properties": {
+                      "pan": {
+                        "type": "string",
+                        "description": "Verified PAN of the remitter.",
+                        "example": "ABCDE1234F"
+                      },
+                      "relation": {
+                        "type": "string",
+                        "enum": [
+                          "SELF",
+                          "PARENT",
+                          "GUARDIAN",
+                          "SPOUSE",
+                          "SIBLING",
+                          "OTHER"
+                        ],
+                        "description": "Remitter's relation to the person the remittance is for.",
+                        "example": "SELF"
+                      }
+                    }
+                  },
+                  "primary_person": {
+                    "type": "object",
+                    "description": "Details of the person the remittance is for. Required when `relation` is not `SELF`.",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "example": "Jane Doe"
+                      },
+                      "dob": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2005-06-15"
+                      },
+                      "passport_number": {
+                        "type": "string",
+                        "example": "M1234567"
+                      }
+                    }
+                  },
+                  "invoice": {
+                    "type": "object",
+                    "required": [
+                      "number",
+                      "date",
+                      "amount"
+                    ],
+                    "properties": {
+                      "number": {
+                        "type": "string",
+                        "example": "INV-2025-0091"
+                      },
+                      "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-07-01"
+                      },
+                      "amount": {
+                        "type": "number",
+                        "example": 1200000
+                      }
+                    }
+                  },
+                  "address": {
+                    "type": "object",
+                    "required": [
+                      "address1",
+                      "city",
+                      "state",
+                      "pincode"
+                    ],
+                    "properties": {
+                      "address1": {
+                        "type": "string",
+                        "example": "12 MG Road"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "Bengaluru"
+                      },
+                      "state": {
+                        "type": "string",
+                        "example": "Karnataka"
+                      },
+                      "pincode": {
+                        "type": "string",
+                        "example": "560001"
+                      }
+                    }
+                  },
+                  "contact": {
+                    "type": "object",
+                    "required": [
+                      "email",
+                      "mobile"
+                    ],
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john@example.com"
+                      },
+                      "mobile": {
+                        "type": "string",
+                        "example": "9876543210"
+                      }
+                    }
+                  },
+                  "tcs": {
+                    "type": "number",
+                    "description": "TCS collected from the buyer, in INR rupees.",
+                    "example": 40000
+                  },
+                  "declarations": {
+                    "type": "object",
+                    "required": [
+                      "resident_in_india",
+                      "lrs",
+                      "tcs",
+                      "source_of_funds"
+                    ],
+                    "description": "All four must be true for the payment to clear checks; otherwise it stays in Action Required.",
+                    "properties": {
+                      "resident_in_india": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "lrs": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "tcs": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "source_of_funds": {
+                        "type": "boolean",
+                        "example": true
+                      }
+                    }
+                  },
+                  "documents": {
+                    "type": "array",
+                    "description": "Supporting documents required for the purpose code.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "type",
+                        "ref"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "example": "INVOICE"
+                        },
+                        "ref": {
+                          "type": "string",
+                          "description": "Reference/handle of the uploaded document.",
+                          "example": "DOC_9f8e7d6c"
+                        }
+                      }
+                    }
+                  },
+                  "linked_payment_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "When this credit tops up an earlier LRS payment, the earlier payment's ID.",
+                    "example": null
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "REMAINING_AMOUNT",
+                      "TCS_PAYMENT"
+                    ],
+                    "nullable": true,
+                    "description": "Why this credit is a top-up of an earlier payment (audit label). Used with `linked_payment_id`.",
+                    "example": null
+                  }
+                }
+              },
+              "example": {
+                "payment_id": "PAY_1a2b3c4d5e",
+                "purpose_code": "S0305",
+                "tcs_threshold_breached": false,
+                "remitter": {
+                  "pan": "ABCDE1234F",
+                  "relation": "SELF"
+                },
+                "invoice": {
+                  "number": "INV-2025-0091",
+                  "date": "2025-07-01",
+                  "amount": 1200000
+                },
+                "address": {
+                  "address1": "12 MG Road",
+                  "city": "Bengaluru",
+                  "state": "Karnataka",
+                  "pincode": "560001"
+                },
+                "contact": {
+                  "email": "john@example.com",
+                  "mobile": "9876543210"
+                },
+                "tcs": 40000,
+                "declarations": {
+                  "resident_in_india": true,
+                  "lrs": true,
+                  "tcs": true,
+                  "source_of_funds": true
+                },
+                "documents": [
+                  {
+                    "type": "INVOICE",
+                    "ref": "DOC_9f8e7d6c"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification details processed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification details processed"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "payment_id": {
+                          "type": "string",
+                          "example": "PAY_1a2b3c4d5e"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "under_review",
+                            "action_required",
+                            "on_hold"
+                          ],
+                          "description": "Resulting payment state.",
+                          "example": "under_review"
+                        },
+                        "tcs_check": {
+                          "type": "string",
+                          "enum": [
+                            "match",
+                            "mismatch",
+                            "n/a"
+                          ],
+                          "example": "match"
+                        },
+                        "missing": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Fields/checks still outstanding when status is `action_required`.",
+                          "example": []
+                        },
+                        "outstanding": {
+                          "type": "string",
+                          "description": "Shortfall still owed (INR), if any.",
+                          "example": "0.00"
+                        },
+                        "reason": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Machine reason when not advanced (e.g. PURPOSE_CODE_NOT_ALLOWED, PAN_NOT_VERIFIED).",
+                          "example": null
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "under_review": {
+                    "summary": "Cleared to Under Review",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details processed",
+                      "data": {
+                        "payment_id": "PAY_1a2b3c4d5e",
+                        "status": "under_review",
+                        "tcs_check": "match",
+                        "missing": [],
+                        "outstanding": "0.00",
+                        "reason": null
+                      }
+                    }
+                  },
+                  "action_required": {
+                    "summary": "Action Required — TCS short",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details processed",
+                      "data": {
+                        "payment_id": "PAY_1a2b3c4d5e",
+                        "status": "action_required",
+                        "tcs_check": "mismatch",
+                        "missing": [
+                          "tcs",
+                          "outstanding"
+                        ],
+                        "outstanding": "5000.00",
+                        "reason": null
+                      }
+                    }
+                  },
+                  "on_hold": {
+                    "summary": "On Hold — sender is not the PAN holder",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details processed",
+                      "data": {
+                        "payment_id": "PAY_1a2b3c4d5e",
+                        "status": "on_hold",
+                        "tcs_check": "n/a",
+                        "missing": [],
+                        "outstanding": "0.00",
+                        "reason": "SENDER_NOT_PAN_HOLDER"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — validation error or business rule failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error processing verification details.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_lrs_verify_"
+      }
     }
   },
   "components": {
