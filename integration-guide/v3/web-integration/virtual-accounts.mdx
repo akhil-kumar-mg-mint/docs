@@ -25,6 +25,10 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
 
 The response carries the `vba_account_number`, `vba_ifsc`, `vba_bank_code`, `vba_status`, and `vba_provider`. **Share the account number and IFSC with the buyer** — that is where they transfer the rupees.
 
+<Note>
+  For ICICI-provider VBAs, the account number is a 16-character number in a fixed pattern: the `INRACC` prefix + a 3-character partner shortcode + a 7-digit identifier — e.g. `INRACCNEX1234567`. The IFSC is fixed per client code.
+</Note>
+
 ### Optional lock rules
 
 You can restrict what a VBA will accept:

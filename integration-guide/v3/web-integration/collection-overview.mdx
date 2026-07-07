@@ -56,6 +56,16 @@ A collected payment moves through these compliance states:
 | `ON_HOLD` | Needs manual attention — e.g. the sender is not the PAN holder. |
 | `SETTLED` | Funds settled to the beneficiary. |
 
+## Edge paths
+
+- **Shortfall** — the buyer paid less than quoted. The payment waits with the outstanding amount; the buyer tops up into the **same VBA**, and you submit the top-up **linked** to the original (`linked_payment_id`).
+- **Discrepancy in review** — if a detail or document is rejected during review, the payment is sent back with exactly what to fix; you re-submit only the flagged item and it returns to review.
+- **Cancellation / overpayment** — issue a refund (full or partial) back to the remitter's **own account**. A payment can take more than one partial refund over its life.
+
+<Note>
+  **Refund funding.** Balances are held **per university**. A refund is netted against the funds EximPe is next due to settle for that university, out of collections not yet settled onward. If enough of that university's balance is held, the refund processes right away; otherwise it waits until enough is collected. Money already settled abroad cannot be pulled back to fund a refund.
+</Note>
+
 ## What You'll Build Against
 
 <CardGroup cols={2}>
