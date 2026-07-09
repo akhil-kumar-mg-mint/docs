@@ -1,112 +1,203 @@
 ---
 title: "FAQ"
-description: "EximPe is a cross-border payment solution that enables international merchants to accept payments from Indian customers without establishing a physical presence in India. We handle the complexity of Indian payment methods, regulatory compliance, and currency conversion, so you can focus on growing your business."
+description: "Common questions about EximPe's API-only collection rail: virtual bank accounts, LRS compliance, TCS, documents, settlements, and webhooks."
 ---
 
 
 ## General
 
-### What is the purpose of Cross-Border Payments Import?
+### What is this product?
 
-Cross-Border Payments Import enables you to accept and process cross-border payments from customers around the world. This feature allows your business to expand its reach and tap into new international markets.
+An **API-only** cross-border collection rail. You issue an EximPe **Virtual Bank Account (VBA)**, an Indian buyer transfers rupees into it, you assert the compliance details through the API, and the funds are settled to the beneficiary abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. A bank partner — an **Authorised Dealer**, or "AD bank" — performs the actual outward remittance.
 
-### What is the PACB Integration and why is it important for cross-border payments?
+### Does EximPe show my buyer a payment page?
 
-The PACB (Payment aggregator cross border) Integration is the process of connecting your website or online store to the a payment gateway for cross-border payments. It is important because it enables merchants to accept and process payments from customers in different countries and currencies.
+No. There is no hosted checkout, no payment links, and no card, UPI, or net-banking page. EximPe shows the buyer no screen at all. You own the entire customer-facing experience; EximPe is the embedded India collection and settlement engine underneath.
 
-### What are the requirements for integrating with EximPe for cross-border payments?
+### How does the buyer actually pay?
 
-To integrate with EximPe, you will need a website or online store capable of accepting payments through EximPe's payment gateway and must follow RBI guidelines.\
-👉 Refer to [RBI Guidelines for Cross-Border Payments](#) for more information.
+By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the VBA you share with them. No SWIFT, no international wire, no intermediary banks.
 
-### What currencies does EximPe accept for Cross-Border Payments?
+### Who are the parties in an integration?
 
-EximPe supports a wide range of currencies, including:
+| Term | Who it is |
+| :--- | :--- |
+| **PSP** | Integrator that calls the API for the sub-merchants it onboards. Holds no VBA or funds. |
+| **Sub-merchant** | A merchant created under a PSP. Holds VBAs and collected funds; the entity that gets settled. |
+| **Direct merchant** | A merchant with no parent PSP — holds its own VBAs and is its own API caller. |
+| **Settling entity** | The account that holds the VBA and funds — a sub-merchant or a direct merchant, never a PSP. |
+| **Remitter (Buyer)** | The person in India paying, uniquely identified by **PAN**. |
 
-- U.S. Dollar (USD)
-- European Euro (EUR)
-- Pound Sterling (GBP)
+You onboard the universities you serve as sub-merchants. Collections, settlements, and balances are tracked **per university**.
 
-### How does EximPe handle currency conversion?
+### What are the requirements to integrate?
 
-EximPe uses real-time exchange rates to convert currencies. These rates are updated regularly to ensure accuracy and transparency for merchants and PSP's.
+A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request must also send `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID` naming the settling sub-merchant.
 
-### How does EximPe ensure the security of my transactions?
+### What fees does EximPe charge?
 
-EximPe uses industry-grade security protocols including encryption, fraud detection and prevention tools, and full compliance with applicable regulatory standards.
+EximPe charges a processing fee per transaction. Contact your EximPe Key Account Manager (KAM) for a detailed fee structure.
 
-### What fees does EximPe charge for Cross-Border Payment services?
+### How do I get started?
 
-EximPe charges a processing fee per transaction. The fee varies based on payment method, currency, and country. Contact your EximPe Key Account Manager (KAM) for a detailed fee structure.
-
-### How do I get started with EximPe Cross-Border Payments?
-
-- If you already have an account with EximPe, contact your KAM to enable Cross-Border Payments.
-- If you’re new, register on [EximPe](https://merchant.eximpe.com) and complete the onboarding process.\
-  👉 See [Register for a Merchant Account](./register-merchant).
-
-### By when can we update the Invoice Number if the invoice number was not available before the payment?
-
-The Invoice ID must be shared with the Bank on the **same day** of the transaction. If unavailable at the time of payment, use the **Order Update API** or **Invoice Upload API** to submit it **on the same day (IST)**.\
-Invoices must be uploaded within **10 days** of the transaction per RBI guidelines.
-
-### Which payment modes does EximPe support for cross-border payments?
-
-- Credit/Debit Cards
-- Net Banking
-- APIs
+- If you already have an EximPe account, contact your KAM to enable this rail.
+- If you're new, register on [EximPe](https://merchant.eximpe.com) and complete onboarding.\
+  👉 See [Register for a Merchant Account](./register-merchant), then [Steps to Integrate](./steps-to-integrate).
 
 ---
 
-## Invoice Upload
+## Virtual Bank Accounts
 
-### What is the purpose of the Invoice Upload API?
+### Is a VBA tied to one buyer?
 
-As per RBI guidelines, invoices must be uploaded within 10 days of the transaction. The [Invoice Upload API](/) allows merchants to submit invoices for regulatory and settlement purposes.
+No. A single VBA can receive credits from **many** remitters. Because of this, an inbound credit does not by itself tell you who paid — you assert the remitter's PAN afterwards during LRS verification.
 
-### Which file formats are supported for invoice or AWB files?
+### Can a settling entity hold more than one VBA?
 
-The following formats are supported:
+Yes. From v2.0.0 onwards a settling entity can have multiple **ACTIVE** VBAs at once.
 
-- PDF (`.pdf`)
-- Word Document (`.doc`, `.docx`)
-- Image Files (`.jpg`, `.jpeg`)
+### Can I restrict who pays into a VBA?
 
-### Can I upload multiple AWBs using the Invoice Upload API?
+Yes, optionally, at creation time. A **remitter lock** restricts the VBA to a specific list of remitter bank accounts (account number + IFSC); an **amount lock** restricts transfers to an amount range. The two locks are independent, and when omitted they impose no restriction.
 
-Yes. For shipments from multiple vendors, you must post multiple requests:
+### The credit shows a sender bank account. Is that the remitter?
 
-1. Invoice Upload
-2. AWB Upload for Vendor A
-3. AWB Upload for Vendor B
+No. The sender bank account is the **payer instrument**, not the **remitter identity**. You must assert the remitter by PAN during LRS verification — never assume the bank sender is the PAN holder.
 
-Each AWB must have a corresponding file and request.
+### Can I test without a real bank transfer?
 
-### By when should invoices be uploaded?
-Invoices should be uploaded **as soon as possible**, and no later than **10 days from the transaction date**.
+Yes. In sandbox, [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) triggers the end-to-end flow — payment creation, webhooks, and LRS. It works for both Cashfree and ICICI VBAs, and the `utr` must be unique across simulations. The endpoint is not available in production.
 
 ---
 
-## Settlements
+## LRS & Compliance
 
-### Does EximPe calculate forex rates at the time of transaction or settlement?
+### Who is eligible to remit under LRS?
 
-Forex rates are calculated at the **time of settlement**.
+**Resident individuals only**, including minors through a guardian. LRS is not available to companies, partnership firms, HUFs, trusts, or non-resident individuals.
 
-### How can I get the settlement details?
+### What are the limits?
 
-Settlement data is accessible via the **EximPe Dashboard** or via the **Settlement Details API**.\
-👉 Refer to [Retrieve Bank Settlement Details APIs](#).
+- **Per transaction**: ₹25,00,000.
+- **Per person, per financial year**: USD 250,000 across *all* of the individual's LRS remittances at every bank — not just those through EximPe. The year runs 1 April to 31 March.
 
-### When does the settlement process start?
+EximPe tracks LRS usage and refuses any remittance that would breach the annual cap on the data available to us; the AD bank is the wider backstop at settlement.
 
-Settlements begin after a transaction is successfully processed. Timelines may vary based on the payment method and type.
+### Can a parent pay for a student?
 
-### How long does it take for funds to reach my bank?
+Yes — but **the parent is then the remitter**. Their PAN is used and their account sends the money, and the relationship to the student is declared. Set `relation` to something other than `SELF` and include `primary_person` (name, DOB, passport number) for the student. Use `SELF` only when the remitter and the student are the same person.
 
-Typically **1–2 days**, but may take up to **5 days** depending on the currency and banking partners involved.
+### Why must the money come from the remitter's own account?
 
-### Can I retrieve settlement data using API?
+LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch puts the payment **On Hold**.
 
-Yes. Use the **Settlement Details API** and follow EximPe's integration guide.\
-👉 Refer to [Retrieve Bank Settlement Details APIs](#).
+### How is TCS calculated?
+
+For education funded from the remitter's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS in a financial year — the first ₹10 lakh each year is TCS-free.
+
+- If the remitter has **already exceeded** ₹10 lakh (`tcs_threshold_breached: true`), TCS applies to the **full** amount of this payment.
+- If **not exceeded**, EximPe computes against its record of the remitter's LRS through us. If this payment itself crosses the threshold, TCS applies only to the portion **above** it.
+
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS; collect it alongside the principal. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
+
+### Do I have to call the quote API?
+
+It is optional but strongly recommended. Quoting reserves nothing and can be re-run freely, so show the buyer the tax-inclusive total before they transfer — otherwise they under-pay and you have to handle a shortfall.
+
+### What declarations does the buyer affirm?
+
+Two, both of which must be affirmed for the payment to proceed: one covering **resident-individual status, the LRS limit, and source of funds**; and one covering **TCS and the ₹10 lakh threshold**. They map onto the `declarations` object and the `tcs_threshold_breached` flag on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification). See [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declarations) for the exact wording.
+
+### Which purpose codes are supported?
+
+| Purpose code | Use |
+| :--- | :--- |
+| `S0305` | Education abroad — studies / tuition (the student typically travels) |
+| `S1107` | Education-related fee remittance (no travel leg) |
+
+Both are handled as own-funds education; loan-funded remittances are not in scope at present. The `purpose_code` you send must be one your settling entity is enabled for (its allowlist).
+
+### Why verify the PAN before quoting?
+
+An inactive, non-individual, or name/DOB-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) checks against income-tax records and returns `verified: false` with a `reason` (e.g. `NAME_MISMATCH`, `INOPERATIVE_PAN`) so you can resolve it with the buyer upfront.
+
+Residency cannot be established from a PAN alone — non-residents hold individual PANs too — which is why the buyer additionally affirms residency in the declarations.
+
+---
+
+## Documents
+
+### Which documents are required?
+
+Documents are decided **by purpose code**:
+
+| Document (`type`) | S0305 | S1107 |
+| :--- | :--- | :--- |
+| `offer_letter` — offer / admission letter (LOO / LOA) | Mandatory | Mandatory |
+| `fee_invoice` — university fee invoice / demand letter | Optional¹ | Optional¹ |
+| `passport` — of the student | Mandatory | — |
+| `student_id_or_visa` — student ID or visa | Mandatory (ID or visa) | `student_id` only (no visa²) |
+| `relationship_declaration` — parent/sponsor pays | If remitter is not the student | If remitter is not the student |
+
+¹ If the offer/admission letter already carries the fee and bank details, a separate invoice is not required. ² S1107 is a fee remittance with no travel leg, so there is no student visa — the student ID is the enrolment proof.
+
+### Is a scanned PAN card required?
+
+No. PAN is captured as a **field** and validated electronically.
+
+### When do I upload documents?
+
+Up front, decoupled from any payment. Each call to [Upload LRS Document](/api-reference/v3/lrs/upload-document) returns a `ref` that you pass in the `documents` array of Submit LRS Verification. The file's type, size, and encryption are validated on upload.
+
+### What happens if a document is rejected?
+
+The payment is sent back with exactly what to fix. You re-submit only the flagged item and it returns to review. Legible, in-date documents of the correct type are the main way to avoid holds — the offer/admission letter is the anchor.
+
+---
+
+## Payments, Settlements & Refunds
+
+### What states does a payment move through?
+
+| State | Meaning |
+| :--- | :--- |
+| `ACTION_REQUIRED` | Credit received; compliance details not yet supplied (or something is missing). |
+| `UNDER_REVIEW` | Verification submitted and posted to the buyer's LRS counter; awaiting bank processing. |
+| `ON_HOLD` | Needs manual attention — e.g. the sender is not the PAN holder. |
+| `SETTLED` | Funds settled to the beneficiary. |
+
+### The buyer paid less than quoted. What now?
+
+The payment waits with the outstanding amount. The buyer tops up into the **same VBA**, and you submit the top-up **linked** to the original by passing `linked_payment_id` and a `reason` (`REMAINING_AMOUNT` or `TCS_PAYMENT`). `reason` is only valid together with `linked_payment_id`.
+
+### Who handles foreign exchange?
+
+You provide the INR amount to collect and handle the FX pricing your customer sees. EximPe adds only the tax, so there is no FX risk from the EximPe leg, then converts and settles the cleared funds to your international bank account.
+
+### How do I get settlement details?
+
+Via the **EximPe Dashboard** or the settlement APIs — [List Settlements](/api-reference/v3/settlement/list), [Get Settlement](/api-reference/v3/settlement/get), and [Settlement Reconciliation](/api-reference/v3/settlement/recon), which returns the captures, refunds, and chargebacks making up a settlement.
+
+### How are refunds funded?
+
+Balances are held **per university**. A refund is netted against the funds EximPe is next due to settle for that university, out of collections not yet settled onward. If enough of that university's balance is held, the refund processes right away; otherwise it waits until enough is collected. **Money already settled abroad cannot be pulled back to fund a refund.**
+
+### Where does a refund go, and can I refund partially?
+
+A refund goes back to the remitter's **own account**. A payment can take more than one partial refund over its life.
+
+---
+
+## Webhooks
+
+### Which events does EximPe send?
+
+Merchant Approved, Payment Successful (a credit landed in a VBA), Payment Failed, Payment Settled, Payment Refunded, and refund/dispute updates.
+
+### How do I verify a webhook is genuine?
+
+Each webhook is signed with an HMAC-SHA256 signature in the `X-Webhook-Signature` header, using your Encryption Key from the Developer section of the dashboard. See [Webhooks](/integration-guide/v3/web-integration/webhooks) for code examples in Node.js, Python, and PHP.
+
+### What happens if my endpoint is down?
+
+EximPe retries: the 1st attempt is immediate, followed by retries at **1 minute**, **5 minutes**, **15 minutes**, and **1 hour**. After 5 failed attempts, EximPe stops retrying.
