@@ -14,10 +14,6 @@ This is a **headless, API-only** rail for collecting an Indian buyer's rupees in
 
 You own the entire customer-facing experience and the customer relationship; EximPe is the embedded India collection and settlement engine underneath. You onboard the universities you serve as sub-merchants — collections, settlements, and balances are tracked **per university**.
 
-<Info>
-  Need a hosted checkout, payment links, or S2S card/UPI/net-banking collection instead? Those are earlier-version flows — switch versions from the selector at the top to see their guides.
-</Info>
-
 ## Who Uses It
 
 <CardGroup cols={2}>
@@ -76,7 +72,7 @@ You own the entire customer-facing experience and the customer relationship; Exi
 
 EximPe operates under the RBI **PA-CB** guidelines. Key constraints to design for:
 
-- **Per-transaction limit**: ₹2,50,000 per transaction.
+- **Per-transaction limit**: ₹25,00,000 per transaction.
 - **LRS TCS threshold**: TCS is nil up to ₹10,00,000 of a remitter's cumulative LRS in a financial year, and applies only to the amount above it (per person, platform-wide, resets each 1 April).
 - **Purpose codes**: every payment carries a FEMA purpose code from the settling entity's allowlist.
 - **Documentation**: a digital invoice and supporting documents are required for each remittance; a full audit trail is maintained.
