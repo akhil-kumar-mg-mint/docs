@@ -61,10 +61,15 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "status": "FAILED",
     "message": "Payment declined by bank",
     "mop_type": "CARD",
-    "bank_ref_num": "",
+    "amount": 1000,
+    "bank_ref_num": null,
+    "extended_status": "FAILED",
+    "payment_message": null,
     "payment_completed_at": null,
     "utr": null,
-    "virtual_account_id": null
+    "virtual_account_id": null,
+    "subscription_id": null,
+    "merchant_reference_id": "S2SIOAW7W4"
   }
 }
 ```
@@ -88,7 +93,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "1.0")
+      Envelope version (e.g. "2.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -98,7 +103,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Payment request details (payment_id, order_id, status, message, mop_type, bank_ref_num, payment_completed_at, utr, virtual_account_id)
+      Payment request details (payment_id, order_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
     </ParamField>
   </Tab>
 
@@ -133,28 +138,54 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"CARD"`
     </ParamField>
 
-    <ParamField path="data.bank_ref_num" type="string" required>
-      Bank reference number (if any); may be empty string
+    <ParamField path="data.amount" type="number" required>
+      Payment amount
       
-      **Example**: `""`
+      **Example**: `1000`
     </ParamField>
 
-    <ParamField path="data.payment_completed_at" type="string" required>
+    <ParamField path="data.bank_ref_num" type="string">
+      Bank reference number (if any); typically null for failed payments
+      
+      **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.extended_status" type="string" required>
+      Detailed status code for the payment
+      
+      **Example**: `"FAILED"`
+    </ParamField>
+
+    <ParamField path="data.payment_message" type="string">
+      Additional processor-level message; may be null
+    </ParamField>
+
+    <ParamField path="data.payment_completed_at" type="string">
       ISO 8601 datetime when payment completed; may be null for failed payments
       
       **Example**: `null`
     </ParamField>
 
-    <ParamField path="data.utr" type="string" required>
+    <ParamField path="data.utr" type="string">
       UTR of the payment (if any); may be empty or null
       
       **Example**: `null`
     </ParamField>
 
-    <ParamField path="data.virtual_account_id" type="string" required>
+    <ParamField path="data.virtual_account_id" type="string">
       Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
       
       **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.subscription_id" type="string">
+      Subscription ID if this payment is linked to a subscription mandate; otherwise null
+    </ParamField>
+
+    <ParamField path="data.merchant_reference_id" type="string" required>
+      Your reference ID for the order
+      
+      **Example**: `"S2SIOAW7W4"`
     </ParamField>
   </Tab>
 </Tabs>

@@ -3188,11 +3188,13 @@
                 },
                 "mop_type": "credit_card",
                 "card_details": {
-                  "card_number": "4111111111111111",
-                  "card_holder_name": "John Doe",
-                  "card_expiry_month": "12",
-                  "card_expiry_year": "2027",
-                  "card_cvv": "123"
+                  "number": "4111111111111111",
+                  "cardholder_name": "John Doe",
+                  "expiry_month": 12,
+                  "expiry_year": 2027,
+                  "cvv": "123",
+                  "network": "VISA",
+                  "nickname": "My Credit Card"
                 }
               }
             }

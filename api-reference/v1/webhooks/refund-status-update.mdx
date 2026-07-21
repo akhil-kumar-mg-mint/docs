@@ -54,7 +54,9 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
                 "payment_id": "PR6271908354",
                 "refund_amount": 320,
                 "refund_status": "PROCESSING",
-                "refund_completed_at": null
+                "order_reference_id": "REF5128740396",
+                "refund_completed_at": null,
+                "refund_reference_id": "f4d8b2e6a1c94b7fa0e3d6c9b8a5f2e1"
             }
         ]
     },
@@ -143,10 +145,22 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `null`
     </ParamField>
 
+    <ParamField path="data.refunds[].order_reference_id" type="string">
+      Your reference ID for the order associated with the refund
+      
+      **Example**: `"REF5128740396"`
+    </ParamField>
+
     <ParamField path="data.refunds[].refund_completed_at" type="string">
       Timestamp when the refund completed - `null` while the refund is still in progress
       
       **Example**: `null`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_reference_id" type="string">
+      Unique reference ID for this refund transaction
+      
+      **Example**: `"f4d8b2e6a1c94b7fa0e3d6c9b8a5f2e1"`
     </ParamField>
   </Tab>
 </Tabs>

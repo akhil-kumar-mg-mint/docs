@@ -51,14 +51,20 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "version": "1.0",
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
-        "status": "failed",
+        "utr": null,
+        "amount": 1000,
+        "status": "FAILED",
         "message": "Cancelled by user",
-        "mop_type": "upi",
+        "mop_type": "UPI",
         "order_id": "OD3376378679",
         "payment_id": "PR6938527534",
-        "bank_ref_num": "OD3376378679-PR6938527534",
-        "payment_completed_at": "2025-06-24T12:30:44.000000Z",
-        "subscription": "SUB123456"
+        "bank_ref_num": null,
+        "extended_status": "FAILED",
+        "payment_message": null,
+        "subscription_id": null,
+        "virtual_account_id": null,
+        "payment_completed_at": null,
+        "merchant_reference_id": "S2SIOAW7W4"
     }
 }
 ```
@@ -115,6 +121,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"UPI"`
     </ParamField>
 
+    <ParamField path="data.amount" type="number" required>
+      Payment amount
+      
+      **Example**: `1000`
+    </ParamField>
+
     <ParamField path="data.order_id" type="string" required>
       Order ID
       
@@ -127,16 +139,44 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"PR6938527534"`
     </ParamField>
 
-    <ParamField path="data.bank_ref_num" type="string" required>
-      Bank reference number
+    <ParamField path="data.bank_ref_num" type="string">
+      Bank reference number; typically null for failed payments
       
-      **Example**: `"OD3376378679-PR6938527534"`
+      **Example**: `null`
     </ParamField>
 
-    <ParamField path="data.payment_completed_at" type="string" required>
-      ISO 8601 payment completion timestamp
+    <ParamField path="data.extended_status" type="string" required>
+      Detailed status code for the payment
       
-      **Example**: `"2025-06-24T12:30:44.000000Z"`
+      **Example**: `"FAILED"`
+    </ParamField>
+
+    <ParamField path="data.payment_message" type="string">
+      Additional processor-level message; may be null
+    </ParamField>
+
+    <ParamField path="data.utr" type="string">
+      UTR of the payment (if any); may be null
+    </ParamField>
+
+    <ParamField path="data.subscription_id" type="string">
+      Subscription ID if this payment is linked to a subscription mandate; otherwise null
+    </ParamField>
+
+    <ParamField path="data.virtual_account_id" type="string">
+      Virtual account ID if this payment is linked to a VBA; otherwise null
+    </ParamField>
+
+    <ParamField path="data.merchant_reference_id" type="string" required>
+      Your reference ID for the order
+      
+      **Example**: `"S2SIOAW7W4"`
+    </ParamField>
+
+    <ParamField path="data.payment_completed_at" type="string">
+      ISO 8601 payment completion timestamp; null for failed payments
+      
+      **Example**: `null`
     </ParamField>
   </Tab>
 </Tabs>
