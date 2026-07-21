@@ -51,11 +51,15 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "data": {
         "refunds": [
             {
-                "payment_request_id": "PR7485664995",
+                "bank_arn": "arn",
+                "comments": "Refund processed successfully",
                 "order_id": "OD6085456489",
                 "refund_id": "RF2684785771",
-                "amount": 1000,
-                "bank_arn": "arn"
+                "payment_id": "PR7485664995",
+                "refund_amount": 1000,
+                "order_reference_id": "REF6085456489",
+                "refund_completed_at": "2025-06-24T12:30:44.000000Z",
+                "refund_reference_id": "c82df8dedf844acaa497ece9126a967e"
             }
         ]
     }
@@ -98,8 +102,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       Array of refund objects containing the refund information
     </ParamField>
 
-    <ParamField path="data.refunds[].payment_request_id" type="string" required>
-      Original payment request ID that was refunded
+    <ParamField path="data.refunds[].payment_id" type="string" required>
+      Original payment ID that was refunded
       
       **Example**: `"PR7485664995"`
     </ParamField>
@@ -116,7 +120,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"RF2684785771"`
     </ParamField>
 
-    <ParamField path="data.refunds[].amount" type="number" required>
+    <ParamField path="data.refunds[].refund_amount" type="number" required>
       Refund amount
       
       **Example**: `1000`
@@ -126,6 +130,30 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       Bank ARN (Acquirer Reference Number) - may be null
       
       **Example**: `"arn"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].comments" type="string">
+      Human-readable note describing the refund outcome
+      
+      **Example**: `"Refund processed successfully"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].order_reference_id" type="string">
+      Your reference ID for the order associated with the refund
+      
+      **Example**: `"REF6085456489"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_completed_at" type="string">
+      ISO 8601 timestamp when the refund completed
+      
+      **Example**: `"2025-06-24T12:30:44.000000Z"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_reference_id" type="string">
+      Unique reference ID for this refund transaction
+      
+      **Example**: `"c82df8dedf844acaa497ece9126a967e"`
     </ParamField>
   </Tab>
 </Tabs>

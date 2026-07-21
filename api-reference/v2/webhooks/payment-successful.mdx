@@ -60,13 +60,17 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "payment_id": "770e8400-e29b-41d4-a716-446655440002",
     "order_id": "660e8400-e29b-41d4-a716-446655440001",
     "status": "CAPTURED",
-    "message": "Payment successful",
+    "message": "Payment Captured",
     "mop_type": "VBA_TRANSFER",
+    "amount": 1000,
     "bank_ref_num": "BANKREF123",
+    "extended_status": "SUCCESS",
+    "payment_message": null,
     "payment_completed_at": "2025-02-12T10:29:55.000000Z",
     "utr": "UTR123456",
     "virtual_account_id": "USER09",
-    "subscription_id": null
+    "subscription_id": null,
+    "merchant_reference_id": "S2SICR1QPJ"
   }
 }
 ```
@@ -100,7 +104,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Payment request details (payment_id, order_id, status, message, mop_type, bank_ref_num, payment_completed_at, utr, virtual_account_id, subscription_id)
+      Payment request details (payment_id, order_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
     </ParamField>
   </Tab>
 
@@ -126,7 +130,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     <ParamField path="data.message" type="string" required>
       Status message from the payment
       
-      **Example**: `"Payment successful"`
+      **Example**: `"Payment Captured"`
     </ParamField>
 
     <ParamField path="data.mop_type" type="string" required>
@@ -135,10 +139,26 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"VBA_TRANSFER"`
     </ParamField>
 
-    <ParamField path="data.bank_ref_num" type="string" required>
-      Bank reference number (if any)
+    <ParamField path="data.amount" type="number" required>
+      Payment amount
+      
+      **Example**: `1000`
+    </ParamField>
+
+    <ParamField path="data.bank_ref_num" type="string">
+      Bank reference number; may be null
       
       **Example**: `"BANKREF123"`
+    </ParamField>
+
+    <ParamField path="data.extended_status" type="string" required>
+      Detailed status code for the payment
+      
+      **Example**: `"SUCCESS"`
+    </ParamField>
+
+    <ParamField path="data.payment_message" type="string">
+      Additional processor-level message; may be null
     </ParamField>
 
     <ParamField path="data.payment_completed_at" type="string" required>
@@ -147,16 +167,26 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       **Example**: `"2025-02-12T10:29:55.000000Z"`
     </ParamField>
 
-    <ParamField path="data.utr" type="string" required>
+    <ParamField path="data.utr" type="string">
       UTR of the payment (if any); may be empty or null
       
       **Example**: `"UTR123456"`
     </ParamField>
 
-    <ParamField path="data.virtual_account_id" type="string" required>
+    <ParamField path="data.virtual_account_id" type="string">
       Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
       
       **Example**: `"USER09"`
+    </ParamField>
+
+    <ParamField path="data.subscription_id" type="string">
+      Subscription ID if this payment is linked to a subscription mandate; otherwise null
+    </ParamField>
+
+    <ParamField path="data.merchant_reference_id" type="string" required>
+      Your reference ID for the order
+      
+      **Example**: `"S2SICR1QPJ"`
     </ParamField>
   </Tab>
 </Tabs>

@@ -182,13 +182,20 @@ EximPe sends real-time webhook notifications when payment status changes:
     "version": "1.0",
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
-        "status": "captured",
-        "message": "Payment successful",
-        "mop_type": "net_banking",
+        "utr": null,
+        "amount": 1000,
+        "status": "CAPTURED",
+        "message": "Payment Captured",
+        "mop_type": "NET_BANKING",
         "order_id": "OD9123456789",
         "payment_id": "PR6938527534",
         "bank_ref_num": "OD9123456789-PR6938527534",
-        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+        "extended_status": "SUCCESS",
+        "payment_message": null,
+        "subscription_id": null,
+        "virtual_account_id": null,
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z",
+        "merchant_reference_id": "S2SICR1QPJ"
     }
 }
 ```
