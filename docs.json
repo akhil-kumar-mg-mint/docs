@@ -361,6 +361,12 @@
                   "integration-guide/v3/web-integration/virtual-accounts",
                   "integration-guide/v3/web-integration/lrs-compliance",
                   "integration-guide/v3/web-integration/lrs-verification",
+                  {
+                    "group": "Server to Server",
+                    "pages": [
+                      "integration-guide/v3/web-integration/s2s-upi-intent"
+                    ]
+                  },
                   "integration-guide/v3/web-integration/webhooks"
                 ]
               }
@@ -369,6 +375,20 @@
           {
             "tab": "API Reference",
             "groups": [
+              {
+                "group": "Order",
+                "pages": [
+                  "api-reference/v3/order/create",
+                  "api-reference/v3/order/get-status",
+                  "api-reference/v3/order/get"
+                ]
+              },
+              {
+                "group": "Payment",
+                "pages": [
+                  "api-reference/v3/payment/upload-verification-details"
+                ]
+              },
               {
                 "group": "Merchant",
                 "pages": [
@@ -419,6 +439,8 @@
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
                   "api-reference/v3/webhooks/payment-successful",
+                  "api-reference/v3/webhooks/payment-details-missing",
+                  "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/payment-failed",
                   "api-reference/v3/webhooks/payment-refunded",
                   "api-reference/v3/webhooks/refund-failed",

@@ -39,6 +39,14 @@ EximPe sends webhooks for these key events:
     **When:** A credit lands in a VBA and a payment is created<br/>
     **Use Case:** Begin LRS verification for the credit
   </Card>
+  <Card title="Payment Details Missing" icon="triangle-exclamation">
+    **When:** A credit lands but the order is missing fields required for verification<br/>
+    **Use Case:** Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details)
+  </Card>
+  <Card title="Verification Needed" icon="file-circle-check">
+    **When:** Verification status changes to `VERIFIED`, `IN_REVIEW`, or `ACTION_REQUIRED`<br/>
+    **Use Case:** Track the outcome, or correct the fields still flagged
+  </Card>
   <Card title="Payment Failed" icon="x">
     **When:** A credit could not be processed<br/>
     **Use Case:** Investigate and reconcile

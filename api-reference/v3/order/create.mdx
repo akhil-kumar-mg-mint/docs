@@ -1,0 +1,177 @@
+---
+title: 'Create Order'
+openapi: 'POST /pg/orders/'
+---
+
+## Overview
+
+The Create Order endpoint is the first step in the S2S UPI Intent payment flow. It creates a new order with buyer details, product information, and your payment collection settings.
+
+For the S2S UPI Intent flow, set `collection_mode` to `s2s`, `mop_type` to `upi`, and `upi_flow_type` to `intent`. The response returns an `order_id` and an `intent_uri` that you use to launch the customer's UPI app.
+
+<Note>
+  See the [S2S UPI Intent integration guide](/integration-guide/v3/web-integration/s2s-upi-intent) for the end-to-end flow, including how to invoke the intent URI on Android, iOS, and desktop.
+</Note>
+
+## Request Parameters
+
+### Required Parameters
+- `reference_id`: Unique identifier for the order
+- `amount`: Payment amount in decimal format
+- `currency`: 3-letter ISO currency code (e.g., INR)
+- `return_url`: URL to redirect after payment completion
+- `buyer`: Buyer details object
+- `product`: Product details object
+- `invoice`: Invoice details object
+
+### S2S UPI Intent Parameters
+- `collection_mode`: Must be `s2s`
+- `mop_type`: Must be `upi`
+- `upi_flow_type`: Must be `intent`
+- `buyer.ip_address`: Customer's IP address
+- `buyer.user_agent`: Customer's browser user agent
+
+<Note>
+  `buyer.ip_address` and `buyer.user_agent` are required for the S2S UPI Intent flow in addition to the standard checkout fields.
+</Note>
+
+### Parameter Definitions
+
+The following tables define the request parameters used by the S2S UPI Intent flow, including nested objects, types, requirements, and constraints.
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| amount | string | Yes | Amount to charge, decimal string. | Format: `^[0-9]+(\.[0-9]{1,2})?$`; amount must be > 0 and ≤ 10,000,000.00 |
+| currency | string | Yes | 3-letter ISO currency code. | Supported: `INR` |
+| reference_id | string | Yes | Merchant-side unique reference for the order. | 1–50 chars; use letters, numbers, and dashes; unique per merchant while order is active |
+| collection_mode | string | Yes | Mode of payment collection. | Must be `s2s` for this flow |
+| mop_type | string | Yes | Method of payment. | Must be `upi` for this flow |
+| upi_flow_type | string | Yes | UPI flow when `mop_type` is `upi` and `collection_mode` is `s2s`. | Must be `intent` for this flow |
+| return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
+| buyer | object | Yes | Buyer/customer details. | See Buyer object |
+| product | object | Yes | Product or service being purchased. | See Product object |
+| invoice | object | Yes | Invoice metadata. | See Invoice object |
+
+#### Buyer
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Full name of the buyer. | Max 255 chars; letters, spaces, and common name punctuation (.,-' ) |
+| email | string | Yes | Email of the buyer. | RFC 5322 email format |
+| phone | string | Yes | Phone number with country code. | Valid phone number; E.164 preferred (e.g., `+9198xxxxxxxx`) |
+| address | object | Yes | Buyer address. | See Address object |
+| ip_address | string | Yes | Customer IP address. | IPv4/IPv6 |
+| user_agent | string | Yes | Browser/device user agent. | Typical browser user agent string |
+
+#### Address (Buyer.address)
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| line_1 | string | No | Address line 1. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
+| line_2 | string | No | Address line 2. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
+| city | string | No | City. | Alphabetic only; Max 255 chars |
+| state | string | No | State/Province. | Alphabetic only; Max 255 chars |
+| postal_code | string | Yes | Postal/ZIP code. | 6 chars; numbers |
+
+#### Product
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Product or service name. | Max 255 chars; letters, numbers, spaces, and common punctuation |
+| description | string | No | Description of the product/service. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
+| type_of_goods | string | Yes | Nature of goods/services. | Enum: `digital_goods`, `physical_goods`, `service` |
+| hs_code | string | Conditional | 8-digit HS Code. Required for physical goods | Max 8 chars; numbers |
+| hs_code_description | string | No | HS Code description. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
+
+#### Invoice
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| number | string | Yes | Invoice number. | Max 255 chars; letters, numbers, dashes/slashes |
+| date | string | No | Invoice date (ISO 8601). | Format: `YYYY-MM-DD` |
+
+## Response
+
+For S2S UPI Intent mode, the response includes:
+- `order_id`: Unique order identifier
+- `intent_uri`: UPI intent link that can be used to open UPI apps directly
+- `test_simulator_url`: **Sandbox only** — a URL you open in a browser to complete the payment without a real UPI app
+
+<Tip>
+  In the **sandbox environment**, the response carries an extra `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without a real UPI app or a mobile device. The result follows the test VPA you use in the simulator. This field is **not returned in production**.
+</Tip>
+
+## Examples
+
+```json S2S UPI Intent
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "ORDER_123457",
+  "collection_mode": "s2s",
+  "mop_type": "upi",
+  "upi_flow_type": "intent",
+  "return_url": "https://yourdomain.com/payment/callback/",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "city": "Delhi",
+      "state": "Delhi",
+      "postal_code": "110001"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Smartphone",
+    "description": "This is a sample product description",
+    "hs_code": "98051000",
+    "hs_code_description": "Portable automatic data processing machines",
+    "type_of_goods": "physical_goods"
+  },
+  "invoice": {
+    "number": "INV_0HOZ0C",
+    "date": "2025-09-04"
+  }
+}
+```
+
+## Response Examples
+
+<CodeGroup>
+
+```json S2S UPI Intent Response
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "order_id": "OD2000992103"
+  }
+}
+```
+
+```json S2S UPI Intent Response (Sandbox)
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "order_id": "OD2000992103",
+    "test_simulator_url": "<simulator URL returned by the sandbox API>"
+  }
+}
+```
+
+</CodeGroup>
+
+## Implementation Notes
+
+- The response includes a UPI intent link (`intent_uri`) that can be used to open UPI apps directly. Prefix it with `upi://pay?` (or an app-specific scheme) before invoking it — see the [integration guide](/integration-guide/v3/web-integration/s2s-upi-intent#step-3-invoke-upi-intent) for platform-specific handling.
+- Poll the [Order Status API](/api-reference/v3/order/get-status) or wait for the [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful) to confirm the outcome.
+- `buyer.ip_address` and `buyer.user_agent` are required for fraud prevention.
