@@ -384,6 +384,12 @@
                 ]
               },
               {
+                "group": "Payment",
+                "pages": [
+                  "api-reference/v3/payment/upload-verification-details"
+                ]
+              },
+              {
                 "group": "Merchant",
                 "pages": [
                   "api-reference/v3/merchant/create",
@@ -433,6 +439,8 @@
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
                   "api-reference/v3/webhooks/payment-successful",
+                  "api-reference/v3/webhooks/payment-details-missing",
+                  "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/payment-failed",
                   "api-reference/v3/webhooks/payment-refunded",
                   "api-reference/v3/webhooks/refund-failed",
