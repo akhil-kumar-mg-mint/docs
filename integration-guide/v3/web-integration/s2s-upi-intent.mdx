@@ -125,6 +125,15 @@ For S2S UPI Intent mode, the response includes:
 
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
+- `test_simulator_url`: **Sandbox only** — a URL you open in a browser to complete the payment without a real UPI app
+
+<Tip>
+  **Testing in sandbox:** the sandbox response includes an additional `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without needing a real UPI app or a mobile device — useful when developing the desktop QR path or testing on a machine with no UPI app installed.
+
+  The outcome is driven by the test VPA you use in the simulator: `testsuccess@gocash` completes as **Success**, `testfailure@gocash` as **Failure**. On mobile, selecting any UPI app in the simulator triggers the corresponding flow for the test VPA.
+
+  This field is **not returned in production**.
+</Tip>
 
 **Explanation of URL Arguments**
 

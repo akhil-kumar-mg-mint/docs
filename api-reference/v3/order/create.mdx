@@ -97,6 +97,11 @@ The following tables define the request parameters used by the S2S UPI Intent fl
 For S2S UPI Intent mode, the response includes:
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
+- `test_simulator_url`: **Sandbox only** — a URL you open in a browser to complete the payment without a real UPI app
+
+<Tip>
+  In the **sandbox environment**, the response carries an extra `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without a real UPI app or a mobile device. The result follows the test VPA you use in the simulator. This field is **not returned in production**.
+</Tip>
 
 ## Examples
 
@@ -138,6 +143,8 @@ For S2S UPI Intent mode, the response includes:
 
 ## Response Examples
 
+<CodeGroup>
+
 ```json S2S UPI Intent Response
 {
   "success": true,
@@ -148,6 +155,20 @@ For S2S UPI Intent mode, the response includes:
   }
 }
 ```
+
+```json S2S UPI Intent Response (Sandbox)
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "intent_uri": "pa=kk.payutest@hdfcbank&pn=&tr=403993715534292371&tid=PPPL403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "order_id": "OD2000992103",
+    "test_simulator_url": "<simulator URL returned by the sandbox API>"
+  }
+}
+```
+
+</CodeGroup>
 
 ## Implementation Notes
 
