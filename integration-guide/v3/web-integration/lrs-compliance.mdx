@@ -15,7 +15,7 @@ You own the customer relationship and everything the customer sees; EximPe is th
 | :--- | :--- |
 | Own the entire customer-facing experience — EximPe shows the customer no screen. | Issues a virtual account, verifies eligibility, computes TCS, files settlement with the AD bank. |
 | Onboard and identify the remitter; collect their details and documents. | Verifies PAN validity, residency affirmation, documents, and declarations. |
-| Provide the INR amount to collect (you handle FX). | Adds only the tax — no FX risk from the EximPe leg. |
+| Provide the INR amount to collect (you handle FX). | Adds our fee and the tax on top — no FX risk from the EximPe leg. |
 
 <Note>
   You onboard the **universities** you serve as sub-merchants — each configured with its own settlement details. Collections, settlements, and balances are tracked **per university**. A partner can onboard one or many.
@@ -44,34 +44,42 @@ You own the customer relationship and everything the customer sees; EximPe is th
 
 ### The declarations
 
-The four regulatory requirements — resident-individual status, the LRS limit, source of funds, and TCS — can be presented to the buyer as **two declarations**. Both must be affirmed for the payment to proceed.
+Three regulatory requirements — resident-individual status, the LRS limit, and source of funds — are affirmed by the buyer and passed to us. All three must be affirmed for the payment to proceed.
 
-**Declaration 1 — Eligibility, LRS limit & source of funds**
+**Declaration — Eligibility, LRS limit & source of funds**
 
 > "I am a resident individual under FEMA, and this remittance is under the Liberalised Remittance Scheme. My total LRS this financial year, including this remittance, is within the permitted limit of USD 250,000, and it is for a permitted purpose (not one prohibited under FEMA/RBI). The funds are from my own legitimate sources and comply with FEMA, RBI, AML and income-tax laws. The information in this declaration is true and complete and I accept sole responsibility for its accuracy."
 
-**Declaration 2 — TCS / ₹10 lakh threshold**
-
-> "I have ☐ already exceeded / ☐ not exceeded ₹10,00,000 in LRS remittances this financial year across all banks and channels. I understand that TCS may be collected as applicable under the Income-tax Act, and that the PAN I have furnished is correct."
-
-These map onto the `declarations` object and the `tcs_threshold_breached` flag on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification):
+These map onto the `declarations` object on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification):
 
 | Declaration | API field |
 | :--- | :--- |
 | Resident individual | `declarations.resident_in_india` |
 | Under the LRS limit | `declarations.lrs` |
 | Source of funds | `declarations.source_of_funds` |
-| TCS understanding | `declarations.tcs` |
-| ₹10 lakh already exceeded? | `tcs_threshold_breached` (`true` = already exceeded) |
+
+<Note>
+  **The ₹10 lakh TCS question is no longer collected.** The buyer's self-declaration that they had already crossed ₹10 lakh elsewhere (`tcs_threshold_breached`) and the TCS acknowledgement (`declarations.tcs`) have both been removed from the quote and submit payloads. EximPe determines the threshold from its own LRS counter. Requests that still send either field are accepted and ignored, not rejected. Keep showing the buyer that TCS is being collected — it is a disclosure, not an API field.
+</Note>
 
 ## Tax at source (TCS)
 
-For education funded from the remitter's own funds, **TCS is 2% on the amount above ₹10,00,000** of LRS in a financial year — the first ₹10 lakh each year is TCS-free. Declaration 2's ₹10 lakh answer drives the calculation:
+For education funded from the remitter's own funds, **TCS is 2% on the amount above ₹10,00,000** of LRS in a financial year — the first ₹10 lakh each year is TCS-free. EximPe's own LRS counter decides the threshold; there is no buyer self-declaration:
 
-- **Already exceeded ₹10 lakh** (`tcs_threshold_breached: true`) → TCS applies to the **full** amount of this payment.
-- **Not exceeded** → EximPe computes against its record of the remitter's LRS through us. If this payment itself crosses ₹10 lakh, TCS applies only to the portion **above** the threshold.
+- **Counter already past ₹10 lakh** → the whole of this payment is taxable.
+- **This payment crosses ₹10 lakh** → only the portion **above** the threshold is taxable.
+- **Still under ₹10 lakh** → nil.
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS; you collect it with the principal. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
+Two different bases are in play, and they are deliberately different numbers:
+
+| Base | What it is | What it drives |
+| :--- | :--- | :--- |
+| Principal | The remittance amount — the money that goes abroad | The ₹10 lakh counter and the threshold test |
+| Settlement base | Principal − EximPe's fee − GST on that fee | The tax itself |
+
+On the payment that crosses the threshold, the fee is netted off the taxable slice pro-rata, so the fee charged on the nil-rated first ₹10 lakh does not reduce the tax.
+
+The buyer therefore pays **principal + EximPe's fee + GST on that fee + TCS**, so the full principal settles onward. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns that all-in total in `total_payable_inr` — collect exactly it. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
 
 <Note>
   EximPe tracks LRS usage and **refuses any remittance that would breach the USD 250,000 annual cap** on the data available to us; the AD bank is the wider backstop at settlement.

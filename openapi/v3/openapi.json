@@ -2437,7 +2437,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on the settlement base (`amount` less EximPe's fee and the GST on it), and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2458,8 +2458,7 @@
                 "required": [
                   "pan",
                   "amount",
-                  "purpose_code",
-                  "tcs_threshold_breached"
+                  "purpose_code"
                 ],
                 "properties": {
                   "pan": {
@@ -2476,19 +2475,13 @@
                     "type": "string",
                     "description": "FEMA purpose code; must be one the sub-merchant is enabled for.",
                     "example": "S0305"
-                  },
-                  "tcs_threshold_breached": {
-                    "type": "boolean",
-                    "description": "Buyer's self-declaration that they have already crossed Rs.10L of LRS this FY elsewhere. When true, the full remittance is taxed.",
-                    "example": false
                   }
                 }
               },
               "example": {
                 "pan": "ABCDE1234F",
                 "amount": 1200000,
-                "purpose_code": "S0305",
-                "tcs_threshold_breached": false
+                "purpose_code": "S0305"
               }
             }
           }
@@ -2529,22 +2522,22 @@
                         },
                         "taxable_inr": {
                           "type": "string",
-                          "description": "Portion of the remittance subject to TCS (INR).",
-                          "example": "200000.00"
+                          "description": "Portion of the settlement base subject to TCS (INR). On the remittance that crosses Rs.10L this is the above-threshold slice with EximPe's fee netted off pro-rata, so it is slightly below the corresponding slice of `remittance_inr`.",
+                          "example": "198820.00"
                         },
                         "tcs_inr": {
                           "type": "string",
                           "description": "TCS due on this remittance (INR).",
-                          "example": "4000.00"
+                          "example": "3976.40"
                         },
                         "total_payable_inr": {
                           "type": "string",
-                          "description": "All-in total the buyer pays (remittance + TCS).",
-                          "example": "1204000.00"
+                          "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response.",
+                          "example": "1211056.40"
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
-                          "description": "Whether the Rs.10L threshold was already crossed before this remittance.",
+                          "description": "Whether EximPe's LRS counter had already crossed Rs.10L before this remittance.",
                           "example": false
                         },
                         "tcs_threshold_breached_after": {
@@ -2563,9 +2556,9 @@
                     "financial_year": 2025,
                     "committed_inr": "0.00",
                     "remittance_inr": "1200000.00",
-                    "taxable_inr": "200000.00",
-                    "tcs_inr": "4000.00",
-                    "total_payable_inr": "1204000.00",
+                    "taxable_inr": "198820.00",
+                    "tcs_inr": "3976.40",
+                    "total_payable_inr": "1211056.40",
                     "tcs_threshold_breached_before": false,
                     "tcs_threshold_breached_after": true
                   }
@@ -2716,7 +2709,7 @@
     "/pg/lrs/verify/": {
       "post": {
         "summary": "Submit a payment's LRS verification details",
-        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
+        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). The money-match requires the credit to cover the remitted principal, EximPe's fee, the GST on that fee and the TCS — anything short comes back as `outstanding`. `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
         "tags": [
           "LRS"
         ],
@@ -2755,12 +2748,6 @@
                     "type": "string",
                     "description": "FEMA purpose code for the remittance.",
                     "example": "S0305"
-                  },
-                  "tcs_threshold_breached": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Buyer's self-declaration that Rs.10L LRS was already crossed this FY.",
-                    "example": false
                   },
                   "remitter": {
                     "type": "object",
@@ -2891,28 +2878,23 @@
                   },
                   "tcs": {
                     "type": "number",
-                    "description": "TCS collected from the buyer, in INR rupees.",
-                    "example": 4000
+                    "description": "TCS collected from the buyer, in INR rupees. Use the `tcs_inr` from the quote — we recompute it here and flag a mismatch.",
+                    "example": 3976.4
                   },
                   "declarations": {
                     "type": "object",
                     "required": [
                       "resident_in_india",
                       "lrs",
-                      "tcs",
                       "source_of_funds"
                     ],
-                    "description": "All four must be true for the payment to clear checks; otherwise it stays in Action Required.",
+                    "description": "All three must be true for the payment to clear checks; otherwise it stays in Action Required.",
                     "properties": {
                       "resident_in_india": {
                         "type": "boolean",
                         "example": true
                       },
                       "lrs": {
-                        "type": "boolean",
-                        "example": true
-                      },
-                      "tcs": {
                         "type": "boolean",
                         "example": true
                       },
@@ -2974,7 +2956,6 @@
               "example": {
                 "payment_id": "PAY_1a2b3c4d5e",
                 "purpose_code": "S0305",
-                "tcs_threshold_breached": false,
                 "remitter": {
                   "pan": "ABCDE1234F",
                   "name": "John Doe",
@@ -2996,11 +2977,10 @@
                   "email": "john@example.com",
                   "mobile": "9876543210"
                 },
-                "tcs": 4000,
+                "tcs": 3976.4,
                 "declarations": {
                   "resident_in_india": true,
                   "lrs": true,
-                  "tcs": true,
                   "source_of_funds": true
                 },
                 "documents": [
@@ -3069,7 +3049,7 @@
                         },
                         "outstanding": {
                           "type": "string",
-                          "description": "Shortfall still owed (INR), if any.",
+                          "description": "Shortfall still owed (INR), if any — principal + EximPe's fee + GST on that fee + TCS, less what the credit brought in.",
                           "example": "0.00"
                         },
                         "reason": {

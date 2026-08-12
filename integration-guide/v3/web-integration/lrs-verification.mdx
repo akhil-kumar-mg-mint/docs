@@ -35,14 +35,14 @@ A non-matching or rejected PAN returns `verified: false` with a `reason` (e.g. `
 
 ## Step 2: Quote the TCS
 
-Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. This quotes against the LRS usage EximPe can see and reserves nothing, so you can re-quote freely.
+Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. The threshold is measured against the LRS usage EximPe can see, with no buyer self-declaration; the tax itself is charged on the settlement base (the remittance less EximPe's fee and the GST on it). `total_payable_inr` is **remittance + EximPe's fee + GST + TCS** — collect exactly that. Quoting reserves nothing, so you can re-quote freely.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
-  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305", "tcs_threshold_breached": false }'
+  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305" }'
 ```
 
 The `purpose_code` must be one your settling entity is enabled for (its allowlist).
@@ -71,7 +71,7 @@ Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_
 
 ## Step 4: Submit Verification Details
 
-Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it.
+Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it. The money-match expects the credit to cover the **principal, EximPe's fee, the GST on that fee and the TCS** — the same all-in total the quote returned.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
@@ -85,8 +85,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
     "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
     "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
     "contact": { "email": "john@example.com", "mobile": "9876543210" },
-    "tcs": 4000,
-    "declarations": { "resident_in_india": true, "lrs": true, "tcs": true, "source_of_funds": true },
+    "tcs": 3976.40,
+    "declarations": { "resident_in_india": true, "lrs": true, "source_of_funds": true },
     "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
   }'
 ```
