@@ -70,14 +70,9 @@ For education funded from the remitter's own funds, **TCS is 2% on the amount ab
 - **This payment crosses ₹10 lakh** → only the portion **above** the threshold is taxable.
 - **Still under ₹10 lakh** → nil.
 
-Two different bases are in play, and they are deliberately different numbers:
+The tax is charged on the **principal** — the remittance amount, the money that goes abroad. EximPe's fee and the GST on it are billed **on top of** the principal, not taken out of it, so they never reduce the taxable amount. The same principal drives the ₹10 lakh counter, the threshold test and the tax, so the three can never disagree.
 
-| Base | What it is | What it drives |
-| :--- | :--- | :--- |
-| Principal | The remittance amount — the money that goes abroad | The ₹10 lakh counter and the threshold test |
-| Settlement base | Principal − EximPe's fee − GST on that fee | The tax itself |
-
-On the payment that crosses the threshold, the fee is netted off the taxable slice pro-rata, so the fee charged on the nil-rated first ₹10 lakh does not reduce the tax.
+On the payment that crosses the threshold, the slice above ₹10 lakh is taxed **in full**.
 
 The buyer therefore pays **principal + EximPe's fee + GST on that fee + TCS**, so the full principal settles onward. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns that all-in total in `total_payable_inr` — collect exactly it. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
 

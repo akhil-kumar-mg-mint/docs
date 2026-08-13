@@ -2437,7 +2437,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on the settlement base (`amount` less EximPe's fee and the GST on it), and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2522,18 +2522,18 @@
                         },
                         "taxable_inr": {
                           "type": "string",
-                          "description": "Portion of the settlement base subject to TCS (INR). On the remittance that crosses Rs.10L this is the above-threshold slice with EximPe's fee netted off pro-rata, so it is slightly below the corresponding slice of `remittance_inr`.",
-                          "example": "198820.00"
+                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it.",
+                          "example": "200000.00"
                         },
                         "tcs_inr": {
                           "type": "string",
                           "description": "TCS due on this remittance (INR).",
-                          "example": "3976.40"
+                          "example": "4000.00"
                         },
                         "total_payable_inr": {
                           "type": "string",
                           "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response.",
-                          "example": "1211056.40"
+                          "example": "1211080.00"
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
@@ -2556,9 +2556,9 @@
                     "financial_year": 2025,
                     "committed_inr": "0.00",
                     "remittance_inr": "1200000.00",
-                    "taxable_inr": "198820.00",
-                    "tcs_inr": "3976.40",
-                    "total_payable_inr": "1211056.40",
+                    "taxable_inr": "200000.00",
+                    "tcs_inr": "4000.00",
+                    "total_payable_inr": "1211080.00",
                     "tcs_threshold_breached_before": false,
                     "tcs_threshold_breached_after": true
                   }
@@ -2879,7 +2879,7 @@
                   "tcs": {
                     "type": "number",
                     "description": "TCS collected from the buyer, in INR rupees. Use the `tcs_inr` from the quote — we recompute it here and flag a mismatch.",
-                    "example": 3976.4
+                    "example": 4000
                   },
                   "declarations": {
                     "type": "object",
@@ -2977,7 +2977,7 @@
                   "email": "john@example.com",
                   "mobile": "9876543210"
                 },
-                "tcs": 3976.4,
+                "tcs": 4000,
                 "declarations": {
                   "resident_in_india": true,
                   "lrs": true,

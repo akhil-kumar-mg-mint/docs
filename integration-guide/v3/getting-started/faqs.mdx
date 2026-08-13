@@ -96,7 +96,7 @@ LRS is reported against the **PAN of the debited account**. A credit from a thir
 For education funded from the remitter's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS in a financial year — the first ₹10 lakh each year is TCS-free.
 
 - The threshold is measured against **EximPe's own LRS counter** on the remittance amount. There is no buyer self-declaration.
-- The tax is charged on the **settlement base** — the remittance less EximPe's fee and the GST on that fee. On the payment that crosses ₹10 lakh, the fee is netted off the above-threshold slice pro-rata.
+- The tax is charged on the **remittance amount itself**. EximPe's fee and the GST on it are billed on top and do not reduce it. On the payment that crosses ₹10 lakh, the slice above the threshold is taxed in full.
 
 [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS and the all-in `total_payable_inr` — principal + EximPe's fee + GST + TCS. Collect exactly that. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
 

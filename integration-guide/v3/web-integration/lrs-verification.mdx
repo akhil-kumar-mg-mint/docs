@@ -35,7 +35,7 @@ A non-matching or rejected PAN returns `verified: false` with a `reason` (e.g. `
 
 ## Step 2: Quote the TCS
 
-Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. The threshold is measured against the LRS usage EximPe can see, with no buyer self-declaration; the tax itself is charged on the settlement base (the remittance less EximPe's fee and the GST on it). `total_payable_inr` is **remittance + EximPe's fee + GST + TCS** — collect exactly that. Quoting reserves nothing, so you can re-quote freely.
+Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. The threshold is measured against the LRS usage EximPe can see, with no buyer self-declaration; the tax itself is charged on the remittance amount, with EximPe's fee and the GST on it billed on top rather than deducted from it. `total_payable_inr` is **remittance + EximPe's fee + GST + TCS** — collect exactly that. Quoting reserves nothing, so you can re-quote freely.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
@@ -85,7 +85,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
     "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
     "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
     "contact": { "email": "john@example.com", "mobile": "9876543210" },
-    "tcs": 3976.40,
+    "tcs": 4000.00,
     "declarations": { "resident_in_india": true, "lrs": true, "source_of_funds": true },
     "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
   }'
