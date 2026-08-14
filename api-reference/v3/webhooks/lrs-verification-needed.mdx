@@ -17,6 +17,13 @@ This webhook fires when a payment settling under an LRS purpose code is missing 
   **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) or [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
 </Note>
 
+<Note>
+  Fires for all five LRS purpose codes — `S0305` and `S1107` (education), and
+  `S0306`, `S0304` and `S0303` (travel). The codes it names differ per purpose
+  code; see [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)
+  for what each one asks for.
+</Note>
+
 ### When the webhook is sent
 
 1. **On a successful payment**, once the payment is recognised as LRS — its purpose code determines this.

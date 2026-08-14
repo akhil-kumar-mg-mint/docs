@@ -7016,9 +7016,10 @@
             "enum": [
               "REQUIRED",
               "CONDITIONAL",
-              "OPTIONAL"
+              "OPTIONAL",
+              "COMPUTED"
             ],
-            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` is accepted but never chased.",
+            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` is accepted but never chased. `COMPUTED` is worked out by EximPe — it appears in `required_fields` so you know it exists and reaches the settlement file, never in `missing_fields`, and submitting it is rejected.",
             "example": "REQUIRED"
           },
           "waivable": {

@@ -46,9 +46,11 @@ Each entry in the four arrays is a requirement item:
 </ParamField>
 
 <ParamField path="requirement" type="string" required>
-  `REQUIRED`, `CONDITIONAL` or `OPTIONAL`.
+  `REQUIRED`, `CONDITIONAL`, `OPTIONAL` or `COMPUTED`.
 
   A `CONDITIONAL` item is owed only in the case named by `condition`. It is not listed as missing while that case cannot yet be determined — for example, the relationship declaration only becomes owed once you tell us the remitter is not the person the remittance is for.
+
+  A `COMPUTED` item is worked out by EximPe. It appears in `required_fields` — it is part of the purpose code's data set and reaches the settlement file, so you need to know it exists — but never in `missing_fields`, and submitting it returns `400`.
 </ParamField>
 
 <ParamField path="waivable" type="boolean" required>
@@ -77,6 +79,51 @@ Each entry in the four arrays is a requirement item:
 
 <Note>
   A payment can read `not_applicable` simply because no purpose code has been declared on it yet. Once one is, call this again.
+</Note>
+
+## What each purpose code asks for
+
+The exact set is always what this endpoint returns — this is a summary, and a revision
+lands here before it lands in any table.
+
+### Fields
+
+Every LRS code asks for the common core (buyer name, address, contact, invoice number
+and date, invoice amount, purpose code, payment term), the remitter's verified identity
+(`remitter_name`, `remitter_pan`, `remitter_dob`, `remitter_relation`), the three LRS
+declarations, `principal`, and `collected_tcs`. On top of that:
+
+| Purpose code | Cell | Extra fields |
+|---|---|---|
+| `S0305` | Education, with a travel leg | `student_name`, `student_dob`, `student_passport_number` |
+| `S1107` | Education, fees only — no travel leg | `student_name`, `student_dob` |
+| `S0306` · `S0304` · `S0303` | Travel | — |
+
+`amount_to_be_settled` is `COMPUTED` on every code: we work it out, you cannot send it.
+
+### Documents
+
+| Document | `S0305` | `S1107` | `S0306` · `S0304` · `S0303` |
+|---|:---:|:---:|:---:|
+| Student passport | required | — | — |
+| Student visa | required¹ | — | — |
+| University ID card | required¹ | required | — |
+| Letter of admission (LOA) | required | required | — |
+| Passenger list | — | — | required |
+| Traveller passports | — | — | required |
+| Traveller visas | — | — | required, waivable |
+| Ticket | — | — | required, waivable |
+| Invoice | optional | optional | required |
+| Relationship self-declaration | conditional² | conditional² | conditional² |
+
+¹ Alternatives — supplying either one clears both. `S1107` has no travel leg, so no visa
+exists and the university ID card stands alone.
+
+² Required only when `remitter_relation` is not `SELF`.
+
+<Note>
+  The three travel codes share one requirement set. They differ in what the remittance
+  is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
 </Note>
 
 ## The requirement set can grow
