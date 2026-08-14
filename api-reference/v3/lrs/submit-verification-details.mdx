@@ -23,7 +23,7 @@ The response repeats the requirement shape, so one call tells you what is left.
 
 <Steps>
   <Step title="An event arrives">
-    [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) lists what the payment owes — each with a label, a reason, and whether it can be waived — and carries this endpoint's path in its `submit` block.
+    [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) lists what the payment owes — each entry a code, a sentence saying why, and whether it can be waived.
   </Step>
   <Step title="You send what you have">
     Fields as a map, documents as files. Partial is fine.
