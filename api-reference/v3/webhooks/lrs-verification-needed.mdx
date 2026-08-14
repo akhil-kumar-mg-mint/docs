@@ -63,11 +63,14 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 
 ## Payload Schema
 
-The payment, what it still owes and why, and where to send it.
+The payment, every item it still owes and why, and where to send them.
+
+These are complete, unedited payloads — one per LRS purpose code. Nothing is
+trimmed, so what you see is what arrives.
 
 <CodeGroup>
 
-```json Example: Education (S0305)
+```json Education, with travel leg (S0305)
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T10:30:00.123456Z",
@@ -79,8 +82,71 @@ The payment, what it still owes and why, and where to send it.
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
       {
-        "field": "student_name",
-        "label": "Student name",
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_name",
+        "label": "Remitter name (as per PAN)",
         "reason": "REQUIRED",
         "message": "Required for this purpose code.",
         "waivable": false
@@ -88,6 +154,76 @@ The payment, what it still owes and why, and where to send it.
       {
         "field": "remitter_pan",
         "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_dob",
+        "label": "Remitter date of birth (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_relation",
+        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_name",
+        "label": "Student name",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_dob",
+        "label": "Student date of birth",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_passport_number",
+        "label": "Student passport number",
         "reason": "REQUIRED",
         "message": "Required for this purpose code.",
         "waivable": false
@@ -116,10 +252,10 @@ The payment, what it still owes and why, and where to send it.
         "waivable": false
       },
       {
-        "document": "relationship_declaration",
-        "label": "Relationship self-declaration",
-        "reason": "CONDITIONALLY_REQUIRED",
-        "message": "Required because the remitter is not the person the remittance is for.",
+        "document": "loa",
+        "label": "Letter of admission / offer letter",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
         "waivable": false
       }
     ],
@@ -131,20 +267,315 @@ The payment, what it still owes and why, and where to send it.
 }
 ```
 
-```json Example: Travel (S0306)
+```json Education, fees only (S1107)
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:31:00.123456Z",
+  "event_time": "2026-08-14T10:31:12.884210Z",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
+  "data": {
+    "payment_id": "PR8125440971",
+    "order_id": "OD5590284413",
+    "message": "LRS payment: verification details are required before settlement.",
+    "action_required_fields": [
+      {
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_name",
+        "label": "Remitter name (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_pan",
+        "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_dob",
+        "label": "Remitter date of birth (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_relation",
+        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_name",
+        "label": "Student name",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_dob",
+        "label": "Student date of birth",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "university_id_card",
+        "label": "University ID card",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "loa",
+        "label": "Letter of admission / offer letter",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR8125440971/verification/"
+    }
+  }
+}
+```
+
+```json Travel - other (S0306)
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T10:32:41.005917Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440002",
   "data": {
     "payment_id": "PR7042318866",
     "order_id": "OD8451220934",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
       {
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_name",
+        "label": "Remitter name (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
         "field": "remitter_pan",
         "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_dob",
+        "label": "Remitter date of birth (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_relation",
+        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
         "reason": "REQUIRED",
         "message": "Required for this purpose code.",
         "waivable": false
@@ -159,11 +590,25 @@ The payment, what it still owes and why, and where to send it.
         "waivable": false
       },
       {
+        "document": "traveller_passports",
+        "label": "Traveller passports",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
         "document": "traveller_visas",
         "label": "Traveller visas",
         "reason": "REQUIRED",
         "message": "Required for this purpose code. May be waived with a recorded reason.",
         "waivable": true
+      },
+      {
+        "document": "invoice",
+        "label": "Invoice",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
       },
       {
         "document": "ticket",
@@ -181,7 +626,560 @@ The payment, what it still owes and why, and where to send it.
 }
 ```
 
+```json Travel - medical (S0304)
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T10:33:08.447362Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440003",
+  "data": {
+    "payment_id": "PR2288140537",
+    "order_id": "OD1904663270",
+    "message": "LRS payment: verification details are required before settlement.",
+    "action_required_fields": [
+      {
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_name",
+        "label": "Remitter name (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_pan",
+        "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_dob",
+        "label": "Remitter date of birth (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_relation",
+        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "passenger_list",
+        "label": "Passenger list (name and passport number of every traveller)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "traveller_passports",
+        "label": "Traveller passports",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "traveller_visas",
+        "label": "Traveller visas",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      },
+      {
+        "document": "invoice",
+        "label": "Invoice",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "ticket",
+        "label": "Ticket",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR2288140537/verification/"
+    }
+  }
+}
+```
+
+```json Travel - pilgrimage (S0303)
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T10:34:55.219043Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440004",
+  "data": {
+    "payment_id": "PR9317025648",
+    "order_id": "OD4726180395",
+    "message": "LRS payment: verification details are required before settlement.",
+    "action_required_fields": [
+      {
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_name",
+        "label": "Remitter name (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_pan",
+        "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_dob",
+        "label": "Remitter date of birth (as per PAN)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_relation",
+        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "passenger_list",
+        "label": "Passenger list (name and passport number of every traveller)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "traveller_passports",
+        "label": "Traveller passports",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "traveller_visas",
+        "label": "Traveller visas",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      },
+      {
+        "document": "invoice",
+        "label": "Invoice",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "ticket",
+        "label": "Ticket",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR9317025648/verification/"
+    }
+  }
+}
+```
+
+```json S0305, relation not self
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T11:02:19.730558Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440005",
+  "data": {
+    "payment_id": "PR6938527534",
+    "order_id": "OD3376378679",
+    "message": "LRS payment: verification details are required before settlement.",
+    "action_required_fields": [
+      {
+        "field": "buyer_address_line_1",
+        "label": "Buyer address line 1",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_city",
+        "label": "Buyer city",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_state",
+        "label": "Buyer state",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_postal_code",
+        "label": "Buyer PIN code",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_email",
+        "label": "Buyer email",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "buyer_phone",
+        "label": "Buyer phone",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_number",
+        "label": "Invoice number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "invoice_date",
+        "label": "Invoice date",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "payment_term",
+        "label": "Payment term",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_resident_in_india",
+        "label": "Declaration: the remitter is a person resident in India",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_lrs",
+        "label": "Declaration: the remittance is within the remitter's LRS limit",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "declaration_source_of_funds",
+        "label": "Declaration: the funds are the remitter's own",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "principal",
+        "label": "Remitted principal for this payment, in INR",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "collected_tcs",
+        "label": "TCS collected from the payer, in INR — cross-checked against the figure we compute",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_name",
+        "label": "Student name",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_dob",
+        "label": "Student date of birth",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "student_passport_number",
+        "label": "Student passport number",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "student_passport",
+        "label": "Student passport",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "student_visa",
+        "label": "Student visa",
+        "reason": "ONE_OF_REQUIRED",
+        "message": "Required unless university_id_card is provided instead.",
+        "waivable": false
+      },
+      {
+        "document": "university_id_card",
+        "label": "University ID card",
+        "reason": "ONE_OF_REQUIRED",
+        "message": "Required unless student_visa is provided instead.",
+        "waivable": false
+      },
+      {
+        "document": "loa",
+        "label": "Letter of admission / offer letter",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "relationship_declaration",
+        "label": "Relationship self-declaration",
+        "reason": "CONDITIONALLY_REQUIRED",
+        "message": "Required because the remitter is not the person the remittance is for.",
+        "waivable": false
+      }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR6938527534/verification/"
+    }
+  }
+}
+```
+
 </CodeGroup>
+
+<Note>
+  The three travel codes — `S0306`, `S0304`, `S0303` — carry identical
+  requirement sets. They differ in what the remittance is *for*, not in what
+  you must collect.
+
+  The last tab is the same payment as the first, after the payer declared a
+  `remitter_relation` other than `SELF`. Two things changed: the relationship
+  self-declaration appeared as `CONDITIONALLY_REQUIRED`, and the remitter
+  identity fields dropped off the list, because declaring them satisfied them.
+</Note>
 
 ---
 
