@@ -36,6 +36,288 @@ The response repeats the requirement shape, so one call tells you what is left.
   </Step>
 </Steps>
 
+## The body depends on the purpose code
+
+There is one endpoint and one envelope — `fields`, `documents`, `finalize` — but
+**what belongs inside them is decided by the payment's purpose code**, not by
+you. Sending a key the code does not ask for is a `400`.
+
+You never have to work out which set applies: `GET` the same path and it tells
+you, or read the codes off the
+[`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+event.
+
+Complete bodies for every LRS purpose code, generated from the live requirement
+sets:
+
+<CodeGroup>
+
+```json S0305 - Education, with travel leg
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00",
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30",
+    "student_passport_number": "Z1234567"
+  },
+  "documents": [
+    {
+      "code": "student_passport",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "student_visa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "loa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S1107 - Education, fees only
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00",
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30"
+  },
+  "documents": [
+    {
+      "code": "university_id_card",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "loa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0306 - Travel, other
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0304 - Travel, medical
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0303 - Travel, pilgrimage
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+</CodeGroup>
+
+<Note>
+  The three travel codes take an identical body. They differ in what the
+  remittance is *for* — other travel, medical treatment, pilgrimage — not in
+  what you must collect.
+
+  `S0305` shows `student_visa`; `university_id_card` would do just as well.
+  They are alternatives, and the requirement set says so — the webhook merges
+  them into one entry, and sending either clears both. **Do not send both.**
+
+  Every example declares `remitter_relation` as `PARENT`, which is what makes
+  `relationship_declaration` required. Declare `SELF` and it drops out.
+</Note>
+
+### What differs, and what does not
+
+| | `S0305` | `S1107` | `S0306` · `S0304` · `S0303` |
+|---|:---:|:---:|:---:|
+| Buyer, invoice, declaration, amount | same | same | same |
+| Remitter identity (4 fields) | same | same | same |
+| `student_name`, `student_dob` | ✓ | ✓ | — |
+| `student_passport_number` | ✓ | — | — |
+| Documents | 4 + optional invoice | 2 + optional invoice | 5 |
+
+`relationship_declaration` is asked for on every code, but only once
+`remitter_relation` is something other than `SELF`.
+
+<Warning>
+  **Do not branch on the purpose code in your own integration.** Read the
+  requirement set instead. The codes above are what the matrix asks for today;
+  it is configuration, and a revision reaches you through the API without a
+  release on your side — but only if you are reading it rather than reproducing
+  it.
+</Warning>
+
 ## Two ways to send it
 
 ### JSON
@@ -129,6 +411,20 @@ When `handed_off` is `false`, `reason` says why:
 </Note>
 
 Pass `finalize: false` to stage details without triggering verification — useful when you know more is coming.
+
+## Where each value goes
+
+Most fields flow into the verification and settlement record. Three are collected
+but held rather than forwarded, and it is worth knowing which:
+
+| Field | Where it goes |
+|---|---|
+| `buyer_name` | Held. The credit's own sender name on the order is authoritative — the LRS own-account check compares the verified PAN holder against *that*, so a submitted value must not overwrite it. |
+| `purpose_code` | Held. Read from the order, which is what the settlement file uses. |
+| `payment_term` | Held. Nothing in the settlement record holds it yet; your answer is kept against the payment until something does. |
+
+Everything else reaches the verification gateway. TCS is not collected at all —
+EximPe computes it.
 
 ## Related
 
