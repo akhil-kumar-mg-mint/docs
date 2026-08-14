@@ -386,7 +386,7 @@ Omit a key rather than sending `null` or an empty string. A boolean requirement 
 
 `finalize` defaults to `true` and applies only to a **complete** set. It never forces an incomplete one through.
 
-When a complete set is submitted it runs through the same verification gateway as [Submit LRS Verification](/api-reference/v3/lrs/submit-verification) — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting are unchanged. The outcome comes back in `verification`:
+When a complete set is submitted it runs through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. The outcome comes back in `verification`:
 
 ```json
 "verification": {
@@ -438,7 +438,7 @@ EximPe computes it.
   <Card title="Upload Document" icon="file-arrow-up" href="/api-reference/v3/lrs/upload-document">
     Pre-upload a file and reference it by `ref`.
   </Card>
-  <Card title="Submit LRS Verification" icon="check-double" href="/api-reference/v3/lrs/submit-verification">
-    The original fixed-shape submit. Still supported.
+  <Card title="Quote LRS Amount" icon="calculator" href="/api-reference/v3/lrs/quote">
+    TCS and the all-in total, before the buyer transfers.
   </Card>
 </CardGroup>
