@@ -12,16 +12,21 @@ There is nothing to map between them:
 
 | Where you read it | What you do with it |
 |---|---|
-| `missing_fields[].code` | the key you put in `fields` |
-| `missing_documents[].code` | what you name the file |
+| the webhook's `action_required_fields` | the keys you put in `fields` |
+| the webhook's `action_required_documents` | what you name the files |
+| `missing_fields[].code` (here, and from `GET`) | the key you put in `fields` |
+| `missing_documents[].code` (here, and from `GET`) | what you name the file |
 
-The response is the same shape again, so one call tells you what is left.
+The response repeats the requirement shape, so one call tells you what is left.
 
 ## The loop
 
 <Steps>
   <Step title="An event arrives">
-    [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) lists what the payment owes, and carries this endpoint's path in its `submit` block.
+    [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) names the codes the payment owes, and carries this endpoint's path in its `submit` block.
+  </Step>
+  <Step title="You read what they mean">
+    `GET` that same path. It returns each code's label, requirement level, waivability and alternatives — the event carries none of that, deliberately, so there is one current source for it.
   </Step>
   <Step title="You send what you have">
     Fields as a map, documents as files. Partial is fine.
