@@ -3158,6 +3158,397 @@
         },
         "operationId": "v3_post_pg_lrs_verify_"
       }
+    },
+    "/pg/settlements/mark-settled/": {
+      "post": {
+        "summary": "Mark payments as settled (sandbox)",
+        "description": "Batches one or more captured payments — plus, optionally, refunds and chargebacks — into a single new settlement, applies a simulated fee schedule, and fires the [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) webhook. Use it to exercise your settlement handler and reconciliation without waiting for real money movement.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.\n\nThe batch is atomic: if any payment fails validation nothing is written, so a partially-settled batch is not a state you can reach.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "Settlement"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "payment_uids"
+                ],
+                "properties": {
+                  "payment_uids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Payments to settle. Each must be `CAPTURED`, on the Simulator gateway, yours, and not already settled.",
+                    "example": [
+                      "PR1234567890",
+                      "PR1234567891"
+                    ]
+                  },
+                  "refund_uids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Refunds to fold into the same settlement. Each debits the total at its full amount and carries no fee of its own.",
+                    "example": [
+                      "RF9876543210"
+                    ]
+                  },
+                  "chargeback_uids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Chargebacks to fold in. Same treatment as refunds.",
+                    "example": [
+                      "CB5555555555"
+                    ]
+                  }
+                }
+              },
+              "example": {
+                "payment_uids": [
+                  "PR1234567890",
+                  "PR1234567891"
+                ],
+                "refund_uids": [
+                  "RF9876543210"
+                ],
+                "chargeback_uids": [
+                  "CB5555555555"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settlement created and the payments marked settled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Payments marked as settled successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "settlement_id": {
+                          "type": "string",
+                          "description": "UID of the new settlement — use it with the settlement detail and list endpoints.",
+                          "example": "ST7362075798"
+                        },
+                        "utr_number": {
+                          "type": "string",
+                          "description": "Simulated bank UTR reference.",
+                          "example": "bb6708d5-367f-4ff4-baea-2743a7e649a3"
+                        },
+                        "settlement_completed_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-08-12T11:32:50.432063Z"
+                        },
+                        "forex_rate": {
+                          "type": "string",
+                          "description": "Always `\"96\"` in the simulator.",
+                          "example": "96"
+                        },
+                        "settlement_amount": {
+                          "type": "string",
+                          "description": "Net settled amount, in **rupees** with 2 decimals — not integer paise.",
+                          "example": "791.00"
+                        },
+                        "settlement_charges": {
+                          "type": "string",
+                          "description": "Total platform fees, in rupees. Payments only.",
+                          "example": "50.00"
+                        },
+                        "settlement_gst": {
+                          "type": "string",
+                          "description": "Total GST on those fees, in rupees. Payments only.",
+                          "example": "9.00"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Payments marked as settled successfully",
+                  "data": {
+                    "settlement_id": "ST7362075798",
+                    "utr_number": "bb6708d5-367f-4ff4-baea-2743a7e649a3",
+                    "settlement_completed_at": "2026-08-12T11:32:50.432063Z",
+                    "forex_rate": "96",
+                    "settlement_amount": "791.00",
+                    "settlement_charges": "50.00",
+                    "settlement_gst": "9.00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed, a UID did not resolve, a payment is not on the Simulator gateway / not captured / already settled, or the endpoint was called in production. `error.code` is `ERR_SERVICE_ERROR_000`; `error.details` says which.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "payment_uids": "PR4673100896 is not on the simulator gateway"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected processing failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/refunds/{refund_id}/simulate-status/": {
+      "post": {
+        "summary": "Set refund status (sandbox)",
+        "description": "Forces a refund straight to any status, bypassing the normal `INITIATED → REFUNDED/FAILED` progression, and fires the same webhook a real status change would. Lets one refund exercise every branch of your refund handler, including statuses a real rail reaches rarely.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.\n\nUnlike a real rail, a refund may be moved **out of** a terminal status (`REFUNDED` / `FAILED`) and back again — deliberately, so you do not need a fresh refund per branch.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "Refund"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "refund_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the refund.",
+            "example": "RF7019490071"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "INITIATED",
+                      "PROCESSING",
+                      "REFUNDED",
+                      "FAILED",
+                      "REVERSED",
+                      "ON_HOLD",
+                      "BANK_REJECTED_REFUND"
+                    ],
+                    "description": "Target status. **Uppercase** — `\"refunded\"` is rejected, `\"REFUNDED\"` is accepted.",
+                    "example": "FAILED"
+                  },
+                  "status_message": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Custom message carried into the webhook. Omit for the default for that status.",
+                    "example": "Beneficiary account closed"
+                  },
+                  "bank_ref_num": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Bank reference to stamp on the refund. Left unchanged if omitted.",
+                    "example": "BANKREF123"
+                  }
+                }
+              },
+              "example": {
+                "status": "FAILED",
+                "status_message": "Beneficiary account closed",
+                "bank_ref_num": "BANKREF123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refund updated. A transition to a status the refund already held still returns 200, but sends no webhook.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Refund status updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "refund_id": {
+                          "type": "string",
+                          "example": "RF7019490071"
+                        },
+                        "payment_id": {
+                          "type": "string",
+                          "example": "PR1195868571"
+                        },
+                        "refund_amount": {
+                          "type": "string",
+                          "description": "In **rupees** with 2 decimals.",
+                          "example": "250.00"
+                        },
+                        "refund_status": {
+                          "type": "string",
+                          "description": "Current status, **lowercase** — you send `FAILED` and receive `failed`.",
+                          "example": "failed"
+                        },
+                        "refunded_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true,
+                          "description": "Stamped when the refund first reaches `REFUNDED`.",
+                          "example": "2026-08-12T11:32:25.256618Z"
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "Beneficiary account closed"
+                        },
+                        "settlement_details": {
+                          "type": "object",
+                          "description": "Settlement breakdown once the refund is settled; `{}` otherwise."
+                        },
+                        "reference_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Your reference, if supplied at refund creation."
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-08-12T11:32:25.255318Z"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Refund status updated successfully",
+                  "data": {
+                    "refund_id": "RF7019490071",
+                    "payment_id": "PR1195868571",
+                    "refund_amount": "250.00",
+                    "refund_status": "failed",
+                    "refunded_at": "2026-08-12T11:32:25.256618Z",
+                    "message": "Beneficiary account closed",
+                    "settlement_details": {},
+                    "reference_id": null,
+                    "created_at": "2026-08-12T11:32:25.255318Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or missing `status`, a refund not on the Simulator gateway, or the endpoint called in production. `error.code` is `ERR_REFUND_002`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_REFUND_002",
+                    "message": "Validation error",
+                    "details": {
+                      "status": "\"NOT_A_STATUS\" is not a valid choice."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such refund for this merchant. **This response does not use the standard envelope** — it returns a bare `detail` string.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "No DomesticPaymentRefund matches the given query."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected processing failure. `error.code` is `ERR_SERVICE_ERROR_000` here, unlike the 400s on this endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

@@ -1,0 +1,112 @@
+---
+title: 'Set Refund Status (Sandbox)'
+description: 'Force a refund to any status on demand and fire the matching webhook, so one refund can exercise every branch of your handler.'
+openapi: 'POST /pg/refunds/{refund_id}/simulate-status/'
+---
+
+<Warning>
+  **Sandbox only.** This endpoint returns `400` in production. It operates only on refunds created through the **Simulator** payment gateway — a refund on a real gateway is rejected.
+</Warning>
+
+## Overview
+
+A real refund walks `INITIATED → REFUNDED` or `INITIATED → FAILED`, driven by the bank on its own timetable. Statuses like `REVERSED` or `BANK_REJECTED_REFUND` are rare enough that you may never see one before it happens in production.
+
+This endpoint forces a refund straight to any status and fires the same webhook a real change would, so you can exercise every branch of your handler deliberately.
+
+## Statuses
+
+| Value | Default message | Meaning |
+|---|---|---|
+| `INITIATED` | `Refund initiated` | Accepted, not yet processing |
+| `PROCESSING` | `Refund processing` | In flight at the bank |
+| `REFUNDED` | `Simulated refund settled` | Successfully refunded |
+| `FAILED` | `Simulated refund failed` | Refund failed |
+| `REVERSED` | `Refund reversed` | Reversed after being sent |
+| `ON_HOLD` | `Refund on hold` | Held for review |
+| `BANK_REJECTED_REFUND` | `Refund rejected by bank` | Rejected by the beneficiary bank |
+
+Setting `REFUNDED` also stamps `refunded_at` with the current time, if it is not already set.
+
+<Note>
+  **Terminal statuses are reversible here.** You may move a refund out of `REFUNDED` or `FAILED` and back again. This is deliberate — it lets one refund cover the whole matrix instead of needing a fresh one per branch.
+</Note>
+
+## Which webhook fires
+
+| Target status | Webhook |
+|---|---|
+| `REFUNDED` | [`PAYMENT_REFUNDED`](/api-reference/v3/webhooks/payment-refunded) |
+| `FAILED` | [`REFUND_FAILED`](/api-reference/v3/webhooks/refund-failed) |
+| `PROCESSING` | [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) |
+| `REVERSED` | [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) |
+| `ON_HOLD` | [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) |
+| `BANK_REJECTED_REFUND` | [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) |
+| `INITIATED` | **None** — it is the starting state, not a transition worth notifying |
+
+<Warning>
+  **Webhooks fire only on a genuine transition.** Setting a refund to the status it already holds returns `200` and sends nothing. To re-trigger an event, move the refund to a different status first.
+</Warning>
+
+Your `status_message` is carried into the webhook, so you can assert on it end to end.
+
+## Case asymmetry
+
+You send `"status": "FAILED"` and receive `"refund_status": "failed"`.
+
+Requests take **uppercase**; responses return **lowercase**. Sending `"refunded"` is rejected as an invalid choice — the most common cause of a `400` on this endpoint. Uppercase the response value before comparing it to what you sent.
+
+## Exercising every branch
+
+Walk one refund through each status, checking your handler at each step:
+
+```
+INITIATED → PROCESSING → ON_HOLD → BANK_REJECTED_REFUND → FAILED → REFUNDED
+```
+
+Each transition fires the corresponding event from the table above.
+
+### Testing a failed refund
+
+```bash
+curl -X POST "https://<your-sandbox-host>/pg/refunds/RF7019490071/simulate-status/" \
+  -H "X-Client-ID: <client-id>" \
+  -H "X-Client-Secret: <client-secret>" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "status": "FAILED",
+        "status_message": "Beneficiary account closed"
+      }'
+```
+
+Your endpoint receives `REFUND_FAILED` carrying your custom message.
+
+## Errors
+
+`400` responses use `error.code` = `ERR_REFUND_002`:
+
+| `details` | Cause |
+|---|---|
+| `status: "…" is not a valid choice.` | Unknown status, or lowercase |
+| `status: This field is required.` | `status` omitted |
+| `refund_uid: RF… is not on the simulator gateway` | Refund created on a real gateway |
+| `error: Refund status simulation is not available in production` | Called in production |
+
+<Warning>
+  **`404` does not use the standard envelope.** A refund that does not exist — or belongs to another merchant — returns a bare `{"detail": "..."}` rather than the `success`/`error` shape. Handle that separately.
+
+  Note this is a `404`, not a `403`: refunds are scoped to your account and its sub-merchants, and someone else's refund is simply not found.
+</Warning>
+
+A `500` on this endpoint uses `ERR_SERVICE_ERROR_000`, unlike its `400`s.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Mark as Settled" icon="money-check-dollar" href="/api-reference/v3/settlement/mark-settled">
+    Settle payments on demand, refunds and chargebacks included.
+  </Card>
+  <Card title="Create Refund" icon="rotate-left" href="/api-reference/v3/refunds/create">
+    Create the refund you are going to drive.
+  </Card>
+</CardGroup>
