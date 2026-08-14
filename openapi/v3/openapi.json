@@ -3379,9 +3379,8 @@
                       "buyer_city": "Bengaluru",
                       "remitter_pan": "ABCDE1234F",
                       "remitter_relation": "SELF",
-                      "declaration_lrs": true,
-                      "principal": "150000.00",
-                      "collected_tcs": "0.00"
+                      "buyer_declaration": true,
+                      "amount_to_be_settled": "150000.00"
                     }
                   },
                   "documents": {
@@ -3440,9 +3439,8 @@
                   "buyer_city": "Bengaluru",
                   "remitter_pan": "ABCDE1234F",
                   "remitter_relation": "SELF",
-                  "declaration_lrs": true,
-                  "principal": "150000.00",
-                  "collected_tcs": "0.00"
+                  "buyer_declaration": true,
+                  "amount_to_be_settled": "150000.00"
                 },
                 "documents": [
                   {
@@ -7016,10 +7014,9 @@
             "enum": [
               "REQUIRED",
               "CONDITIONAL",
-              "OPTIONAL",
-              "COMPUTED"
+              "OPTIONAL"
             ],
-            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` is accepted but never chased. `COMPUTED` is worked out by EximPe — it appears in `required_fields` so you know it exists and reaches the settlement file, never in `missing_fields`, and submitting it is rejected.",
+            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` never blocks completion, but the webhook keeps offering it until you send it.",
             "example": "REQUIRED"
           },
           "waivable": {

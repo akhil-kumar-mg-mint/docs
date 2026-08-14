@@ -46,11 +46,11 @@ Each entry in the four arrays is a requirement item:
 </ParamField>
 
 <ParamField path="requirement" type="string" required>
-  `REQUIRED`, `CONDITIONAL`, `OPTIONAL` or `COMPUTED`.
+  `REQUIRED`, `CONDITIONAL` or `OPTIONAL`.
 
   A `CONDITIONAL` item is owed only in the case named by `condition`. It is not listed as missing while that case cannot yet be determined — for example, the relationship declaration only becomes owed once you tell us the remitter is not the person the remittance is for.
 
-  A `COMPUTED` item is worked out by EximPe. It appears in `required_fields` — it is part of the purpose code's data set and reaches the settlement file, so you need to know it exists — but never in `missing_fields`, and submitting it returns `400`.
+  An `OPTIONAL` item never blocks completion, but the webhook keeps offering it until you send it — an optional invoice nobody is told about is one nobody sends.
 </ParamField>
 
 <ParamField path="waivable" type="boolean" required>
@@ -90,8 +90,8 @@ lands here before it lands in any table.
 
 Every LRS code asks for the common core (buyer name, address, contact, invoice number
 and date, invoice amount, purpose code, payment term), the remitter's verified identity
-(`remitter_name`, `remitter_pan`, `remitter_dob`, `remitter_relation`), the three LRS
-declarations, `principal`, and `collected_tcs`. On top of that:
+(`remitter_name`, `remitter_pan`, `remitter_dob`, `remitter_relation`),
+`buyer_declaration`, and `amount_to_be_settled`. On top of that:
 
 | Purpose code | Cell | Extra fields |
 |---|---|---|
@@ -99,7 +99,13 @@ declarations, `principal`, and `collected_tcs`. On top of that:
 | `S1107` | Education, fees only — no travel leg | `student_name`, `student_dob` |
 | `S0306` · `S0304` · `S0303` | Travel | — |
 
-`amount_to_be_settled` is `COMPUTED` on every code: we work it out, you cannot send it.
+`buyer_declaration` is a single affirmation whose `label` is the full text the payer
+must be shown — resident in India, within the applicable LRS limit for the financial
+year, and not for a purpose prohibited under Rule 3 read with Schedule I of the FEM
+(Current Account Transactions) Rules, 2000. Send `true` once they have affirmed it.
+
+`amount_to_be_settled` is the amount to settle for this payment, in INR. TCS is not
+collected — EximPe computes it.
 
 ### Documents
 

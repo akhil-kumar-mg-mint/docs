@@ -48,9 +48,8 @@ Reference documents you uploaded earlier through [Upload Document](/api-referenc
     "buyer_city": "Bengaluru",
     "remitter_pan": "ABCDE1234F",
     "remitter_relation": "SELF",
-    "declaration_lrs": true,
-    "principal": "150000.00",
-    "collected_tcs": "0.00"
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
   },
   "documents": [
     { "code": "student_passport", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
@@ -90,9 +89,9 @@ This is deliberate: nobody collects a passport scan, a visa and a letter of admi
 Field values are strings, numbers or booleans.
 
 <Note>
-  **A `COMPUTED` field cannot be submitted.** `amount_to_be_settled` is worked out by
-  EximPe; sending it returns `400`. It appears in `required_fields` so you know it
-  exists and reaches the settlement file, but it is never something you owe.
+  **`buyer_declaration` is a single affirmation covering every claim.** Its `label` is
+  the exact text the payer must be shown; send `true` once they have affirmed it. TCS is
+  not collected — EximPe computes it, so there is no figure to declare.
 </Note>
 
 <Warning>
