@@ -29,9 +29,9 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     For education payments this is four API calls. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
   <Step title="Get your money">
-    We take our fee and any tax out of the rupees, convert what is left at the exchange rate on the settlement date, and send it to your account abroad. Status becomes `SETTLED`.
+    We take our fee out of the rupees — plus the buyer's tax on LRS payments, which we pass to the bank — convert what is left at the exchange rate on the settlement date, and send it to your account abroad. Status becomes `SETTLED`.
 
-    [What gets deducted](/integration-guide/v3/getting-started/faqs#what-gets-deducted-before-i-am-paid) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
+    [What comes out of the rupees](/integration-guide/v3/getting-started/faqs#what-comes-out-of-the-rupees-before-i-am-paid) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
 </Steps>
 

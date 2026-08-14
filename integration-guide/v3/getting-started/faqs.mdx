@@ -43,21 +43,24 @@ As a PSP you onboard the businesses you collect for as sub-merchants. Collection
 
 A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the payment belongs to.
 
-### What gets deducted before I am paid?
+### What comes out of the rupees before I am paid?
 
-Everything is taken out of the **rupees**, before conversion. What is left is converted and sent abroad.
+Two different things, and only one of them is a cost to you. Both come out of the **rupees**, before conversion.
 
-| Deduction | When | What it is |
-| :--- | :--- | :--- |
-| **MDR** | Every payment | Our processing fee. Your rate is agreed with your KAM. |
-| **GST on the MDR** | Every payment | Indian tax on our fee. |
-| **TCS** | LRS payments only | Tax collected at source, paid to the Indian government against the buyer's PAN. |
+**What EximPe charges**
+
+| | |
+| :--- | :--- |
+| **MDR** | Our processing fee. Your rate is agreed with your KAM. |
+| **GST on the MDR** | Indian tax on that fee. |
+
+**What passes through**
+
+On LRS payments we also take out **TCS**. This is not our charge and we do not keep it — we hand it to the bank, which pays it to the government against the **buyer's** PAN. The buyer then claims it back as a tax credit; it shows up in their Form 26AS.
 
 <Note>
-  **TCS is the buyer's tax, not your cost — as long as you collect it.** Quote it and add it to what the buyer transfers, and it passes straight through. If you do not, it still comes out of the rupees, and it comes out of your money. See [How is TCS calculated?](#how-is-tcs-calculated)
+  Quote the TCS and add it to what the buyer transfers, and it costs you nothing — the buyer funds their own tax. See [How is TCS calculated?](#how-is-tcs-calculated)
 </Note>
-
-Contact your Key Account Manager for your MDR.
 
 ### How do I get started?
 
@@ -108,7 +111,7 @@ The payment waits with the outstanding amount. The buyer tops up into the **same
 
 The rate at the time we settle, not the rate at the time your buyer paid.
 
-You collect in rupees. When the payment clears, we take the [deductions](#what-gets-deducted-before-i-am-paid) out of the rupees, convert what is left to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad.
+You collect in rupees. When the payment clears, we take the [deductions](#what-comes-out-of-the-rupees-before-i-am-paid) out of the rupees, convert what is left to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad.
 
 So the gap between the buyer paying and the money settling is exposure you carry. If you quote your customer a price in your own currency, price that gap in.
 
