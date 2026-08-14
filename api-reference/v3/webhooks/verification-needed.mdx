@@ -29,6 +29,49 @@ The webhook is created **only if**:
 
 ---
 
+## Classification
+
+This event fires **instead of** [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), and one common reason is that the payment could not be classified. Two facts decide that — the buyer type and the FEMA purpose code — and the event names them:
+
+```json
+{
+  "classification": {
+    "business_model": "B2C",
+    "purpose_code": null,
+    "missing": ["purpose_code"]
+  }
+}
+```
+
+<ParamField path="data.classification.business_model" type="string">
+  `B2C` or `B2B`, as resolved for this order.
+</ParamField>
+
+<ParamField path="data.classification.purpose_code" type="string">
+  The FEMA purpose code the order settles under, or `null` if none has been declared.
+</ParamField>
+
+<ParamField path="data.classification.missing" type="array" required>
+  Which of the two we could not resolve. Empty when both are known.
+
+  `business_model` appears here when nothing has *declared* it — not when it is empty.
+  It is never empty; it defaults to `B2C`. A default nobody stood behind is worth
+  telling you about.
+</ParamField>
+
+Anything in `missing` also appears in this event's own missing list, because it
+is a detail that is missing and that is the list you already read.
+
+<Tip>
+  **Supplying these switches the payment over.** Without a purpose code there is no
+  requirement set, so we cannot say what the payment owes beyond the generic fields.
+  Declare it — through the verification submission — and
+  [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+  takes over with the full, purpose-code-specific list.
+</Tip>
+
+---
+
 ## Delivery Details
 
 | Attribute | Value |
@@ -69,7 +112,17 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
-    "action_required_fields": ["buyer_name", "hs_code"]
+    "action_required_fields": [
+      "buyer_name",
+      "hs_code"
+    ],
+    "classification": {
+      "business_model": "B2C",
+      "purpose_code": null,
+      "missing": [
+        "purpose_code"
+      ]
+    }
   }
 }
 ```
@@ -85,7 +138,14 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "VERIFIED",
     "message": "Payment verified",
-    "action_required_fields": []
+    "action_required_fields": [],
+    "classification": {
+      "business_model": "B2C",
+      "purpose_code": null,
+      "missing": [
+        "purpose_code"
+      ]
+    }
   }
 }
 ```
@@ -101,7 +161,14 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
-    "action_required_fields": []
+    "action_required_fields": [],
+    "classification": {
+      "business_model": "B2C",
+      "purpose_code": null,
+      "missing": [
+        "purpose_code"
+      ]
+    }
   }
 }
 ```
