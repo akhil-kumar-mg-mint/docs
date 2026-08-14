@@ -13,6 +13,10 @@ description: "Technical reference for the VERIFICATION_NEEDED webhook event, inc
 
 This webhook is triggered when the payment verification status is updated for collect-from-India payments (after receiving a verification update from the payment gateway).
 
+<Note>
+  **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which carries the full requirement set — documents included — rather than a flat list of field names. It never receives both.
+</Note>
+
 ### When the webhook is sent
 
 The webhook is sent in the following scenarios:

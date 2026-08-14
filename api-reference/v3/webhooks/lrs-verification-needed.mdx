@@ -1,0 +1,292 @@
+---
+title: "LRS VERIFICATION NEEDED"
+description: "Technical reference for the LRS_VERIFICATION_NEEDED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `LRS_VERIFICATION_NEEDED`  
+**Category**: Payment Verification  
+**Description**: An LRS payment needs verification details before it can settle
+
+This webhook fires when a payment settling under an LRS purpose code is missing details required for its purpose code. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding.
+
+<Note>
+  **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) or [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
+</Note>
+
+### When the webhook is sent
+
+1. **On a successful payment**, once the payment is recognised as LRS — its purpose code determines this.
+2. **After you supply verification details**, if the purpose code was not known earlier. A purpose code is often chosen at submission time, so a payment can only be recognised as LRS then; until it is, the generic events apply.
+
+The webhook is created **only if**:
+- Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
+- The payment is actually missing something — a payment with everything already supplied gets no event
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+| **Pacing** | Delivered on a rate-paced queue, so a burst of payments arrives smoothly rather than all at once |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `LRS_VERIFICATION_NEEDED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+
+**Signature verification (recommended):**  
+Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example: Education (S0305)
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T10:30:00.123456Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
+  "data": {
+    "payment_id": "PR6938527534",
+    "order_uid": "OD3376378679",
+    "order_id": "OD3376378679",
+    "message": "LRS payment: verification details are required before settlement.",
+    "is_lrs": true,
+    "business_model": "B2C",
+    "purpose_code": "S0305",
+    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+    "requirement_label": "B2C · Education — LRS (with travel leg)",
+    "details_missing": ["student_name", "remitter_pan", "payment_term"],
+    "action_required_fields": ["student_name", "remitter_pan", "payment_term"],
+    "documents_missing": ["student_passport", "student_visa", "university_id_card", "loa"],
+    "missing_fields": [
+      { "code": "student_name", "label": "Student name", "requirement": "REQUIRED", "waivable": false },
+      { "code": "remitter_pan", "label": "Remitter PAN", "requirement": "REQUIRED", "waivable": false },
+      { "code": "payment_term", "label": "Payment term", "requirement": "REQUIRED", "waivable": false }
+    ],
+    "missing_documents": [
+      { "code": "student_passport", "label": "Student passport", "requirement": "REQUIRED", "waivable": false },
+      { "code": "student_visa", "label": "Student visa", "requirement": "REQUIRED", "waivable": false, "alternative_group": "student_status_proof" },
+      { "code": "university_id_card", "label": "University ID card", "requirement": "REQUIRED", "waivable": false, "alternative_group": "student_status_proof" },
+      { "code": "loa", "label": "Letter of admission / offer letter", "requirement": "REQUIRED", "waivable": false }
+    ],
+    "required_fields": [ "… every field this purpose code calls for, satisfied or not …" ],
+    "required_documents": [ "… every document this purpose code calls for, satisfied or not …" ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR6938527534/verification/"
+    }
+  }
+}
+```
+
+```json Example: Travel (S0306)
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-14T10:31:00.123456Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
+  "data": {
+    "payment_id": "PR7042318866",
+    "order_uid": "OD8451220934",
+    "order_id": "OD8451220934",
+    "message": "LRS payment: verification details are required before settlement.",
+    "is_lrs": true,
+    "business_model": "B2C",
+    "purpose_code": "S0306",
+    "purpose_code_description": "Other travel (including holiday trips and payments for settlement of overseas credit card)",
+    "requirement_label": "B2C · Travel — LRS (other travel)",
+    "details_missing": ["remitter_pan", "remitter_relation"],
+    "action_required_fields": ["remitter_pan", "remitter_relation"],
+    "documents_missing": ["passenger_list", "traveller_passports", "traveller_visas", "invoice", "ticket"],
+    "missing_documents": [
+      { "code": "passenger_list", "label": "Passenger list (name and passport number of every traveller)", "requirement": "REQUIRED", "waivable": false },
+      { "code": "traveller_passports", "label": "Traveller passports", "requirement": "REQUIRED", "waivable": false },
+      { "code": "traveller_visas", "label": "Traveller visas", "requirement": "REQUIRED", "waivable": true },
+      { "code": "invoice", "label": "Invoice", "requirement": "REQUIRED", "waivable": false },
+      { "code": "ticket", "label": "Ticket", "requirement": "REQUIRED", "waivable": true }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/lrs/payments/PR7042318866/verification/"
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"LRS_VERIFICATION_NEEDED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      ISO 8601 datetime when the webhook event was created
+
+      **Example**: `"2026-08-14T10:30:00.123456Z"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Envelope version (e.g. "3.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for this webhook event (UUID), useful for idempotency
+
+      **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      The payment, its purpose code, and everything outstanding
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment
+    </ParamField>
+
+    <ParamField path="data.order_uid" type="string" required>
+      UID of the order. Also sent as `order_id` for continuity with the events this replaces.
+    </ParamField>
+
+    <ParamField path="data.is_lrs" type="boolean" required>
+      Always `true` on this event — the payment draws against the payer's LRS limit
+    </ParamField>
+
+    <ParamField path="data.business_model" type="string" required>
+      `B2C` for every LRS purpose code today
+    </ParamField>
+
+    <ParamField path="data.purpose_code" type="string" required>
+      The FEMA purpose code this payment settles under, and what determines the requirements
+
+      **Example**: `"S0305"`
+    </ParamField>
+
+    <ParamField path="data.requirement_label" type="string" required>
+      Human label for the requirement set in force
+
+      **Example**: `"B2C · Education — LRS (with travel leg)"`
+    </ParamField>
+
+    <ParamField path="data.details_missing" type="array" required>
+      Flat list of missing **field** codes. Same values as `action_required_fields`; both are kept for continuity with the events this replaces.
+    </ParamField>
+
+    <ParamField path="data.documents_missing" type="array" required>
+      Flat list of missing **document** codes
+    </ParamField>
+
+    <ParamField path="data.missing_fields" type="array" required>
+      The missing fields, with the detail the flat list cannot carry — see **Requirement items** below
+    </ParamField>
+
+    <ParamField path="data.missing_documents" type="array" required>
+      The missing documents, same shape
+    </ParamField>
+
+    <ParamField path="data.required_fields" type="array" required>
+      Every field this purpose code calls for, satisfied or not. Enough to build your whole collection form from the event.
+    </ParamField>
+
+    <ParamField path="data.required_documents" type="array" required>
+      Every document this purpose code calls for, satisfied or not
+    </ParamField>
+
+    <ParamField path="data.submit" type="object" required>
+      Where to send the answer — `method` and `path`. Following it verbatim means you never have to look the endpoint up.
+    </ParamField>
+  </Tab>
+
+  <Tab title="Requirement items">
+    Every entry in `missing_fields`, `missing_documents`, `required_fields` and `required_documents` has this shape.
+
+    <ParamField path="code" type="string" required>
+      The identifier you send the answer back under — as a key in `fields`, or as a document's `code`
+    </ParamField>
+
+    <ParamField path="label" type="string" required>
+      Human-readable description, safe to render to a payer
+    </ParamField>
+
+    <ParamField path="requirement" type="string" required>
+      `REQUIRED`, `CONDITIONAL` or `OPTIONAL`
+    </ParamField>
+
+    <ParamField path="waivable" type="boolean" required>
+      When `true` you may record a `waiver_reason` instead of supplying the document — a visa the destination does not require, a ticket not yet issued.
+
+      It still appears in `missing_documents` until you do. The waiver is yours to declare, not ours to assume.
+    </ParamField>
+
+    <ParamField path="condition" type="string">
+      Present on `CONDITIONAL` items. `relation_not_self` means the item is owed when the remitter is not the person the remittance is for.
+    </ParamField>
+
+    <ParamField path="alternative_group" type="string">
+      Items sharing a group satisfy each other. Send any one and the group clears; send none and all stay listed so you can choose.
+
+      In the education example above, the student visa and university ID card are alternatives — either proves student status.
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---
+
+## Responding to the event
+
+<Steps>
+  <Step title="Collect what is named">
+    Use `label` for what to show a payer, and `code` for what to send back.
+  </Step>
+  <Step title="POST it to data.submit.path">
+    [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and files in one call. Partial sends are merged, so you can send as things arrive.
+  </Step>
+  <Step title="Read what is left">
+    The response carries the same `missing_fields` / `missing_documents` after the write. When both are empty the payment is verified automatically.
+  </Step>
+</Steps>
+
+<Note>
+  Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` adds the relationship self-declaration, because that document is only owed in that case. Always read the response rather than assuming the original list was final.
+</Note>
+
+## Do not hardcode the codes
+
+`required_fields` and `required_documents` are configuration and are revised as the underlying regulatory matrix is — new purpose codes become supported, a document turns waivable, a field stops being needed. Driving your form from the event (or from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)) means a revision reaches you without a release on your side.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
+    Send the answer back, fields and files in one call.
+  </Card>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    The same list, on demand — for resuming or reconciling.
+  </Card>
+</CardGroup>

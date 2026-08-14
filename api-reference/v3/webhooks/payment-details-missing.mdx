@@ -13,6 +13,12 @@ description: "Technical reference for the webhook sent when a payment is recorde
 
 This webhook notifies you which fields that are missing for payment verification so you can supply them via the Partner API (order update or **upload-verification-details**) or dashboard. It is used for any payment with missing verification details, including VBA transfer and regular payment success flows.
 
+<Note>
+  **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which names the documents it needs as well as the fields. It never receives both.
+
+  A payment whose purpose code is not yet known still receives this event; the LRS one follows once the code is declared.
+</Note>
+
 ### When the webhook is sent
 
 The webhook is sent **only when all** of the following are true:

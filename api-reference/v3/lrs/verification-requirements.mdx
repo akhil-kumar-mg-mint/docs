@@ -1,0 +1,81 @@
+---
+title: 'Get Verification Requirements'
+description: "Read everything a payment's purpose code calls for — every field and document, and which are still missing."
+openapi: 'GET /pg/lrs/payments/{payment_id}/verification/'
+---
+
+## Overview
+
+Returns the verification requirements for one payment: every field and document its purpose code calls for, which are already satisfied, and which are still outstanding.
+
+This is the pull equivalent of the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook. Both return the same requirement block, built by the same code, so you can render your collection form from either.
+
+<Note>
+  **Do not hardcode the field list.** Requirements are configuration, not code, and are revised as the underlying regulatory matrix is. Reading them from here means a revision reaches your integration without a release on your side.
+</Note>
+
+## When to use it
+
+<Steps>
+  <Step title="You missed an event">
+    Webhooks get lost, retried, or arrive mid-deploy. This endpoint is authoritative and idempotent — call it any time.
+  </Step>
+  <Step title="You are resuming">
+    A payer supplied three documents last week and two today. Call this to see where the payment stands before asking for anything.
+  </Step>
+  <Step title="You are building the form">
+    `required_fields` and `required_documents` describe the whole set, satisfied or not, with labels safe to show a payer.
+  </Step>
+</Steps>
+
+## Reading the response
+
+Each entry in the four arrays is a requirement item:
+
+<ParamField path="code" type="string" required>
+  The identifier you send the answer back under — as a key in `fields`, or as a document's `code`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
+</ParamField>
+
+<ParamField path="label" type="string" required>
+  A human-readable description, safe to render to a payer.
+</ParamField>
+
+<ParamField path="requirement" type="string" required>
+  `REQUIRED`, `CONDITIONAL` or `OPTIONAL`.
+
+  A `CONDITIONAL` item is owed only in the case named by `condition`. It is not listed as missing while that case cannot yet be determined — for example, the relationship declaration only becomes owed once you tell us the remitter is not the person the remittance is for.
+</ParamField>
+
+<ParamField path="waivable" type="boolean" required>
+  When `true`, you may send a `waiver_reason` instead of a file — a visa that the destination does not require, a ticket not yet issued.
+
+  A waivable document still appears in `missing_documents` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
+</ParamField>
+
+<ParamField path="condition" type="string">
+  Present on `CONDITIONAL` items. `relation_not_self` means the item is owed when the remitter is not the person the remittance is for.
+</ParamField>
+
+<ParamField path="alternative_group" type="string">
+  Items sharing a group satisfy each other. Send any one and the whole group clears; send none and all of them stay listed so you can choose.
+
+  For education with a travel leg, the student visa and the university ID card are alternatives — either proves student status.
+</ParamField>
+
+## Statuses
+
+| `status` | Meaning |
+|---|---|
+| `incomplete` | Something is still owed. See `missing_fields` and `missing_documents`. |
+| `complete` | Nothing is outstanding. |
+| `not_applicable` | No requirements are defined for this payment's business model and purpose code — it follows the standard verification flow instead. |
+
+<Note>
+  A payment can read `not_applicable` simply because no purpose code has been declared on it yet. Once one is, call this again.
+</Note>
+
+## The requirement set can grow
+
+Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` adds the relationship self-declaration to `missing_documents`, because that document is only owed in that case.
+
+This is expected. Read `missing_fields` and `missing_documents` from the response after every write rather than assuming the list you started with is final.
