@@ -1,11 +1,11 @@
 ---
 title: "Account Activation"
-description: "Complete KYC verification to activate your merchant account and start accepting live payments."
+description: "Complete KYC to turn on live payments. What to prepare, and what happens after you submit."
 ---
 
-## Complete KYC from Your Dashboard
+Sandbox works the moment you sign up. To take real money you need to finish KYC and be approved.
 
-Start the KYC process directly on your [**EximPe Dashboard**](https://merchant.eximpe.com). Click on the **"Complete KYC"** button.
+Start it from your [EximPe Dashboard](https://merchant.eximpe.com) — click **Complete KYC**.
 
 <Frame>
   <img
@@ -15,63 +15,102 @@ Start the KYC process directly on your [**EximPe Dashboard**](https://merchant.e
   />
 </Frame>
 
-## Required Documents
+## Documents to prepare
 
-Make sure you have the following **details and documents** ready:
+Gather these before you start. Missing any of them stops your activation.
 
-**Company Information:**
+**For your authorised signatory**
 
-- Legal Company Name
-- Trade Name (DBA)
-- Business Registration Number
-- Tax Identification Number
-- Organization Type (LLC, Pvt Ltd, etc.)
-- Website / App / Store URL
-- Average Transaction Value (USD)
-- Estimated Monthly Volume (USD)
+- Board Resolution, signed and sealed, authorising them to act
+- PEP / KMP declaration
+- Passport copy
+- Address proof
 
-**Registered Business Address:**
+**For your business**
 
-- This cannot be changed once submitted.
-
-**Authorized Representative:**
-
-- Full Name
-- Email Address
-- Phone Number
-
-**Settlement Bank Details:**
-
-- Bank Account Number / IBAN
-- Bank Name & Branch Address
-- SWIFT / BIC Code
-
-**Business Documents:**
-
+- Business Registration or Trade Licence
+- Articles of Association (MOA / AOA)
 - Certificate of Incorporation
-- MoA & AoA
-- Valid Business Licenses _(if applicable)_
-- Proof of Business Address _(e.g., utility bill or bank statement)_
+- Tax Registration Certificate
+- Tax Residency Certificate
+- Bank statement, last 3 months
+- No Permanent Establishment declaration
+- UBO declaration
 
-**Ownership & Banking:**
+<Note>
+  Depending on your tax jurisdiction we may also ask for **Form 10F** or a **withholding tax declaration**. These are not always required.
+</Note>
 
-- Beneficial Owners' ID & Address Proof
-- Cancelled Cheque or Signed Bank Statement
+## Details to have ready
 
-## API Key Access
+**Your company**
 
-**Sandbox API Keys** are available immediately after signing up on the [Sandbox Environment](https://merchant-uat.eximpe.com/). These keys allow you to simulate transactions and test your integration without real funds.
+| | |
+| :--- | :--- |
+| Legal company name | As registered |
+| Trade name | If you operate under a different one |
+| Registration number | |
+| Tax identification number | |
+| Organisation type | LLC, Pvt Ltd, and so on |
+| Date of incorporation | |
+| Website, app, or store URL | |
+| What you sell | A real description, not one word |
+| Business category and MCC | |
+| Average transaction value and monthly volume | In USD |
 
-**Production API Keys** are provided only after your account is activated on the [Production Environment](https://merchant.eximpe.com/). This requires completing the KYC process and receiving approval from the EximPe team.
+**Addresses**
+
+Your registered address, and your communication address if it differs.
+
+<Warning>
+  Check the registered address before you submit. It cannot be changed afterwards.
+</Warning>
+
+**Your authorised signatory and beneficial owners**
+
+| | |
+| :--- | :--- |
+| Full name | |
+| Email and phone | |
+| Date of birth | |
+| Nationality | |
+| ID type and number | Matching the passport copy you upload |
+| Ownership percentage | For each beneficial owner |
+| Politically exposed person? | Declared for each person |
+
+**Where you want to be paid**
+
+| | |
+| :--- | :--- |
+| Account holder name | Must match your company name |
+| Account number or IBAN | |
+| Bank name and branch | |
+| Bank address | |
+| SWIFT / BIC code | |
+| Routing number | If your bank uses one |
+| Settlement currency | |
+
+<Warning>
+  **The account holder name has to match your registered company name.** A mismatch fails activation, and it is the most common reason we send an application back.
+</Warning>
+
+## What happens after you submit
+
+| Status | What it means | What you do |
+| :--- | :--- | :--- |
+| `PENDING` | You have not started KYC | Start it |
+| `IN_PROGRESS` | Partly filled, not submitted | Finish and submit |
+| `SUBMITTED` | With our team for review | Wait |
+| `RESUBMIT` | We need something changed or re-uploaded | Fix what we flagged, submit again |
+| `APPROVED` | KYC passed | Your account is activated for live payments |
+| `REJECTED` | We could not approve the application | Talk to your EximPe contact |
+
+## API keys
+
+**Sandbox keys** appear as soon as you sign up at [merchant-uat.eximpe.com](https://merchant-uat.eximpe.com/). Use them to build and test against simulated money.
+
+**Production keys** appear only after your account is approved and activated at [merchant.eximpe.com](https://merchant.eximpe.com/).
 
 <Tip>
-  Ensure you switch your integration to use the **Production API Keys** and endpoint once your account is live!
+  Switch both your keys **and** your endpoint when you go live. Sandbox keys do not work against the production API.
 </Tip>
-
-## Account Status Lifecycle
-
-| Status                  | Description                                          | Action Required           |
-| ----------------------- | ---------------------------------------------------- | ------------------------- |
-| **Pending**             | KYC not yet started or documents missing             | Start KYC process         |
-| **Documents Submitted** | Documents uploaded – under review                    | Wait for review           |
-| **Approved**            | KYC successful – ready for account activation        | Account will be activated |

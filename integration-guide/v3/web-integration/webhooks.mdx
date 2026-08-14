@@ -1,155 +1,65 @@
 ---
 title: "Webhooks"
-description: "Learn how to set up and configure webhooks to receive real-time payment notifications from EximPe. This guide covers webhook setup, testing, and best practices for integration."
+description: "How EximPe tells your server that something happened, and how to check the message is really from us."
 ---
 
----
+A webhook is a POST we send to your server when something happens — money arrived, a payment settled, a refund went through.
 
-## What are Webhooks?
+You need them. There is no polling endpoint that tells you a credit landed, so without a webhook URL you will not know your buyer has paid.
 
-Webhooks are **real-time server-to-server (S2S) notifications** that EximPe sends to your backend when important events occur. Unlike browser redirects that can be interrupted, webhooks ensure reliable delivery of payment status updates directly to your server.
+## Events we send
 
-<CardGroup cols={2}>
-  <Card title="Reliable Delivery" icon="shield-check">
-    Notifications sent directly to your server with automatic retries
-  </Card>
-  <Card title="Real-time Updates" icon="clock">
-    Instant notification of payment events as they happen
-  </Card>
-  <Card title="No User Dependency" icon="user-check">
-    Works even if customer closes the browser or loses connection
-  </Card>
-  <Card title="Secure Communication" icon="lock">
-    Encrypted and signed for authenticity and data integrity
-  </Card>
-</CardGroup>
+| Event | We send it when | You do this |
+| :--- | :--- | :--- |
+| **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
+| **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
+| **Payment Details Missing** | A payment is missing fields we need | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) |
+| **Verification Needed** | Verification becomes `VERIFIED`, `IN_REVIEW`, or `ACTION_REQUIRED` | Track the outcome, or fix what is flagged |
+| **Payment Failed** | A credit could not be processed | Investigate and reconcile |
+| **Payment Settled** | Money is settled to you | Update your books |
+| **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
+| **Refund / Dispute Updates** | A refund status changes or a dispute moves | Track it |
 
----
+Payload for each is in the [API Reference](/api-reference/v3/webhooks/payment-successful).
 
-## Supported Events
+## Set it up
 
-EximPe sends webhooks for these key events:
+**1. Build the endpoint.** A public HTTPS URL that accepts `POST` with `application/json` and returns `200 OK`.
 
-<CardGroup cols={2}>
-  <Card title="Merchant Approved" icon="user-check">
-    **When:** A sub-merchant is approved<br/>
-    **Use Case:** Enable the merchant to hold VBAs and collect
-  </Card>
-  <Card title="Payment Successful" icon="check">
-    **When:** A credit lands in a VBA and a payment is created<br/>
-    **Use Case:** Begin LRS verification for the credit
-  </Card>
-  <Card title="Payment Details Missing" icon="triangle-exclamation">
-    **When:** A credit lands but the order is missing fields required for verification<br/>
-    **Use Case:** Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details)
-  </Card>
-  <Card title="Verification Needed" icon="file-circle-check">
-    **When:** Verification status changes to `VERIFIED`, `IN_REVIEW`, or `ACTION_REQUIRED`<br/>
-    **Use Case:** Track the outcome, or correct the fields still flagged
-  </Card>
-  <Card title="Payment Failed" icon="x">
-    **When:** A credit could not be processed<br/>
-    **Use Case:** Investigate and reconcile
-  </Card>
-  <Card title="Payment Settled" icon="money-bill">
-    **When:** Funds are settled to the beneficiary<br/>
-    **Use Case:** Update accounting and reconciliation records
-  </Card>
-  <Card title="Payment Refunded" icon="rotate-left">
-    **When:** A refund is processed<br/>
-    **Use Case:** Update your ledger, notify the buyer
-  </Card>
-  <Card title="Refund / Dispute Updates" icon="scale-balanced">
-    **When:** A refund status changes or a dispute is updated<br/>
-    **Use Case:** Track refund and dispute lifecycles
-  </Card>
-</CardGroup>
+**2. Register it.** In your EximPe Dashboard, go to **Developer** and enter the URL. If you cannot use the dashboard, send the URL and your server IP to EximPe Support instead.
 
----
+**3. Whitelist our IPs.** The ranges are in the same Developer section. Configure your firewall to accept webhooks only from those addresses.
 
-## 🛠️ Setup Guide
+**4. Test it.** Make a sandbox payment, watch it arrive, confirm you return `200`.
 
-### Step 1: Prepare Your Endpoint
+## Check the message is really from us
 
-<Info>
-  Ensure your server has a **public HTTPS URL** accessible from the internet, a **POST endpoint** that can receive webhook data, **200 OK response** capability, and support for `application/json`.
-</Info>
-
-### Step 2: Configure Webhook URL
+Every webhook carries an HMAC-SHA256 signature in the `X-Webhook-Signature` header. Verify it before you act on anything — otherwise anyone who finds your URL can tell you a payment succeeded.
 
 <Steps>
-  <Step title="Dashboard Configuration (Recommended)">
-    <ol>
-      <li>Log into your **EximPe Dashboard**</li>
-      <li>Navigate to **Developer Section**</li>
-      <li>Enter your webhook URL</li>
-      <li>Save configuration</li>
-      <li><strong>Whitelist EximPe IP addresses</strong> - Configure your firewall to only accept webhooks from EximPe's IP ranges (found in Developer Section)</li>
-    </ol>
-  </Step>
-  
-  <Step title="Manual Setup">
-    <ol>
-      <li>Contact EximPe Support with your webhook URL</li>
-      <li>Provide your server's IP address</li>
-      <li>EximPe will whitelist your endpoint</li>
-      <li>You'll receive EximPe's IP range for firewall configuration</li>
-      <li><strong>Whitelist EximPe IP addresses</strong> - Configure your firewall to only accept webhooks from EximPe's IP ranges</li>
-    </ol>
-  </Step>
-</Steps>
-
-### Step 3: Test Your Integration
-
-<CardGroup cols={2}>
-  <Card title="Log Requests" icon="file">
-    Log all incoming requests on your server to monitor webhook delivery
-  </Card>
-  <Card title="Test Payment" icon="credit-card">
-    Make a test payment in sandbox environment to trigger webhooks
-  </Card>
-  <Card title="Verify Receipt" icon="check">
-    Verify webhook receipt and processing in your logs
-  </Card>
-  <Card title="Check Response" icon="server">
-    Ensure your endpoint returns 200 OK response codes
-  </Card>
-</CardGroup>
-
----
-
-## 🔐 Security & Verification
-
-EximPe signs each webhook with an HMAC signature to ensure authenticity:
-
-### Verification Steps
-
-<Steps>
-  <Step title="Extract the signature">
-    Extract the signature from the X-Webhook-Signature header in the request
+  <Step title="Take the signature from the header">
+    Read `X-Webhook-Signature` off the request.
   </Step>
   <Step title="Get your Encryption Key">
-    Get your Encryption key 
+    It is in the Developer section of the dashboard.
+
     <Frame>
       <img src="/images/encryption-key.png" alt="Get your Encryption Key from Developer Section" />
     </Frame>
   </Step>
-  <Step title="Recreate the signature">
-    Recreate the signature using HMAC-SHA256:
-    <ul>
-      <li>Use your Encryption Key as the secret</li>
-      <li>Use the raw JSON body as the message</li>
-      <li>**Important:** If reconstructing from JSON object, ensure consistent serialization using `json.dumps()` with `sort_keys=True` and `separators=(",", ":")` to match EximPe's format</li>
-      <li>Generate HMAC-SHA256 hash</li>
-      <li>Convert to hexadecimal string</li>
-    </ul>
+  <Step title="Rebuild the signature">
+    HMAC-SHA256, using your Encryption Key as the secret and the **raw** request body as the message. Output as a hex string.
   </Step>
-  <Step title="Compare signatures">
-    Compare signatures - they should match exactly
+  <Step title="Compare">
+    They must match exactly. Use a timing-safe comparison.
   </Step>
 </Steps>
 
-### Code Examples
+<Warning>
+  **Use the raw body, not a re-serialised object.** If you parse the JSON and stringify it again, your bytes will differ from ours and the signature will never match. If you have no choice, serialise with sorted keys and no spaces — `json.dumps(data, sort_keys=True, separators=(",", ":"))`.
+</Warning>
+
+### Code
 
 <CodeGroup>
 
@@ -284,26 +194,17 @@ public function webhook(Request $request) {
 
 </CodeGroup>
 
-## ⏰ Retry Logic & Delivery
+## If your endpoint is down
 
-EximPe implements an automatic retry mechanism to ensure reliable webhook delivery. If your endpoint doesn't respond with a `200 OK` status code, we'll retry the webhook delivery according to the following schedule:
+We retry. First attempt is immediate, then at **1 minute**, **5 minutes**, **15 minutes**, and **1 hour**. After 5 failed attempts we stop.
 
-<Info>
-  **Retry Schedule:** 1st attempt is **immediate**, followed by retries at **1 minute**, **5 minutes**, **15 minutes**, and finally **1 hour**. After 5 failed attempts, EximPe will stop retrying.
-</Info>
----
+Anything other than `200 OK` counts as a failure, so return `200` as soon as you have stored the event, and do your processing afterwards.
 
 <Warning>
-  **Security Best Practices:**
-  - 🔐 Never expose your encryption key publicly
-  - 📝 Always verify webhook signatures
-  - 🛡️ Use HTTPS endpoints only
-  - 📊 Log webhook events for audit trails
-</Warning>
+  **Four things to get right.**
 
-<Note>
-  **Next Steps:**
-  - Review the [API Reference](/api-reference/v3/webhooks) for detailed webhook payload specifications
-  - Test your webhook integration in the sandbox environment
-  - Monitor webhook delivery in your EximPe dashboard
-</Note>
+  - Never expose your encryption key.
+  - Verify every signature.
+  - HTTPS only.
+  - Log what you receive — you will need it to reconcile.
+</Warning>

@@ -19,6 +19,10 @@ The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by
   </Card>
 </CardGroup>
 
+<Info>
+  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required** like any other v3 payment, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance) below.
+</Info>
+
 ### Intent Invocation
 
 Intent invocation is simply the act of packaging your UPI payment details (amount, payee VPA, reference, etc.) into a deep-link URI and then launching the user’s UPI app directly from your front end. With a **specific intent**, you target a known app (e.g. Google Pay), while a **generic intent** lets Android show an app picker (on iOS it falls back to the default handler), all without bouncing users through extra web redirects.
@@ -278,7 +282,6 @@ Invoke the **Order Status API** to retrieve the status of the UPI transaction:
 curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
   -H "X-Client-ID: YOUR_CLIENT_ID" \
   -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
-  -H "X-API-Version: 3.0.0"
 ```
 
 <Note>
@@ -291,5 +294,14 @@ EximPe can also send a webhook response whenever the transaction status gets upd
 
 For more information, see the [Payment Successful response](/api-reference/v3/webhooks/payment-successful)
 
+### Step 5: Assert compliance
+
+A collected UPI payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
+
+For **LRS education** payments, that is the same four-call flow used for virtual account collections — verify the remitter's PAN, quote the TCS, upload the supporting documents, and submit the remitter, purpose, and declarations.
+
+<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+  The step-by-step compliance flow, shared by every v3 collection method.
+</Card>
 
 ---

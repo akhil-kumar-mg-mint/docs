@@ -1,6 +1,6 @@
 ---
 title: "FAQ"
-description: "Common questions about EximPe's API-only collection rail: virtual bank accounts, LRS compliance, TCS, documents, settlements, and webhooks."
+description: "Common questions about EximPe's cross-border collection rail: virtual accounts, the payment lifecycle, settlements, webhooks, and the LRS education rules."
 ---
 
 
@@ -8,35 +8,56 @@ description: "Common questions about EximPe's API-only collection rail: virtual 
 
 ### What is this product?
 
-An **API-only** cross-border collection rail. You issue an EximPe **Virtual Bank Account (VBA)**, an Indian buyer transfers rupees into it, you assert the compliance details through the API, and the funds are settled to the beneficiary abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. A bank partner — an **Authorised Dealer**, or "AD bank" — performs the actual outward remittance.
+A cross-border collection rail. An Indian buyer pays rupees into a virtual account we issue for you, you supply the compliance details the payment needs, and the funds are settled to the beneficiary abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. A bank partner — an **Authorised Dealer**, or "AD bank" — performs the actual outward remittance.
 
 ### Does EximPe show my buyer a payment page?
 
-No. There is no hosted checkout, no payment links, and no card, UPI, or net-banking page. EximPe shows the buyer no screen at all. You own the entire customer-facing experience; EximPe is the embedded India collection and settlement engine underneath.
+Not today. Virtual bank accounts are driven entirely from your own product, so the buyer stays in your experience throughout — they just make a bank transfer. Methods where EximPe hosts the buyer-facing page are on the roadmap; contact your KAM about what is available to you.
 
 ### How does the buyer actually pay?
 
-By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the VBA you share with them. No SWIFT, no international wire, no intermediary banks.
+By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual bank account you share with them. No SWIFT, no international wire, no intermediary banks.
+
+### What can I collect for?
+
+Every payment carries a FEMA **purpose code**, and the purpose code decides the compliance rules — who may pay, which documents are needed, and what tax applies. EximPe supports **LRS education** payments today, on purpose codes `S0305` and `S1107`.
+
+Your account is enabled for a specific set of purpose codes (its allowlist). To collect for a purpose outside it, contact your EximPe KAM.
+
+### Does the payment type change how I integrate?
+
+Only the compliance step. Onboarding, collection, the payment lifecycle, webhooks, settlement, and refunds are identical whatever the purpose code. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
 
 ### Who are the parties in an integration?
 
 | Term | Who it is |
 | :--- | :--- |
-| **PSP** | Integrator that calls the API for the sub-merchants it onboards. Holds no VBA or funds. |
-| **Sub-merchant** | A merchant created under a PSP. Holds VBAs and collected funds; the entity that gets settled. |
-| **Direct merchant** | A merchant with no parent PSP — holds its own VBAs and is its own API caller. |
-| **Settling entity** | The account that holds the VBA and funds — a sub-merchant or a direct merchant, never a PSP. |
-| **Remitter (Buyer)** | The person in India paying, uniquely identified by **PAN**. |
+| **PSP** | Integrator that onboards sub-merchants and calls the API for them. EximPe settles their collections to the PSP. |
+| **Sub-merchant** | A merchant onboarded by a PSP. Collections are tracked against it; its PSP settles the money onward to it. |
+| **Direct merchant** | A merchant with no parent PSP. Calls the API for itself and is settled directly by EximPe. |
+| **Remitter (Buyer)** | The person or business in India paying you. For LRS payments they are identified by their **PAN**. |
 
-You onboard the universities you serve as sub-merchants. Collections, settlements, and balances are tracked **per university**.
+As a PSP you onboard the businesses you collect for as sub-merchants. Collections and balances are tracked per sub-merchant, and EximPe settles them to you; you pay each sub-merchant onward.
 
 ### What are the requirements to integrate?
 
-A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request must also send `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID` naming the settling sub-merchant.
+A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the payment belongs to.
 
-### What fees does EximPe charge?
+### What gets deducted before I am paid?
 
-EximPe charges a processing fee per transaction. Contact your EximPe Key Account Manager (KAM) for a detailed fee structure.
+Everything is taken out of the **rupees**, before conversion. What is left is converted and sent abroad.
+
+| Deduction | When | What it is |
+| :--- | :--- | :--- |
+| **MDR** | Every payment | Our processing fee. Your rate is agreed with your KAM. |
+| **GST on the MDR** | Every payment | Indian tax on our fee. |
+| **TCS** | LRS payments only | Tax collected at source, paid to the Indian government against the buyer's PAN. |
+
+<Note>
+  **TCS is the buyer's tax, not your cost — as long as you collect it.** Quote it and add it to what the buyer transfers, and it passes straight through. If you do not, it still comes out of the rupees, and it comes out of your money. See [How is TCS calculated?](#how-is-tcs-calculated)
+</Note>
+
+Contact your Key Account Manager for your MDR.
 
 ### How do I get started?
 
@@ -50,108 +71,21 @@ EximPe charges a processing fee per transaction. Contact your EximPe Key Account
 
 ### Is a VBA tied to one buyer?
 
-No. A single VBA can receive credits from **many** remitters. Because of this, an inbound credit does not by itself tell you who paid — you assert the remitter's PAN afterwards during LRS verification.
+Not by default. One account accepts money from any number of buyers, so a credit landing does not by itself tell you who paid — you tell us that during verification.
 
-### Can a settling entity hold more than one VBA?
+If you want an account to accept money from one buyer only, lock it when you create it. See [Can I restrict who pays into a VBA?](#can-i-restrict-who-pays-into-a-vba)
 
-Yes. From v2.0.0 onwards a settling entity can have multiple **ACTIVE** VBAs at once.
+### Can I create more than one VBA?
+
+Yes. Create as many as you want — there is no limit.
 
 ### Can I restrict who pays into a VBA?
 
 Yes, optionally, at creation time. A **remitter lock** restricts the VBA to a specific list of remitter bank accounts (account number + IFSC); an **amount lock** restricts transfers to an amount range. The two locks are independent, and when omitted they impose no restriction.
 
-### The credit shows a sender bank account. Is that the remitter?
-
-No. The sender bank account is the **payer instrument**, not the **remitter identity**. You must assert the remitter by PAN during LRS verification — never assume the bank sender is the PAN holder.
-
 ### Can I test without a real bank transfer?
 
-Yes. In sandbox, [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) triggers the end-to-end flow — payment creation, webhooks, and LRS. It works for both Cashfree and ICICI VBAs, and the `utr` must be unique across simulations. The endpoint is not available in production.
-
----
-
-## LRS & Compliance
-
-### Who is eligible to remit under LRS?
-
-**Resident individuals only**, including minors through a guardian. LRS is not available to companies, partnership firms, HUFs, trusts, or non-resident individuals.
-
-### What are the limits?
-
-- **Per transaction**: ₹25,00,000.
-- **Per person, per financial year**: USD 250,000 across *all* of the individual's LRS remittances at every bank — not just those through EximPe. The year runs 1 April to 31 March.
-
-EximPe tracks LRS usage and refuses any remittance that would breach the annual cap on the data available to us; the AD bank is the wider backstop at settlement.
-
-### Can a parent pay for a student?
-
-Yes — but **the parent is then the remitter**. Their PAN is used and their account sends the money, and the relationship to the student is declared. Set `relation` to something other than `SELF` and include `primary_person` (name, DOB, passport number) for the student. Use `SELF` only when the remitter and the student are the same person.
-
-### Why must the money come from the remitter's own account?
-
-LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch puts the payment **On Hold**.
-
-### How is TCS calculated?
-
-For education funded from the remitter's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS in a financial year — the first ₹10 lakh each year is TCS-free.
-
-- If the remitter has **already exceeded** ₹10 lakh (`tcs_threshold_breached: true`), TCS applies to the **full** amount of this payment.
-- If **not exceeded**, EximPe computes against its record of the remitter's LRS through us. If this payment itself crosses the threshold, TCS applies only to the portion **above** it.
-
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS; collect it alongside the principal. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
-
-### Do I have to call the quote API?
-
-It is optional but strongly recommended. Quoting reserves nothing and can be re-run freely, so show the buyer the tax-inclusive total before they transfer — otherwise they under-pay and you have to handle a shortfall.
-
-### What declarations does the buyer affirm?
-
-Two, both of which must be affirmed for the payment to proceed: one covering **resident-individual status, the LRS limit, and source of funds**; and one covering **TCS and the ₹10 lakh threshold**. They map onto the `declarations` object and the `tcs_threshold_breached` flag on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification). See [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declarations) for the exact wording.
-
-### Which purpose codes are supported?
-
-| Purpose code | Use |
-| :--- | :--- |
-| `S0305` | Education abroad — studies / tuition (the student typically travels) |
-| `S1107` | Education-related fee remittance (no travel leg) |
-
-Both are handled as own-funds education; loan-funded remittances are not in scope at present. The `purpose_code` you send must be one your settling entity is enabled for (its allowlist).
-
-### Why verify the PAN before quoting?
-
-An inactive, non-individual, or name/DOB-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) checks against income-tax records and returns `verified: false` with a `reason` (e.g. `NAME_MISMATCH`, `INOPERATIVE_PAN`) so you can resolve it with the buyer upfront.
-
-Residency cannot be established from a PAN alone — non-residents hold individual PANs too — which is why the buyer additionally affirms residency in the declarations.
-
----
-
-## Documents
-
-### Which documents are required?
-
-Documents are decided **by purpose code**:
-
-| Document (`type`) | S0305 | S1107 |
-| :--- | :--- | :--- |
-| `offer_letter` — offer / admission letter (LOO / LOA) | Mandatory | Mandatory |
-| `fee_invoice` — university fee invoice / demand letter | Optional¹ | Optional¹ |
-| `passport` — of the student | Mandatory | — |
-| `student_id_or_visa` — student ID or visa | Mandatory (ID or visa) | `student_id` only (no visa²) |
-| `relationship_declaration` — parent/sponsor pays | If remitter is not the student | If remitter is not the student |
-
-¹ If the offer/admission letter already carries the fee and bank details, a separate invoice is not required. ² S1107 is a fee remittance with no travel leg, so there is no student visa — the student ID is the enrolment proof.
-
-### Is a scanned PAN card required?
-
-No. PAN is captured as a **field** and validated electronically.
-
-### When do I upload documents?
-
-Up front, decoupled from any payment. Each call to [Upload LRS Document](/api-reference/v3/lrs/upload-document) returns a `ref` that you pass in the `documents` array of Submit LRS Verification. The file's type, size, and encryption are validated on upload.
-
-### What happens if a document is rejected?
-
-The payment is sent back with exactly what to fix. You re-submit only the flagged item and it returns to review. Legible, in-date documents of the correct type are the main way to avoid holds — the offer/admission letter is the anchor.
+Yes. In sandbox, [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) triggers the end-to-end flow — payment creation, webhooks, and verification. Each `utr` must be unique across simulations. The endpoint is not available in production.
 
 ---
 
@@ -161,18 +95,22 @@ The payment is sent back with exactly what to fix. You re-submit only the flagge
 
 | State | Meaning |
 | :--- | :--- |
-| `ACTION_REQUIRED` | Credit received; compliance details not yet supplied (or something is missing). |
-| `UNDER_REVIEW` | Verification submitted and posted to the buyer's LRS counter; awaiting bank processing. |
-| `ON_HOLD` | Needs manual attention — e.g. the sender is not the PAN holder. |
+| `ACTION_REQUIRED` | Money received; compliance details not yet supplied (or something is missing). |
+| `UNDER_REVIEW` | Verification submitted; awaiting bank processing. For LRS, the amount is posted to the buyer's LRS counter at this point. |
+| `ON_HOLD` | Needs manual attention. We tell you the reason. |
 | `SETTLED` | Funds settled to the beneficiary. |
 
-### The buyer paid less than quoted. What now?
+### The buyer paid less than the amount due. What now?
 
 The payment waits with the outstanding amount. The buyer tops up into the **same VBA**, and you submit the top-up **linked** to the original by passing `linked_payment_id` and a `reason` (`REMAINING_AMOUNT` or `TCS_PAYMENT`). `reason` is only valid together with `linked_payment_id`.
 
-### Who handles foreign exchange?
+### What exchange rate do I get?
 
-You provide the INR amount to collect and handle the FX pricing your customer sees. EximPe adds only the tax, so there is no FX risk from the EximPe leg, then converts and settles the cleared funds to your international bank account.
+The rate at the time we settle, not the rate at the time your buyer paid.
+
+You collect in rupees. When the payment clears, we take the [deductions](#what-gets-deducted-before-i-am-paid) out of the rupees, convert what is left to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad.
+
+So the gap between the buyer paying and the money settling is exposure you carry. If you quote your customer a price in your own currency, price that gap in.
 
 ### How do I get settlement details?
 
@@ -180,7 +118,9 @@ Via the **EximPe Dashboard** or the settlement APIs — [List Settlements](/api-
 
 ### How are refunds funded?
 
-Balances are held **per university**. A refund is netted against the funds EximPe is next due to settle for that university, out of collections not yet settled onward. If enough of that university's balance is held, the refund processes right away; otherwise it waits until enough is collected. **Money already settled abroad cannot be pulled back to fund a refund.**
+A refund is netted against your upcoming settlements. We track a balance for each merchant, and the refund comes out of collections we have not settled to you yet.
+
+If that balance does not cover the refund, the call fails with an error. Nothing is queued and nothing retries on its own — collect more, then call again.
 
 ### Where does a refund go, and can I refund partially?
 
@@ -192,7 +132,7 @@ A refund goes back to the remitter's **own account**. A payment can take more th
 
 ### Which events does EximPe send?
 
-Merchant Approved, Payment Successful (a credit landed in a VBA), Payment Failed, Payment Settled, Payment Refunded, and refund/dispute updates.
+Merchant Approved, Payment Successful (money was collected and a payment created), Payment Failed, Payment Settled, Payment Refunded, and refund/dispute updates.
 
 ### How do I verify a webhook is genuine?
 
@@ -201,3 +141,71 @@ Each webhook is signed with an HMAC-SHA256 signature in the `X-Webhook-Signature
 ### What happens if my endpoint is down?
 
 EximPe retries: the 1st attempt is immediate, followed by retries at **1 minute**, **5 minutes**, **15 minutes**, and **1 hour**. After 5 failed attempts, EximPe stops retrying.
+
+---
+
+## LRS — education and travel payments from individuals
+
+<Info>
+  **LRS** is the Liberalised Remittance Scheme — the RBI rules that apply when an **individual** in India sends money abroad, for things like education fees or travel. It does not apply to businesses paying businesses.
+
+  EximPe supports **education** payments today. The full rules live in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance); the API walk-through is [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+</Info>
+
+### Who is allowed to pay under LRS?
+
+Resident individuals only, including minors through a guardian. Not companies, partnerships, HUFs, trusts, or non-residents.
+
+### What are the limits?
+
+₹25,00,000 per payment, and USD 250,000 per person per financial year across every bank they use — not just payments through us. We refuse anything that would breach the annual cap on the data we can see.
+
+### Which purpose codes are supported?
+
+`S0305` and `S1107`, both for education from the buyer's own funds. See [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for what each covers.
+
+### Can a parent pay for a student?
+
+Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Set `relation` to something other than `SELF` and include `primary_person` for the student. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
+
+### Why must the money come from the remitter's own account?
+
+LRS is reported against the PAN of the account the money came out of, so a payment always settles against whoever actually paid. Enforce own-account payment in your UX.
+
+### The credit shows a sender bank account. Is that the remitter?
+
+It should be. You tell us the remitter's PAN and we check it against the name on the sending account. If they do not match the payment goes **on hold**, and you either refund it or give us the PAN of whoever actually paid — in which case it settles against them and their LRS limit.
+
+### How is TCS calculated?
+
+2% on whatever the buyer has sent abroad above ₹10,00,000 in a financial year. The first ₹10 lakh each year is TCS-free. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure — collect it along with the principal, and it passes through to the government against the buyer's PAN.
+
+Full mechanics, including the `tcs_threshold_breached` flag, are in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#tax-at-source-tcs).
+
+### Do I have to call the quote API?
+
+Optional, but call it. Quoting reserves nothing and can be re-run freely. Show the buyer the tax-inclusive total before they pay, or they underpay and you handle a shortfall.
+
+### What declaration does the buyer affirm?
+
+One, covering resident status, the LRS limit, and source of funds. Exact wording in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declaration).
+
+### Why verify the PAN before quoting?
+
+An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and tells you why.
+
+Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declarations.
+
+### Which documents are required?
+
+It depends on the purpose code. See the document table in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents).
+
+No scanned PAN card is needed — PAN is a field, validated electronically.
+
+### When do I upload documents?
+
+Up front, before you submit, and not tied to a payment. Each [upload](/api-reference/v3/lrs/upload-document) returns a `ref` you pass in the submit call.
+
+### What happens if a document is rejected?
+
+We tell you exactly what is wrong. Re-submit only that item and it goes back to review. Legible, in-date documents of the right type are the main way to avoid holds.

@@ -1,119 +1,118 @@
 ---
 title: "LRS & Compliance"
-description: "How the Liberalised Remittance Scheme works, the compliance rules EximPe enforces, the declarations the buyer affirms, TCS mechanics, and the education purpose codes and documents supported."
+description: "The rules for education payments from individuals in India: who can pay, how much, what tax applies, and which documents you need."
 ---
 
-# Introduction
+<Info>
+  **LRS** is the Liberalised Remittance Scheme — the RBI rules for money sent abroad by an **individual** in India, for things like education fees or travel. It does not apply to a business paying a business.
 
-Most personal outward remittances from India fall under the **Liberalised Remittance Scheme (LRS)**, an RBI/FEMA framework. EximPe is an RBI-authorised **Payment Aggregator – Cross Border (PA-CB)**; a bank partner (an **Authorised Dealer**, or "AD bank") performs the actual outward remittance. Our APIs encode the LRS rules so you supply the remitter, the amount, and the documents — we enforce eligibility, tax, and the annual cap.
+  This page covers **education** payments, on purpose codes `S0305` and `S1107`. Collection, the payment lifecycle, webhooks, and settlement are the same whatever you collect for — see [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
+</Info>
 
-## How we work together
+When an individual in India sends money abroad, LRS decides whether they are allowed to, how much, what tax applies, and what paperwork is needed. EximPe is licensed by the RBI as a **Payment Aggregator – Cross Border**, and a partner bank makes the actual transfer.
 
-You own the customer relationship and everything the customer sees; EximPe is the embedded India collection and settlement engine underneath.
+You give us the buyer, the amount, and the documents. We enforce the rest.
 
-| You (the partner) | EximPe |
+## Who does what
+
+| You | EximPe |
 | :--- | :--- |
-| Own the entire customer-facing experience — EximPe shows the customer no screen. | Issues a virtual account, verifies eligibility, computes TCS, files settlement with the AD bank. |
-| Onboard and identify the remitter; collect their details and documents. | Verifies PAN validity, residency affirmation, documents, and declarations. |
-| Provide the INR amount to collect (you handle FX). | Adds only the tax — no FX risk from the EximPe leg. |
+| Own the customer and the experience around the payment | Issue the virtual account and file the settlement with the bank |
+| Identify the buyer, collect their details and documents | Check the PAN, the documents, and the declaration |
+| Decide the INR amount, and any price you quote in your own currency | Add the tax, convert, and settle at the rate on the settlement date |
 
 <Note>
-  You onboard the **universities** you serve as sub-merchants — each configured with its own settlement details. Collections, settlements, and balances are tracked **per university**. A partner can onboard one or many.
+  Onboard each institution you collect for as its own sub-merchant, with its own settlement details. Collections are tracked per sub-merchant. You can onboard one or many.
 </Note>
 
-## LRS essentials
+## The rules in four lines
 
-- **Who can use it** — resident individuals only (including minors, through a guardian). Not available to companies, partnership firms, HUFs, trusts, or non-resident individuals.
-- **How much** — up to **USD 250,000 per person per financial year** (1 April – 31 March). A hard annual ceiling across all of the individual's LRS remittances at every bank, not just those through EximPe.
-- **Whose money** — the funds must come from the **remitter's own account**. LRS is reported against the **PAN** of the person whose account is debited.
-- **Purpose codes** — every remittance carries a FEMA/FETERS purpose code that declares what it is for and drives which documents and tax rules apply.
+- **Who can pay** — resident individuals only, including minors through a guardian. Not companies, partnerships, HUFs, trusts, or non-residents.
+- **How much** — USD 250,000 per person per financial year, 1 April to 31 March. That ceiling covers everything they send through every bank, not just through us.
+- **Whose money** — it must come from the buyer's own account. LRS is reported against the PAN of the account that was debited.
+- **What for** — every payment carries a FEMA purpose code, and the code decides the documents and the tax.
 
-## Compliance requirements
+## What we check
 
 <Steps>
-  <Step title="Resident individual only">
-    The remitter must be a resident individual. Verifying the PAN rejects company / HUF / firm PANs automatically. Residency cannot be established from a PAN alone (non-residents hold individual PANs too), so the buyer additionally **affirms residency** in the declarations.
+  <Step title="They are a resident individual">
+    Verifying the PAN rejects company, HUF, and firm PANs automatically. Residency cannot be proved by PAN alone — non-residents hold individual PANs too — so the buyer also affirms it in the declaration.
   </Step>
-  <Step title="Own-account / name-match">
-    Because LRS runs on the PAN of the debited account, the **sender of the money must match the verified remitter**. A credit from a third party's account cannot be settled on someone else's PAN. Where a parent or sponsor pays for a student, **the parent is the remitter** — their PAN is used, their account sends the money — and the relationship to the student is declared.
+  <Step title="The money came from their own account">
+    LRS runs on the PAN of the debited account, so the sender must match the buyer you named. A payment always settles against whoever actually paid; it can never be booked to a different person's PAN.
+
+    Where a parent or sponsor pays for a student, **the parent is the buyer** — their PAN, their account — and the relationship to the student is declared.
+
+    If the money arrives from an account that does not match, the payment is held. You then either refund it, or send us the PAN of whoever actually paid so it settles against them and their limit.
   </Step>
-  <Step title="Declarations">
-    The buyer affirms the declarations below; you pass the result to us.
+  <Step title="They affirmed the declaration">
+    The buyer affirms it; you pass the result to us.
   </Step>
 </Steps>
 
-### The declarations
+## The declaration
 
-The four regulatory requirements — resident-individual status, the LRS limit, source of funds, and TCS — can be presented to the buyer as **two declarations**. Both must be affirmed for the payment to proceed.
-
-**Declaration 1 — Eligibility, LRS limit & source of funds**
+Three requirements — resident status, the LRS limit, and source of funds — are put to the buyer as **one declaration**. They must affirm it for the payment to proceed.
 
 > "I am a resident individual under FEMA, and this remittance is under the Liberalised Remittance Scheme. My total LRS this financial year, including this remittance, is within the permitted limit of USD 250,000, and it is for a permitted purpose (not one prohibited under FEMA/RBI). The funds are from my own legitimate sources and comply with FEMA, RBI, AML and income-tax laws. The information in this declaration is true and complete and I accept sole responsibility for its accuracy."
 
-**Declaration 2 — TCS / ₹10 lakh threshold**
+It maps onto the `declarations` object on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification):
 
-> "I have ☐ already exceeded / ☐ not exceeded ₹10,00,000 in LRS remittances this financial year across all banks and channels. I understand that TCS may be collected as applicable under the Income-tax Act, and that the PAN I have furnished is correct."
-
-These map onto the `declarations` object and the `tcs_threshold_breached` flag on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification):
-
-| Declaration | API field |
+| What the buyer affirms | API field |
 | :--- | :--- |
 | Resident individual | `declarations.resident_in_india` |
 | Under the LRS limit | `declarations.lrs` |
 | Source of funds | `declarations.source_of_funds` |
-| TCS understanding | `declarations.tcs` |
-| ₹10 lakh already exceeded? | `tcs_threshold_breached` (`true` = already exceeded) |
 
 ## Tax at source (TCS)
 
-For education funded from the remitter's own funds, **TCS is 2% on the amount above ₹10,00,000** of LRS in a financial year — the first ₹10 lakh each year is TCS-free. Declaration 2's ₹10 lakh answer drives the calculation:
+**2% on whatever the buyer sends abroad above ₹10,00,000 in a financial year.** The first ₹10 lakh each year is tax-free.
 
-- **Already exceeded ₹10 lakh** (`tcs_threshold_breached: true`) → TCS applies to the **full** amount of this payment.
-- **Not exceeded** → EximPe computes against its record of the remitter's LRS through us. If this payment itself crosses ₹10 lakh, TCS applies only to the portion **above** the threshold.
+The `tcs_threshold_breached` flag drives the sum:
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS; you collect it with the principal. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
+- **`true`** — they have already crossed ₹10 lakh, so the whole of this payment is taxed.
+- **`false`** — we compute against our own record of what they have sent through us. If this payment crosses the threshold, only the part above it is taxed.
+
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure. Collect it along with the principal. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
 
 <Note>
-  EximPe tracks LRS usage and **refuses any remittance that would breach the USD 250,000 annual cap** on the data available to us; the AD bank is the wider backstop at settlement.
+  We track LRS usage and **refuse anything that would breach the USD 250,000 annual cap**, on the data we can see. The bank is the wider backstop at settlement.
 </Note>
 
 ## Purpose codes and documents
 
-EximPe supports these education LRS purpose codes. Documents are decided **by purpose code**. Both are handled as own-funds education (loan-funded remittances are not in scope at present).
+Two codes, both for education paid from the buyer's own funds. Loan-funded remittances are not supported yet.
 
-| Purpose code | Use |
+| Purpose code | What it is for |
 | :--- | :--- |
-| `S0305` | Education abroad — studies / tuition (the student typically travels) |
-| `S1107` | Education-related fee remittance (no travel leg) |
+| `S0305` | Studying abroad — tuition, where the student usually travels |
+| `S1107` | Education fees with no travel involved |
+
+Documents are decided by the purpose code:
 
 | Document (`type`) | S0305 | S1107 |
 | :--- | :--- | :--- |
-| `offer_letter` — offer / admission letter (LOO / LOA) | Mandatory | Mandatory |
-| `fee_invoice` — university fee invoice / demand letter | Optional¹ | Optional¹ |
-| `passport` — of the student | Mandatory | — |
-| `student_id_or_visa` — student ID or visa | Mandatory (ID or visa) | `student_id` only (no visa²) |
-| `relationship_declaration` — parent/sponsor pays | If remitter is not the student | If remitter is not the student |
+| `offer_letter` — offer or admission letter | Required | Required |
+| `fee_invoice` — fee invoice or demand letter | Sometimes¹ | Sometimes¹ |
+| `passport` — the student's | Required | — |
+| `student_id_or_visa` | Required, either one | Student ID only² |
+| `relationship_declaration` | Required if the buyer is not the student | Required if the buyer is not the student |
 
-¹ If the offer/admission letter already carries the fee and bank details, a separate invoice is not required. ² S1107 is a fee remittance with no travel leg, so there is no student visa — the student ID is the enrolment proof.
+¹ Not needed if the offer letter already carries the fee and bank details.
+² No travel, so no student visa — the student ID proves enrolment.
 
 <Info>
-  PAN is captured as a **field** and validated electronically — a scanned PAN card is not required.
+  No scanned PAN card. PAN is a field, validated electronically.
 </Info>
 
-## Best practices
+## What partners get wrong
 
-<Warning>
-  The things partners most often get wrong:
-</Warning>
-
-- **Money must come from the remitter's own account.** Enforce it in your UX; where a parent pays, onboard the parent as the remitter (their PAN, their account).
-- **The student is not the remitter.** Capture the student (name, DOB, passport) separately and set `relation` — `SELF` only when they are the same person.
-- **Verify the PAN before you quote.** An inactive, non-individual, or name/DOB-mismatched PAN is a guaranteed bank rejection — catch it upfront.
-- **Show the TCS in the quote, not just FX** — so the remitter pays the full amount and you avoid a later shortfall.
-- **Document quality avoids holds.** Legible, in-date, correct type; the offer/admission letter is the anchor.
-
----
+- **The money comes from someone else's account.** Enforce own-account payment in your UX. Where a parent pays, onboard the parent as the buyer.
+- **Treating the student as the buyer.** Capture the student separately, and set `relation` to `SELF` only when they really are the same person.
+- **Quoting before verifying the PAN.** An inactive, non-individual, or name-mismatched PAN is a guaranteed rejection later. Catch it first.
+- **Showing the buyer a price without the tax.** They underpay, and you handle a shortfall.
+- **Poor document scans.** Legible, in date, right type. The offer letter is the one that matters most.
 
 <Note>
-  This is a product and compliance overview, not legal or tax advice. Ready to build? See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) for the step-by-step API flow.
+  This is a product and compliance overview, not legal or tax advice. Ready to build? See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
 </Note>
