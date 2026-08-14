@@ -56,8 +56,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 
 ## Payload Schema
 
-The event carries the payment, two flat lists of requirement codes, and where to
-send them. Nothing else — see [Why there is no requirement detail](#why-there-is-no-requirement-detail).
+The payment, what it still owes and why, and where to send it.
 
 <CodeGroup>
 
@@ -71,8 +70,52 @@ send them. Nothing else — see [Why there is no requirement detail](#why-there-
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["student_name", "remitter_pan", "payment_term"],
-    "action_required_documents": ["student_passport", "student_visa", "university_id_card", "loa"],
+    "action_required_fields": [
+      {
+        "field": "student_name",
+        "label": "Student name",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "field": "remitter_pan",
+        "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "student_passport",
+        "label": "Student passport",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "student_visa",
+        "label": "Student visa",
+        "reason": "ONE_OF_REQUIRED",
+        "message": "Required unless university_id_card is provided instead.",
+        "waivable": false
+      },
+      {
+        "document": "university_id_card",
+        "label": "University ID card",
+        "reason": "ONE_OF_REQUIRED",
+        "message": "Required unless student_visa is provided instead.",
+        "waivable": false
+      },
+      {
+        "document": "relationship_declaration",
+        "label": "Relationship self-declaration",
+        "reason": "CONDITIONALLY_REQUIRED",
+        "message": "Required because the remitter is not the person the remittance is for.",
+        "waivable": false
+      }
+    ],
     "submit": {
       "method": "POST",
       "path": "/pg/lrs/payments/PR6938527534/verification/"
@@ -91,8 +134,38 @@ send them. Nothing else — see [Why there is no requirement detail](#why-there-
     "payment_id": "PR7042318866",
     "order_id": "OD8451220934",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["remitter_pan", "remitter_relation"],
-    "action_required_documents": ["passenger_list", "traveller_passports", "traveller_visas", "invoice", "ticket"],
+    "action_required_fields": [
+      {
+        "field": "remitter_pan",
+        "label": "Remitter PAN",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      }
+    ],
+    "action_required_documents": [
+      {
+        "document": "passenger_list",
+        "label": "Passenger list (name and passport number of every traveller)",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code.",
+        "waivable": false
+      },
+      {
+        "document": "traveller_visas",
+        "label": "Traveller visas",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      },
+      {
+        "document": "ticket",
+        "label": "Ticket",
+        "reason": "REQUIRED",
+        "message": "Required for this purpose code. May be waived with a recorded reason.",
+        "waivable": true
+      }
+    ],
     "submit": {
       "method": "POST",
       "path": "/pg/lrs/payments/PR7042318866/verification/"
@@ -148,17 +221,11 @@ send them. Nothing else — see [Why there is no requirement detail](#why-there-
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array" required>
-      Codes of the **fields** still owed. Each is a key you put in `fields` when you
-      [submit](/api-reference/v3/lrs/submit-verification-details).
-
-      **Example**: `["student_name", "remitter_pan", "payment_term"]`
+      The **fields** still owed. See **Action-required entries** below.
     </ParamField>
 
     <ParamField path="data.action_required_documents" type="array" required>
-      Codes of the **documents** still owed. Each is a document `code` when you submit —
-      either as a multipart part named `document.<code>`, or as an entry in `documents`.
-
-      **Example**: `["student_passport", "loa"]`
+      The **documents** still owed. Same shape, keyed on `document` instead of `field`.
     </ParamField>
 
     <ParamField path="data.submit" type="object" required>
@@ -166,29 +233,101 @@ send them. Nothing else — see [Why there is no requirement detail](#why-there-
       have to look the endpoint up, and it keeps working if the endpoint moves.
     </ParamField>
   </Tab>
+
+  <Tab title="Action-required entries">
+    <ParamField path="field" type="string" required>
+      In `action_required_fields`: the code, and the key you put in `fields` when you
+      [submit](/api-reference/v3/lrs/submit-verification-details).
+    </ParamField>
+
+    <ParamField path="document" type="string" required>
+      In `action_required_documents`: the code, and the document `code` when you submit —
+      either as a multipart part named `document.<code>`, or as an entry in `documents`.
+    </ParamField>
+
+    <ParamField path="label" type="string" required>
+      Human-readable description, safe to render to a payer
+
+      **Example**: `"Student passport"`
+    </ParamField>
+
+    <ParamField path="reason" type="string" required>
+      Why this item is being asked for. Branch on this, not on `message`.
+
+      | Value | Meaning |
+      |---|---|
+      | `REQUIRED` | Owed outright for this purpose code |
+      | `CONDITIONALLY_REQUIRED` | Owed because a condition now holds — `message` names it |
+      | `ONE_OF_REQUIRED` | Owed **unless** a named alternative is supplied instead |
+    </ParamField>
+
+    <ParamField path="message" type="string" required>
+      The reason in a sentence, safe to render to a payer. On `ONE_OF_REQUIRED` it names
+      the alternative; on `CONDITIONALLY_REQUIRED` it names the condition.
+    </ParamField>
+
+    <ParamField path="waivable" type="boolean" required>
+      When `true` you may record a `waiver_reason` instead of supplying the document —
+      a visa the destination does not require, a ticket not yet issued.
+
+      The item is still owed until you do; `waivable` describes how it may be
+      discharged, not whether it is required. The `message` says so too.
+    </ParamField>
+  </Tab>
 </Tabs>
 
 ---
 
-## Why there is no requirement detail
+## Reading the reasons
 
-The event names codes. What each code *means* — its label, whether it is required
-or conditional, whether it can be waived, which other code it can be substituted
-for — comes from `GET` on the same path `submit` names.
+The `reason` is the part worth branching on, because the three cases want
+different handling.
 
-That is deliberate, and it is about staleness. A requirement set gets revised: a
-document turns waivable, a purpose code gains a field. An event is a snapshot,
-and a snapshot can sit in your dead-letter queue for a day before anyone reads
-it. If the event carried the requirement detail, that copy could be wrong by the
-time you acted on it — and nothing in the payload would tell you.
+<AccordionGroup>
+  <Accordion title="ONE_OF_REQUIRED — do not chase both">
+    `student_visa` and `university_id_card` both appear, and each one's `message`
+    names the other. Supplying **either** clears both.
 
-So there is one source for it, and it is always current.
+    Asking a payer for both is the most common way to make this flow feel worse
+    than it is — which is why the alternative is spelled out in the entry rather
+    than left for you to infer.
+  </Accordion>
+  <Accordion title="CONDITIONALLY_REQUIRED — it was not there last time">
+    An item like the relationship self-declaration only appears once the
+    condition holds. Declaring `remitter_relation` as anything other than `SELF`
+    brings it in, so it can show up in an event after you thought you had the
+    full list.
+
+    The `message` names the condition, so its arrival is explicable rather than
+    arbitrary.
+  </Accordion>
+  <Accordion title="REQUIRED — owed outright">
+    Nothing conditional about it. If `waivable` is `true` you may still discharge
+    it with a recorded reason instead of a file.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## What the event does not carry
+
+The entries describe what is **outstanding**. They do not describe the
+requirement set as a whole — the items already satisfied, and the raw
+requirement levels, conditions and groupings behind them. Those come from `GET`
+on the same path `submit` names.
+
+That split is about staleness. A requirement set gets revised: a document turns
+waivable, a purpose code gains a field. An event is a snapshot, and a snapshot
+can sit in your dead-letter queue for a day before anyone reads it. So the event
+carries the *consequence* — "required unless `university_id_card` is provided
+instead" — which is what you act on and which is still true whenever you read it,
+rather than a structure you would have to interpret against rules that may have
+moved.
 
 <Note>
-  The practical consequence: **read the requirements before collecting**. A
-  merchant working only from the event's codes will not know that
-  `student_visa` and `university_id_card` are alternatives, and will chase a
-  payer for both when either would do.
+  Use [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)
+  when you need the full picture: what is already satisfied, and what the purpose
+  code asks for in total. Use the event when you just need to know what to chase.
 </Note>
 
 ---
@@ -196,11 +335,8 @@ So there is one source for it, and it is always current.
 ## Responding to the event
 
 <Steps>
-  <Step title="Read the requirements">
-    `GET` the path in `data.submit.path`. It returns what each code means — the label to show a payer, whether it is waivable, and which codes substitute for each other.
-  </Step>
-  <Step title="Collect what is named">
-    Chase only what `action_required_fields` and `action_required_documents` list.
+  <Step title="Collect what the entries name">
+    Show the payer each `label`, and each `message` for why it is needed. Where two entries are `ONE_OF_REQUIRED` and name each other, ask for one.
   </Step>
   <Step title="POST it back to the same path">
     [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and files in one call. Partial sends are merged, so you can send as things arrive.

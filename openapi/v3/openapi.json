@@ -3171,7 +3171,7 @@
     "/pg/lrs/payments/{payment_id}/verification/": {
       "get": {
         "summary": "Get verification requirements",
-        "description": "Returns everything a payment's purpose code calls for — every field and document, which are already satisfied, and which are still missing.\n\nThis is the **only** source for what a requirement code means. The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook names the codes a payment owes; this says what each one is — its label, whether it can be waived, and which codes substitute for each other. Call it when an event arrives, and to resume or reconcile if one was missed.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Returns everything a payment's purpose code calls for — every field and document, which are already satisfied, and which are still missing.\n\nThe [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is *missing*, with a label and a reason for each item. This returns the *whole* requirement set, including what is already satisfied — call it when you need the full picture, or to resume or reconcile if an event was missed.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -3340,7 +3340,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields` are the keys you put in `fields`, and its `action_required_documents` are what you name the files.\n\n**Two ways to send it, one endpoint.**\n\n* `application/json` — `fields` as an object, `documents` as a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).\n* `multipart/form-data` — the same `fields` and `documents` as JSON strings, plus the files themselves as parts named `document.<code>` (for example `document.student_passport`). No pre-upload round trip: five documents in one request instead of six.\n\n**Partial sends are merged, never replaced.** Send what you have; the response tells you what is left. Nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the same verification gateway as [Submit LRS Verification](/api-reference/v3/lrs/submit-verification) — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting are unchanged. Pass `finalize: false` to stage without triggering it.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields[].field` are the keys you put in `fields`, and its `action_required_documents[].document` are what you name the files.\n\n**Two ways to send it, one endpoint.**\n\n* `application/json` — `fields` as an object, `documents` as a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).\n* `multipart/form-data` — the same `fields` and `documents` as JSON strings, plus the files themselves as parts named `document.<code>` (for example `document.student_passport`). No pre-upload round trip: five documents in one request instead of six.\n\n**Partial sends are merged, never replaced.** Send what you have; the response tells you what is left. Nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the same verification gateway as [Submit LRS Verification](/api-reference/v3/lrs/submit-verification) — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting are unchanged. Pass `finalize: false` to stage without triggering it.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -7040,7 +7040,7 @@
       },
       "v3_VerificationState": {
         "type": "object",
-        "description": "What a payment needs and what it already has. This is the only source for what a requirement code means — the LRS_VERIFICATION_NEEDED webhook names codes and nothing more.",
+        "description": "What a payment needs and what it already has — the whole requirement set, unlike the LRS_VERIFICATION_NEEDED webhook, which lists only what is outstanding.",
         "properties": {
           "payment_id": {
             "type": "string",

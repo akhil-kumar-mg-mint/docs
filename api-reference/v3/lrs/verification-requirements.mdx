@@ -8,7 +8,7 @@ openapi: 'GET /pg/lrs/payments/{payment_id}/verification/'
 
 Returns the verification requirements for one payment: every field and document its purpose code calls for, which are already satisfied, and which are still outstanding.
 
-This is the **only** source for what a requirement code means. The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook names the codes a payment owes; this says what each one is — the label to show a payer, whether it can be waived, and which codes substitute for each other.
+The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook tells you what a payment is **missing**, with a label and a reason for each item. This tells you the **whole** requirement set — including what is already satisfied — and is what to call when you need the full picture rather than just the next thing to chase.
 
 Call it when the event arrives, and render your collection form from the response.
 
@@ -19,8 +19,8 @@ Call it when the event arrives, and render your collection form from the respons
 ## When to use it
 
 <Steps>
-  <Step title="An event arrived">
-    `LRS_VERIFICATION_NEEDED` gives you codes and nothing more. This turns them into something you can put in front of a payer.
+  <Step title="You need the whole set">
+    The event lists what is outstanding. Call this when you also need what is already satisfied — reconciling your own record against ours, or rendering a progress view.
   </Step>
   <Step title="You missed an event">
     Webhooks get lost, retried, or arrive mid-deploy. This endpoint is authoritative and idempotent — call it any time.
