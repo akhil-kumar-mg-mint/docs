@@ -22,7 +22,11 @@ This webhook is triggered when the payment verification status is updated for co
 The webhook is sent in the following scenarios:
 
 1. **Action Required** (`ACTION_REQUIRED`): Additional or corrected information is needed
-2. **Payment Verified** (`VERIFIED`): Payment has been successfully verified
+2. **In Review** (`IN_REVIEW`): The payment moved into review; nothing is needed from you
+
+<Note>
+  **A verified payment gets no webhook.** `VERIFIED` means nothing is outstanding, so there is nothing to tell you to act on — the event is not sent at all. Do not wait on it to confirm verification.
+</Note>
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
@@ -111,22 +115,6 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 }
 ```
 
-```json Example: Verified
-{
-  "event_type": "VERIFICATION_NEEDED",
-  "event_time": "2025-02-13T10:30:00.123456Z",
-  "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
-  "data": {
-    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
-    "verification_status": "VERIFIED",
-    "message": "Payment verified",
-    "action_required_fields": []
-  }
-}
-```
-
 ```json Example: In Review
 {
   "event_type": "VERIFICATION_NEEDED",
@@ -190,7 +178,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
-      Current verification status. One of: `IN_REVIEW`, `ACTION_REQUIRED`, `VERIFIED`
+      Current verification status. One of: `ACTION_REQUIRED`, `IN_REVIEW`. A verified payment sends no event, so `VERIFIED` never appears here.
       
       **Example**: `"ACTION_REQUIRED"`
     </ParamField>
@@ -219,11 +207,11 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
 3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
 4. **Handle based on verification status**:
-   - **`VERIFIED`**: Update your system to reflect successful verification. Payment can proceed to settlement.
    - **`ACTION_REQUIRED`**: 
      - Check `data.action_required_fields` to see what needs updating
      - Notify merchant/admin about required actions
      - Update the specified fields using the [Upload Verification Details API](/api-reference/v3/payment/upload-verification-details)
+   - **`IN_REVIEW`**: Nothing to do. Record that the payment is under review; `action_required_fields` is empty unless a classifying fact is still unresolved.
   
 ### Action Required Fields Reference
 
