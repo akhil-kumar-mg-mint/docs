@@ -434,7 +434,7 @@ Each entry in the four arrays is a requirement item:
 | `not_applicable` | No requirements are defined for this payment's business model and purpose code — it follows the standard verification flow instead. |
 
 <Note>
-  A payment reads `not_applicable` most often because no purpose code has been declared on it yet. The ordinary [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) events carry a `classification` block naming exactly which fact is missing. Supply it and call this again.
+  A payment reads `not_applicable` most often because no purpose code has been declared on it yet. The ordinary [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) events name exactly which fact is missing — `purpose_code` or `business_model` — in their own missing-field list. Supply it and call this again.
 </Note>
 
 ## What each purpose code asks for
