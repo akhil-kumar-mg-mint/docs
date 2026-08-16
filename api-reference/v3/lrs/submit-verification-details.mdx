@@ -394,9 +394,74 @@ When a complete set is submitted it runs through the verification gateway — PA
   "status": "under_review",
   "tcs_check": "match",
   "missing": [],
-  "reason": null
+  "reason": null,
+  "outstanding": "0.00"
 }
 ```
+
+<Warning>
+  **`handed_off: true` does not mean the payment passed.** It means the gateway
+  took the set and reached a verdict. Read `status`, which is `under_review` or
+  `action_required`. A complete set that fails PAN verification, the sender match
+  or the money check is `handed_off: true` with `status: "action_required"` — the
+  payment stays where it was, and `missing` says what to fix.
+</Warning>
+
+### `status: "action_required"` — accepted, not passed
+
+Everything the requirement list named can be supplied and the payment still not
+proceed, because supplying a PAN is not the same as it verifying. When that
+happens you get:
+
+```json
+"verification": {
+  "handed_off": true,
+  "status": "action_required",
+  "tcs_check": "match",
+  "missing": ["outstanding"],
+  "reason": null,
+  "outstanding": "12500.00"
+}
+```
+
+| Key | What it carries |
+|---|---|
+| `status` | `under_review` (accepted and proceeding) or `action_required` (the payment stays parked). |
+| `missing` | What did not pass, as tokens — see the table below. Empty on `under_review`. |
+| `reason` | One headline conclusion where one exists, `null` otherwise. `null` is normal, not an error. |
+| `outstanding` | The money still owed, in rupees, as a decimal string. `"0.00"` when nothing is — the key is always there whenever `handed_off` is `true`, so there is no absence to handle. |
+| `tcs_check` | `match`, `mismatch`, or `n/a` where the check was never reached (an early reject on the PAN or the purpose code). |
+
+The same payment also gets an
+[`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass)
+webhook carrying the same conclusion in the requirement codes, with a sentence
+per item you can show a payer. This response is the synchronous half of it — you
+do not have to wait for the event to know what happened.
+
+**`missing` tokens**
+
+| Token | What to do |
+|---|---|
+| `outstanding` | The credit does not cover the payment. `outstanding` says by how much — either the buyer tops it up (link it with `linked_payment_id` when you re-submit) or you declare a smaller `amount_to_be_settled`. |
+| `remitter.pan` | The PAN did not verify against the name and date of birth. Re-send all three. |
+| `declarations` | `buyer_declaration` was not affirmed. |
+| `primary_person` | The remitter is not the person the remittance is for, so name them — `student_name`, `student_dob`, `student_passport_number`. |
+| `tcs` | The TCS figure does not reconcile with ours. You do not declare TCS; raise this with us rather than re-sending. |
+| `purpose_code` | The code is not one this account may use, or not one we recognise. Fixed on the order, not here. |
+| `documents.<type>` | That document did not reach the gateway. Re-send the file. |
+
+**`reason` values**
+
+`PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED`,
+`PURPOSE_CODE_NOT_IN_REGISTRY` — or `null`, which is what a shortfall and every
+other multi-check refusal returns.
+
+<Note>
+  **Nothing you sent is lost.** Re-send only the thing that failed; it merges
+  with what is already held, and the payment stays submittable throughout.
+</Note>
+
+### `handed_off: false` — the set never reached a verdict
 
 When `handed_off` is `false`, `reason` says why:
 

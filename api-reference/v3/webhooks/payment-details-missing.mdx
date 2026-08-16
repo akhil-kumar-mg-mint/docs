@@ -5,6 +5,53 @@ description: "Technical reference for the webhook sent when a payment is recorde
 
 ---
 
+<Warning>
+  **This event is being retired. Move to [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed).**
+
+  Which of the two events you received for a payment that could not be filed
+  depended on which gateway the money arrived through, not on what was actually
+  wrong — a distinction no integration should have had to model. In an upcoming
+  release `VERIFICATION_NEEDED` becomes the single signal for all of it, raised
+  from one evaluation for every gateway, and **nothing will raise
+  `PAYMENT_DETAILS_MISSING` any more**.
+
+  If you handle this event today, handle `VERIFICATION_NEEDED` before that
+  release. See [What replaces it](#what-replaces-it) for the mapping.
+
+  The event type itself is not removed — historical deliveries and your stored
+  records keep reading correctly. You simply stop receiving new ones.
+</Warning>
+
+## What replaces it
+
+`VERIFICATION_NEEDED` carries the same information in a payload that also says
+*why* it fired, so you no longer have to infer the cause from which field names
+turned up:
+
+| This event | `VERIFICATION_NEEDED` |
+|---|---|
+| `data.order_uid` | `data.order_id` |
+| `data.payment_id` | `data.payment_id` (unchanged) |
+| `data.details_missing` | `data.action_required_fields` — the same field names |
+| — | `data.reasons`, an array of stable reason codes naming what is wrong |
+| — | `data.settlement_status`, so you can see the payment is parked |
+| — | `data.payment_verification_expiry`, the deadline where one applies |
+
+The reason codes distinguish cases this event conflated. A purpose code that was
+never declared and a purpose code that has dropped off your account's allow-list
+both showed up here as the bare string `purpose_code`; they arrive as
+`purpose_code_unresolved` and `purpose_code_not_allowed`, and they need different
+things done about them.
+
+<Note>
+  **LRS payments are unaffected either way.** They receive
+  [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+  today and will continue to — it names documents as well as fields, which neither
+  of the generic events does.
+</Note>
+
+---
+
 ## Event Overview
 
 **Event Type**: `PAYMENT_DETAILS_MISSING`  
@@ -50,6 +97,13 @@ telling you about.
 They are ordinary entries in that list, not a section of their own: they are
 details that are missing, so they belong in the one list you already read. What
 we *did* resolve is not reported — you declared it.
+
+<Note>
+  Both become reason codes on `VERIFICATION_NEEDED` when this event is retired —
+  see [What replaces it](#what-replaces-it). `purpose_code` splits in two there,
+  because "never declared" and "no longer allowed on this account" are not the
+  same problem.
+</Note>
 
 <Tip>
   **Supplying these switches the payment over.** Without a purpose code there is no

@@ -17,12 +17,30 @@ This webhook is triggered when the payment verification status is updated for co
   **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which carries the full requirement set — documents included — rather than a flat list of field names. It never receives both.
 </Note>
 
+<Warning>
+  **This event is becoming the single verification signal, and its payload gains
+  keys.** [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing)
+  is retired in an upcoming release and everything it reported arrives here
+  instead. Two consequences for anyone integrating now:
+
+  - You will start receiving this event for payments that used to send
+    `PAYMENT_DETAILS_MISSING` — including on gateways that sent neither before.
+  - `data` gains `reasons`, `settlement_status` and `payment_verification_expiry`.
+    Existing keys keep their meaning; `verification_status` remains on the
+    Cashfree flow that already carries it.
+
+  See [The consolidated payload](#the-consolidated-payload). Nothing you read
+  today stops being sent, so an integration that ignores unknown keys needs no
+  change to keep working.
+</Warning>
+
 ### When the webhook is sent
 
 The webhook is sent in the following scenarios:
 
 1. **Action Required** (`ACTION_REQUIRED`): Additional or corrected information is needed
 2. **In Review** (`IN_REVIEW`): The payment moved into review; nothing is needed from you
+3. **Expired** (`EXPIRED`): The verification window closed before the details were accepted — see [When verification expires](#when-verification-expires)
 
 <Note>
   **A verified payment gets no webhook.** `VERIFIED` means nothing is outstanding, so there is nothing to tell you to act on — the event is not sent at all. Do not wait on it to confirm verification.
@@ -30,6 +48,7 @@ The webhook is sent in the following scenarios:
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
+- Something actually changed — the verification status, the expiry, or the verified flag. A repeated report of an unchanged state sends nothing.
 
 ---
 
@@ -63,6 +82,64 @@ What we *did* resolve is not reported — you declared it.
   [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
   takes over with the full, purpose-code-specific list.
 </Tip>
+
+---
+
+## The consolidated payload
+
+In an upcoming release this event becomes the single "act on this payment"
+signal for every gateway, and
+[`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing)
+stops being raised. One evaluation runs for every payment, whichever rail the
+money arrived on, and a payment with several problems gets one event listing all
+of them.
+
+`data` gains three keys. Everything you read today keeps its name and meaning:
+
+```json
+{
+  "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+  "message": "Payment verification action required",
+  "reasons": ["missing_order_fields", "purpose_code_unresolved"],
+  "action_required_fields": ["buyer_name", "hs_code", "purpose_code"],
+  "settlement_status": "ACTION_REQUIRED",
+  "payment_verification_expiry": "2025-02-20T23:59:59+00:00"
+}
+```
+
+### `reasons`
+
+Stable codes saying *why* the event fired, so you no longer infer the cause from
+which field names appear. More than one can be present.
+
+| Reason | What is wrong |
+|---|---|
+| `missing_order_fields` | One or more order fields required for filing are empty. They are named in `action_required_fields`. |
+| `purpose_code_unresolved` | No FEMA purpose code has been declared for this order. |
+| `purpose_code_not_allowed` | A code is declared, but it is not one this merchant account is enabled for. Usually an account change that stranded live orders. |
+| `business_model_disagrees_with_kyc` | The order's buyer type contradicts what the merchant's KYC declares. |
+| `document_action_required` | The gateway flagged a document as needing action or expired. |
+| `settlement_action_required` | The payment is parked awaiting someone's action — `settlement_status` says which state. |
+
+<Note>
+  `purpose_code_unresolved` and `purpose_code_not_allowed` are the same bare
+  `purpose_code` entry today. They are split because the first is something you
+  declare and the second is something to take up with us — the same fix does not
+  work for both.
+</Note>
+
+### `settlement_status`
+
+The payment's settlement state — `ACTION_REQUIRED` or `ON_HOLD` where the event
+fired for that reason. It tells you the payment is parked, not merely that a
+field is blank.
+
+<Note>
+  **Migrating is additive.** New keys appear; none are removed or renamed. An
+  integration that ignores unknown keys keeps working untouched — but reading
+  `reasons` is what lets you stop guessing at the cause.
+</Note>
 
 ---
 
@@ -110,7 +187,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       "buyer_name",
       "hs_code",
       "purpose_code"
-    ]
+    ],
+    "payment_verification_expiry": "2025-02-20T23:59:59+00:00"
   }
 }
 ```
@@ -126,7 +204,25 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
-    "action_required_fields": []
+    "action_required_fields": [],
+    "payment_verification_expiry": null
+  }
+}
+```
+
+```json Example: Expired
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2025-02-13T10:30:00.123456Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440003",
+  "data": {
+    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "verification_status": "EXPIRED",
+    "message": "Payment verification action required",
+    "action_required_fields": [],
+    "payment_verification_expiry": "2025-02-12T23:59:59+00:00"
   }
 }
 ```
@@ -178,7 +274,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
-      Current verification status. One of: `ACTION_REQUIRED`, `IN_REVIEW`. A verified payment sends no event, so `VERIFIED` never appears here.
+      Current verification status. One of: `ACTION_REQUIRED`, `IN_REVIEW`, `EXPIRED`. A verified payment sends no event, so `VERIFIED` never appears here.
       
       **Example**: `"ACTION_REQUIRED"`
     </ParamField>
@@ -196,8 +292,39 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       
       **Example**: `["buyer_name", "hs_code", "purpose_code"]`
     </ParamField>
+
+    <ParamField path="data.payment_verification_expiry" type="string | null" required>
+      ISO 8601 datetime by which verification must be complete, or `null` where no
+      deadline has been set for this payment.
+
+      Past this point the payment can no longer be verified: `verification_status`
+      becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat it
+      as the deadline you are working to, not as a detail to log — it is the one
+      key here that tells you how long you have.
+
+      **Example**: `"2025-02-20T23:59:59+00:00"`
+    </ParamField>
   </Tab>
 </Tabs>
+
+## When verification expires
+
+Every payment awaiting verification may carry a deadline in
+`payment_verification_expiry`. If the details are not accepted by then, the
+window closes: you receive this event with `verification_status` of `EXPIRED`,
+the payment settles nowhere, and the amount is refunded to the buyer.
+
+<Warning>
+  **`EXPIRED` is terminal for that payment.** There is nothing to supply after it —
+  sending the missing details will not reopen the window. If the buyer still wants
+  to transact, that is a new order.
+</Warning>
+
+`action_required_fields` is usually empty on an `EXPIRED` event: the list is what
+you could still act on, and by then there is nothing. Act on the deadline while
+the status is `ACTION_REQUIRED`, and treat each event's
+`payment_verification_expiry` as authoritative — it can move, and an event is
+sent when it does even if nothing else changed.
 
 ---
 
@@ -212,6 +339,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
      - Notify merchant/admin about required actions
      - Update the specified fields using the [Upload Verification Details API](/api-reference/v3/payment/upload-verification-details)
    - **`IN_REVIEW`**: Nothing to do. Record that the payment is under review; `action_required_fields` is empty unless a classifying fact is still unresolved.
+   - **`EXPIRED`**: The verification window has closed and the amount is refunded to the buyer. Nothing you send reopens it — close the payment out on your side. See [When verification expires](#when-verification-expires).
+5. **Watch `payment_verification_expiry`** while the status is `ACTION_REQUIRED`. It is the deadline the payment is working to, and it can move between events.
   
 ### Action Required Fields Reference
 
