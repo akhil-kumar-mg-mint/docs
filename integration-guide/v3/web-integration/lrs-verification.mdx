@@ -35,14 +35,14 @@ A non-matching or rejected PAN returns `verified: false` with a `reason` (e.g. `
 
 ## Step 2: Quote the TCS
 
-Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. This quotes against the LRS usage EximPe can see and reserves nothing, so you can re-quote freely.
+Show the buyer a complete, tax-inclusive amount before they pay. The quote returns the TCS due and the all-in total to collect. For education from the buyer's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS this financial year — the first ₹10 lakh each year is TCS-free. The threshold is measured against the LRS usage EximPe can see, with no buyer self-declaration; the tax itself is charged on the remittance amount, with EximPe's fee and the GST on it billed on top rather than deducted from it. `total_payable_inr` is **remittance + EximPe's fee + GST + TCS** — collect exactly that. Quoting reserves nothing, so you can re-quote freely.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
-  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305", "tcs_threshold_breached": false }'
+  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305" }'
 ```
 
 The `purpose_code` must be one your settling entity is enabled for (its allowlist).
@@ -63,7 +63,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
   -F 'file=@offer_letter.pdf'
 ```
 
-Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa`. See the [document matrix](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for which documents each purpose code requires.
+Document `type` values depend on the purpose code: `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa` (S0305) and `student_id` (S1107). See the [document matrix](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for which documents each purpose code requires.
 
 <Card title="📚 API Reference" href="/api-reference/v3/lrs/upload-document">
   **Upload LRS Document API** — accepted types and validation.
@@ -71,7 +71,9 @@ Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_
 
 ## Step 4: Submit Verification Details
 
-Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it.
+Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, the `principal`, the collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it. The money-match expects the credit to cover the **principal, EximPe's fee, the GST on that fee and the TCS** — the same all-in total the quote returned.
+
+`principal` is this payment's remitted amount — what settles onward, what posts to the ₹10 lakh LRS counter, and what TCS is charged on. It is **not** `invoice.amount`: the invoice total is metadata for the settlement file and may be met across several payments, each with its own principal.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
@@ -85,8 +87,9 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
     "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
     "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
     "contact": { "email": "john@example.com", "mobile": "9876543210" },
-    "tcs": 4000,
-    "declarations": { "resident_in_india": true, "lrs": true, "tcs": true, "source_of_funds": true },
+    "principal": 1200000,
+    "tcs": 4000.00,
+    "declarations": { "resident_in_india": true, "lrs": true, "source_of_funds": true },
     "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
   }'
 ```
@@ -96,8 +99,9 @@ The response reports the resulting state:
 | `status` | Meaning |
 | :--- | :--- |
 | `under_review` | Checks passed; posted to the LRS counter and awaiting bank processing. |
-| `action_required` | Something is missing — see the `missing` array and `outstanding` amount, fix, and resubmit. |
-| `on_hold` | Needs manual attention (e.g. the sender is not the PAN holder). |
+| `action_required` | Something is missing — see the `missing` array and `outstanding` amount, fix, and resubmit. A non-null `reason` (e.g. `SENDER_NAME_MISMATCH`) says the credit's sender is not the declared PAN holder. |
+
+LRS has no On Hold state: every outcome that does not advance stays in `action_required` and is cleared by re-submitting.
 
 <Warning>
   When the remitter's `relation` is not `SELF` (e.g. a parent paying for a student), you must also include `primary_person` (name, dob, passport number) for the person the remittance is for.

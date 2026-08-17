@@ -89,24 +89,24 @@ Yes — but **the parent is then the remitter**. Their PAN is used and their acc
 
 ### Why must the money come from the remitter's own account?
 
-LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch puts the payment **On Hold**.
+LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch keeps the payment in **Action Required** with `reason: SENDER_NAME_MISMATCH`, and it clears only by re-declaring the actual account holder as the remitter.
 
 ### How is TCS calculated?
 
 For education funded from the remitter's own funds, TCS is **2% on the amount above ₹10,00,000** of the remitter's cumulative LRS in a financial year — the first ₹10 lakh each year is TCS-free.
 
-- If the remitter has **already exceeded** ₹10 lakh (`tcs_threshold_breached: true`), TCS applies to the **full** amount of this payment.
-- If **not exceeded**, EximPe computes against its record of the remitter's LRS through us. If this payment itself crosses the threshold, TCS applies only to the portion **above** it.
+- The threshold is measured against **EximPe's own LRS counter** on the remittance amount. There is no buyer self-declaration.
+- The tax is charged on the **remittance amount itself**. EximPe's fee and the GST on it are billed on top and do not reduce it. On the payment that crosses ₹10 lakh, the slice above the threshold is taxed in full.
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS; collect it alongside the principal. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact TCS and the all-in `total_payable_inr` — principal + EximPe's fee + GST + TCS. Collect exactly that. The AD bank deposits the tax against the remitter's PAN, and the remitter reclaims it as a tax credit (it reflects in their Form 26AS / TCS certificate).
 
 ### Do I have to call the quote API?
 
-It is optional but strongly recommended. Quoting reserves nothing and can be re-run freely, so show the buyer the tax-inclusive total before they transfer — otherwise they under-pay and you have to handle a shortfall.
+It is optional but strongly recommended. Quoting reserves nothing and can be re-run freely, so show the buyer the all-in total (principal + EximPe's fee + GST + TCS) before they transfer — otherwise they under-pay and you have to handle a shortfall.
 
 ### What declarations does the buyer affirm?
 
-Two, both of which must be affirmed for the payment to proceed: one covering **resident-individual status, the LRS limit, and source of funds**; and one covering **TCS and the ₹10 lakh threshold**. They map onto the `declarations` object and the `tcs_threshold_breached` flag on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification). See [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declarations) for the exact wording.
+Three, all of which must be affirmed for the payment to proceed: **resident-individual status, the LRS limit, and source of funds**. They map onto the `declarations` object on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification). The TCS acknowledgement (`declarations.tcs`) and the ₹10 lakh self-declaration (`tcs_threshold_breached`) are no longer collected — EximPe determines the threshold from its own counter. See [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declarations) for the exact wording.
 
 ### Which purpose codes are supported?
 
