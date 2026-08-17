@@ -5,6 +5,53 @@ description: "Technical reference for the webhook sent when a payment is recorde
 
 ---
 
+<Warning>
+  **This event is being retired. Move to [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed).**
+
+  Which of the two events you received for a payment that could not be filed
+  depended on which gateway the money arrived through, not on what was actually
+  wrong — a distinction no integration should have had to model. In an upcoming
+  release `VERIFICATION_NEEDED` becomes the single signal for all of it, raised
+  from one evaluation for every gateway, and **nothing will raise
+  `PAYMENT_DETAILS_MISSING` any more**.
+
+  If you handle this event today, handle `VERIFICATION_NEEDED` before that
+  release. See [What replaces it](#what-replaces-it) for the mapping.
+
+  The event type itself is not removed — historical deliveries and your stored
+  records keep reading correctly. You simply stop receiving new ones.
+</Warning>
+
+## What replaces it
+
+`VERIFICATION_NEEDED` carries the same information in a payload that also says
+*why* it fired, so you no longer have to infer the cause from which field names
+turned up:
+
+| This event | `VERIFICATION_NEEDED` |
+|---|---|
+| `data.order_uid` | `data.order_id` |
+| `data.payment_id` | `data.payment_id` (unchanged) |
+| `data.details_missing` | `data.action_required_fields` — the same field names |
+| — | `data.reasons`, an array of stable reason codes naming what is wrong |
+| — | `data.settlement_status`, so you can see the payment is parked |
+| — | `data.payment_verification_expiry`, the deadline where one applies |
+
+The reason codes distinguish cases this event conflated. A purpose code that was
+never declared and a purpose code that has dropped off your account's allow-list
+both showed up here as the bare string `purpose_code`; they arrive as
+`purpose_code_unresolved` and `purpose_code_not_allowed`, and they need different
+things done about them.
+
+<Note>
+  **LRS payments are unaffected either way.** They receive
+  [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+  today and will continue to — it names documents as well as fields, which neither
+  of the generic events does.
+</Note>
+
+---
+
 ## Event Overview
 
 **Event Type**: `PAYMENT_DETAILS_MISSING`  
@@ -13,12 +60,58 @@ description: "Technical reference for the webhook sent when a payment is recorde
 
 This webhook notifies you which fields that are missing for payment verification so you can supply them via the Partner API (order update or **upload-verification-details**) or dashboard. It is used for any payment with missing verification details, including VBA transfer and regular payment success flows.
 
+<Note>
+  **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which names the documents it needs as well as the fields. It never receives both.
+
+  A payment whose purpose code is not yet known still receives this event; the LRS one follows once the code is declared.
+</Note>
+
 ### When the webhook is sent
 
 The webhook is sent **only when all** of the following are true:
 
 1. **Merchant has webhook URL** – Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
 2. **At least one detail is missing** – The payment’s order is missing one or more verification fields (see [details_missing](#details_missing-field-names) below). If all six fields are present on the order, the webhook is not sent.
+
+---
+
+## Classification
+
+This event fires **instead of** [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), and one common reason is that the payment could not be classified. Two facts decide that — the buyer type and the FEMA purpose code — and either one we could not resolve appears in `details_missing` alongside the order fields:
+
+```json
+{
+  "details_missing": ["buyer_name", "purpose_code"]
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `purpose_code` | No FEMA purpose code has been declared for this order. |
+| `business_model` | Nothing has *declared* whether the buyer is `B2C` or `B2B`. |
+
+`business_model` is listed when nothing has declared it — not when it is empty.
+It is never empty; it defaults to `B2C`. A default nobody stood behind is worth
+telling you about.
+
+They are ordinary entries in that list, not a section of their own: they are
+details that are missing, so they belong in the one list you already read. What
+we *did* resolve is not reported — you declared it.
+
+<Note>
+  Both become reason codes on `VERIFICATION_NEEDED` when this event is retired —
+  see [What replaces it](#what-replaces-it). `purpose_code` splits in two there,
+  because "never declared" and "no longer allowed on this account" are not the
+  same problem.
+</Note>
+
+<Tip>
+  **Supplying these switches the payment over.** Without a purpose code there is no
+  requirement set, so we cannot say what the payment owes beyond the generic fields.
+  Declare it — through the verification submission — and
+  [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+  takes over with the full, purpose-code-specific list.
+</Tip>
 
 ---
 
@@ -67,7 +160,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       "buyer_address",
       "invoice_number",
       "buyer_postal_code",
-      "hs_code"
+      "hs_code",
+      "purpose_code"
     ]
   }
 }
@@ -126,9 +220,9 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.details_missing" type="array" required>
-      List of **field names** that are missing on the order. Use these when updating the order via the Partner API or dashboard. See the table below for descriptions.
+      List of **field names** that are missing on the order. Use these when updating the order via the Partner API or dashboard. It also carries `purpose_code` or `business_model` when that classifying fact is unresolved (see [Classification](#classification)). See the table below for descriptions.
       
-      **Example**: `["buyer_name", "product_description", "buyer_address", "invoice_number", "buyer_postal_code", "hs_code"]`
+      **Example**: `["buyer_name", "product_description", "buyer_address", "invoice_number", "buyer_postal_code", "hs_code", "purpose_code"]`
     </ParamField>
   </Tab>
 </Tabs>
@@ -145,8 +239,10 @@ Each element in `details_missing` is a field name that may be missing on the ord
 | `invoice_number` | Invoice number. |
 | `buyer_postal_code` | Buyer's postal/ZIP code. |
 | `hs_code` | HS code (or `hs_code_description` on the order). |
+| `purpose_code` | FEMA purpose code — none has been declared for this order. |
+| `business_model` | Buyer type — nothing has declared `B2C` or `B2B`. |
 
-The webhook is sent only when at least one of these fields is missing (empty or not set) on the order.
+The webhook is sent only when at least one of the order fields above is missing (empty or not set) on the order. The two classifying fields join the list when they are unresolved, but never trigger the event on their own.
 
 ---
 

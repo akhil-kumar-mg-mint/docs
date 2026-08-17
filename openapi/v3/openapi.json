@@ -2653,14 +2653,23 @@
                   },
                   "type": {
                     "type": "string",
-                    "description": "Document type. Must be a known LRS document type for the purpose codes you are enabled for.",
+                    "description": "Document type. Must be a code the purpose codes you are enabled for actually ask for — read them from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than assuming.",
                     "enum": [
                       "fee_invoice",
                       "offer_letter",
                       "passport",
                       "relationship_declaration",
                       "student_id_or_visa",
-                      "student_id"
+                      "student_id",
+                      "student_passport",
+                      "student_visa",
+                      "university_id_card",
+                      "loa",
+                      "invoice",
+                      "passenger_list",
+                      "traveller_passports",
+                      "traveller_visas",
+                      "ticket"
                     ],
                     "example": "offer_letter"
                   }
@@ -2736,10 +2745,10 @@
         "operationId": "v3_post_pg_lrs_documents_"
       }
     },
-    "/pg/lrs/verify/": {
-      "post": {
-        "summary": "Submit a payment's LRS verification details",
-        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required**, either with a `missing` list or because the credit's sender is not the declared PAN holder (`reason: SENDER_NAME_MISMATCH`). LRS has no On Hold state: every outcome that does not advance stays in Action Required and is fixed by re-submitting. The money-match requires the credit to cover the remitted principal, EximPe's fee, the GST on that fee and the TCS — anything short comes back as `outstanding`. `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
+    "/pg/lrs/payments/{payment_id}/verification/": {
+      "get": {
+        "summary": "Get verification requirements",
+        "description": "Returns everything a payment's purpose code calls for — every field and document, which are already satisfied, and which are still missing.\n\nThe [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is *missing*, with a label and a reason for each item. This returns the *whole* requirement set, including what is already satisfied — call it when you need the full picture, or to resume or reconcile if an event was missed.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -2751,293 +2760,21 @@
             "apiVersionHeader": []
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "payment_id",
-                  "purpose_code",
-                  "remitter",
-                  "invoice",
-                  "address",
-                  "contact",
-                  "principal",
-                  "tcs",
-                  "declarations",
-                  "documents"
-                ],
-                "properties": {
-                  "payment_id": {
-                    "type": "string",
-                    "description": "ID of the payment created for the credit.",
-                    "example": "PAY_1a2b3c4d5e"
-                  },
-                  "purpose_code": {
-                    "type": "string",
-                    "description": "FEMA purpose code for the remittance.",
-                    "example": "S0305"
-                  },
-                  "remitter": {
-                    "type": "object",
-                    "required": [
-                      "pan",
-                      "name",
-                      "dob",
-                      "relation"
-                    ],
-                    "properties": {
-                      "pan": {
-                        "type": "string",
-                        "description": "Remitter PAN. Verified inline (needs name + dob) if not already verified.",
-                        "example": "ABCDE1234F"
-                      },
-                      "name": {
-                        "type": "string",
-                        "description": "Remitter's full name as per PAN.",
-                        "example": "John Doe"
-                      },
-                      "dob": {
-                        "type": "string",
-                        "format": "date",
-                        "description": "Remitter's date of birth (YYYY-MM-DD).",
-                        "example": "1990-01-01"
-                      },
-                      "relation": {
-                        "type": "string",
-                        "enum": [
-                          "SELF",
-                          "PARENT",
-                          "GUARDIAN",
-                          "SPOUSE",
-                          "SIBLING",
-                          "OTHER"
-                        ],
-                        "description": "Remitter's relation to the person the remittance is for.",
-                        "example": "SELF"
-                      }
-                    }
-                  },
-                  "primary_person": {
-                    "type": "object",
-                    "description": "Details of the person the remittance is for. Required when `relation` is not `SELF`.",
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "example": "Jane Doe"
-                      },
-                      "dob": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2005-06-15"
-                      },
-                      "passport_number": {
-                        "type": "string",
-                        "example": "M1234567"
-                      }
-                    }
-                  },
-                  "invoice": {
-                    "type": "object",
-                    "required": [
-                      "number",
-                      "date",
-                      "amount"
-                    ],
-                    "properties": {
-                      "number": {
-                        "type": "string",
-                        "example": "INV-2025-0091"
-                      },
-                      "date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2025-07-01"
-                      },
-                      "amount": {
-                        "type": "number",
-                        "description": "Invoice total in INR rupees — metadata for the settlement file. It may be met across several payments, so it does not gate the money-match; `principal` does.",
-                        "example": 1200000
-                      }
-                    }
-                  },
-                  "address": {
-                    "type": "object",
-                    "required": [
-                      "address1",
-                      "city",
-                      "state",
-                      "pincode"
-                    ],
-                    "properties": {
-                      "address1": {
-                        "type": "string",
-                        "example": "12 MG Road"
-                      },
-                      "city": {
-                        "type": "string",
-                        "example": "Bengaluru"
-                      },
-                      "state": {
-                        "type": "string",
-                        "example": "Karnataka"
-                      },
-                      "pincode": {
-                        "type": "string",
-                        "example": "560001"
-                      }
-                    }
-                  },
-                  "contact": {
-                    "type": "object",
-                    "required": [
-                      "email",
-                      "mobile"
-                    ],
-                    "properties": {
-                      "email": {
-                        "type": "string",
-                        "format": "email",
-                        "example": "john@example.com"
-                      },
-                      "mobile": {
-                        "type": "string",
-                        "example": "9876543210"
-                      }
-                    }
-                  },
-                  "principal": {
-                    "type": "number",
-                    "description": "This payment's remitted principal, in INR rupees — the money that goes abroad. The money-match target is `principal` + EximPe's fee + GST on that fee + TCS; this is also what posts to the buyer's Rs.10L LRS counter and what TCS is charged on. Distinct from `invoice.amount`: one invoice may be met across several payments, each with its own principal.",
-                    "example": 1200000
-                  },
-                  "tcs": {
-                    "type": "number",
-                    "description": "TCS collected from the buyer, in INR rupees. Use the `tcs_inr` from the quote — we recompute it here and flag a mismatch.",
-                    "example": 4000
-                  },
-                  "declarations": {
-                    "type": "object",
-                    "required": [
-                      "resident_in_india",
-                      "lrs",
-                      "source_of_funds"
-                    ],
-                    "description": "All three must be true for the payment to clear checks; otherwise it stays in Action Required.",
-                    "properties": {
-                      "resident_in_india": {
-                        "type": "boolean",
-                        "example": true
-                      },
-                      "lrs": {
-                        "type": "boolean",
-                        "example": true
-                      },
-                      "source_of_funds": {
-                        "type": "boolean",
-                        "example": true
-                      }
-                    }
-                  },
-                  "documents": {
-                    "type": "array",
-                    "description": "Supporting documents for the purpose code. Upload each via POST /pg/lrs/documents first, then reference it here.",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "type",
-                        "ref"
-                      ],
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "description": "Document type (same value used at upload).",
-                          "enum": [
-                            "fee_invoice",
-                            "offer_letter",
-                            "passport",
-                            "relationship_declaration",
-                            "student_id_or_visa",
-                            "student_id"
-                          ],
-                          "example": "offer_letter"
-                        },
-                        "ref": {
-                          "type": "string",
-                          "description": "`ref` returned by the document upload.",
-                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-                        }
-                      }
-                    }
-                  },
-                  "linked_payment_id": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "When this credit tops up an earlier LRS payment, the earlier payment's ID.",
-                    "example": null
-                  },
-                  "reason": {
-                    "type": "string",
-                    "enum": [
-                      "REMAINING_AMOUNT",
-                      "TCS_PAYMENT"
-                    ],
-                    "nullable": true,
-                    "description": "Why this credit is a top-up of an earlier payment (audit label). Only valid together with `linked_payment_id` — sending `reason` without it returns 400.",
-                    "example": null
-                  }
-                }
-              },
-              "example": {
-                "payment_id": "PAY_1a2b3c4d5e",
-                "purpose_code": "S0305",
-                "remitter": {
-                  "pan": "ABCDE1234F",
-                  "name": "John Doe",
-                  "dob": "1990-01-01",
-                  "relation": "SELF"
-                },
-                "invoice": {
-                  "number": "INV-2025-0091",
-                  "date": "2025-07-01",
-                  "amount": 1200000
-                },
-                "address": {
-                  "address1": "12 MG Road",
-                  "city": "Bengaluru",
-                  "state": "Karnataka",
-                  "pincode": "560001"
-                },
-                "contact": {
-                  "email": "john@example.com",
-                  "mobile": "9876543210"
-                },
-                "principal": 1200000,
-                "tcs": 4000,
-                "declarations": {
-                  "resident_in_india": true,
-                  "lrs": true,
-                  "source_of_funds": true
-                },
-                "documents": [
-                  {
-                    "type": "offer_letter",
-                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-                  },
-                  {
-                    "type": "fee_invoice",
-                    "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e"
-                  }
-                ]
-              }
-            }
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the payment the details are for.",
+            "example": "PR6938527534"
           }
-        },
+        ],
         "responses": {
           "200": {
-            "description": "Verification details processed.",
+            "description": "The payment's requirements and their current state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3049,111 +2786,255 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Verification details processed"
+                      "example": "Verification requirements"
                     },
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "payment_id": {
-                          "type": "string",
-                          "example": "PAY_1a2b3c4d5e"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "under_review",
-                            "action_required"
-                          ],
-                          "description": "Resulting payment state. There is no On Hold outcome on LRS — anything that does not advance stays in `action_required`.",
-                          "example": "under_review"
-                        },
-                        "tcs_check": {
-                          "type": "string",
-                          "enum": [
-                            "match",
-                            "mismatch",
-                            "n/a"
-                          ],
-                          "example": "match"
-                        },
-                        "missing": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Fields/checks still outstanding when status is `action_required`.",
-                          "example": []
-                        },
-                        "outstanding": {
-                          "type": "string",
-                          "description": "Shortfall still owed (INR), if any — principal + EximPe's fee + GST on that fee + TCS, less what the credit brought in.",
-                          "example": "0.00"
-                        },
-                        "reason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Machine reason when not advanced: `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED`, `PURPOSE_CODE_NOT_IN_REGISTRY` or `PAN_NOT_VERIFIED`. Null when the payment advanced, and null on an Action Required caused only by gaps in `missing`.",
-                          "example": null
-                        }
-                      }
+                      "$ref": "#/components/schemas/v3_VerificationState"
                     }
                   }
                 },
-                "examples": {
-                  "under_review": {
-                    "summary": "Cleared to Under Review",
-                    "value": {
-                      "success": true,
-                      "message": "Verification details processed",
-                      "data": {
-                        "payment_id": "PAY_1a2b3c4d5e",
-                        "status": "under_review",
-                        "tcs_check": "match",
-                        "missing": [],
-                        "outstanding": "0.00",
-                        "reason": null
+                "example": {
+                  "success": true,
+                  "message": "Verification requirements",
+                  "data": {
+                    "payment_id": "PR6938527534",
+                    "order_uid": "OD3376378679",
+                    "status": "incomplete",
+                    "is_lrs": true,
+                    "business_model": "B2C",
+                    "purpose_code": "S0305",
+                    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+                    "requirement_label": "B2C · Education — LRS (with travel leg)",
+                    "fields": [
+                      {
+                        "code": "buyer_name",
+                        "label": "Buyer / remitter name",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
+                      },
+                      {
+                        "code": "buyer_address_line_1",
+                        "label": "Buyer address line 1",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_city",
+                        "label": "Buyer city",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_state",
+                        "label": "Buyer state",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_postal_code",
+                        "label": "Buyer PIN code",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_email",
+                        "label": "Buyer email",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_phone",
+                        "label": "Buyer phone",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_number",
+                        "label": "Invoice number",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_date",
+                        "label": "Invoice date",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_amount",
+                        "label": "Invoice amount",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
+                      },
+                      {
+                        "code": "purpose_code",
+                        "label": "FEMA purpose code",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
+                      },
+                      {
+                        "code": "payment_term",
+                        "label": "Payment term",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_name",
+                        "label": "Remitter name (as per PAN)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_pan",
+                        "label": "Remitter PAN",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_dob",
+                        "label": "Remitter date of birth (as per PAN)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_relation",
+                        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_declaration",
+                        "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "amount_to_be_settled",
+                        "label": "Amount to be settled for this payment, in INR",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_name",
+                        "label": "Student name",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_dob",
+                        "label": "Student date of birth",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_passport_number",
+                        "label": "Student passport number",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
                       }
-                    }
-                  },
-                  "action_required": {
-                    "summary": "Action Required — TCS short",
-                    "value": {
-                      "success": true,
-                      "message": "Verification details processed",
-                      "data": {
-                        "payment_id": "PAY_1a2b3c4d5e",
-                        "status": "action_required",
-                        "tcs_check": "mismatch",
-                        "missing": [
-                          "tcs",
-                          "outstanding"
-                        ],
-                        "outstanding": "5000.00",
-                        "reason": null
+                    ],
+                    "documents": [
+                      {
+                        "code": "student_passport",
+                        "label": "Student passport",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_visa",
+                        "label": "Student visa",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false,
+                        "alternative_group": "student_status_proof"
+                      },
+                      {
+                        "code": "university_id_card",
+                        "label": "University ID card",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false,
+                        "alternative_group": "student_status_proof"
+                      },
+                      {
+                        "code": "loa",
+                        "label": "Letter of admission / offer letter",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice",
+                        "label": "Fee invoice",
+                        "requirement": "OPTIONAL",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": false
+                      },
+                      {
+                        "code": "relationship_declaration",
+                        "label": "Relationship self-declaration",
+                        "requirement": "CONDITIONAL",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": false,
+                        "condition": "relation_not_self"
                       }
-                    }
-                  },
-                  "sender_mismatch": {
-                    "summary": "Action Required — sender is not the PAN holder",
-                    "value": {
-                      "success": true,
-                      "message": "Verification details processed",
-                      "data": {
-                        "payment_id": "PAY_1a2b3c4d5e",
-                        "status": "action_required",
-                        "tcs_check": "match",
-                        "missing": [],
-                        "outstanding": "0.00",
-                        "reason": "SENDER_NAME_MISMATCH"
-                      }
-                    }
+                    ]
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Invalid request — validation error or business rule failure.",
+          "404": {
+            "description": "No such payment for this merchant.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3163,7 +3044,7 @@
             }
           },
           "500": {
-            "description": "Unexpected error processing verification details.",
+            "description": "Unexpected processing failure.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3172,8 +3053,805 @@
               }
             }
           }
+        }
+      },
+      "post": {
+        "summary": "Submit verification details",
+        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields[].field` are the keys you put in `fields`, and its `action_required_documents[].document` are what you name the files.\n\n**Two ways to send it, one endpoint.**\n\n* `application/json` — `fields` as an object, `documents` as a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).\n* `multipart/form-data` — the same `fields` and `documents` as JSON strings, plus the files themselves as parts named `document.<code>` (for example `document.student_passport`). No pre-upload round trip: five documents in one request instead of six.\n\n**Partial sends are merged, never replaced.** Send what you have; the response tells you what is left. Nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the payment the details are for.",
+            "example": "PR6938527534"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fields": {
+                    "type": "object",
+                    "description": "Answers keyed by requirement code, e.g. `{\"remitter_pan\": \"ABCDE1234F\", \"payment_term\": \"Advance\"}`. Values are strings, numbers or booleans. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string.",
+                    "additionalProperties": true,
+                    "example": {
+                      "buyer_city": "Bengaluru",
+                      "remitter_pan": "ABCDE1234F",
+                      "remitter_relation": "SELF",
+                      "buyer_declaration": true,
+                      "amount_to_be_settled": "150000.00"
+                    }
+                  },
+                  "documents": {
+                    "type": "array",
+                    "description": "Documents by reference, or waivers. Files sent inline as multipart parts do not need an entry here.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "code"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "description": "The requirement code this document answers.",
+                          "enum": [
+                            "fee_invoice",
+                            "offer_letter",
+                            "passport",
+                            "relationship_declaration",
+                            "student_id_or_visa",
+                            "student_id",
+                            "student_passport",
+                            "student_visa",
+                            "university_id_card",
+                            "loa",
+                            "invoice",
+                            "passenger_list",
+                            "traveller_passports",
+                            "traveller_visas",
+                            "ticket"
+                          ],
+                          "example": "student_passport"
+                        },
+                        "ref": {
+                          "type": "string",
+                          "description": "A `ref` returned by Upload Document. Send this or `waiver_reason`, not neither.",
+                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                        },
+                        "waiver_reason": {
+                          "type": "string",
+                          "description": "Why this document is not being supplied. Only accepted on items whose `waivable` is true.",
+                          "example": "Destination is visa-free for this passport"
+                        }
+                      }
+                    }
+                  },
+                  "finalize": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether to run a complete set through the verification gateway. Never forces an incomplete one through."
+                  }
+                }
+              },
+              "example": {
+                "fields": {
+                  "buyer_city": "Bengaluru",
+                  "remitter_pan": "ABCDE1234F",
+                  "remitter_relation": "SELF",
+                  "buyer_declaration": true,
+                  "amount_to_be_settled": "150000.00"
+                },
+                "documents": [
+                  {
+                    "code": "student_passport",
+                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                  },
+                  {
+                    "code": "traveller_visas",
+                    "waiver_reason": "Destination is visa-free"
+                  }
+                ],
+                "finalize": true
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "description": "`fields` and `documents` are JSON encoded as strings. Each file is its own part named `document.<code>` — `document.student_passport`, `document.loa`. Parts whose name does not start with `document.` are ignored.",
+                "properties": {
+                  "fields": {
+                    "type": "string",
+                    "description": "The `fields` object, JSON encoded as a string.",
+                    "example": "{\"buyer_city\":\"Bengaluru\",\"payment_term\":\"Advance\"}"
+                  },
+                  "documents": {
+                    "type": "string",
+                    "description": "The `documents` array, JSON encoded as a string. Only needed for references and waivers.",
+                    "example": "[{\"code\":\"loa\",\"ref\":\"a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d\"}]"
+                  },
+                  "finalize": {
+                    "type": "string",
+                    "example": "true"
+                  },
+                  "document.student_passport": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Example of an inline file part. Any `document.<code>` part is accepted, where `<code>` is a document code from the requirements."
+                  }
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "format": "binary",
+                  "description": "Further `document.<code>` file parts."
+                }
+              }
+            }
+          }
         },
-        "operationId": "v3_post_pg_lrs_verify_"
+        "responses": {
+          "200": {
+            "description": "Details received. The body carries the full state after the write, so a single call tells you what is left.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Verification details received"
+                    },
+                    "data": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/v3_VerificationState"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "accepted": {
+                              "type": "object",
+                              "description": "What this call took, echoed back.",
+                              "properties": {
+                                "fields": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "documents": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "verification": {
+                              "type": "object",
+                              "description": "Present only once a complete set was run through the gateway.",
+                              "properties": {
+                                "handed_off": {
+                                  "type": "boolean"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "under_review",
+                                    "action_required"
+                                  ]
+                                },
+                                "tcs_check": {
+                                  "type": "string",
+                                  "enum": [
+                                    "match",
+                                    "mismatch",
+                                    "n/a"
+                                  ]
+                                },
+                                "missing": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "What did not pass, as tokens: `outstanding`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `purpose_code`, or `documents.<type>`. Empty on `under_review`."
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "One headline conclusion, or `null` — which is normal, not an error. On `handed_off: true` with `status: action_required`: `PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED` or `PURPOSE_CODE_NOT_IN_REGISTRY`; a shortfall and every other multi-check refusal returns `null`. On `handed_off: false`: `GATEWAY_REJECTED`, `GATEWAY_UNAVAILABLE` (your details are saved — retry to complete) or `NO_DOWNSTREAM_GATEWAY`."
+                                },
+                                "outstanding": {
+                                  "type": "string",
+                                  "description": "Money still owed on this payment, in rupees, as a decimal string — principal plus fees, GST and TCS, less what was received. `\"0.00\"` when nothing is owed. Always present when `handed_off` is `true`.",
+                                  "example": "12500.00"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "partial": {
+                    "summary": "Partial send — still incomplete",
+                    "description": "`finalize` applies only to a complete set, so nothing was handed downstream and there is no `verification` block.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_uid": "OD3376378679",
+                        "status": "incomplete",
+                        "is_lrs": true,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+                        "requirement_label": "B2C · Education — LRS (with travel leg)",
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "label": "Buyer / remitter name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_address_line_1",
+                            "label": "Buyer address line 1",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_city",
+                            "label": "Buyer city",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "label": "Buyer state",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "label": "Buyer PIN code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_email",
+                            "label": "Buyer email",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "label": "Buyer phone",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_number",
+                            "label": "Invoice number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_date",
+                            "label": "Invoice date",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_amount",
+                            "label": "Invoice amount",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "purpose_code",
+                            "label": "FEMA purpose code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "payment_term",
+                            "label": "Payment term",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_name",
+                            "label": "Remitter name (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "label": "Remitter PAN",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "label": "Remitter date of birth (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_relation",
+                            "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "label": "Amount to be settled for this payment, in INR",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_dob",
+                            "label": "Student date of birth",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_passport_number",
+                            "label": "Student passport number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "student_passport",
+                            "label": "Student passport",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_visa",
+                            "label": "Student visa",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "university_id_card",
+                            "label": "University ID card",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "loa",
+                            "label": "Letter of admission / offer letter",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice",
+                            "label": "Fee invoice",
+                            "requirement": "OPTIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false
+                          },
+                          {
+                            "code": "relationship_declaration",
+                            "label": "Relationship self-declaration",
+                            "requirement": "CONDITIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "relation_not_self"
+                          }
+                        ],
+                        "accepted": {
+                          "fields": [
+                            "buyer_city",
+                            "remitter_pan"
+                          ],
+                          "documents": [
+                            "student_passport"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "complete": {
+                    "summary": "Complete set — handed off, and refused",
+                    "description": "Everything the purpose code asks for was sent, so the set went to the verification gateway. `handed_off: true` means it reached a verdict, not that the payment passed — this one is short by ₹12,500 and stays in Action Required.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_uid": "OD3376378679",
+                        "status": "complete",
+                        "is_lrs": true,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+                        "requirement_label": "B2C · Education — LRS (with travel leg)",
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "label": "Buyer / remitter name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_address_line_1",
+                            "label": "Buyer address line 1",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_city",
+                            "label": "Buyer city",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "label": "Buyer state",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "label": "Buyer PIN code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_email",
+                            "label": "Buyer email",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "label": "Buyer phone",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_number",
+                            "label": "Invoice number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_date",
+                            "label": "Invoice date",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_amount",
+                            "label": "Invoice amount",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "purpose_code",
+                            "label": "FEMA purpose code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "payment_term",
+                            "label": "Payment term",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_name",
+                            "label": "Remitter name (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "label": "Remitter PAN",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "label": "Remitter date of birth (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_relation",
+                            "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "label": "Amount to be settled for this payment, in INR",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_dob",
+                            "label": "Student date of birth",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_passport_number",
+                            "label": "Student passport number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "student_passport",
+                            "label": "Student passport",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_visa",
+                            "label": "Student visa",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "university_id_card",
+                            "label": "University ID card",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "loa",
+                            "label": "Letter of admission / offer letter",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice",
+                            "label": "Fee invoice",
+                            "requirement": "OPTIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false
+                          },
+                          {
+                            "code": "relationship_declaration",
+                            "label": "Relationship self-declaration",
+                            "requirement": "CONDITIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "relation_not_self"
+                          }
+                        ],
+                        "accepted": {
+                          "fields": [
+                            "amount_to_be_settled",
+                            "buyer_declaration"
+                          ],
+                          "documents": [
+                            "loa",
+                            "student_visa"
+                          ]
+                        },
+                        "verification": {
+                          "handed_off": true,
+                          "status": "action_required",
+                          "tcs_check": "match",
+                          "missing": [
+                            "outstanding"
+                          ],
+                          "reason": null,
+                          "outstanding": "12500.00"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request — an unknown code, a value that is not a scalar, an unusable document reference, or a waiver on a document that cannot be waived. The offending code is named in `error.details`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_LRS_001",
+                    "message": "Unknown or misplaced field(s).",
+                    "details": {
+                      "buyer_citty": "Not a requirement of this payment's purpose code."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such payment for this merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected processing failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/pg/settlements/mark-settled/": {
@@ -6835,6 +7513,116 @@
           },
           "error": {
             "$ref": "#/components/schemas/v1_ErrorDetails"
+          }
+        }
+      },
+      "v3_VerificationRequirementItem": {
+        "type": "object",
+        "description": "One field or document a payment's purpose code calls for. The `code` is the key you send it back under.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable identifier. Use it as the key in `fields`, or as the `code` of a document.",
+            "example": "student_passport"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable description, safe to show a payer.",
+            "example": "Student passport"
+          },
+          "requirement": {
+            "type": "string",
+            "enum": [
+              "REQUIRED",
+              "CONDITIONAL",
+              "OPTIONAL"
+            ],
+            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` never blocks completion, but the webhook keeps offering it until you send it.",
+            "example": "REQUIRED"
+          },
+          "waivable": {
+            "type": "boolean",
+            "description": "When true you may send `waiver_reason` instead of a file. The item stays `satisfied: false` until you do — the waiver is yours to record, not ours to assume.",
+            "example": false
+          },
+          "condition": {
+            "type": "string",
+            "description": "Present on `CONDITIONAL` items only. `relation_not_self` means the item is owed when the remitter is not the person the remittance is for.",
+            "example": "relation_not_self"
+          },
+          "alternative_group": {
+            "type": "string",
+            "description": "Items sharing a group satisfy each other — send any one and the whole group clears. Send none and all of them stay listed so you can choose.",
+            "example": "student_status_proof"
+          },
+          "satisfied": {
+            "type": "boolean",
+            "description": "Whether this item is met. `false` blocks `status` from reaching `complete`. An OPTIONAL item, and a CONDITIONAL item whose condition does not hold, are satisfied without having been sent.",
+            "example": false
+          },
+          "provided": {
+            "type": "boolean",
+            "description": "Whether it has actually been sent, or we already held it. `satisfied: true` with `provided: false` means nothing is owed and nothing was sent — an OPTIONAL item, or a CONDITIONAL that does not apply.",
+            "example": false
+          }
+        }
+      },
+      "v3_VerificationState": {
+        "type": "object",
+        "description": "What a payment needs and what it already has — the whole requirement set, unlike the LRS_VERIFICATION_NEEDED webhook, which lists only what is outstanding.",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "example": "PR6938527534"
+          },
+          "order_uid": {
+            "type": "string",
+            "example": "OD3376378679"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "incomplete",
+              "complete",
+              "not_applicable"
+            ],
+            "description": "`incomplete` — something is still owed. `complete` — nothing is. `not_applicable` — no requirements are defined for this payment's business model and purpose code.",
+            "example": "incomplete"
+          },
+          "is_lrs": {
+            "type": "boolean",
+            "description": "Whether this payment draws against the payer's LRS limit.",
+            "example": true
+          },
+          "business_model": {
+            "type": "string",
+            "example": "B2C"
+          },
+          "purpose_code": {
+            "type": "string",
+            "example": "S0305"
+          },
+          "purpose_code_description": {
+            "type": "string",
+            "example": "Travel for education (including fees, hostel expenses etc.)"
+          },
+          "requirement_label": {
+            "type": "string",
+            "example": "B2C · Education — LRS (with travel leg)"
+          },
+          "fields": {
+            "type": "array",
+            "description": "Every field this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
+            "items": {
+              "$ref": "#/components/schemas/v3_VerificationRequirementItem"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "description": "Every document this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
+            "items": {
+              "$ref": "#/components/schemas/v3_VerificationRequirementItem"
+            }
           }
         }
       }

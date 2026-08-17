@@ -18,7 +18,10 @@ This webhook is triggered when the payment verification status is updated for co
 The webhook is sent in the following scenarios:
 
 1. **Action Required** (`ACTION_REQUIRED`): Additional or corrected information is needed
-2. **Payment Verified** (`VERIFIED`): Payment has been successfully verified
+2. **In Review** (`IN_REVIEW`): The payment moved into review; nothing is needed from you
+3. **Expired** (`EXPIRED`): The verification window closed before the details were accepted
+
+A verified payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
@@ -65,23 +68,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
-    "action_required_fields": ["buyer_name", "hs_code"]
-  }
-}
-```
-
-```json Example: Verified
-{
-  "event_type": "VERIFICATION_NEEDED",
-  "event_time": "2025-02-13T10:30:00.123456Z",
-  "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
-  "data": {
-    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
-    "verification_status": "VERIFIED",
-    "message": "Payment verified",
-    "action_required_fields": []
+    "action_required_fields": ["buyer_name", "hs_code", "purpose_code"],
+    "payment_verification_expiry": "2025-02-20T23:59:59"
   }
 }
 ```
@@ -97,7 +85,25 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
-    "action_required_fields": []
+    "action_required_fields": [],
+    "payment_verification_expiry": null
+  }
+}
+```
+
+```json Example: Expired
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2025-02-13T10:30:00.123456Z",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440003",
+  "data": {
+    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "verification_status": "EXPIRED",
+    "message": "Payment verification action required",
+    "action_required_fields": ["invoice_file", "hs_code"],
+    "payment_verification_expiry": "2025-02-12T23:59:59"
   }
 }
 ```
@@ -131,7 +137,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Verification status details (payment_id, order_id, verification_status, message, action_required_fields)
+      Verification status details (payment_id, order_id, verification_status, message, action_required_fields, payment_verification_expiry)
     </ParamField>
   </Tab>
 
@@ -149,7 +155,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
-      Current verification status. One of: `IN_REVIEW`, `ACTION_REQUIRED`, `VERIFIED`
+      Current verification status. One of: `ACTION_REQUIRED`, `IN_REVIEW`, `EXPIRED`. A verified payment sends no event, so `VERIFIED` never appears here.
       
       **Example**: `"ACTION_REQUIRED"`
     </ParamField>
@@ -161,11 +167,21 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array" required>
-      List of order field names that require merchant action. Empty array when `verification_status` is `VERIFIED` or `IN_REVIEW`.
+      List of field names that require merchant action. Mostly order fields; it also carries `purpose_code` or `business_model` when that classifying fact has not been declared. Empty array when nothing is outstanding.
       
-      **Possible values**: `buyer_name`, `buyer_address`, `buyer_postal_code`, `product_description`, `invoice_number`, `invoice_file`, `hs_code`, `country_of_origin`
+      **Possible values**: `buyer_name`, `buyer_address`, `buyer_postal_code`, `product_description`, `invoice_number`, `invoice_file`, `hs_code`, `country_of_origin`, `purpose_code`, `business_model`
       
-      **Example**: `["buyer_name", "hs_code"]`
+      **Example**: `["buyer_name", "hs_code", "purpose_code"]`
+    </ParamField>
+
+    <ParamField path="data.payment_verification_expiry" type="string | null" required>
+      ISO 8601 datetime by which verification must be complete.
+
+      Past this point the payment can no longer be verified: `verification_status` becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat each event's value as authoritative — it can move, and an event is sent when it does.
+
+      Every `ACTION_REQUIRED` payment carries one. Where the payment gateway names a deadline of its own that is what you get; otherwise it is **10 days from the time the payment completed**. `null` on an `IN_REVIEW` event, where nothing is being asked of you and no clock is running.
+
+      **Example**: `"2025-02-20T23:59:59"`
     </ParamField>
   </Tab>
 </Tabs>
@@ -178,11 +194,13 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
 3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
 4. **Handle based on verification status**:
-   - **`VERIFIED`**: Update your system to reflect successful verification. Payment can proceed to settlement.
    - **`ACTION_REQUIRED`**: 
      - Check `data.action_required_fields` to see what needs updating
      - Notify merchant/admin about required actions
      - Update the specified fields using the [Upload Verification Details API](/api-reference/v3/payment/upload-verification-details)
+   - **`IN_REVIEW`**: Nothing to do. Record that the payment is under review.
+   - **`EXPIRED`**: The verification window has closed and the amount is refunded to the buyer. `action_required_fields` records what lapsed, but nothing you send reopens it — close the payment out on your side.
+5. **Watch `payment_verification_expiry`** while the status is `ACTION_REQUIRED`. It is the deadline the payment is working to — 10 days from the payment completing, unless the gateway named a date of its own — and it can move between events.
   
 ### Action Required Fields Reference
 
@@ -196,3 +214,5 @@ When `verification_status` is `ACTION_REQUIRED`, the `action_required_fields` ar
 | `product_description` | Description of goods/services |
 | `invoice_number` | Invoice or order number |
 | `hs_code` | Harmonized System code for goods |
+| `purpose_code` | FEMA purpose code — none has been declared for this order |
+| `business_model` | Buyer type — nothing has declared `B2C` or `B2B` |
