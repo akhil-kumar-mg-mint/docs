@@ -364,7 +364,7 @@
                 ]
               },
               {
-                "group": "LRS (Education Payments from Individuals)",
+                "group": "LRS (Payments from Individuals)",
                 "pages": [
                   "integration-guide/v3/web-integration/lrs-compliance",
                   "integration-guide/v3/web-integration/lrs-verification"

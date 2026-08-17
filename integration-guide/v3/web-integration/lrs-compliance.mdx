@@ -1,12 +1,12 @@
 ---
 title: "LRS & Compliance"
-description: "The rules for education payments from individuals in India: who can pay, how much, what tax applies, and which documents you need."
+description: "The rules for LRS payments from individuals in India: who can pay, how much, what tax applies, and which documents each purpose code needs."
 ---
 
 <Info>
   **LRS** is the Liberalised Remittance Scheme — the RBI rules for money sent abroad by an **individual** in India, for things like education fees or travel. It does not apply to a business paying a business.
 
-  This page covers **education** payments, on purpose codes `S0305` and `S1107`. Collection, the payment lifecycle, webhooks, and settlement are the same whatever you collect for — see [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
+  **Education is live today.** Travel is described below but cannot complete yet. Collection, the payment lifecycle, webhooks, and settlement are the same whatever you collect for — see [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
 </Info>
 
 When an individual in India sends money abroad, LRS decides whether they are allowed to, how much, what tax applies, and what paperwork is needed. EximPe is licensed by the RBI as a **Payment Aggregator – Cross Border**, and a partner bank makes the actual transfer.
@@ -102,6 +102,22 @@ Both are for education paid from the buyer's own funds. Loan-funded remittances 
 **`S0305` only.** The student's passport number, their passport, and either their student visa or their university ID card.
 
 **`S1107` only.** The university ID card. There is no travel leg, so no student visa exists.
+
+### Travel — `S0303`, `S0304`, `S0306`
+
+<Warning>
+  **Travel does not complete yet.** These codes accept details and hold them against the payment, but our verification rules cover education only, so a travel payment will not advance. Do not put it in front of a buyer until we say it is live.
+</Warning>
+
+| Purpose code | What it is for |
+| :--- | :--- |
+| `S0306` | Travel, other |
+| `S0304` | Travel for medical treatment |
+| `S0303` | Travel for pilgrimage |
+
+**Shared by all three.** No extra fields beyond the common set. Expect to ask the buyer for the passenger list, the travellers' passports, their visas, the ticket, and an invoice. A relationship declaration where the buyer is not the traveller. Visas and the ticket can be waived with a reason — a visa-free destination, for instance.
+
+**Per code.** The three currently ask for the same set. Expect that to diverge as the rules for each are settled, so read the requirements per payment rather than assuming they stay identical.
 
 <Warning>
   **Do not build a form off this description.** It is here so you can scope the work and know roughly what to ask a buyer for. Which documents a given payment actually requires — and whether each is required, optional, waivable or conditional — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which is generated from the live requirement sets.
