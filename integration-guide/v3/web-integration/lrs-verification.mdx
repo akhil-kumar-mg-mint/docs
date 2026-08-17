@@ -1,124 +1,123 @@
 ---
 title: "LRS Verification"
-description: "The four calls that clear an education payment for settlement: verify the PAN, quote the tax, upload documents, submit."
+description: "Clear an LRS payment for settlement: read what it needs, send fields and documents, repeat until nothing is left."
 ---
 
-Money has arrived and the payment is sitting in `ACTION_REQUIRED`. To get it settled you tell us who paid, what for, and attach the paperwork.
-
-Four calls, in order.
+Money has arrived and the payment cannot settle yet. We tell you exactly what it needs, you send it, and the payment completes itself once nothing is outstanding.
 
 <Info>
   New to the rules? Read [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance) first. This page is the API walk-through.
 </Info>
 
 <Note>
-  **PSPs must send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. LRS is always scoped to the sub-merchant, never the PSP.
+  **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. LRS is always scoped to the sub-merchant, never the PSP.
 </Note>
 
-## 1. Verify the PAN
+## The shape of it
 
-The buyer is identified by PAN, not by whoever the bank says sent the money. This checks the PAN against income-tax records and matches the name and date of birth.
+<Steps>
+  <Step title="We tell you what is needed">
+    The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what the payment owes — each entry a code, a sentence saying why, and whether it can be waived.
+  </Step>
+  <Step title="You send what you have">
+    Fields as a map, documents as files or references. Partial is fine.
+  </Step>
+  <Step title="You read what is left">
+    The response repeats the requirement set after your write, so one call tells you where you stand.
+  </Step>
+  <Step title="It finishes itself">
+    Once nothing is outstanding the set goes to the verification gateway automatically.
+  </Step>
+</Steps>
 
-Do this first. A bad PAN is a guaranteed rejection later, and you cannot quote or submit until it passes.
+<Warning>
+  **Do not hardcode the field list.** What a payment needs is decided by its purpose code, and those requirement sets get revised as the regulations behind them do. Drive your form off the response, not off this page.
+</Warning>
+
+## Before the money arrives
+
+Two calls are worth making up front, neither of which is part of the loop above.
+
+**Verify the buyer's PAN.** A dead or mismatched PAN is a guaranteed refusal later, so catch it before you ask anyone for documents. See [Verify PAN](/api-reference/v3/lrs/verify-pan).
+
+**Quote the tax.** Show the buyer a total that includes TCS before they transfer, or they underpay and you handle a shortfall. See [Quote LRS Amount](/api-reference/v3/lrs/quote).
+
+## Step 1: Read what the payment needs
 
 ```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/pan/verify/' \
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -H 'Content-Type: application/json' \
-  -d '{ "pan": "ABCDE1234F", "name": "John Doe", "dob": "1990-01-01" }'
+  -H 'X-Merchant-ID: <sub_merchant_id>'
 ```
 
-A failure returns `verified: false` and a `reason` — `NAME_MISMATCH`, `INOPERATIVE_PAN`, and so on. Sort it out with the buyer before you go further.
+You get the whole requirement set — what is already satisfied and what is still owed — plus the `label` for each code. Those labels are written to be shown to a payer, including the exact wording they must be shown to affirm `buyer_declaration`.
 
-<Card title="Verify PAN API" icon="code" href="/api-reference/v3/lrs/verify-pan">
-  Full request, response, and every reason code.
+The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
+
+<Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
+  Full response, statuses, and what each purpose code asks for.
 </Card>
 
-## 2. Quote the tax
+## Step 2: Send what you have
 
-Tell the buyer what they owe **including tax**, before they pay. This returns the TCS due and the total to collect.
+One endpoint, one envelope: `fields`, `documents`, `finalize`. What belongs inside is set by the purpose code.
 
-Quoting reserves nothing and costs nothing, so call it as often as you like.
+**Multipart** sends the files themselves, with no pre-upload. Five documents in one request instead of six:
 
 ```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/quote/' \
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -H 'Content-Type: application/json' \
-  -d '{ "pan": "ABCDE1234F", "amount": 1200000, "purpose_code": "S0305", "tcs_threshold_breached": false }'
+  -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
+  -F 'document.student_passport=@passport.pdf' \
+  -F 'document.university_id_card=@student-id.png'
 ```
 
-The `purpose_code` must be one your account is enabled for.
+**JSON** references documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document):
 
-<Card title="Quote LRS Amount API" icon="code" href="/api-reference/v3/lrs/quote">
-  The tax breakdown and threshold flags.
+```json
+{
+  "fields": {
+    "remitter_pan": "ABCDE1234F",
+    "remitter_relation": "SELF",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    { "code": "student_passport", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
+  ]
+}
+```
+
+<Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
+  Complete bodies for every purpose code, both send modes, and every error.
 </Card>
 
-## 3. Upload the documents
+## Four things that will bite you
 
-Upload each one before you submit. They are not tied to a payment, so you can do this whenever you have them. Each upload returns a `ref` you pass in the next call.
+**Partial sends merge.** Three fields today and two tomorrow is five fields. Nothing you sent earlier is wiped. Nobody collects a passport, a visa and an admission letter in the same instant, so do not wait until you have everything.
 
-This is `multipart/form-data` — a `file` and a `type`.
+**An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for something you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
 
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -F 'type=offer_letter' \
-  -F 'file=@offer_letter.pdf'
-```
+**Omit a key rather than sending `null` or an empty string.** A boolean is only satisfied by `true` — `false` reads as not yet answered.
 
-Which `type` values you need depends on the purpose code — see the [document table](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents).
-
-<Card title="Upload LRS Document API" icon="code" href="/api-reference/v3/lrs/upload-document">
-  Accepted types, size limits, and validation.
-</Card>
-
-## 4. Submit
-
-Send everything else: who paid, what for, the invoice, the declaration, the tax you collected, and the document `ref`s.
-
-We check the declaration, the documents, that the sender's name matches the PAN, and that the money adds up. Then we post it to the buyer's LRS counter and move it on.
-
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "payment_id": "PAY_1a2b3c4d5e",
-    "purpose_code": "S0305",
-    "remitter": { "pan": "ABCDE1234F", "name": "John Doe", "dob": "1990-01-01", "relation": "SELF" },
-    "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
-    "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
-    "contact": { "email": "john@example.com", "mobile": "9876543210" },
-    "tcs": 4000,
-    "declarations": { "resident_in_india": true, "lrs": true, "tcs": true, "source_of_funds": true },
-    "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
-  }'
-```
-
-You get back one of three outcomes:
+**`handed_off: true` does not mean the payment passed.** It means the gateway reached a verdict. Read `status`:
 
 | `status` | What it means | What you do |
 | :--- | :--- | :--- |
-| `under_review` | Everything passed. Posted to the LRS counter, waiting on the bank. | Nothing |
-| `action_required` | Something is missing. Check the `missing` array and the `outstanding` amount. | Fix it and submit again |
-| `on_hold` | Needs a person — usually the sender does not match the PAN. | See [What we check](/integration-guide/v3/web-integration/lrs-compliance#what-we-check) |
+| `under_review` | Passed. With the bank now. | Nothing |
+| `action_required` | Accepted, but did not pass — PAN, sender match, or the money does not add up | Read `missing` and `reason`, fix, send again |
 
-<Warning>
-  If `relation` is anything other than `SELF` — a parent paying for a student, say — you must also send `primary_person` with the student's name, date of birth, and passport number.
-</Warning>
+## The payment has a deadline
 
-<Info>
-  Topping up an earlier payment? Send `linked_payment_id` and a `reason` (`REMAINING_AMOUNT` or `TCS_PAYMENT`). `reason` only works alongside `linked_payment_id`.
-</Info>
+Every LRS payment carries a `payment_verification_expiry`. Miss it and verification status becomes `EXPIRED`, which is terminal — the window closes, the money goes back to the buyer, and nothing you send afterwards reopens it.
 
-<Card title="Submit LRS Verification API" icon="code" href="/api-reference/v3/lrs/submit-verification">
-  The full payload, every check, and all result statuses.
-</Card>
+Surface that date in your own UI and chase against it. It is the difference between a payment that settles and one that unwinds.
 
-## After that
+## Only education completes today
 
-Once it clears review, the money is settled to you. Track it with the [Settlement APIs](/api-reference/v3/settlement/list) and the [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
+Travel purpose codes accept details and hold them against the payment, but the verification gateway's rules cover education only, so a travel payment will not advance yet. Education — `S0305` and `S1107` — is unaffected.
+
+## After it passes
+
+Once it clears review the money is settled to you. Track it with the [Settlement APIs](/api-reference/v3/settlement/list) and the [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.

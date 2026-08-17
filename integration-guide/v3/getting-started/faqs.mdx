@@ -191,17 +191,21 @@ Optional, but call it. Quoting reserves nothing and can be re-run freely. Show t
 
 ### What declaration does the buyer affirm?
 
-One, covering resident status, the LRS limit, and source of funds. Exact wording in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#the-declaration).
+One, covering resident status, the LRS limit, and source of funds. It is a single field, `buyer_declaration`, and the exact wording to show the payer comes back as its `label` from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) — read it from there rather than hardcoding it.
+
+### Is there a deadline?
+
+Yes. Every LRS payment carries a verification expiry. Miss it and the payment expires, which is terminal — the money goes back to the buyer and nothing you send afterwards reopens it. Surface the date in your own UI and chase against it.
 
 ### Why verify the PAN before quoting?
 
 An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and tells you why.
 
-Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declarations.
+Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declaration.
 
 ### Which documents are required?
 
-It depends on the purpose code. See the document table in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents).
+It depends on the purpose code, and the authoritative answer for a given payment comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) — do not hardcode a list. For the education codes, see the table in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents).
 
 No scanned PAN card is needed — PAN is a field, validated electronically.
 

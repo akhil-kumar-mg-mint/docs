@@ -26,7 +26,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
   <Step title="Send the compliance details">
     Tell us who paid, what for, and attach the documents. The status becomes `UNDER_REVIEW`.
 
-    For education payments this is four API calls. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+    For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
   <Step title="Get your money">
     We take our fee out of the rupees — plus the buyer's tax on LRS payments, which we pass to the bank — convert what is left at the exchange rate on the settlement date, and send it to your account abroad. Status becomes `SETTLED`.
@@ -63,6 +63,10 @@ Give them two things: the account number and the IFSC. See [Virtual Bank Account
 | `ON_HOLD` | Something needs a human | Check the reason we give and act on it |
 | `SETTLED` | Money is on its way to you | Nothing |
 
+<Warning>
+  **LRS payments work to a deadline.** Each carries a verification expiry. Miss it and the payment expires — terminal, and the money goes back to the buyer. See [The payment has a deadline](/integration-guide/v3/web-integration/lrs-verification#the-payment-has-a-deadline).
+</Warning>
+
 ## When things go wrong
 
 **The buyer paid too little.** The payment waits. Ask them to send the rest to the **same account**, then submit it with `linked_payment_id` pointing at the first payment.
@@ -84,6 +88,6 @@ Give them two things: the account number and the IFSC. See [Virtual Bank Account
     Create a virtual account and take your first payment.
   </Card>
   <Card title="Send compliance details" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-    The four calls that clear a payment for settlement.
+    Read what the payment needs, send it, repeat until nothing is left.
   </Card>
 </CardGroup>

@@ -13,14 +13,23 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | :--- | :--- | :--- |
 | **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
-| **Payment Details Missing** | A payment is missing fields we need | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) |
-| **Verification Needed** | Verification becomes `VERIFIED`, `IN_REVIEW`, or `ACTION_REQUIRED` | Track the outcome, or fix what is flagged |
+| **LRS Verification Needed** | An LRS payment is missing details | Send them — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
+| **Payment Details Missing** | A non-LRS payment is missing fields we need | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) |
+| **Verification Needed** | Verification becomes `VERIFIED`, `IN_REVIEW`, `ACTION_REQUIRED`, or `EXPIRED` | Track the outcome, or fix what is flagged |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |
 | **Payment Settled** | Money is settled to you | Update your books |
 | **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
 | **Refund / Dispute Updates** | A refund status changes or a dispute moves | Track it |
 
 Payload for each is in the [API Reference](/api-reference/v3/webhooks/payment-successful).
+
+<Warning>
+  **LRS payments get `LRS_VERIFICATION_NEEDED`, not the other two.** `PAYMENT_DETAILS_MISSING` and `VERIFICATION_NEEDED` are not sent for them. If you collect education fees and you only handle those two, your handler will never fire.
+</Warning>
+
+<Note>
+  A verified payment sends nothing. `VERIFIED` means nothing is outstanding, so there is no event — do not wait on one to confirm a payment passed.
+</Note>
 
 ## Set it up
 

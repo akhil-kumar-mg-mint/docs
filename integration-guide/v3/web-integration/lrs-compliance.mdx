@@ -56,13 +56,11 @@ Three requirements — resident status, the LRS limit, and source of funds — a
 
 > "I am a resident individual under FEMA, and this remittance is under the Liberalised Remittance Scheme. My total LRS this financial year, including this remittance, is within the permitted limit of USD 250,000, and it is for a permitted purpose (not one prohibited under FEMA/RBI). The funds are from my own legitimate sources and comply with FEMA, RBI, AML and income-tax laws. The information in this declaration is true and complete and I accept sole responsibility for its accuracy."
 
-It maps onto the `declarations` object on [Submit LRS Verification](/api-reference/v3/lrs/submit-verification):
+It maps onto a single field, `buyer_declaration`, on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details). Send `true` once the buyer has affirmed it.
 
-| What the buyer affirms | API field |
-| :--- | :--- |
-| Resident individual | `declarations.resident_in_india` |
-| Under the LRS limit | `declarations.lrs` |
-| Source of funds | `declarations.source_of_funds` |
+<Note>
+  Read the exact wording to show the payer from the requirement set — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns it as the `label` on `buyer_declaration`. Use that rather than copying the text above, so your screen stays right when the wording is revised.
+</Note>
 
 ## Tax at source (TCS)
 
