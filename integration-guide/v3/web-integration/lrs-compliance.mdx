@@ -82,7 +82,9 @@ It maps onto a single field, `buyer_declaration`, on [Submit Verification Detail
 
 Everything else on this page — who may pay, the limit, the declaration, the tax — is the same for every LRS payment. This is the only part that varies, and it varies by **purpose code**.
 
-Fifteen fields are common to all of them: the buyer's address and contact, the invoice number and date, the payment term, the remitter's verified identity, `buyer_declaration`, and `amount_to_be_settled`. What follows is what each purpose code adds on top.
+**Common to every LRS payment.** Fifteen fields: the buyer's address and contact, the invoice number and date, the payment term, the remitter's verified identity, `buyer_declaration`, and `amount_to_be_settled`. Every purpose code asks for these.
+
+What follows is what each code adds on top — first what its group shares, then anything specific to the code itself.
 
 ### Education — `S0305` and `S1107`
 
@@ -93,9 +95,11 @@ Both are for education paid from the buyer's own funds. Loan-funded remittances 
 | `S0305` | Studying abroad — tuition, where the student usually travels |
 | `S1107` | Education fees with no travel involved |
 
-On top of the common fields, expect to collect the **student's name and date of birth**, and their **passport number** for `S0305`.
+**Shared by both.** The student's name and date of birth. The letter of admission, and a relationship declaration where the buyer is not the student. An invoice may be asked for.
 
-Expect to ask the buyer for the **letter of admission**, the **student's passport** or **university ID card**, and a **relationship declaration** where the buyer is not the student. An **invoice** may be asked for. `S1107` has no travel leg, so no student visa exists and the university ID card stands alone.
+**`S0305` only.** The student's passport number, their passport, and either their student visa or their university ID card.
+
+**`S1107` only.** The university ID card. There is no travel leg, so no student visa exists.
 
 <Warning>
   **Do not build a form off this description.** It is here so you can scope the work and know roughly what to ask a buyer for. Which documents a given payment actually requires — and whether each is required, optional, waivable or conditional — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which is generated from the live requirement sets.
