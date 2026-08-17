@@ -63,7 +63,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
   -F 'file=@offer_letter.pdf'
 ```
 
-Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa`. See the [document matrix](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for which documents each purpose code requires.
+Document `type` values depend on the purpose code: `offer_letter`, `fee_invoice`, `passport`, `relationship_declaration`, `student_id_or_visa` (S0305) and `student_id` (S1107). See the [document matrix](/integration-guide/v3/web-integration/lrs-compliance#purpose-codes-and-documents) for which documents each purpose code requires.
 
 <Card title="📚 API Reference" href="/api-reference/v3/lrs/upload-document">
   **Upload LRS Document API** — accepted types and validation.
