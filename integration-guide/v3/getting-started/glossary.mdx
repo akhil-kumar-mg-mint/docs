@@ -1,0 +1,94 @@
+---
+title: "Glossary"
+description: "Every Indian banking, tax and regulatory term this guide uses, in plain English."
+---
+
+Indian payments come with their own vocabulary, and some of it looks unfamiliar even to people who have integrated payments elsewhere. Everything here appears somewhere in this guide.
+
+## Reading rupee amounts
+
+This is the one that catches people out. Indian digit grouping is not the same as most of the world's.
+
+| You see | It means |
+| :--- | :--- |
+| `₹10,00,000` | 1,000,000 — one million rupees |
+| `₹25,00,000` | 2,500,000 — two and a half million rupees |
+
+After the first three digits from the right, digits group in **twos**, not threes. So `₹1,00,00,000` is ten million, not one hundred million.
+
+| Word | Value |
+| :--- | :--- |
+| **lakh** | 100,000. "₹10 lakh" is `₹10,00,000`. |
+| **crore** | 10,000,000, or 100 lakh. Not used in this guide, but you will meet it. |
+
+**₹** is the rupee symbol. You may also see `INR`, the currency code.
+
+## The two amounts
+
+| Term | What it is |
+| :--- | :--- |
+| **Amount to be collected** | What you ask the buyer to transfer — the amount to be settled plus our fee, GST on that fee, and any tax. Returned by the quote as `total_payable_inr`. |
+| **Amount to be settled** | What reaches you abroad. Sent as `amount_to_be_settled`. |
+
+## How buyers pay
+
+| Term | What it is |
+| :--- | :--- |
+| **NEFT** | National Electronic Funds Transfer. A standard Indian bank transfer, settled in batches. |
+| **RTGS** | Real Time Gross Settlement. Same idea, for larger amounts, settled one at a time. |
+| **IMPS** | Immediate Payment Service. Instant transfer, works around the clock. |
+| **UPI** | Unified Payments Interface. India's instant mobile payment system. |
+| **IFSC** | Indian Financial System Code. Eleven characters identifying a specific bank branch. A buyer needs it alongside the account number to send money. |
+| **UTR** | Unique Transaction Reference. The number the bank puts on a transfer — how you match a credit to a payment. |
+| **VBA** | Virtual bank account. The Indian account number we issue for you to collect into. |
+
+## Who is who
+
+| Term | What it is |
+| :--- | :--- |
+| **Buyer** | Whoever in India is paying you. |
+| **Remitter** | The same person, in LRS rules and API field names. Identified by PAN. |
+| **Merchant** | A business collecting money. You, if you collect for yourself. |
+| **Sub-merchant** | A business a PSP onboards and collects for. |
+| **PSP** | Payment Service Provider. Collects on behalf of the sub-merchants it onboards. |
+| **AD bank** | Authorised Dealer bank. The partner bank licensed to move money out of India; it makes the actual transfer. |
+| **Beneficiary** | Whoever receives the money abroad. |
+
+## Tax and money
+
+| Term | What it is |
+| :--- | :--- |
+| **TCS** | Tax Collected at Source. Indian tax taken when money is sent abroad, paid to the government against the buyer's PAN. The buyer claims it back later. |
+| **GST** | Goods and Services Tax. Indian sales tax. Applies to our fee. |
+| **MDR** | Merchant Discount Rate. Our processing fee, as a percentage. |
+| **Financial year** | India's tax year: **1 April to 31 March**. Not the calendar year. Limits and thresholds reset on 1 April. |
+| **Form 26AS** | An Indian taxpayer's annual tax statement. Where a buyer sees the TCS credited to them. |
+
+## Regulation
+
+| Term | What it is |
+| :--- | :--- |
+| **RBI** | Reserve Bank of India. India's central bank and the regulator here. |
+| **PA-CB** | Payment Aggregator – Cross Border. The RBI licence EximPe holds to do this. |
+| **FEMA** | Foreign Exchange Management Act, 1999. The law governing money crossing India's border. |
+| **LRS** | Liberalised Remittance Scheme. The FEMA rules for an **individual** in India sending money abroad. Does not apply to a business paying a business. |
+| **Purpose code** | A FEMA code declaring what a payment is for. Decides who may pay, which documents are needed, and what tax applies. |
+| **Resident individual** | Someone resident in India under FEMA. Only they can use LRS — not companies, partnerships, trusts, or non-residents. |
+| **HUF** | Hindu Undivided Family. An Indian entity type for tax purposes. Cannot use LRS. |
+| **PAN** | Permanent Account Number. A ten-character Indian tax ID, e.g. `ABCDE1234F`. How a buyer is identified under LRS. |
+
+## Onboarding
+
+| Term | What it is |
+| :--- | :--- |
+| **KYC** | Know Your Customer. The identity and business checks before your account goes live. |
+| **UBO** | Ultimate Beneficial Owner. Whoever really owns your business, behind any holding structure. |
+| **PEP** | Politically Exposed Person. Someone in public office, or close to someone who is — declared during KYC. |
+| **MOA / AOA** | Memorandum and Articles of Association. Your company's constitutional documents. |
+
+## Your own bank, abroad
+
+| Term | What it is |
+| :--- | :--- |
+| **SWIFT / BIC** | The code identifying your bank internationally. Both names mean the same thing. |
+| **IBAN** | International Bank Account Number. Used instead of an account number in many countries. |
