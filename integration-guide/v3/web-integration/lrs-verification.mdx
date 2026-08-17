@@ -89,7 +89,7 @@ Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 
 ## Send what you have
 
-One endpoint, one envelope: `fields`, `documents`, `finalize`. What belongs inside is set by the purpose code.
+One endpoint, one envelope: `fields`, `documents`, `finalize`. The envelope never changes — what belongs inside it is set by the payment's purpose code. The examples below are for education; see [what a payment needs, by purpose code](/integration-guide/v3/web-integration/lrs-compliance#what-a-payment-needs-by-purpose-code).
 
 **Multipart** sends the files themselves, with no pre-upload. Five documents in one request instead of six:
 

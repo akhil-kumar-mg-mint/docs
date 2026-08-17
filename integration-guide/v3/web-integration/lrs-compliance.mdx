@@ -78,16 +78,24 @@ It maps onto a single field, `buyer_declaration`, on [Submit Verification Detail
   We track LRS usage and **refuse anything that would breach the USD 250,000 annual cap**, on the data we can see. The bank is the wider backstop at settlement.
 </Note>
 
-## Purpose codes and documents
+## What a payment needs, by purpose code
 
-Two codes, both for education paid from the buyer's own funds. Loan-funded remittances are not supported yet.
+Everything else on this page — who may pay, the limit, the declaration, the tax — is the same for every LRS payment. This is the only part that varies, and it varies by **purpose code**.
+
+Fifteen fields are common to all of them: the buyer's address and contact, the invoice number and date, the payment term, the remitter's verified identity, `buyer_declaration`, and `amount_to_be_settled`. What follows is what each purpose code adds on top.
+
+### Education — `S0305` and `S1107`
+
+Both are for education paid from the buyer's own funds. Loan-funded remittances are not supported yet.
 
 | Purpose code | What it is for |
 | :--- | :--- |
 | `S0305` | Studying abroad — tuition, where the student usually travels |
 | `S1107` | Education fees with no travel involved |
 
-Documents are decided by the purpose code. For education:
+**Extra fields:** `student_name` and `student_dob` for both, plus `student_passport_number` for `S0305`.
+
+**Documents:**
 
 | Document | `S0305` | `S1107` |
 | :--- | :---: | :---: |
@@ -101,7 +109,7 @@ Documents are decided by the purpose code. For education:
 ¹ Alternatives — supplying either one clears both. `S1107` has no travel leg, so there is no visa and the university ID card stands alone.
 
 <Warning>
-  **Do not build a form off this table.** It is here so you know roughly what to ask a buyer for. The authoritative set for a given payment — including the travel codes, and anything added as the rules change — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
+  **Do not build a form off this table.** It is here so you know roughly what to ask a buyer for. The authoritative set for a given payment comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
 </Warning>
 
 <Info>
