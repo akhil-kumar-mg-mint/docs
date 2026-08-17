@@ -31,6 +31,46 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
   </Step>
 </Steps>
 
+## Declaring the purpose code and business model
+
+Most of what this endpoint takes is a fact about the goods or the buyer. Two of them are not: `purpose_code` and `business_model` say what the payment *is*, and they are what the platform files it under.
+
+They appear in `action_required_fields` on [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) when nothing has declared them, alongside the ordinary order fields:
+
+```json
+{
+  "action_required_fields": ["buyer_name", "hs_code", "purpose_code"]
+}
+```
+
+Send them back the same way you send anything else on that list:
+
+```json
+{
+  "buyer_name": "Acme Imports Pvt Ltd",
+  "hs_code": "6109",
+  "purpose_code": "S0305",
+  "business_model": "B2C"
+}
+```
+
+| Field | What it says |
+|---|---|
+| `purpose_code` | The FEMA/FETERS purpose code this order settles under. Must be one your merchant account is enabled for — an unrecognised or un-enabled code is rejected with a `400` rather than stored. |
+| `business_model` | `B2C` or `B2B`. |
+
+<Note>
+  **Both are optional, and omitting one is not the same as clearing it.** Leave either out and whatever was already declared stays. Correcting a buyer's postal code does not retract the purpose code you declared last week.
+</Note>
+
+<Warning>
+  **Sending `business_model` is what makes it declared.** The field defaults to `B2C`, so an order nobody has classified and an order that genuinely is B2C read the same until you say which. That is why the webhook can list `business_model` as outstanding on an order that already shows `B2C` — and why sending `"business_model": "B2C"` is a real answer, not a no-op.
+</Warning>
+
+<Tip>
+  For a payment settling under an LRS purpose code, declaring these switches it over: it stops receiving `VERIFICATION_NEEDED` and starts receiving [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which carries the full purpose-code-specific requirement set — documents included — instead of a flat list of field names.
+</Tip>
+
 ## Test Data
 
 When testing this API in the **sandbox environment**, you must use the following specific test values for the API to work correctly:
