@@ -1,6 +1,6 @@
 ---
 title: 'Submit Verification Details'
-description: "Send a payment's verification details — fields and files — in one call, keyed by the codes the requirements name."
+description: "Send a payment's verification details — fields and document refs — in one JSON call, keyed by the codes the requirements name."
 openapi: 'POST /pg/lrs/payments/{payment_id}/verification/'
 ---
 
@@ -13,9 +13,9 @@ There is nothing to map between them:
 | Where you read it | What you do with it |
 |---|---|
 | the webhook's `action_required_fields[].field` | the keys you put in `fields` |
-| the webhook's `action_required_documents[].document` | what you name the files |
+| the webhook's `action_required_documents[].document` | the `code` you put in `documents` |
 | `fields[].code` (here, and from `GET`) | the key you put in `fields` |
-| `documents[].code` (here, and from `GET`) | what you name the file |
+| `documents[].code` (here, and from `GET`) | the `code` you put in `documents` |
 
 The response repeats the requirement shape, so one call tells you what is left.
 
@@ -26,7 +26,7 @@ The response repeats the requirement shape, so one call tells you what is left.
     [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) lists what the payment owes — each entry a code, a sentence saying why, and whether it can be waived.
   </Step>
   <Step title="You send what you have">
-    Fields as a map, documents as files. Partial is fine.
+    Fields as a map, documents as refs from [Upload Document](/api-reference/v3/lrs/upload-document). Partial is fine.
   </Step>
   <Step title="You read what is left">
     The response repeats `fields` and `documents`, re-evaluated. What is left is the `satisfied: false` entries.
@@ -317,48 +317,6 @@ sets:
   release on your side — but only if you are reading it rather than reproducing
   it.
 </Warning>
-
-## Two ways to send it
-
-### JSON
-
-Reference documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).
-
-```json
-{
-  "fields": {
-    "buyer_city": "Bengaluru",
-    "remitter_pan": "ABCDE1234F",
-    "remitter_relation": "SELF",
-    "buyer_declaration": true,
-    "amount_to_be_settled": "150000.00"
-  },
-  "documents": [
-    { "code": "student_passport", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
-    { "code": "traveller_visas", "waiver_reason": "Destination is visa-free" }
-  ],
-  "finalize": true
-}
-```
-
-### Multipart — one call, no pre-upload
-
-Send the files themselves as parts named `document.<code>`.
-
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/PR6938527534/verification/' \
-  -H 'X-Client-ID: your-client-id' \
-  -H 'X-Client-Secret: your-client-secret' \
-  -H 'X-API-Version: 3.0.0' \
-  -F 'fields={"buyer_city":"Bengaluru","payment_term":"Advance"}' \
-  -F 'document.student_passport=@passport.pdf' \
-  -F 'document.university_id_card=@student-id.png' \
-  -F 'finalize=true'
-```
-
-`fields` and `documents` are JSON encoded as strings; each file is its own part. Parts whose name does not start with `document.` are ignored, so an incidental part costs you nothing.
-
-Five documents is one request instead of six.
 
 ## Partial sends are merged
 
