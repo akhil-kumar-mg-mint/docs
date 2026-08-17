@@ -2816,9 +2816,8 @@
                             },
                             "verification_checked_at": {
                               "type": "string",
-                              "format": "date-time",
-                              "description": "When that verdict was reached. Beside the block rather than inside it, so `verification` stays identical to the submit response's.",
-                              "example": "2026-08-17T05:43:31+00:00"
+                              "description": "When that verdict was reached. Beside the block rather than inside it, so `verification` stays identical to the submit response's. ISO 8601 in UTC with NO offset — parse it as UTC, not as local time.",
+                              "example": "2026-08-17T06:25:20.866647"
                             }
                           }
                         }

@@ -104,7 +104,7 @@ of them.
   "reasons": ["missing_order_fields", "purpose_code_unresolved"],
   "action_required_fields": ["buyer_name", "hs_code", "purpose_code"],
   "settlement_status": "ACTION_REQUIRED",
-  "payment_verification_expiry": "2025-02-20T23:59:59+00:00"
+  "payment_verification_expiry": "2025-02-20T23:59:59"
 }
 ```
 
@@ -188,7 +188,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       "hs_code",
       "purpose_code"
     ],
-    "payment_verification_expiry": "2025-02-20T23:59:59+00:00"
+    "payment_verification_expiry": "2025-02-20T23:59:59"
   }
 }
 ```
@@ -225,7 +225,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       "invoice_file",
       "hs_code"
     ],
-    "payment_verification_expiry": "2025-02-12T23:59:59+00:00"
+    "payment_verification_expiry": "2025-02-12T23:59:59"
   }
 }
 ```
@@ -305,7 +305,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       as the deadline you are working to, not as a detail to log — it is the one
       key here that tells you how long you have.
 
-      **Example**: `"2025-02-20T23:59:59+00:00"`
+      **Example**: `"2025-02-20T23:59:59"`
     </ParamField>
   </Tab>
 </Tabs>

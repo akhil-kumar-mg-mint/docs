@@ -35,7 +35,7 @@ Call it when the event arrives, and render your collection form from the respons
 
 ## Response
 
-A complete, unedited response for an education payment (`S0305`) that has had nothing supplied yet, and one for a payment no requirement set applies to.
+Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, the same payment after a complete set was submitted and **refused**, and a payment no requirement set applies to.
 
 <CodeGroup>
 
@@ -363,6 +363,36 @@ A complete, unedited response for an education payment (`S0305`) that has had no
 }
 ```
 
+```json Complete, but the gateway refused it
+{
+  "success": true,
+  "message": "Verification requirements",
+  "data": {
+    "payment_id": "PR1101324780",
+    "order_uid": "OD8963809589",
+    "status": "complete",
+    "is_lrs": true,
+    "business_model": "B2C",
+    "purpose_code": "S0305",
+    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+    "requirement_label": "B2C · Education — LRS (with travel leg)",
+    "missing_fields": [],
+    "missing_documents": [],
+    "required_fields": ["… as above, all satisfied …"],
+    "required_documents": ["… as above, all satisfied …"],
+    "verification": {
+      "handed_off": true,
+      "status": "action_required",
+      "tcs_check": "match",
+      "missing": ["outstanding"],
+      "reason": null,
+      "outstanding": "1400.00"
+    },
+    "verification_checked_at": "2026-08-17T06:25:20.866647"
+  }
+}
+```
+
 ```json No requirements apply
 {
   "success": true,
@@ -384,6 +414,8 @@ A complete, unedited response for an education payment (`S0305`) that has had no
 </CodeGroup>
 
 `required_*` is the whole set; `missing_*` is the subset still outstanding. Here 21 fields are required and 18 are missing — `buyer_name`, `invoice_amount` and `purpose_code` came in with the payment itself.
+
+The second example is the one worth reading twice: **`status: "complete"` with both missing lists empty, and the payment still has not passed.** `verification` is where that shows — see [The gateway's last word](#the-gateways-last-word).
 
 <Note>
   `required_documents` lists six for `S0305` while `missing_documents` lists four. The optional invoice is not missing because it is optional, and the relationship self-declaration is not missing because its condition cannot be evaluated until you declare `remitter_relation`.
@@ -445,7 +477,7 @@ returns, so there is one shape to parse whichever way you arrived at it:
     "reason": null,
     "outstanding": "12500.00"
   },
-  "verification_checked_at": "2026-08-17T05:43:31+00:00"
+  "verification_checked_at": "2026-08-17T06:25:20.866647"
 }
 ```
 
@@ -461,6 +493,13 @@ returns, so there is one shape to parse whichever way you arrived at it:
 `verification_checked_at` is when that verdict was reached. It sits beside the
 block rather than inside it, so the block itself stays identical to the submit
 response's.
+
+<Warning>
+  **It is ISO 8601 in UTC with no offset** — `2026-08-17T06:25:20.866647`, not
+  `…+00:00`. Parse it as UTC. A parser that treats a naive timestamp as local
+  time will be wrong by your whole offset, which for IST is five and a half
+  hours in the direction that makes a fresh verdict look stale.
+</Warning>
 
 <Note>
   **Absent until a complete set has been submitted** — and absent is not the same
