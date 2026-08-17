@@ -195,7 +195,7 @@ It should be. You tell us the remitter's PAN and we check it against the name on
 
 ### How is TCS calculated?
 
-2% on whatever the buyer has sent abroad above ₹10,00,000 in a financial year. The first ₹10 lakh each year is TCS-free. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure — collect it on top of the amount to be settled, and it passes through to the government against the buyer's PAN.
+On a threshold basis: below the threshold nothing is taxed, on the payment that crosses it only the slice above is taxed, and after that the whole of each payment is. **For education** the rate is 2% and the threshold is ₹10,00,000 of cumulative LRS in a financial year. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the amount, the rate and the reason — collect it on top of the amount to be settled, and it passes through to the government against the buyer's PAN.
 
 You do not declare anything — we compute it. Full mechanics in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#tax-at-source-tcs).
 

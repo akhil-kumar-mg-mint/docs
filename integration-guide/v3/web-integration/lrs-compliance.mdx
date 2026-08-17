@@ -68,11 +68,13 @@ It maps onto a single field, `buyer_declaration`, on [Submit Verification Detail
 
 ## Tax at source (TCS)
 
-**2% on whatever the buyer sends abroad above ₹10,00,000 in a financial year.** The first ₹10 lakh each year is tax-free.
+**How it works, whatever the payment is for.** TCS is charged on a threshold basis: below the threshold nothing is taxed, and on the payment that crosses it only the slice above is taxed. Once the buyer's counter is past the threshold, the whole of each later payment is taxed.
 
-**EximPe works the figure out.** There is nothing for you or the buyer to declare — we compute it against our record of what that PAN has sent through us this financial year. If this payment is the one that crosses ₹10 lakh, only the part above the threshold is taxed.
+**EximPe works the figure out.** There is nothing for you or the buyer to declare — we compute it against our record of what that PAN has sent through us this financial year. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact amount as `tcs_inr`, the rate applied as `tcs_rate`, and why it came out that way as `tcs_reason`. Read the rate from the response rather than assuming it.
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure. Collect it on top of the amount to be settled. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
+Collect it on top of the amount to be settled. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
+
+**For education**, the rate is **2%** and the threshold is **₹10,00,000** of the buyer's cumulative LRS in a financial year. The first ₹10 lakh each year is tax-free.
 
 <Note>
   We track LRS usage and **refuse anything that would breach the USD 250,000 annual cap**, on the data we can see. The bank is the wider backstop at settlement.
