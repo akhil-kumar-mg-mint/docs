@@ -116,7 +116,7 @@ The last two need your sandbox account on the **Simulator** gateway. None of the
 Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLED` webhook take over.
 
 <Note>
-  The submit call reports its own outcome separately, in `verification.status`, as lowercase `under_review` or `action_required`.
+  The submit call answers with where the payment stands and nothing else — `IN_REVIEW` if the set was complete and passed, `ACTION_REQUIRED` if anything is still owed.
 </Note>
 
 ### The buyer paid less than the amount due. What now?

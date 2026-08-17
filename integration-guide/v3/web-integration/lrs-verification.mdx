@@ -47,8 +47,8 @@ flowchart TD
     A --> B --> C --> D --> E --> F
     F -- "yes" --> E
     F -- "no" --> G
-    G -- "<code>action_required</code>" --> E
-    G -- "<code>under_review</code>" --> H
+    G -- "<code>ACTION_REQUIRED</code>" --> E
+    G -- "<code>IN_REVIEW</code>" --> H
     D -.-> X
     X -.-> E
     U -.-> E
@@ -74,9 +74,9 @@ The first two calls happen before any money moves. After that it is one call, re
 | What happened | What you see | What to do |
 | :--- | :--- | :--- |
 | The PAN will not verify | `verified: false` with a `reason` — `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
-| The buyer paid too little | `action_required`, `missing: ["outstanding"]`, and `outstanding` | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
+| The buyer paid too little | `status: "ACTION_REQUIRED"`, and an `LRS_VERIFICATION_NEEDED` event carrying `outstanding` — how much is short | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
 | Something is still missing | `status: "incomplete"`, and the entries in `fields` / `documents` with `satisfied: false` | Send just those. What you sent before is kept. |
-| A complete set failed our checks | `handed_off: true` with `status: "action_required"`, plus `missing` and often a `reason` | Fix what it names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; a `missing` entry of `primary_person` means the buyer is not the person the money is for, so name that person. |
+| A complete set failed our checks | `status: "ACTION_REQUIRED"` on the submit response, and an `LRS_VERIFICATION_NEEDED` event carrying a sentence per item plus `outstanding` and `reason` | Fix what the event names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; an item of `primary_person` means the buyer is not the person the money is for, so name that person. |
 
 <Warning>
   **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).
@@ -178,15 +178,15 @@ You get the whole requirement set as `fields` and `documents`. Each entry carrie
 
 **Omit a key rather than sending `null` or an empty string.** A boolean is only satisfied by `true` — `false` reads as not yet answered.
 
-**`handed_off: true` does not mean the payment passed.** It means our checks ran and reached a verdict. Read `status`:
+**The response tells you where the payment stands, and nothing else.** Two values, and you read `status` for both:
 
 | `status` | What it means | What you do |
 | :--- | :--- | :--- |
-| `under_review` | Passed our checks. With the bank now. | Nothing |
-| `action_required` | Accepted, but did not pass — PAN, sender match, or the money does not add up | Read `missing` and `reason`, fix, send again |
+| `IN_REVIEW` | The set was complete, it went through our checks, and it passed. With us now. | Nothing |
+| `ACTION_REQUIRED` | Something is still owed — the set is short, you held it back with `finalize: false`, or it did not pass our checks | Find out what, then send it |
 
 <Warning>
-  **The same state has two names, and both are correct.** This call reports lowercase `under_review`. The webhook reports the same state on a different field, `verification_status`, as uppercase `IN_REVIEW`. Neither is a typo — match on the field you are reading, not on the word.
+  **`ACTION_REQUIRED` never means your details were discarded.** Everything you sent is kept. `GET /pg/lrs/payments/:payment_id/verification/` names what is still outstanding; a failed check also arrives as an `LRS_VERIFICATION_NEEDED` event with a sentence per item.
 </Warning>
 
 ## The payment has a deadline
