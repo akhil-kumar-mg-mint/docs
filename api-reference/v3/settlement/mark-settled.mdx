@@ -1,0 +1,153 @@
+---
+title: 'Mark as Settled (Sandbox)'
+description: 'Batch captured payments — plus optional refunds and chargebacks — into one settlement and fire PAYMENT_SETTLED, without waiting for real money movement.'
+openapi: 'POST /pg/settlements/mark-settled/'
+---
+
+<Warning>
+  **Sandbox only.** This endpoint returns `400` in production. It operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.
+
+  Your account must be assigned the Simulator gateway in sandbox. Contact your EximPe integration manager if it isn't.
+</Warning>
+
+## Overview
+
+Settlement is the one part of the payment lifecycle you cannot trigger yourself: it happens when money actually moves, on the bank's schedule. That makes settlement webhook handlers and reconciliation logic awkward to test.
+
+This endpoint settles payments on demand. It applies a simulated fee schedule, creates a real settlement record, and fires [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) exactly as production would.
+
+## How the amounts are calculated
+
+Per payment, against the **order amount**:
+
+| Component | Rule |
+|---|---|
+| Platform fee | 5% of the order amount |
+| GST | 18% of the platform fee |
+| Net | order amount − platform fee − GST |
+| Forex rate | Fixed at `96` |
+
+The settlement totals are the sums across the batch:
+
+- `settlement_amount` = Σ payment net − Σ refund amounts − Σ chargeback amounts
+- `settlement_charges` = Σ platform fees
+- `settlement_gst` = Σ GST
+
+Refunds and chargebacks carry **no fee of their own**. They debit the total at their full amount, mirroring the real settlement pipeline.
+
+<Accordion title="Worked example — ₹1,000 payment, ₹100 refund, ₹50 chargeback">
+```
+Payment order amount        ₹1,000.00
+  platform fee (5%)         −  ₹50.00
+  GST (18% of fee)          −   ₹9.00
+  net                       =  ₹941.00
+
+Refund                      − ₹100.00
+Chargeback                  −  ₹50.00
+                            ──────────
+settlement_amount           =  ₹791.00
+settlement_charges          =   ₹50.00
+settlement_gst              =    ₹9.00
+```
+</Accordion>
+
+<Note>
+  These are simulator figures, not your contracted rates. Use them to check that your reconciliation *arithmetic* holds, not to predict production settlement amounts.
+</Note>
+
+## Side effects
+
+Each payment in the batch gets `settlement_status` = `SETTLED` and its per-payment breakdown populated — fee, tax, net, forex rate, settlement currency — in the same shape a real settlement produces.
+
+<Tip>
+  The batch is atomic. If any payment fails validation **nothing** is written, so a partially-settled batch is not a state you can reach.
+</Tip>
+
+## What each payment must satisfy
+
+A payment is rejected unless it is:
+
+1. **Yours** — belonging to your merchant account or one of your sub-merchants
+2. **On the Simulator gateway**
+3. **`CAPTURED`**
+4. **Not already settled** — a payment belongs to exactly one settlement
+
+<Note>
+  A UID owned by a different merchant is indistinguishable from one that does not exist. Both simply fail to resolve.
+</Note>
+
+## Reading validation errors
+
+Unresolvable UIDs come back grouped by category, with the **first** failure in each. Empty categories return `[]`.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_SERVICE_ERROR_000",
+    "message": "Payment gateway error",
+    "details": {
+      "payment_uids": "PR0000000000",
+      "refund_uids": [],
+      "chargeback_uids": []
+    }
+  }
+}
+```
+
+Because only the first failure per category is reported, fix them one at a time or pre-validate your list.
+
+State problems name the offending UID directly:
+
+| `details.payment_uids` | Meaning |
+|---|---|
+| `PR… is not on the simulator gateway` | Created on a real gateway |
+| `PR… is not captured` | Payment has not succeeded |
+| `PR… is already settled` | Belongs to another settlement — create a fresh payment |
+
+## Testing your settlement handler
+
+<Steps>
+  <Step title="Capture a payment">
+    Create an order and complete it on the Simulator gateway so the payment reaches `CAPTURED`.
+  </Step>
+  <Step title="Settle it">
+    `POST /pg/settlements/mark-settled/` with that payment's UID.
+  </Step>
+  <Step title="Receive the webhook">
+    Your endpoint gets [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) carrying the new settlement.
+  </Step>
+  <Step title="Reconcile">
+    `GET /pg/settlements/{settlement_id}/` and check your records agree.
+  </Step>
+</Steps>
+
+To exercise a **net** settlement, create a refund and a chargeback against the payment first, then pass all three UIDs in one call and confirm `settlement_amount` equals the payment net minus both.
+
+## Gotchas
+
+<AccordionGroup>
+  <Accordion title="Amounts are strings in rupees, not integer paise">
+    `"941.00"`, not `94100`. Parse as decimal — never as a float, for money.
+  </Accordion>
+  <Accordion title="A payment can be settled only once">
+    Re-settling returns `is already settled`. Create a fresh payment for each settlement test.
+  </Accordion>
+  <Accordion title="settlement_charges and settlement_gst cover payments only">
+    Refunds and chargebacks carry no fee. They only reduce `settlement_amount`.
+  </Accordion>
+  <Accordion title="It is a POST, despite reading like a bulk update">
+    Both simulator endpoints are `POST`.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Set Refund Status" icon="rotate-left" href="/api-reference/v3/refunds/simulate-status">
+    Drive a refund to any status on demand.
+  </Card>
+  <Card title="PAYMENT_SETTLED" icon="webhook" href="/api-reference/v3/webhooks/payment-settled">
+    The event this endpoint fires.
+  </Card>
+</CardGroup>

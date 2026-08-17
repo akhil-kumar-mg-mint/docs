@@ -14,8 +14,8 @@ There is nothing to map between them:
 |---|---|
 | the webhook's `action_required_fields[].field` | the keys you put in `fields` |
 | the webhook's `action_required_documents[].document` | what you name the files |
-| `missing_fields[].code` (here, and from `GET`) | the key you put in `fields` |
-| `missing_documents[].code` (here, and from `GET`) | what you name the file |
+| `fields[].code` (here, and from `GET`) | the key you put in `fields` |
+| `documents[].code` (here, and from `GET`) | what you name the file |
 
 The response repeats the requirement shape, so one call tells you what is left.
 
@@ -29,7 +29,7 @@ The response repeats the requirement shape, so one call tells you what is left.
     Fields as a map, documents as files. Partial is fine.
   </Step>
   <Step title="You read what is left">
-    The response carries `missing_fields` and `missing_documents` after the write.
+    The response repeats `fields` and `documents`, re-evaluated. What is left is the `satisfied: false` entries.
   </Step>
   <Step title="It completes itself">
     Once nothing is outstanding the set is verified automatically and `verification` reports the outcome.
