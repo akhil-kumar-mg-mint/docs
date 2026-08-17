@@ -3111,12 +3111,18 @@
                                   "type": "array",
                                   "items": {
                                     "type": "string"
-                                  }
+                                  },
+                                  "description": "What did not pass, as tokens: `outstanding`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `purpose_code`, or `documents.<type>`. Empty on `under_review`."
                                 },
                                 "reason": {
                                   "type": "string",
                                   "nullable": true,
-                                  "description": "On `handed_off: false`: `GATEWAY_REJECTED`, `GATEWAY_UNAVAILABLE` (your details are saved — retry to complete) or `NO_DOWNSTREAM_GATEWAY`."
+                                  "description": "One headline conclusion, or `null` — which is normal, not an error. On `handed_off: true` with `status: action_required`: `PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED` or `PURPOSE_CODE_NOT_IN_REGISTRY`; a shortfall and every other multi-check refusal returns `null`. On `handed_off: false`: `GATEWAY_REJECTED`, `GATEWAY_UNAVAILABLE` (your details are saved — retry to complete) or `NO_DOWNSTREAM_GATEWAY`."
+                                },
+                                "outstanding": {
+                                  "type": "string",
+                                  "description": "Money still owed on this payment, in rupees, as a decimal string — principal plus fees, GST and TCS, less what was received. `\"0.00\"` when nothing is owed. Always present when `handed_off` is `true`.",
+                                  "example": "12500.00"
                                 }
                               }
                             }
