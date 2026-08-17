@@ -66,10 +66,7 @@ It maps onto a single field, `buyer_declaration`, on [Submit Verification Detail
 
 **2% on whatever the buyer sends abroad above ₹10,00,000 in a financial year.** The first ₹10 lakh each year is tax-free.
 
-The `tcs_threshold_breached` flag drives the sum:
-
-- **`true`** — they have already crossed ₹10 lakh, so the whole of this payment is taxed.
-- **`false`** — we compute against our own record of what they have sent through us. If this payment crosses the threshold, only the part above it is taxed.
+**EximPe works the figure out.** There is nothing for you or the buyer to declare — we compute it against our record of what that PAN has sent through us this financial year. If this payment is the one that crosses ₹10 lakh, only the part above the threshold is taxed.
 
 [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure. Collect it along with the principal. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
 
