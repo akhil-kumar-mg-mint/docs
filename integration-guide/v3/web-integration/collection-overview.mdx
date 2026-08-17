@@ -16,7 +16,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Create Merchant](/api-reference/v3/merchant/create) · [Merchant Approved webhook](/api-reference/v3/webhooks/merchant-approved)
   </Step>
   <Step title="Set up a way to get paid">
-    Create a virtual account and give the buyer its account number and IFSC.
+    Today that is a virtual account: create one and give the buyer its account number and IFSC.
 
     [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
@@ -37,9 +37,15 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
 ## How the buyer pays
 
-Through a **virtual account** — an Indian account number we issue for you. Your buyer transfers rupees into it by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier.
+Money can reach you by more than one Indian payment method. **Today that means a virtual account** — an Indian account number we issue for you, which your buyer pays into by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier. Give them two things: the account number and the IFSC.
 
-Give them two things: the account number and the IFSC. See [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts).
+<Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
+  Create one, share it, and handle the money arriving.
+</Card>
+
+<Note>
+  **The method only decides how the money arrives.** Once a payment exists it behaves the same way whichever route it came by — same statuses, same webhooks, same compliance step, same settlement. So everything from step 3 onwards is unaffected by which method you use, and adding a method later does not change the integration you have already built.
+</Note>
 
 ## Who is who
 
