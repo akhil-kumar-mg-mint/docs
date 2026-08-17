@@ -47,7 +47,7 @@ A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Clien
 
 ### What does it cost me?
 
-Nothing comes out of the amount you are owed. The buyer pays the **amount to be collected** — the amount to be settled, plus our fee, the GST on that fee, and TCS — so the full amount to be settled reaches you.
+Nothing comes out of the amount you are owed. The buyer pays the **amount to be collected** — the amount to be settled, plus our fee, the GST on that fee, and TCS where the payment is LRS — so the full amount to be settled reaches you.
 
 | | Who funds it | What it is |
 | :--- | :--- | :--- |
@@ -166,7 +166,9 @@ EximPe retries: the 1st attempt is immediate, followed by retries at **1 minute*
 ## LRS — education and travel payments from individuals
 
 <Info>
-  **LRS** is the Liberalised Remittance Scheme — the RBI rules that apply when an **individual** in India sends money abroad, for things like education fees or travel. It does not apply to businesses paying businesses.
+  **LRS** is the Liberalised Remittance Scheme — the RBI rules for an **individual** in India sending money abroad for a personal purpose, like education fees or travel.
+
+  It is decided by **what the money is for**, not by who is paying. An individual buying goods or services from a foreign seller is making a purchase: no LRS limit, and **no TCS**. `is_lrs` on the payment's requirements tells you which kind you have.
 
   **Education is live today.** Travel purpose codes are documented but cannot complete yet. The full rules live in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance); the API walk-through is [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
 </Info>
