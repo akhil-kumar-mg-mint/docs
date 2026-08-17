@@ -121,7 +121,7 @@ Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLE
 
 ### The buyer paid less than the amount due. What now?
 
-The payment waits, and `outstanding` tells you by how much. Two ways to clear it: have the buyer transfer the shortfall into the **same virtual account** and link that credit with `linked_payment_id` when you re-submit, or declare a smaller `amount_to_be_settled`.
+The payment waits, and `outstanding` tells you by how much. Clear it by declaring a smaller `amount_to_be_settled` — the amount that actually arrived — and submitting again.
 
 ### What exchange rate do I get?
 

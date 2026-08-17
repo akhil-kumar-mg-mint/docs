@@ -88,7 +88,7 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 ## When things go wrong
 
-**The buyer paid too little.** The payment waits. Ask them to send the rest to the **same account**, then submit it with `linked_payment_id` pointing at the first payment.
+**The buyer paid too little.** The payment waits, and `outstanding` says by how much. Declare a smaller `amount_to_be_settled` for what actually arrived, and submit again.
 
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 

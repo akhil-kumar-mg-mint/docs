@@ -54,17 +54,9 @@ The response gives you `vba_account_number` and `vba_ifsc`. Send those two to yo
 
 ## Step 3: Handle the money arriving
 
-When a credit lands we record the amount, the sender's account and IFSC, their name, the UTR, and any remarks the buyer typed on the transfer. Then we create a payment and send you a webhook.
+When a credit lands we record the amount, the sender's account and IFSC, their name, and the UTR. Then we create a payment and send you a webhook.
 
 The payment status is `ACTION_REQUIRED`. We have the money but not the paperwork.
-
-### Buyer remarks as a matching hint
-
-Most Indian banks let the buyer type a short free-text narration on the transfer. It reaches you as `payer_remarks` on the payment, exactly as they typed it. Ask buyers to put your own reference there — an order number, an invoice number — and a credit that shares an account with others usually identifies itself.
-
-<Warning>
-  **Treat it as a hint, never as the key.** The field is optional at the buyer's bank and often arrives blank, truncated, or mistyped, so it is `null` on a good share of credits. Build matching on something you control — an account per payment, or a remitter lock — and use `payer_remarks` to resolve what is left over.
-</Warning>
 
 <Warning>
   **The sender on the credit does not identify the payment.** You tell us who paid, and what for, in the next step.
