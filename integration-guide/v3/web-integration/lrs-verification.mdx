@@ -89,35 +89,73 @@ Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 
 ## Send what you have
 
-One endpoint, one envelope: `fields`, `documents`, `finalize`. The envelope never changes — what belongs inside it is set by the payment's purpose code. The examples below are for education; see [what a payment needs, by purpose code](/integration-guide/v3/web-integration/lrs-compliance#what-a-payment-needs-by-purpose-code).
+One endpoint, one envelope: `fields`, `documents`, `finalize`. The envelope never changes — what belongs inside it is set by the payment's purpose code.
 
-**Multipart** sends the files themselves, with no pre-upload. Five documents in one request instead of six:
+Two ways to send. **Multipart** carries the files themselves, so five documents is one request instead of six. **JSON** references documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).
 
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -H 'X-API-Version: 3.0.0' \
-  -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
-  -F 'document.student_passport=@passport.pdf' \
-  -F 'document.university_id_card=@student-id.png'
-```
+<Tabs>
+  <Tab title="Education">
+    ```bash Multipart
+    curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
+      -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+      -H 'X-Merchant-ID: <sub_merchant_id>' \
+      -H 'X-API-Version: 3.0.0' \
+      -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
+      -F 'document.student_passport=@passport.pdf' \
+      -F 'document.university_id_card=@student-id.png'
+    ```
 
-**JSON** references documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document):
+    ```json JSON
+    {
+      "fields": {
+        "remitter_pan": "ABCDE1234F",
+        "remitter_relation": "SELF",
+        "buyer_declaration": true,
+        "amount_to_be_settled": "150000.00",
+        "student_name": "Ananya Kumar",
+        "student_dob": "2005-09-30"
+      },
+      "documents": [
+        { "code": "loa", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
+        { "code": "student_passport", "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e" }
+      ]
+    }
+    ```
+  </Tab>
 
-```json
-{
-  "fields": {
-    "remitter_pan": "ABCDE1234F",
-    "remitter_relation": "SELF",
-    "buyer_declaration": true,
-    "amount_to_be_settled": "150000.00"
-  },
-  "documents": [
-    { "code": "student_passport", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
-  ]
-}
-```
+  <Tab title="Travel">
+    <Warning>
+      **Travel does not complete yet.** The call accepts these details and holds them, but a travel payment will not advance — see [Only education completes today](#only-education-completes-today).
+    </Warning>
+
+    ```bash Multipart
+    curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
+      -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+      -H 'X-Merchant-ID: <sub_merchant_id>' \
+      -H 'X-API-Version: 3.0.0' \
+      -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
+      -F 'document.passenger_list=@passengers.pdf' \
+      -F 'document.traveller_passports=@passports.pdf' \
+      -F 'document.ticket=@ticket.pdf'
+    ```
+
+    ```json JSON
+    {
+      "fields": {
+        "remitter_pan": "ABCPK1234F",
+        "remitter_relation": "PARENT",
+        "buyer_declaration": true,
+        "amount_to_be_settled": "150000.00"
+      },
+      "documents": [
+        { "code": "passenger_list", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
+        { "code": "traveller_passports", "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e" },
+        { "code": "traveller_visas", "waiver_reason": "Destination is visa-free" }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
 
 <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
   Complete bodies for every purpose code, both send modes, and every error.

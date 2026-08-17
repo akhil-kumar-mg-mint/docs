@@ -88,36 +88,38 @@ Everything else on this page — who may pay, the limit, the declaration, the ta
 
 What follows is what each code adds on top — first what its group shares, then anything specific to the code itself.
 
-### Education — `S0305` and `S1107`
+<Tabs>
+  <Tab title="Education">
+    Both are for education paid from the buyer's own funds. Loan-funded remittances are not supported yet.
 
-Both are for education paid from the buyer's own funds. Loan-funded remittances are not supported yet.
+    | Purpose code | What it is for |
+    | :--- | :--- |
+    | `S0305` | Studying abroad — tuition, where the student usually travels |
+    | `S1107` | Education fees with no travel involved |
 
-| Purpose code | What it is for |
-| :--- | :--- |
-| `S0305` | Studying abroad — tuition, where the student usually travels |
-| `S1107` | Education fees with no travel involved |
+    **Shared by both.** The student's name and date of birth. The letter of admission, and a relationship declaration where the buyer is not the student. An invoice may be asked for.
 
-**Shared by both.** The student's name and date of birth. The letter of admission, and a relationship declaration where the buyer is not the student. An invoice may be asked for.
+    **`S0305` only.** The student's passport number, their passport, and either their student visa or their university ID card.
 
-**`S0305` only.** The student's passport number, their passport, and either their student visa or their university ID card.
+    **`S1107` only.** The university ID card. There is no travel leg, so no student visa exists.
+  </Tab>
 
-**`S1107` only.** The university ID card. There is no travel leg, so no student visa exists.
+  <Tab title="Travel">
+    <Warning>
+      **Travel does not complete yet.** These codes accept details and hold them against the payment, but our verification rules cover education only, so a travel payment will not advance. Do not put it in front of a buyer until we say it is live.
+    </Warning>
 
-### Travel — `S0303`, `S0304`, `S0306`
+    | Purpose code | What it is for |
+    | :--- | :--- |
+    | `S0306` | Travel, other |
+    | `S0304` | Travel for medical treatment |
+    | `S0303` | Travel for pilgrimage |
 
-<Warning>
-  **Travel does not complete yet.** These codes accept details and hold them against the payment, but our verification rules cover education only, so a travel payment will not advance. Do not put it in front of a buyer until we say it is live.
-</Warning>
+    **Shared by all three.** No extra fields beyond the common set. Expect to ask the buyer for the passenger list, the travellers' passports, their visas, the ticket, and an invoice. A relationship declaration where the buyer is not the traveller. Visas and the ticket can be waived with a reason — a visa-free destination, for instance.
 
-| Purpose code | What it is for |
-| :--- | :--- |
-| `S0306` | Travel, other |
-| `S0304` | Travel for medical treatment |
-| `S0303` | Travel for pilgrimage |
-
-**Shared by all three.** No extra fields beyond the common set. Expect to ask the buyer for the passenger list, the travellers' passports, their visas, the ticket, and an invoice. A relationship declaration where the buyer is not the traveller. Visas and the ticket can be waived with a reason — a visa-free destination, for instance.
-
-**Per code.** The three currently ask for the same set. Expect that to diverge as the rules for each are settled, so read the requirements per payment rather than assuming they stay identical.
+    **Per code.** The three currently ask for the same set. Expect that to diverge as the rules for each are settled, so read the requirements per payment rather than assuming they stay identical.
+  </Tab>
+</Tabs>
 
 <Warning>
   **Do not build a form off this description.** It is here so you can scope the work and know roughly what to ask a buyer for. Which documents a given payment actually requires — and whether each is required, optional, waivable or conditional — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which is generated from the live requirement sets.
