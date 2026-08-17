@@ -41,6 +41,26 @@ Payload for each is in the [API Reference](/api-reference/v3/webhooks/payment-su
 
 **4. Test it.** Make a sandbox payment, watch it arrive, confirm you return `200`.
 
+## Driving every event in sandbox
+
+You do not have to wait for real money, or a real settlement date, to exercise your handlers. Sandbox lets you fire each event on demand.
+
+| To test | Call |
+| :--- | :--- |
+| Money arriving, and the verification that follows | [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) |
+| `PAYMENT_SETTLED`, with a real settlement record and fee arithmetic | [Mark as Settled](/api-reference/v3/settlement/mark-settled) |
+| `PAYMENT_REFUNDED`, `REFUND_FAILED`, `REFUND_STATUS_UPDATE` | [Set Refund Status](/api-reference/v3/refunds/simulate-status) |
+
+Set Refund Status is the useful one for coverage: force a single refund through `REFUNDED`, `FAILED`, `PROCESSING`, `REVERSED`, `ON_HOLD` and `BANK_REJECTED_REFUND` in turn, and one refund exercises every branch of your handler. `INITIATED` fires nothing — it is the starting state, not a transition.
+
+<Warning>
+  **Both need the Simulator gateway.** They only work on transactions created through it, and return `400` in production. If your sandbox account is not on the Simulator gateway, ask your EximPe integration manager to assign it.
+</Warning>
+
+<Note>
+  Mark as Settled applies a **simulated** fee schedule, not your contracted rates. Use it to check that your reconciliation arithmetic holds, not to predict what a production settlement will pay you.
+</Note>
+
 ## Check the message is really from us
 
 Every webhook carries an HMAC-SHA256 signature in the `X-Webhook-Signature` header. Verify it before you act on anything — otherwise anyone who finds your URL can tell you a payment succeeded.

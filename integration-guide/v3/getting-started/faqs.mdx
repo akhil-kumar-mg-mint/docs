@@ -88,7 +88,13 @@ Yes, optionally, at creation time. A **remitter lock** restricts the VBA to a sp
 
 ### Can I test without a real bank transfer?
 
-Yes. In sandbox, [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) triggers the end-to-end flow — payment creation, webhooks, and verification. Each `utr` must be unique across simulations. The endpoint is not available in production.
+Yes, and not just the transfer. In sandbox you can fire each stage on demand:
+
+- [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer) — money arriving. Each `utr` must be unique.
+- [Mark as Settled](/api-reference/v3/settlement/mark-settled) — settlement and `PAYMENT_SETTLED`.
+- [Set Refund Status](/api-reference/v3/refunds/simulate-status) — force a refund to any status, so one refund covers every branch of your handler.
+
+The last two need your sandbox account on the **Simulator** gateway. None of the three exist in production.
 
 ---
 
