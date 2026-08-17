@@ -41,7 +41,7 @@ flowchart TD
     F{"Anything<br/>outstanding?"}
     G{"Our checks<br/>PAN, sender match, tax"}
     H["With the bank,<br/>then settled to you"]
-    X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — the whole set, if you missed<br/>the webhook or are building your form"]
+    X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, with labels for the buyer"]
 
     A --> B --> C --> D --> E --> F
     F -- "yes" --> E
@@ -125,7 +125,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verif
 
 ## If you need the full picture
 
-The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the event, you are resuming a half-finished payment, or you are building the form and want every label. It is idempotent — call it whenever.
+The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the webhook, when you are picking up a payment someone started days ago, or when you are building the screen you show the buyer and want every label up front. It is idempotent — call it whenever.
 
 ```bash
 curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
