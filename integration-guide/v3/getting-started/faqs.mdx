@@ -89,7 +89,7 @@ Yes — but **the parent is then the remitter**. Their PAN is used and their acc
 
 ### Why must the money come from the remitter's own account?
 
-LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch puts the payment **On Hold**.
+LRS is reported against the **PAN of the debited account**. A credit from a third party's account cannot be settled on someone else's PAN. Enforce own-account payment in your UX — a mismatch keeps the payment in **Action Required** with `reason: SENDER_NAME_MISMATCH`, and it clears only by re-declaring the actual account holder as the remitter.
 
 ### How is TCS calculated?
 

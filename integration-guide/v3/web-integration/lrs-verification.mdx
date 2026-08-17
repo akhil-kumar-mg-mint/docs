@@ -71,7 +71,9 @@ Document `type` values depend on the purpose code — e.g. `offer_letter`, `fee_
 
 ## Step 4: Submit Verification Details
 
-Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it. The money-match expects the credit to cover the **principal, EximPe's fee, the GST on that fee and the TCS** — the same all-in total the quote returned.
+Finally, submit the remaining details for the payment: the remitter, purpose code, invoice, address, contact, declarations, the `principal`, the collected TCS, and the document `ref`s. EximPe runs the checks (declarations, documents, sender-name match, TCS, money-match), posts the payment to the buyer's LRS counter, and advances it. The money-match expects the credit to cover the **principal, EximPe's fee, the GST on that fee and the TCS** — the same all-in total the quote returned.
+
+`principal` is this payment's remitted amount — what settles onward, what posts to the ₹10 lakh LRS counter, and what TCS is charged on. It is **not** `invoice.amount`: the invoice total is metadata for the settlement file and may be met across several payments, each with its own principal.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
@@ -85,6 +87,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/verify/' \
     "invoice": { "number": "INV-2025-0091", "date": "2025-07-01", "amount": 1200000 },
     "address": { "address1": "12 MG Road", "city": "Bengaluru", "state": "Karnataka", "pincode": "560001" },
     "contact": { "email": "john@example.com", "mobile": "9876543210" },
+    "principal": 1200000,
     "tcs": 4000.00,
     "declarations": { "resident_in_india": true, "lrs": true, "source_of_funds": true },
     "documents": [ { "type": "offer_letter", "ref": "<ref-from-step-3>" } ]
@@ -96,8 +99,9 @@ The response reports the resulting state:
 | `status` | Meaning |
 | :--- | :--- |
 | `under_review` | Checks passed; posted to the LRS counter and awaiting bank processing. |
-| `action_required` | Something is missing — see the `missing` array and `outstanding` amount, fix, and resubmit. |
-| `on_hold` | Needs manual attention (e.g. the sender is not the PAN holder). |
+| `action_required` | Something is missing — see the `missing` array and `outstanding` amount, fix, and resubmit. A non-null `reason` (e.g. `SENDER_NAME_MISMATCH`) says the credit's sender is not the declared PAN holder. |
+
+LRS has no On Hold state: every outcome that does not advance stays in `action_required` and is cleared by re-submitting.
 
 <Warning>
   When the remitter's `relation` is not `SELF` (e.g. a parent paying for a student), you must also include `primary_person` (name, dob, passport number) for the person the remittance is for.

@@ -2506,9 +2506,9 @@
                       "type": "object",
                       "properties": {
                         "financial_year": {
-                          "type": "integer",
-                          "description": "Financial year the quote applies to (start year).",
-                          "example": 2025
+                          "type": "string",
+                          "description": "Financial year the quote applies to, rendered `YYYY-YY` (1 April - 31 March).",
+                          "example": "2025-26"
                         },
                         "committed_inr": {
                           "type": "string",
@@ -2553,7 +2553,7 @@
                   "success": true,
                   "message": "LRS amount quoted",
                   "data": {
-                    "financial_year": 2025,
+                    "financial_year": "2025-26",
                     "committed_inr": "0.00",
                     "remittance_inr": "1200000.00",
                     "taxable_inr": "200000.00",
@@ -2709,7 +2709,7 @@
     "/pg/lrs/verify/": {
       "post": {
         "summary": "Submit a payment's LRS verification details",
-        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required** (with a `missing` list) or **On Hold** (sender is not the PAN holder). The money-match requires the credit to cover the remitted principal, EximPe's fee, the GST on that fee and the TCS — anything short comes back as `outstanding`. `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
+        "description": "After a credit lands and the payment is created, submit the remitter, purpose, invoice, address, contact, declarations, supporting documents and the collected TCS. We run the checks (declarations, documents, sender-name match, TCS, money-match), post the payment to the buyer's LRS counter and advance it to **Under Review** — or leave it in **Action Required**, either with a `missing` list or because the credit's sender is not the declared PAN holder (`reason: SENDER_NAME_MISMATCH`). LRS has no On Hold state: every outcome that does not advance stays in Action Required and is fixed by re-submitting. The money-match requires the credit to cover the remitted principal, EximPe's fee, the GST on that fee and the TCS — anything short comes back as `outstanding`. `primary_person` is required when the remitter's `relation` is not `SELF`.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant.",
         "tags": [
           "LRS"
         ],
@@ -2734,6 +2734,7 @@
                   "invoice",
                   "address",
                   "contact",
+                  "principal",
                   "tcs",
                   "declarations",
                   "documents"
@@ -2827,6 +2828,7 @@
                       },
                       "amount": {
                         "type": "number",
+                        "description": "Invoice total in INR rupees — metadata for the settlement file. It may be met across several payments, so it does not gate the money-match; `principal` does.",
                         "example": 1200000
                       }
                     }
@@ -2875,6 +2877,11 @@
                         "example": "9876543210"
                       }
                     }
+                  },
+                  "principal": {
+                    "type": "number",
+                    "description": "This payment's remitted principal, in INR rupees — the money that goes abroad. The money-match target is `principal` + EximPe's fee + GST on that fee + TCS; this is also what posts to the buyer's Rs.10L LRS counter and what TCS is charged on. Distinct from `invoice.amount`: one invoice may be met across several payments, each with its own principal.",
+                    "example": 1200000
                   },
                   "tcs": {
                     "type": "number",
@@ -2977,6 +2984,7 @@
                   "email": "john@example.com",
                   "mobile": "9876543210"
                 },
+                "principal": 1200000,
                 "tcs": 4000,
                 "declarations": {
                   "resident_in_india": true,
@@ -3024,10 +3032,9 @@
                           "type": "string",
                           "enum": [
                             "under_review",
-                            "action_required",
-                            "on_hold"
+                            "action_required"
                           ],
-                          "description": "Resulting payment state.",
+                          "description": "Resulting payment state. There is no On Hold outcome on LRS — anything that does not advance stays in `action_required`.",
                           "example": "under_review"
                         },
                         "tcs_check": {
@@ -3055,7 +3062,7 @@
                         "reason": {
                           "type": "string",
                           "nullable": true,
-                          "description": "Machine reason when not advanced (e.g. PURPOSE_CODE_NOT_ALLOWED, PAN_NOT_VERIFIED).",
+                          "description": "Machine reason when not advanced: `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED`, `PURPOSE_CODE_NOT_IN_REGISTRY` or `PAN_NOT_VERIFIED`. Null when the payment advanced, and null on an Action Required caused only by gaps in `missing`.",
                           "example": null
                         }
                       }
@@ -3096,18 +3103,18 @@
                       }
                     }
                   },
-                  "on_hold": {
-                    "summary": "On Hold — sender is not the PAN holder",
+                  "sender_mismatch": {
+                    "summary": "Action Required — sender is not the PAN holder",
                     "value": {
                       "success": true,
                       "message": "Verification details processed",
                       "data": {
                         "payment_id": "PAY_1a2b3c4d5e",
-                        "status": "on_hold",
-                        "tcs_check": "n/a",
+                        "status": "action_required",
+                        "tcs_check": "match",
                         "missing": [],
                         "outstanding": "0.00",
-                        "reason": "SENDER_NOT_PAN_HOLDER"
+                        "reason": "SENDER_NAME_MISMATCH"
                       }
                     }
                   }
