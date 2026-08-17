@@ -83,18 +83,22 @@ Two codes, both for education paid from the buyer's own funds. Loan-funded remit
 | `S0305` | Studying abroad — tuition, where the student usually travels |
 | `S1107` | Education fees with no travel involved |
 
-Documents are decided by the purpose code:
+Documents are decided by the purpose code. For education:
 
-| Document (`type`) | S0305 | S1107 |
-| :--- | :--- | :--- |
-| `offer_letter` — offer or admission letter | Required | Required |
-| `fee_invoice` — fee invoice or demand letter | Sometimes¹ | Sometimes¹ |
-| `passport` — the student's | Required | — |
-| `student_id_or_visa` | Required, either one | Student ID only² |
-| `relationship_declaration` | Required if the buyer is not the student | Required if the buyer is not the student |
+| Document | `S0305` | `S1107` |
+| :--- | :---: | :---: |
+| Letter of admission (`loa`) | Required | Required |
+| Student passport (`student_passport`) | Required | — |
+| Student visa (`student_visa`) | Required¹ | — |
+| University ID card (`university_id_card`) | Required¹ | Required |
+| Invoice (`invoice`) | Optional | Optional |
+| Relationship declaration (`relationship_declaration`) | If the buyer is not the student | If the buyer is not the student |
 
-¹ Not needed if the offer letter already carries the fee and bank details.
-² No travel, so no student visa — the student ID proves enrolment.
+¹ Alternatives — supplying either one clears both. `S1107` has no travel leg, so there is no visa and the university ID card stands alone.
+
+<Warning>
+  **Do not build a form off this table.** It is here so you know roughly what to ask a payer for. The authoritative set for a given payment — including the travel codes, and anything added as the rules change — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
+</Warning>
 
 <Info>
   No scanned PAN card. PAN is a field, validated electronically.
