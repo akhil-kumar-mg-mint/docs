@@ -43,23 +43,23 @@ As a PSP you onboard the businesses you collect for as sub-merchants. Collection
 
 A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the payment belongs to.
 
-### What comes out of the rupees before I am paid?
+### What does it cost me?
 
-Two different things, and only one of them is a cost to you. Both come out of the **rupees**, before conversion.
+Nothing comes out of your principal. The buyer pays **principal + our fee + GST on that fee + TCS**, so the full principal settles onward to you.
 
-**What EximPe charges**
+| | Who funds it | What it is |
+| :--- | :--- | :--- |
+| **Principal** | Buyer | The remittance — this is what settles to you |
+| **MDR** | Buyer, on top | Our processing fee. Your rate is agreed with your KAM. |
+| **GST on the MDR** | Buyer, on top | Indian tax on that fee. |
+| **TCS** | Buyer, on top | LRS only. We hand it to the bank, which pays it to the government against the buyer's **PAN**. The buyer reclaims it as a tax credit. |
 
-| | |
-| :--- | :--- |
-| **MDR** | Our processing fee. Your rate is agreed with your KAM. |
-| **GST on the MDR** | Indian tax on that fee. |
-
-**What passes through**
-
-On LRS payments we also take out **TCS**. This is not our charge and we do not keep it — we hand it to the bank, which pays it to the government against the **buyer's** PAN. The buyer then claims it back as a tax credit; it shows up in their Form 26AS.
+<Warning>
+  **Collect the all-in total, not the principal.** [Quote LRS Amount](/api-reference/v3/lrs/quote) returns it as `total_payable_inr` — ask the buyer for exactly that. Collect only the principal and the payment is short, and it waits until the buyer tops up.
+</Warning>
 
 <Note>
-  Quote the TCS and add it to what the buyer transfers, and it costs you nothing — the buyer funds their own tax. See [How is TCS calculated?](#how-is-tcs-calculated)
+  The fee and GST are not itemised in the quote response. If you need them broken out, talk to your KAM.
 </Note>
 
 ### How do I get started?
@@ -111,7 +111,7 @@ The payment waits with the outstanding amount. The buyer tops up into the **same
 
 The rate at the time we settle, not the rate at the time your buyer paid.
 
-You collect in rupees. When the payment clears, we take the [deductions](#what-comes-out-of-the-rupees-before-i-am-paid) out of the rupees, convert what is left to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad.
+You collect in rupees. When the payment clears we convert your principal to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad. See [What does it cost me?](#what-does-it-cost-me) for what the buyer pays on top.
 
 So the gap between the buyer paying and the money settling is exposure you carry. If you quote your customer a price in your own currency, price that gap in.
 
@@ -177,7 +177,7 @@ LRS is reported against the PAN of the account the money came out of, so a payme
 
 ### The credit shows a sender bank account. Is that the remitter?
 
-It should be. You tell us the remitter's PAN and we check it against the name on the sending account. If they do not match the payment goes **on hold**, and you either refund it or give us the PAN of whoever actually paid — in which case it settles against them and their LRS limit.
+It should be. You tell us the remitter's PAN and we check it against the name on the sending account. If they do not match the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`, and you either refund it or give us the PAN of whoever actually paid — in which case it settles against them and their LRS limit.
 
 ### How is TCS calculated?
 

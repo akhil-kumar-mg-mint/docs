@@ -29,9 +29,9 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
   <Step title="Get your money">
-    We take our fee out of the rupees — plus the buyer's tax on LRS payments, which we pass to the bank — convert what is left at the exchange rate on the settlement date, and send it to your account abroad. Status becomes `SETTLED`.
+    We convert your principal at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole principal settles.
 
-    [What comes out of the rupees](/integration-guide/v3/getting-started/faqs#what-comes-out-of-the-rupees-before-i-am-paid) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
+    [What it costs you](/integration-guide/v3/getting-started/faqs#what-does-it-cost-me) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
 </Steps>
 
@@ -73,7 +73,7 @@ Give them two things: the account number and the IFSC. See [Virtual Bank Account
 
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 
-**The money came from someone else's account.** This applies to LRS payments only. The name on the sending account did not match the PAN you gave us, so the payment is on hold. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
+**The money came from someone else's account.** This applies to LRS payments only. The name on the sending account did not match the PAN you gave us, so the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
 
 **You need to refund.** Refunds go back to the buyer's own account. You can refund part of a payment, more than once. If your balance does not cover it, the call fails — collect more and try again.
 
