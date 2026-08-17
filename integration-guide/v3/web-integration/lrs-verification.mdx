@@ -15,14 +15,14 @@ Money has arrived and the payment cannot settle yet. We tell you exactly what it
 
 ## Do it in this order
 
-Every settlement blocker comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the amount to be settled instead of the amount to be collected.
+Every settlement blocker comes from doing one of these out of order. The quote is the important one: it is how you learn **what to ask the buyer for**, and that figure is bigger than the amount you are owed.
 
 ```mermaid
 %%{init: {
   "theme": "base",
   "themeVariables": {
     "fontFamily": "ui-sans-serif, system-ui, -apple-system, sans-serif",
-    "fontSize": "14px",
+    "fontSize": "13px",
     "primaryColor": "#ffffff",
     "primaryTextColor": "#15803d",
     "primaryBorderColor": "#26a887",
@@ -30,15 +30,15 @@ Every settlement blocker comes from doing one of these out of order. The two tha
     "tertiaryColor": "#ffffff",
     "edgeLabelBackground": "#ffffff"
   },
-  "flowchart": { "curve": "basis", "nodeSpacing": 40, "rankSpacing": 44 }
+  "flowchart": { "curve": "basis", "htmlLabels": true, "wrappingWidth": 340, "nodeSpacing": 44, "rankSpacing": 48 }
 }}%%
 flowchart TD
-    A["1 · Verify the buyer's PAN"]
-    B["2 · Quote the tax"]
-    C["3 · Ask for the<br/><b>amount to be collected</b>"]
-    D["4 · Buyer transfers in"]
-    E["5 · LRS_VERIFICATION_NEEDED<br/>names what is missing"]
-    F["6 · Send fields and documents"]
+    A["<code>POST /pg/pan/verify</code><br/>Check the buyer's PAN is real<br/>and matches their name"]
+    B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>TCS</b> to collect, plus our fee<br/>and the GST on it, added to the amount to be settled"]
+    C["Buyer transfers that amount<br/>into the virtual account"]
+    D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We list what the payment still owes"]
+    E["<code>GET /pg/lrs/payments/:id/verification</code><br/>The full requirement set, with labels<br/>you can show the buyer"]
+    F["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
     G{"Anything<br/>outstanding?"}
     H{"Gateway<br/>verdict"}
     I["Settled to you"]
@@ -46,21 +46,21 @@ flowchart TD
     A --> B --> C --> D --> E --> F --> G
     G -- "yes" --> F
     G -- "no" --> H
-    H -- "action_required" --> F
-    H -- "under_review" --> I
+    H -- "<code>action_required</code>" --> F
+    H -- "<code>under_review</code>" --> I
 
     classDef step fill:#ffffff,stroke:#26a887,stroke-width:1.5px,color:#134e4a
     classDef gate fill:#f0faf7,stroke:#26a887,stroke-width:1.5px,color:#134e4a
     classDef emphasis fill:#e6f6f1,stroke:#15803d,stroke-width:2px,color:#134e4a
     classDef done fill:#15803d,stroke:#15803d,stroke-width:2px,color:#ffffff
 
-    class A,B,D,E,F step
-    class C emphasis
+    class A,C,D,E,F step
+    class B emphasis
     class G,H gate
     class I done
 ```
 
-Steps 1 to 3 happen before any money moves. Steps 4 to 6 repeat until nothing is outstanding — partial sends merge, so send each thing as you get it.
+The first two calls happen before any money moves. The last two repeat until nothing is outstanding — partial sends merge, so send each thing as you get it rather than waiting for the full set.
 
 ### When it does not go straight through
 
@@ -81,10 +81,10 @@ Steps 1 to 3 happen before any money moves. Steps 4 to 6 repeat until nothing is
 
 ## The two calls before the money moves
 
-Steps 1 and 2 above are not part of the verification loop, and both are easy to skip.
+Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 
-- **[Verify PAN](/api-reference/v3/lrs/verify-pan)** — do it before you ask anyone for documents.
-- **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — returns `total_payable_inr`, the figure to ask the buyer for.
+- **[Verify PAN](/api-reference/v3/lrs/verify-pan)** — do it first. Nothing downstream works until the PAN passes, and you do not want to have chased documents by then.
+- **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — this is what tells you **how much to collect**. It returns `total_payable_inr`: the amount to be settled, plus our fee, the GST on that fee, and any tax. Ask the buyer for that figure and the payment covers itself.
 
 ## Step 1: Read what the payment needs
 

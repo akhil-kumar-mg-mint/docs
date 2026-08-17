@@ -101,3 +101,9 @@
         flex-wrap: wrap !important;
     }
 }
+/* Centre Mermaid diagrams. Mintlify's wrapper is full-width and the SVG is a
+   block element with no auto margins, so it renders flush left by default. */
+.mermaid svg {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
