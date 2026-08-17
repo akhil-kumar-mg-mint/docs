@@ -450,6 +450,15 @@ do not have to wait for the event to know what happened.
 | `purpose_code` | The code is not one this account may use, or not one we recognise. Fixed on the order, not here. |
 | `documents.<type>` | That document did not reach the gateway. Re-send the file. |
 
+<Warning>
+  **Travel purpose codes cannot complete yet.** A complete set on `S0306`,
+  `S0304` or `S0303` returns `status: "action_required"` with
+  `missing: ["purpose_code"]` and `reason: "PURPOSE_CODE_NOT_IN_REGISTRY"`,
+  however much you send. Collecting and submitting works — the details are held
+  against the payment — but the payment will not advance until the travel rules
+  are in place. Education (`S0305`, `S1107`) is unaffected.
+</Warning>
+
 **`reason` values**
 
 `PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED`,
