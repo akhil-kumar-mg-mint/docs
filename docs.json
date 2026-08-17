@@ -403,7 +403,8 @@
                 "pages": [
                   "api-reference/v3/settlement/list",
                   "api-reference/v3/settlement/get",
-                  "api-reference/v3/settlement/recon"
+                  "api-reference/v3/settlement/recon",
+                  "api-reference/v3/settlement/mark-settled"
                 ]
               },
               {
@@ -411,7 +412,8 @@
                 "pages": [
                   "api-reference/v3/refunds/create",
                   "api-reference/v3/refunds/list",
-                  "api-reference/v3/refunds/get"
+                  "api-reference/v3/refunds/get",
+                  "api-reference/v3/refunds/simulate-status"
                 ]
               },
               {
