@@ -221,7 +221,10 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
     "verification_status": "EXPIRED",
     "message": "Payment verification action required",
-    "action_required_fields": [],
+    "action_required_fields": [
+      "invoice_file",
+      "hs_code"
+    ],
     "payment_verification_expiry": "2025-02-12T23:59:59+00:00"
   }
 }
@@ -320,9 +323,12 @@ the payment settles nowhere, and the amount is refunded to the buyer.
   to transact, that is a new order.
 </Warning>
 
-`action_required_fields` is usually empty on an `EXPIRED` event: the list is what
-you could still act on, and by then there is nothing. Act on the deadline while
-the status is `ACTION_REQUIRED`, and treat each event's
+`action_required_fields` is usually **populated** on an `EXPIRED` event — a
+document whose own status is `EXPIRED` is listed the same way a flagged one is.
+Read it as a record of what lapsed, not as a to-do list: supplying any of it will
+not reopen the window.
+
+Act on the deadline while the status is `ACTION_REQUIRED`, and treat each event's
 `payment_verification_expiry` as authoritative — it can move, and an event is
 sent when it does even if nothing else changed.
 
@@ -339,7 +345,7 @@ sent when it does even if nothing else changed.
      - Notify merchant/admin about required actions
      - Update the specified fields using the [Upload Verification Details API](/api-reference/v3/payment/upload-verification-details)
    - **`IN_REVIEW`**: Nothing to do. Record that the payment is under review; `action_required_fields` is empty unless a classifying fact is still unresolved.
-   - **`EXPIRED`**: The verification window has closed and the amount is refunded to the buyer. Nothing you send reopens it — close the payment out on your side. See [When verification expires](#when-verification-expires).
+   - **`EXPIRED`**: The verification window has closed and the amount is refunded to the buyer. `action_required_fields` records what lapsed, but nothing you send reopens it — close the payment out on your side. See [When verification expires](#when-verification-expires).
 5. **Watch `payment_verification_expiry`** while the status is `ACTION_REQUIRED`. It is the deadline the payment is working to, and it can move between events.
   
 ### Action Required Fields Reference
