@@ -6353,6 +6353,21 @@
             "type": "string",
             "maxLength": 30,
             "description": "HS code. Required when type_of_goods is GOODS, PHYSICAL_GOODS, or DIGITAL_GOODS; optional for SERVICE."
+          },
+          "purpose_code": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "FEMA/FETERS purpose code this order settles under. Send it when `VERIFICATION_NEEDED` lists `purpose_code` in `action_required_fields`. Must be one your merchant account is enabled for — an unrecognised or un-enabled code is a 400, not a stored value. Omit it to leave whatever was already declared untouched.",
+            "example": "S0305"
+          },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2C",
+              "B2B"
+            ],
+            "description": "Whether the buyer is a business (B2B) or a consumer (B2C). Send it when `VERIFICATION_NEEDED` lists `business_model` in `action_required_fields`. Sending it is what makes it declared — the field defaults to `B2C`, so an order nobody classified is indistinguishable from one that genuinely is B2C until you say so. Omit it to leave an earlier declaration untouched.",
+            "example": "B2C"
           }
         }
       },
