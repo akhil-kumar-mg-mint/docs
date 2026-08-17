@@ -24,7 +24,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet.
   </Step>
   <Step title="Send the compliance details">
-    Tell us who paid, what for, and attach the documents. The status becomes `UNDER_REVIEW`.
+    Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
 
     For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
@@ -67,11 +67,14 @@ Ask for the amount to be collected. Declare the amount to be settled. Collect th
 
 ## Payment statuses
 
-| Status | What it means | What you do |
+| `verification_status` | What it means | What you do |
 | :--- | :--- | :--- |
 | `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
-| `UNDER_REVIEW` | Details accepted, bank is processing | Wait |
-| `SETTLED` | Money is on its way to you | Nothing |
+| `IN_REVIEW` | Details accepted, bank is processing | Wait |
+| `VERIFIED` | Nothing outstanding. No webhook fires for this. | Nothing |
+| `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
+
+Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 <Warning>
   **LRS payments work to a deadline.** Each carries a verification expiry. Miss it and the payment expires — terminal, and the money goes back to the buyer. See [The payment has a deadline](/integration-guide/v3/web-integration/lrs-verification#the-payment-has-a-deadline).

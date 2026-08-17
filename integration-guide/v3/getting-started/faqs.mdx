@@ -102,15 +102,24 @@ The last two need your sandbox account on the **Simulator** gateway. None of the
 
 ### What states does a payment move through?
 
-| State | Meaning |
+`verification_status`, as the webhooks report it:
+
+| Status | Meaning |
 | :--- | :--- |
-| `ACTION_REQUIRED` | Money received, but something is still outstanding — details not sent yet, or sent and not passed. |
-| `UNDER_REVIEW` | Verification accepted; awaiting bank processing. For LRS, the amount is posted to the buyer's LRS counter at this point. |
-| `SETTLED` | Funds settled to the beneficiary. |
+| `ACTION_REQUIRED` | Something is still outstanding — details not sent yet, or sent and not passed. |
+| `IN_REVIEW` | Accepted; awaiting bank processing. For LRS the amount is posted to the buyer's LRS counter at this point. |
+| `VERIFIED` | Nothing outstanding. **No webhook is sent** for this — do not wait on one. |
+| `EXPIRED` | The verification window closed. Terminal; the money goes back to the buyer. |
+
+Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLED` webhook take over.
+
+<Note>
+  The submit call reports its own outcome separately, in `verification.status`, as lowercase `under_review` or `action_required`.
+</Note>
 
 ### The buyer paid less than the amount due. What now?
 
-The payment waits with the outstanding amount. The buyer tops up into the **same VBA**, and you submit the top-up **linked** to the original by passing `linked_payment_id` and a `reason` (`REMAINING_AMOUNT` or `TCS_PAYMENT`). `reason` is only valid together with `linked_payment_id`.
+The payment waits, and `outstanding` tells you by how much. Two ways to clear it: have the buyer transfer the shortfall into the **same virtual account** and link that credit with `linked_payment_id` when you re-submit, or declare a smaller `amount_to_be_settled`.
 
 ### What exchange rate do I get?
 

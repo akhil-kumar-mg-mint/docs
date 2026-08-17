@@ -68,7 +68,7 @@ The first two calls happen before any money moves. The last two repeat until not
 | :--- | :--- | :--- |
 | The PAN will not verify | `verified: false` with a `reason` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
 | The buyer paid too little | `action_required`, `missing: ["outstanding"]`, and `outstanding` | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
-| Something is still missing | `missing_fields` / `missing_documents` on the response | Send just those. What you sent before is kept. |
+| Something is still missing | `status: "incomplete"`, and the entries in `fields` / `documents` with `satisfied: false` | Send just those. What you sent before is kept. |
 | A complete set was refused | `handed_off: true` with `status: "action_required"` and a `reason` | Fix what `reason` names — usually the PAN or the sender match — and send again |
 
 <Warning>
@@ -95,7 +95,7 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verifi
   -H 'X-API-Version: 3.0.0'
 ```
 
-You get the whole requirement set — what is already satisfied and what is still owed — plus the `label` for each code. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
+You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `label`, whether it is `waivable`, and `satisfied` — so the ones still owed are those with `satisfied: false`. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
 
 The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
 
