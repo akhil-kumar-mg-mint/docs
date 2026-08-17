@@ -16488,7 +16488,7 @@
         "in": "header",
         "description": "**Client Application ID** - Your unique application identifier used to authenticate API requests. You can find your Client ID in the Developer Settings section of the merchant dashboard.",
         "x-displayName": "Client ID",
-        "x-example": "your-client-id"
+        "x-default": "your-client-id"
       },
       "clientSecretAuth": {
         "type": "apiKey",
@@ -16496,7 +16496,7 @@
         "in": "header",
         "description": "**Client Secret Key** - Your secret key used alongside the Client ID for secure authentication. Keep this confidential and never expose it in client-side code. Available in the Developer Settings section of the merchant dashboard.",
         "x-displayName": "Client Secret",
-        "x-example": "your-client-secret"
+        "x-default": "your-client-secret"
       },
       "merchantAuth": {
         "type": "apiKey",
@@ -16504,7 +16504,7 @@
         "in": "header",
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
-        "x-example": "your-merchant-id"
+        "x-default": "sub-merchant-id"
       },
       "apiVersionHeader": {
         "type": "apiKey",
@@ -16512,7 +16512,7 @@
         "in": "header",
         "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
         "x-displayName": "API Version",
-        "x-example": "3.0.0"
+        "x-default": "3.0.0"
       }
     }
   },
