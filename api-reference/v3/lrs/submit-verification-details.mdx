@@ -1,0 +1,518 @@
+---
+title: 'Submit Verification Details'
+description: "Send a payment's verification details — fields and files — in one call, keyed by the codes the requirements name."
+openapi: 'POST /pg/lrs/payments/{payment_id}/verification/'
+---
+
+## Overview
+
+Sends verification details for a payment, keyed by the same codes that [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use.
+
+There is nothing to map between them:
+
+| Where you read it | What you do with it |
+|---|---|
+| the webhook's `action_required_fields[].field` | the keys you put in `fields` |
+| the webhook's `action_required_documents[].document` | what you name the files |
+| `missing_fields[].code` (here, and from `GET`) | the key you put in `fields` |
+| `missing_documents[].code` (here, and from `GET`) | what you name the file |
+
+The response repeats the requirement shape, so one call tells you what is left.
+
+## The loop
+
+<Steps>
+  <Step title="An event arrives">
+    [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) lists what the payment owes — each entry a code, a sentence saying why, and whether it can be waived.
+  </Step>
+  <Step title="You send what you have">
+    Fields as a map, documents as files. Partial is fine.
+  </Step>
+  <Step title="You read what is left">
+    The response carries `missing_fields` and `missing_documents` after the write.
+  </Step>
+  <Step title="It completes itself">
+    Once nothing is outstanding the set is verified automatically and `verification` reports the outcome.
+  </Step>
+</Steps>
+
+## The body depends on the purpose code
+
+There is one endpoint and one envelope — `fields`, `documents`, `finalize` — but
+**what belongs inside them is decided by the payment's purpose code**, not by
+you. Sending a key the code does not ask for is a `400`.
+
+You never have to work out which set applies: `GET` the same path and it tells
+you, or read the codes off the
+[`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+event.
+
+Complete bodies for every LRS purpose code, generated from the live requirement
+sets:
+
+<CodeGroup>
+
+```json S0305 - Education, with travel leg
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00",
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30",
+    "student_passport_number": "Z1234567"
+  },
+  "documents": [
+    {
+      "code": "student_passport",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "student_visa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "loa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S1107 - Education, fees only
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00",
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30"
+  },
+  "documents": [
+    {
+      "code": "university_id_card",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "loa",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0306 - Travel, other
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0304 - Travel, medical
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+```json S0303 - Travel, pilgrimage
+{
+  "fields": {
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "payment_term": "Advance",
+    "remitter_name": "RAVI KUMAR",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "remitter_relation": "PARENT",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    {
+      "code": "passenger_list",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_passports",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "traveller_visas",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "invoice",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "ticket",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    },
+    {
+      "code": "relationship_declaration",
+      "ref": "<ref from POST /pg/lrs/documents>"
+    }
+  ],
+  "finalize": true
+}
+```
+
+</CodeGroup>
+
+<Note>
+  The three travel codes take an identical body. They differ in what the
+  remittance is *for* — other travel, medical treatment, pilgrimage — not in
+  what you must collect.
+
+  `S0305` shows `student_visa`; `university_id_card` would do just as well.
+  They are alternatives, and the requirement set says so — the webhook merges
+  them into one entry, and sending either clears both. **Do not send both.**
+
+  Every example declares `remitter_relation` as `PARENT`, which is what makes
+  `relationship_declaration` required. Declare `SELF` and it drops out.
+</Note>
+
+### What differs, and what does not
+
+| | `S0305` | `S1107` | `S0306` · `S0304` · `S0303` |
+|---|:---:|:---:|:---:|
+| Buyer, invoice, declaration, amount | same | same | same |
+| Remitter identity (4 fields) | same | same | same |
+| `student_name`, `student_dob` | ✓ | ✓ | — |
+| `student_passport_number` | ✓ | — | — |
+| Documents | 4 + optional invoice | 2 + optional invoice | 5 |
+
+`relationship_declaration` is asked for on every code, but only once
+`remitter_relation` is something other than `SELF`.
+
+<Warning>
+  **Do not branch on the purpose code in your own integration.** Read the
+  requirement set instead. The codes above are what the matrix asks for today;
+  it is configuration, and a revision reaches you through the API without a
+  release on your side — but only if you are reading it rather than reproducing
+  it.
+</Warning>
+
+## Two ways to send it
+
+### JSON
+
+Reference documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).
+
+```json
+{
+  "fields": {
+    "buyer_city": "Bengaluru",
+    "remitter_pan": "ABCDE1234F",
+    "remitter_relation": "SELF",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "documents": [
+    { "code": "student_passport", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
+    { "code": "traveller_visas", "waiver_reason": "Destination is visa-free" }
+  ],
+  "finalize": true
+}
+```
+
+### Multipart — one call, no pre-upload
+
+Send the files themselves as parts named `document.<code>`.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/PR6938527534/verification/' \
+  -H 'X-Client-ID: your-client-id' \
+  -H 'X-Client-Secret: your-client-secret' \
+  -H 'X-API-Version: 3.0.0' \
+  -F 'fields={"buyer_city":"Bengaluru","payment_term":"Advance"}' \
+  -F 'document.student_passport=@passport.pdf' \
+  -F 'document.university_id_card=@student-id.png' \
+  -F 'finalize=true'
+```
+
+`fields` and `documents` are JSON encoded as strings; each file is its own part. Parts whose name does not start with `document.` are ignored, so an incidental part costs you nothing.
+
+Five documents is one request instead of six.
+
+## Partial sends are merged
+
+Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a document sent twice supersedes the first without discarding it.
+
+This is deliberate: nobody collects a passport scan, a visa and a letter of admission in the same instant.
+
+## Values
+
+Field values are strings, numbers or booleans.
+
+<Note>
+  **`buyer_declaration` is a single affirmation covering every claim.** Its `label` is
+  the exact text the payer must be shown; send `true` once they have affirmed it. TCS is
+  not collected — EximPe computes it, so there is no figure to declare.
+</Note>
+
+<Warning>
+  **An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
+</Warning>
+
+Omit a key rather than sending `null` or an empty string. A boolean requirement — the LRS declarations — is only satisfied by `true`; `false` reads as not yet answered.
+
+## Completion
+
+`finalize` defaults to `true` and applies only to a **complete** set. It never forces an incomplete one through.
+
+When a complete set is submitted it runs through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. The outcome comes back in `verification`:
+
+```json
+"verification": {
+  "handed_off": true,
+  "status": "under_review",
+  "tcs_check": "match",
+  "missing": [],
+  "reason": null,
+  "outstanding": "0.00"
+}
+```
+
+<Warning>
+  **`handed_off: true` does not mean the payment passed.** It means the gateway
+  took the set and reached a verdict. Read `status`, which is `under_review` or
+  `action_required`. A complete set that fails PAN verification, the sender match
+  or the money check is `handed_off: true` with `status: "action_required"` — the
+  payment stays where it was, and `missing` says what to fix.
+</Warning>
+
+### `status: "action_required"` — accepted, not passed
+
+Everything the requirement list named can be supplied and the payment still not
+proceed, because supplying a PAN is not the same as it verifying. When that
+happens you get:
+
+```json
+"verification": {
+  "handed_off": true,
+  "status": "action_required",
+  "tcs_check": "match",
+  "missing": ["outstanding"],
+  "reason": null,
+  "outstanding": "12500.00"
+}
+```
+
+| Key | What it carries |
+|---|---|
+| `status` | `under_review` (accepted and proceeding) or `action_required` (the payment stays parked). |
+| `missing` | What did not pass, as tokens — see the table below. Empty on `under_review`. |
+| `reason` | One headline conclusion where one exists, `null` otherwise. `null` is normal, not an error. |
+| `outstanding` | The money still owed, in rupees, as a decimal string. `"0.00"` when nothing is — the key is always there whenever `handed_off` is `true`, so there is no absence to handle. |
+| `tcs_check` | `match`, `mismatch`, or `n/a` where the check was never reached (an early reject on the PAN or the purpose code). |
+
+The same payment also gets an
+[`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass)
+webhook carrying the same conclusion in the requirement codes, with a sentence
+per item you can show a payer. This response is the synchronous half of it — you
+do not have to wait for the event to know what happened.
+
+**`missing` tokens**
+
+| Token | What to do |
+|---|---|
+| `outstanding` | The credit does not cover the payment. `outstanding` says by how much — either the buyer tops it up (link it with `linked_payment_id` when you re-submit) or you declare a smaller `amount_to_be_settled`. |
+| `remitter.pan` | The PAN did not verify against the name and date of birth. Re-send all three. |
+| `declarations` | `buyer_declaration` was not affirmed. |
+| `primary_person` | The remitter is not the person the remittance is for, so name them — `student_name`, `student_dob`, `student_passport_number`. |
+| `tcs` | The TCS figure does not reconcile with ours. You do not declare TCS; raise this with us rather than re-sending. |
+| `purpose_code` | The code is not one this account may use, or not one we recognise. Fixed on the order, not here. |
+| `documents.<type>` | That document did not reach the gateway. Re-send the file. |
+
+<Warning>
+  **Travel purpose codes cannot complete yet.** A complete set on `S0306`,
+  `S0304` or `S0303` returns `status: "action_required"` with
+  `missing: ["purpose_code"]` and `reason: "PURPOSE_CODE_NOT_IN_REGISTRY"`,
+  however much you send. Collecting and submitting works — the details are held
+  against the payment — but the payment will not advance until the travel rules
+  are in place. Education (`S0305`, `S1107`) is unaffected.
+</Warning>
+
+**`reason` values**
+
+`PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED`,
+`PURPOSE_CODE_NOT_IN_REGISTRY` — or `null`, which is what a shortfall and every
+other multi-check refusal returns.
+
+<Note>
+  **Nothing you sent is lost.** Re-send only the thing that failed; it merges
+  with what is already held, and the payment stays submittable throughout.
+</Note>
+
+### `handed_off: false` — the set never reached a verdict
+
+When `handed_off` is `false`, `reason` says why:
+
+| `reason` | What it means |
+|---|---|
+| `GATEWAY_REJECTED` | Verification declined — for example the payment is already past submit. `detail` says which. |
+| `GATEWAY_UNAVAILABLE` | A dependency was briefly unreachable. **Your details are saved.** Repeat the request to complete it; you do not need to re-send anything. |
+| `NO_DOWNSTREAM_GATEWAY` | This purpose code has no automated verification; details are recorded and the payment proceeds through review. |
+
+<Note>
+  Details are stored before verification is attempted and are never discarded by it. An outage costs you a retry, never a re-send.
+</Note>
+
+Pass `finalize: false` to stage details without triggering verification — useful when you know more is coming.
+
+## Where each value goes
+
+Most fields flow into the verification and settlement record. Three are collected
+but held rather than forwarded, and it is worth knowing which:
+
+| Field | Where it goes |
+|---|---|
+| `buyer_name` | Held. The credit's own sender name on the order is authoritative — the LRS own-account check compares the verified PAN holder against *that*, so a submitted value must not overwrite it. |
+| `purpose_code` | Held. Read from the order, which is what the settlement file uses. |
+| `payment_term` | Held. Nothing in the settlement record holds it yet; your answer is kept against the payment until something does. |
+
+Everything else reaches the verification gateway. TCS is not collected at all —
+EximPe computes it.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    What this payment needs, and what it already has.
+  </Card>
+  <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
+    The event that tells you a payment owes details.
+  </Card>
+  <Card title="Upload Document" icon="file-arrow-up" href="/api-reference/v3/lrs/upload-document">
+    Pre-upload a file and reference it by `ref`.
+  </Card>
+  <Card title="Quote LRS Amount" icon="calculator" href="/api-reference/v3/lrs/quote">
+    TCS and the all-in total, before the buyer transfers.
+  </Card>
+</CardGroup>
