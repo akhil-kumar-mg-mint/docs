@@ -2505,6 +2505,11 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "pan": {
+                          "type": "string",
+                          "description": "The PAN the quote was run for, upper-cased.",
+                          "example": "ABCDE1234F"
+                        },
                         "financial_year": {
                           "type": "string",
                           "description": "Financial year the quote applies to, rendered `YYYY-YY` (1 April - 31 March).",
@@ -2525,6 +2530,11 @@
                           "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it.",
                           "example": "200000.00"
                         },
+                        "tcs_rate": {
+                          "type": "string",
+                          "description": "The TCS rate applied, formatted for display. Flat across every supported purpose code.",
+                          "example": "2%"
+                        },
                         "tcs_inr": {
                           "type": "string",
                           "description": "TCS due on this remittance (INR).",
@@ -2542,8 +2552,24 @@
                         },
                         "tcs_threshold_breached_after": {
                           "type": "boolean",
-                          "description": "Whether this remittance crosses the Rs.10L threshold.",
+                          "description": "Whether the counter is at or past Rs.10L once this remittance is counted. Also `true` when it was already past beforehand, and it flips at exactly Rs.10,00,000 — where `taxable_inr` is still `0.00`. Read `tcs_inr`, not this flag, to know whether tax is due.",
                           "example": true
+                        },
+                        "tcs_reason": {
+                          "type": "string",
+                          "enum": [
+                            "nil_below_threshold",
+                            "partial_above_threshold",
+                            "full_amount_taxable"
+                          ],
+                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under Rs.10L; this remittance crosses the line and only the slice above it is taxed; or the counter was already past and the whole remittance is taxable.",
+                          "example": "partial_above_threshold"
+                        },
+                        "refusal_reason": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Machine-readable code when we will not quote. `null` on a valid quote.",
+                          "example": null
                         }
                       }
                     }
@@ -2553,14 +2579,18 @@
                   "success": true,
                   "message": "LRS amount quoted",
                   "data": {
+                    "pan": "ABCDE1234F",
                     "financial_year": "2025-26",
                     "committed_inr": "0.00",
                     "remittance_inr": "1200000.00",
                     "taxable_inr": "200000.00",
+                    "tcs_rate": "2%",
                     "tcs_inr": "4000.00",
                     "total_payable_inr": "1211080.00",
                     "tcs_threshold_breached_before": false,
-                    "tcs_threshold_breached_after": true
+                    "tcs_threshold_breached_after": true,
+                    "tcs_reason": "partial_above_threshold",
+                    "refusal_reason": null
                   }
                 }
               }
