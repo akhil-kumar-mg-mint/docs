@@ -37,11 +37,12 @@ flowchart TD
     B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>total amount to collect</b> —<br/>inclusive of TCS and EximPe's charges"]
     C["Buyer pays that amount<br/>Payment created as <code>ACTION_REQUIRED</code>"]
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We name the exact fields and documents<br/>still needed, and any money short"]
-    E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
+    E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields, and documents as refs"]
     F{"Anything<br/>outstanding?"}
     G{"Our checks<br/>PAN, sender match, tax"}
     H["With the bank,<br/>then settled to you"]
     X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, with labels for the buyer"]
+    U["<code>POST /pg/lrs/documents</code><br/>Upload each document as it arrives,<br/>keep the <code>ref</code> it returns"]
 
     A --> B --> C --> D --> E --> F
     F -- "yes" --> E
@@ -50,6 +51,7 @@ flowchart TD
     G -- "<code>under_review</code>" --> H
     D -.-> X
     X -.-> E
+    U -.-> E
 
     classDef step fill:#ffffff,stroke:#26a887,stroke-width:1.5px,color:#134e4a
     classDef gate fill:#f0faf7,stroke:#26a887,stroke-width:1.5px,color:#134e4a
@@ -61,7 +63,7 @@ flowchart TD
     class B emphasis
     class F,G gate
     class H done
-    class X aside
+    class X,U aside
 
 ```
 
@@ -89,23 +91,24 @@ Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 
 ## Send what you have
 
-One endpoint, one envelope: `fields`, `documents`, `finalize`. The envelope never changes — what belongs inside it is set by the payment's purpose code.
+Two calls, and they are decoupled. Upload each document when you get it and keep the `ref` it returns; then send the fields and those refs together as JSON.
 
-Two ways to send. **Multipart** carries the files themselves, so five documents is one request instead of six. **JSON** references documents you uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).
+**Uploading a document** is `multipart/form-data` — a `file` and a `type`:
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
+  -F 'type=loa' \
+  -F 'file=@admission-letter.pdf'
+```
+
+**Sending the details** is one JSON call. The envelope never changes — `fields`, `documents`, `finalize` — and what belongs inside is set by the payment's purpose code.
 
 <Tabs>
   <Tab title="Education">
-    ```bash Multipart
-    curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
-      -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-      -H 'X-Merchant-ID: <sub_merchant_id>' \
-      -H 'X-API-Version: 3.0.0' \
-      -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
-      -F 'document.student_passport=@passport.pdf' \
-      -F 'document.university_id_card=@student-id.png'
-    ```
-
-    ```json JSON
+    ```json
     {
       "fields": {
         "remitter_pan": "ABCDE1234F",
@@ -124,18 +127,7 @@ Two ways to send. **Multipart** carries the files themselves, so five documents 
   </Tab>
 
   <Tab title="Travel">
-    ```bash Multipart
-    curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
-      -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-      -H 'X-Merchant-ID: <sub_merchant_id>' \
-      -H 'X-API-Version: 3.0.0' \
-      -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
-      -F 'document.passenger_list=@passengers.pdf' \
-      -F 'document.traveller_passports=@passports.pdf' \
-      -F 'document.ticket=@ticket.pdf'
-    ```
-
-    ```json JSON
+    ```json
     {
       "fields": {
         "remitter_pan": "ABCPK1234F",
@@ -152,6 +144,10 @@ Two ways to send. **Multipart** carries the files themselves, so five documents 
     ```
   </Tab>
 </Tabs>
+
+<Note>
+  Uploading is decoupled from any payment, so you can do it the moment a document arrives rather than holding it until you have the full set. A document can also be waived with a `waiver_reason` instead of a `ref`, where the requirements allow it.
+</Note>
 
 <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
   Complete bodies for every purpose code, both send modes, and every error.
