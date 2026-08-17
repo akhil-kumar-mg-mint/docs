@@ -1,84 +1,63 @@
 ---
 title: 'Introduction'
-description: 'EximPe is an API-only cross-border collection rail. Collect an Indian buyer''s rupees into an EximPe-issued virtual account and have the funds settled to you abroad — with LRS compliance handled through the API. EximPe shows the buyer no screen.'
+description: 'Collect rupees from Indian buyers and get the money settled to your account abroad, without an Indian entity.'
 ---
 
+Sell to buyers in India, get paid in your own currency, abroad. No Indian company, no Indian bank account, no dealing with Indian regulations yourself.
+
+Your buyer pays in rupees, the way they always do. We handle the compliance and send you the money.
 
 <Button href="/integration-guide/v3/getting-started/steps-to-integrate" variant="primary" size="lg">
   Get Started with EximPe
 </Button>
 
-## Overview
+## What you can collect for
 
-This is a **headless, API-only** rail for collecting an Indian buyer's rupees into an EximPe-issued **Virtual Bank Account (VBA)** and settling the funds abroad under the RBI **Payment Aggregator – Cross Border (PA-CB)** framework. A bank partner (an **Authorised Dealer**, or "AD bank") performs the actual outward remittance. There is no hosted checkout, no card/UPI payment page — the buyer transfers money to a virtual account, and you assert the compliance details through the API.
-
-You own the entire customer-facing experience and the customer relationship; EximPe is the embedded India collection and settlement engine underneath. You onboard the universities you serve as sub-merchants — collections, settlements, and balances are tracked **per university**.
-
-## Who Uses It
+Every payment has a **purpose code** that says what the money is for. The purpose code decides who is allowed to pay, which documents you need, and what tax applies.
 
 <CardGroup cols={2}>
-  <Card title="PSP" icon="sitemap">
-    An integrator that calls the API on behalf of the **sub-merchants** it onboards. A PSP never holds a VBA or funds itself.
+  <Card title="Education fees" icon="graduation-cap" href="/integration-guide/v3/web-integration/lrs-compliance">
+    Tuition and other education fees, paid by an individual in India under the Liberalised Remittance Scheme. Purpose codes `S0305` and `S1107`.
   </Card>
-  <Card title="Sub-merchant" icon="store">
-    A merchant created under a PSP. Holds VBAs and collected funds; is the entity that gets settled (the "settling entity").
-  </Card>
-  <Card title="Direct merchant" icon="building">
-    A merchant with no parent PSP — holds its own VBAs and funds and is its own API caller.
-  </Card>
-  <Card title="Remitter (Buyer)" icon="user">
-    The person in India paying, uniquely identified by **PAN**. LRS limits apply per person, platform-wide.
+  <Card title="Travel" icon="plane" href="/integration-guide/v3/web-integration/lrs-compliance#what-a-payment-needs-by-purpose-code">
+    Travel, medical treatment and pilgrimage, paid by an individual in India under the same scheme. Purpose codes `S0306`, `S0304` and `S0303`.
   </Card>
 </CardGroup>
 
-## How It Works
-
-<Steps>
-  <Step title="Onboard merchants">
-    A PSP registers, then creates sub-merchants via the API. Each is approved before it can collect.
-  </Step>
-  <Step title="Issue a Virtual Bank Account">
-    Create a VBA for the settling entity. Indian buyers transfer rupees into it — a single VBA can receive credits from many remitters.
-  </Step>
-  <Step title="Receive a credit">
-    When money lands in the VBA, EximPe creates a payment in **Action Required** and notifies you by webhook.
-  </Step>
-  <Step title="Assert LRS compliance">
-    Verify the buyer's PAN, quote the TCS, upload supporting documents, and submit the remitter / purpose / declarations. The payment advances to **Under Review**.
-  </Step>
-  <Step title="Settle abroad">
-    Cleared funds are settled to the beneficiary and reported via the settlement APIs and the Payment Settled webhook.
-  </Step>
-</Steps>
+<Note>
+  Your account is enabled for specific purpose codes. If you want to collect for something not listed here, get in touch — we will tell you what it takes.
+</Note>
 
 ## Why EximPe
 
 <CardGroup cols={2}>
-  <Card title="No Local Entity" icon="building">
-    Collect in India without an Indian business entity or banking setup.
+  <Card title="No Indian entity needed" icon="building">
+    Collect in India without registering a company or opening a bank account there.
   </Card>
-  <Card title="Compliance Built In" icon="shield-check">
-    LRS limits, TCS, purpose codes, and documentation are handled through the API and by EximPe.
+  <Card title="Compliance handled" icon="shield-check">
+    We enforce the purpose codes, limits, tax, and paperwork on every payment.
   </Card>
-  <Card title="Multi-Currency Settlement" icon="money-bill">
-    Rupees collected in India, settled to you abroad in your currency.
+  <Card title="Paid in your currency" icon="money-bill">
+    Rupees in, your currency out, to your own bank abroad.
   </Card>
-  <Card title="Fully API-Driven" icon="code">
-    No buyer-facing screens — embed collection and compliance directly in your product.
+  <Card title="Integrate your way" icon="code">
+    Build it into your own product, or hand the buyer to a page we host.
   </Card>
 </CardGroup>
 
-## Regulatory Framework
+## The rules you are working within
 
-EximPe operates under the RBI **PA-CB** guidelines. Key constraints to design for:
+EximPe is licensed by the RBI as a **Payment Aggregator – Cross Border (PA-CB)**. A partner bank makes the actual transfer abroad. Four things shape what you can build:
 
-- **Per-transaction limit**: ₹25,00,000 per transaction.
-- **LRS TCS threshold**: TCS is nil up to ₹10,00,000 of a remitter's cumulative LRS in a financial year, and applies only to the amount above it (per person, platform-wide, resets each 1 April).
-- **Purpose codes**: every payment carries a FEMA purpose code from the settling entity's allowlist.
-- **Documentation**: a digital invoice and supporting documents are required for each remittance; a full audit trail is maintained.
-
-For the full rules — eligibility, the buyer declarations, TCS mechanics, and the education purpose codes and documents — see [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance).
+- **₹25,00,000** is the most one payment can be.
+- **Every payment needs a purpose code**, from the set your account is enabled for.
+- **Every payment needs documents.** Which ones depends on the purpose code.
+- **Some payments attract tax at source.** For education, tax starts only after the buyer has sent ₹10,00,000 abroad in a financial year.
 
 <Info>
-  **Ready to start?** Follow [Steps to Integrate](/integration-guide/v3/getting-started/steps-to-integrate) to onboard, issue a VBA, and collect your first payment.
+  Unfamiliar with any of the Indian terms — `₹10,00,000`, lakh, NEFT, PAN, TCS? The [Glossary](/integration-guide/v3/getting-started/glossary) defines every one this guide uses.
+</Info>
+
+<Info>
+  Next: [Steps to Integrate](/integration-guide/v3/getting-started/steps-to-integrate) sets up your account. [Collection Overview](/integration-guide/v3/web-integration/collection-overview) shows how a payment works end to end.
 </Info>

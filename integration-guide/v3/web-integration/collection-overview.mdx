@@ -1,102 +1,112 @@
 ---
 title: "Collection Overview"
-description: "The end-to-end flow: issue a virtual account, receive a rupee credit, assert LRS compliance, and settle abroad."
+description: "How a payment works end to end: the buyer pays in rupees, you send the compliance details, EximPe settles the money to you abroad."
 ---
 
-# Introduction
+Your Indian buyer pays in rupees. You send us the compliance details. We settle the money to your account abroad.
 
-This is an **API-only** cross-border collection rail. The buyer never sees an EximPe screen — they simply transfer rupees into a **Virtual Bank Account (VBA)**, and you assert the compliance details through the API. You build the product your customer sees; EximPe is the embedded India collection and settlement engine underneath.
+This page shows the whole flow. Read it once, then follow the linked pages to build.
 
-<CardGroup cols={3}>
-  <Card title="Issue a VBA" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
-    Give the buyer a local Indian account to transfer rupees into
-  </Card>
-  <Card title="Stay compliant" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-compliance">
-    LRS eligibility, TCS, and documents, enforced through the API
-  </Card>
-  <Card title="Settle abroad" icon="money-bill-transfer" href="/api-reference/v3/settlement/list">
-    Cleared funds are converted and settled in your currency
-  </Card>
-</CardGroup>
-
-## Roles
-
-| Term | Who it is |
-| :--- | :--- |
-| **PSP** | Integrator that calls the API for the sub-merchants it onboards. Holds no VBA or funds. |
-| **Sub-merchant** | A merchant created under a PSP. Holds VBAs and collected funds; the entity that gets settled. |
-| **Direct merchant** | A merchant with no parent PSP — holds its own VBAs and is its own API caller. |
-| **Settling entity** | The account that holds the VBA and funds — a sub-merchant or a direct merchant, never a PSP. |
-| **Remitter (Buyer)** | The person in India paying, uniquely identified by **PAN**. |
-
-<Note>
-  A single VBA can receive credits from **many** remitters — it is not tied to one buyer. Because of this, an inbound credit does **not** by itself tell you who paid; the remitter (PAN) is asserted by you afterwards during LRS verification.
-</Note>
-
-## The Flow
+## The five steps
 
 <Steps>
-  <Step title="Onboard (PSP only)">
-    Create and get approval for each sub-merchant. See [Create Merchant](/api-reference/v3/merchant/create) and the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved) webhook.
+  <Step title="Create your merchants">
+    PSPs create a sub-merchant for each business they collect for. Wait for approval before collecting.
+
+    [Create Merchant](/api-reference/v3/merchant/create) · [Merchant Approved webhook](/api-reference/v3/webhooks/merchant-approved)
   </Step>
-  <Step title="Issue a VBA">
-    Create a Virtual Bank Account for the settling entity and share its account number + IFSC with the buyer. See [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts).
+  <Step title="Set up a way to get paid">
+    Today that is a virtual account: create one and give the buyer its account number and IFSC.
+
+    [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
-  <Step title="Buyer transfers rupees">
-    The buyer sends money to the VBA from their bank. When the credit lands, EximPe creates a payment and fires a payment webhook. The payment starts in **Action Required** — its compliance details are not yet supplied.
+  <Step title="The buyer pays">
+    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet.
   </Step>
-  <Step title="Verify the buyer's PAN">
-    Verify the remitter's PAN before you can quote or submit. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+  <Step title="Send the compliance details">
+    Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
+
+    For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
-  <Step title="Quote TCS (optional but recommended)">
-    Quote the TCS and all-in total for the remittance against the buyer's LRS usage.
-  </Step>
-  <Step title="Upload documents & submit verification">
-    Upload the supporting documents, then submit the remitter, purpose code, invoice, declarations, the principal, and the collected TCS. The payment moves to **Under Review**, or stays in **Action Required** if something is missing or short.
-  </Step>
-  <Step title="Settle & reconcile">
-    Once cleared, funds are settled to the beneficiary abroad. Track via the [Settlement APIs](/api-reference/v3/settlement/list) and [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
+  <Step title="Get your money">
+    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
+
+    [What it costs you](/integration-guide/v3/getting-started/faqs#what-does-it-cost-me) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
 </Steps>
 
-## Payment Lifecycle
+## How the buyer pays
 
-A collected payment moves through these compliance states:
+Money can reach you by more than one Indian payment method. **Today that means a virtual account** — an Indian account number we issue for you, which your buyer pays into by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier. Give them two things: the account number and the IFSC.
 
-| State | Meaning |
-| :--- | :--- |
-| `ACTION_REQUIRED` | Credit received; compliance details not yet supplied (or something is missing). |
-| `UNDER_REVIEW` | Verification submitted and posted to the buyer's LRS counter; awaiting bank processing. |
-| `ON_HOLD` | Needs manual attention — e.g. the sender is not the PAN holder. |
-| `SETTLED` | Funds settled to the beneficiary. |
-
-## Edge paths
-
-- **Shortfall** — the buyer paid less than quoted. The payment waits with the outstanding amount; the buyer tops up into the **same VBA**, and you submit the top-up **linked** to the original (`linked_payment_id`).
-- **Discrepancy in review** — if a detail or document is rejected during review, the payment is sent back with exactly what to fix; you re-submit only the flagged item and it returns to review.
-- **Cancellation / overpayment** — issue a refund (full or partial) back to the remitter's **own account**. A payment can take more than one partial refund over its life.
+<Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
+  Create one, share it, and handle the money arriving.
+</Card>
 
 <Note>
-  **Refund funding.** Balances are held **per university**. A refund is netted against the funds EximPe is next due to settle for that university, out of collections not yet settled onward. If enough of that university's balance is held, the refund processes right away; otherwise it waits until enough is collected. Money already settled abroad cannot be pulled back to fund a refund.
+  **The method only decides how the money arrives.** Once a payment exists it behaves the same way whichever route it came by — same statuses, same webhooks, same compliance step, same settlement. So everything from step 3 onwards is unaffected by which method you use, and adding a method later does not change the integration you have already built.
 </Note>
 
-## What You'll Build Against
+## Who is who
+
+| Term | What it means |
+| :--- | :--- |
+| **PSP** | You, if you collect on behalf of other businesses. You onboard them, you call the API for them, and we settle their money to you. |
+| **Sub-merchant** | A business onboarded by a PSP — a university, a hospital, a travel operator. Collections are tracked against it, and its PSP pays it onward. |
+| **Direct merchant** | You, if you collect only for yourself. We settle straight to you. |
+| **Buyer** | Whoever in India is paying you. In LRS rules and API fields they are the **remitter**, identified by PAN — `remitter_pan`, `remitter_relation`, and the remitter lock on an account. |
+
+<Warning>
+  One virtual account takes payments from **many** buyers. So a credit landing does not tell you who paid — you tell us, in step 4.
+</Warning>
+
+## The two amounts
+
+These are not the same number, and mixing them up is the most common way a payment stalls.
+
+| Term | What it is | In the API |
+| :--- | :--- | :--- |
+| **Amount to be collected** | What you ask the buyer to transfer. The amount to be settled, plus our fee, the GST on that fee, and any tax. | `total_payable_inr` on the quote |
+| **Amount to be settled** | What reaches you abroad. This is the figure the buyer's payment is actually *for*. | `amount_to_be_settled` on submit |
+
+Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
+
+## Payment statuses
+
+| `verification_status` | What it means | What you do |
+| :--- | :--- | :--- |
+| `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
+| `IN_REVIEW` | Details accepted, bank is processing | Wait |
+| `VERIFIED` | Nothing outstanding. No webhook fires for this. | Nothing |
+| `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
+
+Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
+
+<Warning>
+  **LRS payments work to a deadline.** Each carries a verification expiry. Miss it and the payment expires — terminal, and the money goes back to the buyer. See [The payment has a deadline](/integration-guide/v3/web-integration/lrs-verification#the-payment-has-a-deadline).
+</Warning>
+
+## When things go wrong
+
+**The buyer paid too little.** The payment waits, and `outstanding` says by how much. Declare a smaller `amount_to_be_settled` for what actually arrived, and submit again.
+
+**A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
+
+**The money came from someone else's account.** This applies to LRS payments only. The name on the sending account did not match the PAN you gave us, so the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
+
+**You need to refund.** Refunds go back to the buyer's own account. You can refund part of a payment, more than once. If your balance does not cover it, the call fails — collect more and try again.
+
+<Note>
+  **Where refund money comes from.** A refund is netted against your upcoming settlements. We hold a balance for each merchant, and the refund comes out of money we have not settled to you yet. If that balance is too small the call is rejected, so retry once you have collected more.
+</Note>
+
+## Next
 
 <CardGroup cols={2}>
-  <Card title="Merchant APIs" icon="store" href="/api-reference/v3/merchant/create">
-    Onboard and manage sub-merchants (PSP).
+  <Card title="Set up collection" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
+    Create a virtual account and take your first payment.
   </Card>
-  <Card title="Virtual Bank Accounts" icon="building-columns" href="/api-reference/v3/vba/create">
-    Create, list, and read VBAs and their payments.
-  </Card>
-  <Card title="LRS APIs" icon="shield-check" href="/api-reference/v3/lrs/verify-pan">
-    PAN verify, TCS quote, document upload, and verification submit.
-  </Card>
-  <Card title="Settlement & Refund" icon="money-bill-transfer" href="/api-reference/v3/settlement/list">
-    Track settlements and issue refunds.
+  <Card title="Send compliance details" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+    Read what the payment needs, send it, repeat until nothing is left.
   </Card>
 </CardGroup>
-
-<Info>
-  Ready for detail? Continue to [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts) and [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
-</Info>
