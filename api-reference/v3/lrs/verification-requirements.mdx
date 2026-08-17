@@ -29,7 +29,7 @@ Call it when the event arrives, and render your collection form from the respons
     A payer supplied three documents last week and two today. Call this to see where the payment stands before asking for anything.
   </Step>
   <Step title="You are building the form">
-    `required_fields` and `required_documents` describe the whole set, satisfied or not, with labels safe to show a payer.
+    `fields` and `documents` describe the whole set, satisfied or not, with labels safe to show a payer. Filter on `satisfied` for what is still owed.
   </Step>
 </Steps>
 
@@ -52,284 +52,192 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
     "purpose_code": "S0305",
     "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
     "requirement_label": "B2C · Education — LRS (with travel leg)",
-    "missing_fields": [
-      {
-        "code": "buyer_address_line_1",
-        "label": "Buyer address line 1",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_city",
-        "label": "Buyer city",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_state",
-        "label": "Buyer state",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_postal_code",
-        "label": "Buyer PIN code",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_email",
-        "label": "Buyer email",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_phone",
-        "label": "Buyer phone",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "invoice_number",
-        "label": "Invoice number",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "invoice_date",
-        "label": "Invoice date",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "payment_term",
-        "label": "Payment term",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "remitter_name",
-        "label": "Remitter name (as per PAN)",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "remitter_pan",
-        "label": "Remitter PAN",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "remitter_dob",
-        "label": "Remitter date of birth (as per PAN)",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "remitter_relation",
-        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "buyer_declaration",
-        "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "amount_to_be_settled",
-        "label": "Amount to be settled for this payment, in INR",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "student_name",
-        "label": "Student name",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "student_dob",
-        "label": "Student date of birth",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "student_passport_number",
-        "label": "Student passport number",
-        "requirement": "REQUIRED",
-        "waivable": false
-      }
-    ],
-    "missing_documents": [
-      {
-        "code": "student_passport",
-        "label": "Student passport",
-        "requirement": "REQUIRED",
-        "waivable": false
-      },
-      {
-        "code": "student_visa",
-        "label": "Student visa",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "alternative_group": "student_status_proof"
-      },
-      {
-        "code": "university_id_card",
-        "label": "University ID card",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "alternative_group": "student_status_proof"
-      },
-      {
-        "code": "loa",
-        "label": "Letter of admission / offer letter",
-        "requirement": "REQUIRED",
-        "waivable": false
-      }
-    ],
-    "required_fields": [
+    "fields": [
       {
         "code": "buyer_name",
         "label": "Buyer / remitter name",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": true,
+        "provided": true
       },
       {
         "code": "buyer_address_line_1",
         "label": "Buyer address line 1",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_city",
         "label": "Buyer city",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_state",
         "label": "Buyer state",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_postal_code",
         "label": "Buyer PIN code",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_email",
         "label": "Buyer email",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_phone",
         "label": "Buyer phone",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "invoice_number",
         "label": "Invoice number",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "invoice_date",
         "label": "Invoice date",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "invoice_amount",
         "label": "Invoice amount",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": true,
+        "provided": true
       },
       {
         "code": "purpose_code",
         "label": "FEMA purpose code",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": true,
+        "provided": true
       },
       {
         "code": "payment_term",
         "label": "Payment term",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "remitter_name",
         "label": "Remitter name (as per PAN)",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "remitter_pan",
         "label": "Remitter PAN",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "remitter_dob",
         "label": "Remitter date of birth (as per PAN)",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "remitter_relation",
         "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_declaration",
         "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "amount_to_be_settled",
         "label": "Amount to be settled for this payment, in INR",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "student_name",
         "label": "Student name",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "student_dob",
         "label": "Student date of birth",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "student_passport_number",
         "label": "Student passport number",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       }
     ],
-    "required_documents": [
+    "documents": [
       {
         "code": "student_passport",
         "label": "Student passport",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "student_visa",
         "label": "Student visa",
         "requirement": "REQUIRED",
         "waivable": false,
+        "satisfied": false,
+        "provided": false,
         "alternative_group": "student_status_proof"
       },
       {
@@ -337,25 +245,33 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "label": "University ID card",
         "requirement": "REQUIRED",
         "waivable": false,
+        "satisfied": false,
+        "provided": false,
         "alternative_group": "student_status_proof"
       },
       {
         "code": "loa",
         "label": "Letter of admission / offer letter",
         "requirement": "REQUIRED",
-        "waivable": false
+        "waivable": false,
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "invoice",
         "label": "Fee invoice",
         "requirement": "OPTIONAL",
-        "waivable": false
+        "waivable": false,
+        "satisfied": true,
+        "provided": false
       },
       {
         "code": "relationship_declaration",
         "label": "Relationship self-declaration",
         "requirement": "CONDITIONAL",
         "waivable": false,
+        "satisfied": true,
+        "provided": false,
         "condition": "relation_not_self"
       }
     ]
@@ -363,7 +279,7 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 }
 ```
 
-```json Complete, but the gateway refused it
+```json Everything satisfied
 {
   "success": true,
   "message": "Verification requirements",
@@ -376,19 +292,12 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
     "purpose_code": "S0305",
     "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
     "requirement_label": "B2C · Education — LRS (with travel leg)",
-    "missing_fields": [],
-    "missing_documents": [],
-    "required_fields": ["… as above, all satisfied …"],
-    "required_documents": ["… as above, all satisfied …"],
-    "verification": {
-      "handed_off": true,
-      "status": "action_required",
-      "tcs_check": "match",
-      "missing": ["outstanding"],
-      "reason": null,
-      "outstanding": "1400.00"
-    },
-    "verification_checked_at": "2026-08-17T06:25:20.866647"
+    "fields": [
+      "… as above, every entry now satisfied: true …"
+    ],
+    "documents": [
+      "… as above, every entry now satisfied: true …"
+    ]
   }
 }
 ```
@@ -403,10 +312,8 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
     "is_lrs": false,
     "status": "not_applicable",
     "detail": "No verification requirements are defined for this payment's business model and purpose code.",
-    "required_fields": [],
-    "required_documents": [],
-    "missing_fields": [],
-    "missing_documents": []
+    "fields": [],
+    "documents": []
   }
 }
 ```
@@ -415,15 +322,45 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 
 `required_*` is the whole set; `missing_*` is the subset still outstanding. Here 21 fields are required and 18 are missing — `buyer_name`, `invoice_amount` and `purpose_code` came in with the payment itself.
 
-The second example is the one worth reading twice: **`status: "complete"` with both missing lists empty, and the payment still has not passed.** `verification` is where that shows — see [The gateway's last word](#the-gateways-last-word).
+The second example is the one worth reading twice: **`status: "complete"` means nothing is outstanding of what the purpose code asks for — not that the payment passed.** Whether it then cleared PAN verification, the sender match and the money check is reported by the [submit response](/api-reference/v3/lrs/submit-verification-details#completion) and by [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). This endpoint does not repeat it.
 
 <Note>
-  `required_documents` lists six for `S0305` while `missing_documents` lists four. The optional invoice is not missing because it is optional, and the relationship self-declaration is not missing because its condition cannot be evaluated until you declare `remitter_relation`.
+  `documents` lists six for `S0305`, of which four are `satisfied: false`. The optional invoice is not owed because it is optional, and the relationship self-declaration is not owed because its condition cannot be evaluated until you declare `remitter_relation`. Both are still listed, with `provided: false` — that is how you know they exist.
 </Note>
 
 ## Reading the response
 
-Each entry in the four arrays is a requirement item:
+There is one list per kind, holding the whole set. There is no separate "missing" array — what is still owed is a filter:
+
+```js
+const outstanding = data.fields.filter(f => !f.satisfied)
+```
+
+Each entry in `fields` and `documents` is a requirement item:
+
+<ParamField path="satisfied" type="boolean" required>
+  Whether this item is met. `false` is what "missing" used to mean: it blocks `status` from reaching `complete`.
+
+  An `OPTIONAL` item is `satisfied` from the very first response, and a `CONDITIONAL` item whose condition does not hold is satisfied vacuously. Neither blocks completion.
+</ParamField>
+
+<ParamField path="provided" type="boolean" required>
+  Whether you have actually sent it, or we already held it. Read alongside `satisfied`:
+
+  | `satisfied` | `provided` | Means |
+  |---|---|---|
+  | `false` | `false` | Owed. Send it. |
+  | `true` | `true` | Done. |
+  | `true` | `false` | Nothing owed, nothing sent — an `OPTIONAL` item, or a `CONDITIONAL` that does not apply to this payment. |
+
+  That last row is why `satisfied` alone is not enough. To offer optionals to a payer as well as chase what is owed, widen the filter:
+
+  ```js
+  const offerable = data.fields.filter(
+    f => !f.satisfied || (f.requirement === "OPTIONAL" && !f.provided)
+  )
+  ```
+</ParamField>
 
 <ParamField path="code" type="string" required>
   The identifier you send the answer back under — as a key in `fields`, or as a document's `code`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
@@ -444,7 +381,7 @@ Each entry in the four arrays is a requirement item:
 <ParamField path="waivable" type="boolean" required>
   When `true`, you may send a `waiver_reason` instead of a file — a visa that the destination does not require, a ticket not yet issued.
 
-  A waivable document still appears in `missing_documents` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
+  A waivable document stays `satisfied: false` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
 </ParamField>
 
 <ParamField path="condition" type="string">
@@ -457,66 +394,23 @@ Each entry in the four arrays is a requirement item:
   For education with a travel leg, the student visa and the university ID card are alternatives — either proves student status.
 </ParamField>
 
-## The gateway's last word
-
-Once a complete set has been handed to the verification gateway, the response
-also carries what came back — the **same `verification` block** the
-[submit response](/api-reference/v3/lrs/submit-verification-details#completion)
-returns, so there is one shape to parse whichever way you arrived at it:
-
-```json
-{
-  "status": "complete",
-  "missing_fields": [],
-  "missing_documents": [],
-  "verification": {
-    "handed_off": true,
-    "status": "action_required",
-    "tcs_check": "match",
-    "missing": ["outstanding"],
-    "reason": null,
-    "outstanding": "12500.00"
-  },
-  "verification_checked_at": "2026-08-17T06:25:20.866647"
-}
-```
-
-<Warning>
-  **`status: "complete"` does not mean the payment passed.** It means you have
-  sent everything the purpose code asks for. Whether the payment then cleared
-  PAN verification, the sender match and the money check is what `verification`
-  tells you — and the example above is a payment sitting in Action Required,
-  ₹12,500 short, with an empty `missing_documents`. Reconcile on `verification`,
-  not on `status`.
-</Warning>
-
-`verification_checked_at` is when that verdict was reached. It sits beside the
-block rather than inside it, so the block itself stays identical to the submit
-response's.
-
-<Warning>
-  **It is ISO 8601 in UTC with no offset** — `2026-08-17T06:25:20.866647`, not
-  `…+00:00`. Parse it as UTC. A parser that treats a naive timestamp as local
-  time will be wrong by your whole offset, which for IST is five and a half
-  hours in the direction that makes a fresh verdict look stale.
-</Warning>
-
-<Note>
-  **Absent until a complete set has been submitted** — and absent is not the same
-  as approved. No `verification` key means the gateway has never been asked about
-  this payment, so there is nothing to read into its silence.
-
-  Nothing is re-run when you call this. A `GET` never verifies a PAN, posts to an
-  LRS counter or moves a payment; it reports what the last attempt concluded.
-</Note>
-
 ## Statuses
 
 | `status` | Meaning |
 |---|---|
-| `incomplete` | Something is still owed. See `missing_fields` and `missing_documents`. |
-| `complete` | Nothing is outstanding **of what the purpose code asks for**. Read `verification` for whether the payment itself passed. |
+| `incomplete` | Something is still owed — the `satisfied: false` entries of `fields` and `documents`. |
+| `complete` | Nothing is outstanding **of what the purpose code asks for**. Not a statement about whether the payment passed — see below. |
 | `not_applicable` | No requirements are defined for this payment's business model and purpose code — it follows the standard verification flow instead. |
+
+<Warning>
+  **`status: "complete"` does not mean the payment passed.** It means you have sent everything the purpose code asks for. Whether the payment then cleared PAN verification, the sender match and the money check is not reported here — a payment can read `complete` while sitting in Action Required, short of the amount it needs.
+
+  That verdict comes back on the [submit response](/api-reference/v3/lrs/submit-verification-details#completion) and, thereafter, on [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Reconcile on those, not on `status`.
+</Warning>
+
+<Note>
+  **Nothing is re-run when you call this.** A `GET` never verifies a PAN, posts to an LRS counter or moves a payment; it reports the requirement set and what has been collected against it.
+</Note>
 
 <Note>
   A payment reads `not_applicable` most often because no purpose code has been declared on it yet. The ordinary [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) events name exactly which fact is missing — `purpose_code` or `business_model` — in their own missing-field list. Supply it and call this again.
@@ -575,6 +469,6 @@ exists and the university ID card stands alone.
 
 ## The requirement set can grow
 
-Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` adds the relationship self-declaration to `missing_documents`, because that document is only owed in that case.
+Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the relationship self-declaration to `satisfied: false`, because that document is only owed in that case.
 
-This is expected. Read `missing_fields` and `missing_documents` from the response after every write rather than assuming the list you started with is final.
+This is expected. Re-read `fields` and `documents` from the response after every write rather than assuming the list you started with is final.

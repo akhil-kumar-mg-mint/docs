@@ -2766,62 +2766,7 @@
                       "example": "Verification requirements"
                     },
                     "data": {
-                      "allOf": [
-                        {
-                          "$ref": "#/components/schemas/v3_VerificationState"
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "verification": {
-                              "type": "object",
-                              "description": "The verification gateway's last word on this payment — the same block the POST returns. Absent until a complete set has been handed downstream, and absent is not approval. `status: \"complete\"` above means you sent everything the purpose code asks for, NOT that the payment passed; this is where you see that. Nothing is re-run to produce it.",
-                              "properties": {
-                                "handed_off": {
-                                  "type": "boolean"
-                                },
-                                "status": {
-                                  "type": "string",
-                                  "enum": [
-                                    "under_review",
-                                    "action_required"
-                                  ]
-                                },
-                                "tcs_check": {
-                                  "type": "string",
-                                  "enum": [
-                                    "match",
-                                    "mismatch",
-                                    "n/a"
-                                  ]
-                                },
-                                "missing": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string"
-                                  },
-                                  "description": "What did not pass, as tokens: `outstanding`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `purpose_code`, or `documents.<type>`. Empty on `under_review`."
-                                },
-                                "reason": {
-                                  "type": "string",
-                                  "nullable": true,
-                                  "description": "One headline conclusion, or `null` — which is normal, not an error. On `handed_off: true` with `status: action_required`: `PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED` or `PURPOSE_CODE_NOT_IN_REGISTRY`; a shortfall and every other multi-check refusal returns `null`. On `handed_off: false`: `GATEWAY_REJECTED`, `GATEWAY_UNAVAILABLE` (your details are saved — retry to complete) or `NO_DOWNSTREAM_GATEWAY`."
-                                },
-                                "outstanding": {
-                                  "type": "string",
-                                  "description": "Money still owed on this payment, in rupees, as a decimal string — principal plus fees, GST and TCS, less what was received. `\"0.00\"` when nothing is owed. Always present when `handed_off` is `true`.",
-                                  "example": "12500.00"
-                                }
-                              }
-                            },
-                            "verification_checked_at": {
-                              "type": "string",
-                              "description": "When that verdict was reached. Beside the block rather than inside it, so `verification` stays identical to the submit response's. ISO 8601 in UTC with NO offset — parse it as UTC, not as local time.",
-                              "example": "2026-08-17T06:25:20.866647"
-                            }
-                          }
-                        }
-                      ]
+                      "$ref": "#/components/schemas/v3_VerificationState"
                     }
                   }
                 },
@@ -2837,38 +2782,192 @@
                     "purpose_code": "S0305",
                     "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
                     "requirement_label": "B2C · Education — LRS (with travel leg)",
-                    "missing_fields": [
+                    "fields": [
                       {
-                        "code": "student_name",
-                        "label": "Student name",
+                        "code": "buyer_name",
+                        "label": "Buyer / remitter name",
                         "requirement": "REQUIRED",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
                       },
                       {
-                        "code": "remitter_pan",
-                        "label": "Remitter PAN",
+                        "code": "buyer_address_line_1",
+                        "label": "Buyer address line 1",
                         "requirement": "REQUIRED",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_city",
+                        "label": "Buyer city",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_state",
+                        "label": "Buyer state",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_postal_code",
+                        "label": "Buyer PIN code",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_email",
+                        "label": "Buyer email",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_phone",
+                        "label": "Buyer phone",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_number",
+                        "label": "Invoice number",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_date",
+                        "label": "Invoice date",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "invoice_amount",
+                        "label": "Invoice amount",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
+                      },
+                      {
+                        "code": "purpose_code",
+                        "label": "FEMA purpose code",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": true
                       },
                       {
                         "code": "payment_term",
                         "label": "Payment term",
                         "requirement": "REQUIRED",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_name",
+                        "label": "Remitter name (as per PAN)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_pan",
+                        "label": "Remitter PAN",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_dob",
+                        "label": "Remitter date of birth (as per PAN)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "remitter_relation",
+                        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "buyer_declaration",
+                        "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "amount_to_be_settled",
+                        "label": "Amount to be settled for this payment, in INR",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_name",
+                        "label": "Student name",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_dob",
+                        "label": "Student date of birth",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
+                      },
+                      {
+                        "code": "student_passport_number",
+                        "label": "Student passport number",
+                        "requirement": "REQUIRED",
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
                       }
                     ],
-                    "missing_documents": [
+                    "documents": [
                       {
                         "code": "student_passport",
                         "label": "Student passport",
                         "requirement": "REQUIRED",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
                       },
                       {
                         "code": "student_visa",
                         "label": "Student visa",
                         "requirement": "REQUIRED",
                         "waivable": false,
+                        "satisfied": false,
+                        "provided": false,
                         "alternative_group": "student_status_proof"
                       },
                       {
@@ -2876,47 +2975,33 @@
                         "label": "University ID card",
                         "requirement": "REQUIRED",
                         "waivable": false,
+                        "satisfied": false,
+                        "provided": false,
                         "alternative_group": "student_status_proof"
                       },
                       {
                         "code": "loa",
                         "label": "Letter of admission / offer letter",
                         "requirement": "REQUIRED",
-                        "waivable": false
-                      }
-                    ],
-                    "required_fields": [
-                      {
-                        "code": "buyer_name",
-                        "label": "Buyer / remitter name",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "student_name",
-                        "label": "Student name",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      }
-                    ],
-                    "required_documents": [
-                      {
-                        "code": "student_passport",
-                        "label": "Student passport",
-                        "requirement": "REQUIRED",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": false,
+                        "provided": false
                       },
                       {
                         "code": "invoice",
                         "label": "Fee invoice",
                         "requirement": "OPTIONAL",
-                        "waivable": false
+                        "waivable": false,
+                        "satisfied": true,
+                        "provided": false
                       },
                       {
                         "code": "relationship_declaration",
                         "label": "Relationship self-declaration",
                         "requirement": "CONDITIONAL",
                         "waivable": false,
+                        "satisfied": true,
+                        "provided": false,
                         "condition": "relation_not_self"
                       }
                     ]
@@ -3203,38 +3288,192 @@
                         "purpose_code": "S0305",
                         "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
                         "requirement_label": "B2C · Education — LRS (with travel leg)",
-                        "missing_fields": [
+                        "fields": [
                           {
-                            "code": "student_name",
-                            "label": "Student name",
+                            "code": "buyer_name",
+                            "label": "Buyer / remitter name",
                             "requirement": "REQUIRED",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
                           },
                           {
-                            "code": "remitter_pan",
-                            "label": "Remitter PAN",
+                            "code": "buyer_address_line_1",
+                            "label": "Buyer address line 1",
                             "requirement": "REQUIRED",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_city",
+                            "label": "Buyer city",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "label": "Buyer state",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "label": "Buyer PIN code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_email",
+                            "label": "Buyer email",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "label": "Buyer phone",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_number",
+                            "label": "Invoice number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_date",
+                            "label": "Invoice date",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_amount",
+                            "label": "Invoice amount",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "purpose_code",
+                            "label": "FEMA purpose code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
                           },
                           {
                             "code": "payment_term",
                             "label": "Payment term",
                             "requirement": "REQUIRED",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_name",
+                            "label": "Remitter name (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "label": "Remitter PAN",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "label": "Remitter date of birth (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_relation",
+                            "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "label": "Amount to be settled for this payment, in INR",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_dob",
+                            "label": "Student date of birth",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_passport_number",
+                            "label": "Student passport number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
                           }
                         ],
-                        "missing_documents": [
+                        "documents": [
                           {
                             "code": "student_passport",
                             "label": "Student passport",
                             "requirement": "REQUIRED",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
                           },
                           {
                             "code": "student_visa",
                             "label": "Student visa",
                             "requirement": "REQUIRED",
                             "waivable": false,
+                            "satisfied": false,
+                            "provided": false,
                             "alternative_group": "student_status_proof"
                           },
                           {
@@ -3242,47 +3481,33 @@
                             "label": "University ID card",
                             "requirement": "REQUIRED",
                             "waivable": false,
+                            "satisfied": false,
+                            "provided": false,
                             "alternative_group": "student_status_proof"
                           },
                           {
                             "code": "loa",
                             "label": "Letter of admission / offer letter",
                             "requirement": "REQUIRED",
-                            "waivable": false
-                          }
-                        ],
-                        "required_fields": [
-                          {
-                            "code": "buyer_name",
-                            "label": "Buyer / remitter name",
-                            "requirement": "REQUIRED",
-                            "waivable": false
-                          },
-                          {
-                            "code": "student_name",
-                            "label": "Student name",
-                            "requirement": "REQUIRED",
-                            "waivable": false
-                          }
-                        ],
-                        "required_documents": [
-                          {
-                            "code": "student_passport",
-                            "label": "Student passport",
-                            "requirement": "REQUIRED",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": false,
+                            "provided": false
                           },
                           {
                             "code": "invoice",
                             "label": "Fee invoice",
                             "requirement": "OPTIONAL",
-                            "waivable": false
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false
                           },
                           {
                             "code": "relationship_declaration",
                             "label": "Relationship self-declaration",
                             "requirement": "CONDITIONAL",
                             "waivable": false,
+                            "satisfied": true,
+                            "provided": false,
                             "condition": "relation_not_self"
                           }
                         ],
@@ -3313,8 +3538,229 @@
                         "purpose_code": "S0305",
                         "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
                         "requirement_label": "B2C · Education — LRS (with travel leg)",
-                        "missing_fields": [],
-                        "missing_documents": [],
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "label": "Buyer / remitter name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_address_line_1",
+                            "label": "Buyer address line 1",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_city",
+                            "label": "Buyer city",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "label": "Buyer state",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "label": "Buyer PIN code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_email",
+                            "label": "Buyer email",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "label": "Buyer phone",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_number",
+                            "label": "Invoice number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_date",
+                            "label": "Invoice date",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice_amount",
+                            "label": "Invoice amount",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "purpose_code",
+                            "label": "FEMA purpose code",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "payment_term",
+                            "label": "Payment term",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_name",
+                            "label": "Remitter name (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "label": "Remitter PAN",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "label": "Remitter date of birth (as per PAN)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "remitter_relation",
+                            "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "label": "Amount to be settled for this payment, in INR",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_dob",
+                            "label": "Student date of birth",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_passport_number",
+                            "label": "Student passport number",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "student_passport",
+                            "label": "Student passport",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "student_visa",
+                            "label": "Student visa",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "university_id_card",
+                            "label": "University ID card",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "loa",
+                            "label": "Letter of admission / offer letter",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "invoice",
+                            "label": "Fee invoice",
+                            "requirement": "OPTIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false
+                          },
+                          {
+                            "code": "relationship_declaration",
+                            "label": "Relationship self-declaration",
+                            "requirement": "CONDITIONAL",
+                            "waivable": false,
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "relation_not_self"
+                          }
+                        ],
                         "accepted": {
                           "fields": [
                             "amount_to_be_settled",
@@ -6682,7 +7128,7 @@
           },
           "waivable": {
             "type": "boolean",
-            "description": "When true you may send `waiver_reason` instead of a file. The item still appears in `missing_documents` until you do — the waiver is yours to record, not ours to assume.",
+            "description": "When true you may send `waiver_reason` instead of a file. The item stays `satisfied: false` until you do — the waiver is yours to record, not ours to assume.",
             "example": false
           },
           "condition": {
@@ -6694,6 +7140,16 @@
             "type": "string",
             "description": "Items sharing a group satisfy each other — send any one and the whole group clears. Send none and all of them stay listed so you can choose.",
             "example": "student_status_proof"
+          },
+          "satisfied": {
+            "type": "boolean",
+            "description": "Whether this item is met. `false` blocks `status` from reaching `complete`. An OPTIONAL item, and a CONDITIONAL item whose condition does not hold, are satisfied without having been sent.",
+            "example": false
+          },
+          "provided": {
+            "type": "boolean",
+            "description": "Whether it has actually been sent, or we already held it. `satisfied: true` with `provided: false` means nothing is owed and nothing was sent — an OPTIONAL item, or a CONDITIONAL that does not apply.",
+            "example": false
           }
         }
       },
@@ -6740,30 +7196,16 @@
             "type": "string",
             "example": "B2C · Education — LRS (with travel leg)"
           },
-          "missing_fields": {
+          "fields": {
             "type": "array",
-            "description": "Fields still owed.",
+            "description": "Every field this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
             }
           },
-          "missing_documents": {
+          "documents": {
             "type": "array",
-            "description": "Documents still owed.",
-            "items": {
-              "$ref": "#/components/schemas/v3_VerificationRequirementItem"
-            }
-          },
-          "required_fields": {
-            "type": "array",
-            "description": "Every field this purpose code calls for, satisfied or not.",
-            "items": {
-              "$ref": "#/components/schemas/v3_VerificationRequirementItem"
-            }
-          },
-          "required_documents": {
-            "type": "array",
-            "description": "Every document this purpose code calls for, satisfied or not.",
+            "description": "Every document this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
             }
