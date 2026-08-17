@@ -15,33 +15,61 @@ Money has arrived and the payment cannot settle yet. We tell you exactly what it
 
 ## Do it in this order
 
-Every settlement blocker below comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the amount to be settled instead of the amount to be collected.
+Every settlement blocker comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the amount to be settled instead of the amount to be collected.
 
 ```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "fontFamily": "ui-sans-serif, system-ui, -apple-system, sans-serif",
+    "fontSize": "14px",
+    "primaryColor": "#ffffff",
+    "primaryTextColor": "#15803d",
+    "primaryBorderColor": "#26a887",
+    "lineColor": "#26a887",
+    "tertiaryColor": "#ffffff",
+    "edgeLabelBackground": "#ffffff"
+  },
+  "flowchart": { "curve": "basis", "nodeSpacing": 40, "rankSpacing": 44 }
+}}%%
 flowchart TD
-    A["Verify the buyer's PAN"] --> B{"verified?"}
-    B -->|"no — NAME_MISMATCH,<br/>INOPERATIVE_PAN"| B1["Resolve with the buyer.<br/>Do not quote yet."]
-    B1 --> A
-    B -->|yes| C["Quote the tax"]
-    C --> D["Ask for the <b>amount to be collected</b><br/>total_payable_inr<br/>amount to be settled + fee + GST + TCS"]
-    D --> E["Buyer transfers into the VBA"]
-    E --> F["LRS_VERIFICATION_NEEDED<br/>names what is missing"]
-    F --> G["Send fields and documents<br/>as you get them — they merge"]
-    G --> H{"anything<br/>outstanding?"}
-    H -->|"yes — missing fields<br/>or documents"| G
-    H -->|"yes — money short"| M["Buyer tops up,<br/>or lower amount_to_be_settled"]
-    M --> G
-    H -->|no| I{"gateway verdict"}
-    I -->|action_required| J["Read missing + reason,<br/>fix, send again"]
-    J --> G
-    I -->|under_review| K["Bank processes it"]
-    K --> L["Settled to you"]
+    A["1 · Verify the buyer's PAN"]
+    B["2 · Quote the tax"]
+    C["3 · Ask for the<br/><b>amount to be collected</b>"]
+    D["4 · Buyer transfers in"]
+    E["5 · LRS_VERIFICATION_NEEDED<br/>names what is missing"]
+    F["6 · Send fields and documents"]
+    G{"Anything<br/>outstanding?"}
+    H{"Gateway<br/>verdict"}
+    I["Settled to you"]
 
-    style L fill:#26a887,stroke:#1a7a63,color:#fff
-    style B1 fill:#fde8e8,stroke:#c53030,color:#742a2a
-    style M fill:#fde8e8,stroke:#c53030,color:#742a2a
-    style D fill:#fff5e6,stroke:#d69e2e,color:#744210
+    A --> B --> C --> D --> E --> F --> G
+    G -- "yes" --> F
+    G -- "no" --> H
+    H -- "action_required" --> F
+    H -- "under_review" --> I
+
+    classDef step fill:#ffffff,stroke:#26a887,stroke-width:1.5px,color:#134e4a
+    classDef gate fill:#f0faf7,stroke:#26a887,stroke-width:1.5px,color:#134e4a
+    classDef emphasis fill:#e6f6f1,stroke:#15803d,stroke-width:2px,color:#134e4a
+    classDef done fill:#15803d,stroke:#15803d,stroke-width:2px,color:#ffffff
+
+    class A,B,D,E,F step
+    class C emphasis
+    class G,H gate
+    class I done
 ```
+
+Steps 1 to 3 happen before any money moves. Steps 4 to 6 repeat until nothing is outstanding — partial sends merge, so send each thing as you get it.
+
+### When it does not go straight through
+
+| What happened | What you see | What to do |
+| :--- | :--- | :--- |
+| The PAN will not verify | `verified: false` with a `reason` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
+| The buyer paid too little | `action_required`, `missing: ["outstanding"]`, and `outstanding` | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
+| Something is still missing | `missing_fields` / `missing_documents` on the response | Send just those. What you sent before is kept. |
+| A complete set was refused | `handed_off: true` with `status: "action_required"` and a `reason` | Fix what `reason` names — usually the PAN or the sender match — and send again |
 
 <Warning>
   **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).
@@ -51,13 +79,12 @@ flowchart TD
   **Do not hardcode the field list.** What a payment needs is decided by its purpose code, and those requirement sets get revised as the regulations behind them do. Drive your form off the response, not off this page.
 </Note>
 
-## Before the money arrives
+## The two calls before the money moves
 
-Two calls are worth making up front, neither of which is part of the loop above.
+Steps 1 and 2 above are not part of the verification loop, and both are easy to skip.
 
-**Verify the buyer's PAN.** A dead or mismatched PAN is a guaranteed refusal later, so catch it before you ask anyone for documents. See [Verify PAN](/api-reference/v3/lrs/verify-pan).
-
-**Quote the tax.** Show the buyer a total that includes TCS before they transfer, or they underpay and you handle a shortfall. See [Quote LRS Amount](/api-reference/v3/lrs/quote).
+- **[Verify PAN](/api-reference/v3/lrs/verify-pan)** — do it before you ask anyone for documents.
+- **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — returns `total_payable_inr`, the figure to ask the buyer for.
 
 ## Step 1: Read what the payment needs
 
