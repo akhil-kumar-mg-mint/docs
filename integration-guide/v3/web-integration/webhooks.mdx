@@ -13,7 +13,7 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | :--- | :--- | :--- |
 | **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
-| **LRS Verification Needed** | An LRS payment is missing details | Send them — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
+| **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
 | **Payment Details Missing** | A non-LRS payment is missing fields we need | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) |
 | **Verification Needed** | Verification becomes `VERIFIED`, `IN_REVIEW`, `ACTION_REQUIRED`, or `EXPIRED` | Track the outcome, or fix what is flagged |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |
