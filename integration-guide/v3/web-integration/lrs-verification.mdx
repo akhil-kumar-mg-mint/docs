@@ -13,26 +13,43 @@ Money has arrived and the payment cannot settle yet. We tell you exactly what it
   **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. LRS is always scoped to the sub-merchant, never the PSP.
 </Note>
 
-## The shape of it
+## Do it in this order
 
-<Steps>
-  <Step title="We tell you what is needed">
-    The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what the payment owes — each entry a code, a sentence saying why, and whether it can be waived.
-  </Step>
-  <Step title="You send what you have">
-    Fields as a map, documents as files or references. Partial is fine.
-  </Step>
-  <Step title="You read what is left">
-    The response repeats the requirement set after your write, so one call tells you where you stand.
-  </Step>
-  <Step title="It finishes itself">
-    Once nothing is outstanding the set goes to the verification gateway automatically.
-  </Step>
-</Steps>
+Every settlement blocker below comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the principal instead of the all-in total.
+
+```mermaid
+flowchart TD
+    A["Verify the buyer's PAN"] --> B{"verified?"}
+    B -->|"no — NAME_MISMATCH,<br/>INOPERATIVE_PAN"| B1["Resolve with the buyer.<br/>Do not quote yet."]
+    B1 --> A
+    B -->|yes| C["Quote the tax"]
+    C --> D["Ask the buyer for<br/><b>total_payable_inr</b><br/>principal + fee + GST + TCS"]
+    D --> E["Buyer transfers into the VBA"]
+    E --> F["LRS_VERIFICATION_NEEDED<br/>names what is missing"]
+    F --> G["Send fields and documents<br/>as you get them — they merge"]
+    G --> H{"anything<br/>outstanding?"}
+    H -->|"yes — missing fields<br/>or documents"| G
+    H -->|"yes — money short"| M["Buyer tops up,<br/>or lower amount_to_be_settled"]
+    M --> G
+    H -->|no| I{"gateway verdict"}
+    I -->|action_required| J["Read missing + reason,<br/>fix, send again"]
+    J --> G
+    I -->|under_review| K["Bank processes it"]
+    K --> L["Settled to you"]
+
+    style L fill:#26a887,stroke:#1a7a63,color:#fff
+    style B1 fill:#fde8e8,stroke:#c53030,color:#742a2a
+    style M fill:#fde8e8,stroke:#c53030,color:#742a2a
+    style D fill:#fff5e6,stroke:#d69e2e,color:#744210
+```
 
 <Warning>
-  **Do not hardcode the field list.** What a payment needs is decided by its purpose code, and those requirement sets get revised as the regulations behind them do. Drive your form off the response, not off this page.
+  **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).
 </Warning>
+
+<Note>
+  **Do not hardcode the field list.** What a payment needs is decided by its purpose code, and those requirement sets get revised as the regulations behind them do. Drive your form off the response, not off this page.
+</Note>
 
 ## Before the money arrives
 
