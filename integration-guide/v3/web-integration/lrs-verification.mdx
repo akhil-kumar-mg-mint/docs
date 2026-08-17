@@ -66,10 +66,10 @@ The first two calls happen before any money moves. The last two repeat until not
 
 | What happened | What you see | What to do |
 | :--- | :--- | :--- |
-| The PAN will not verify | `verified: false` with a `reason` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
+| The PAN will not verify | `verified: false` with a `reason` — `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
 | The buyer paid too little | `action_required`, `missing: ["outstanding"]`, and `outstanding` | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
 | Something is still missing | `status: "incomplete"`, and the entries in `fields` / `documents` with `satisfied: false` | Send just those. What you sent before is kept. |
-| A complete set was refused | `handed_off: true` with `status: "action_required"` and a `reason` | Fix what `reason` names — usually the PAN or the sender match — and send again |
+| A complete set was refused | `handed_off: true` with `status: "action_required"`, plus `missing` and often a `reason` | Fix what it names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; a `missing` entry of `primary_person` means the buyer is not the person the money is for, so name that person. |
 
 <Warning>
   **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).

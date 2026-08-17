@@ -213,7 +213,7 @@ Yes. Every LRS payment carries a verification expiry. Miss it and the payment ex
 
 ### Why verify the PAN before quoting?
 
-An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and tells you why.
+An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and returns a `reason`: `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH`.
 
 Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declaration.
 
