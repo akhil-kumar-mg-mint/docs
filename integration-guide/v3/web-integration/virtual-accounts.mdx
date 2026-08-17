@@ -3,7 +3,9 @@ title: "Virtual Bank Accounts"
 description: "Give your buyer an Indian bank account to pay into. They transfer rupees the normal way; you get the money abroad."
 ---
 
-We issue an Indian account number your buyer can pay into. They transfer rupees by NEFT, RTGS, or IMPS — the same way they pay any local supplier. No SWIFT, no international wire, no forex on their side.
+We issue a **virtual account** — an Indian account number your buyer can pay into. They transfer rupees by NEFT, RTGS, or IMPS, the same way they pay any local supplier. No SWIFT, no international wire, no forex on their side.
+
+Shortened to **VBA** in field names and API responses.
 
 The account sits on EximPe's master account. You do not need a bank account in India, and there is nothing for you to open or maintain.
 
@@ -103,5 +105,5 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
 | One account | [Get VBA](/api-reference/v3/vba/get) |
 
 <Note>
-  Create as many accounts as you want — there is no limit. By default each one accepts money from any number of buyers; use a remitter lock if you want to tie an account to specific payers.
+  Create as many accounts as you want — there is no limit. By default each one accepts money from any number of buyers; use a remitter lock if you want to tie an account to specific buyers.
 </Note>

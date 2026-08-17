@@ -16,7 +16,7 @@ Not today. Virtual bank accounts are driven entirely from your own product, so t
 
 ### How does the buyer actually pay?
 
-By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual bank account you share with them. No SWIFT, no international wire, no intermediary banks.
+By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual account you share with them. No SWIFT, no international wire, no intermediary banks.
 
 ### What can I collect for?
 
@@ -32,10 +32,10 @@ Only the compliance step. Onboarding, collection, the payment lifecycle, webhook
 
 | Term | Who it is |
 | :--- | :--- |
-| **PSP** | Integrator that onboards sub-merchants and calls the API for them. EximPe settles their collections to the PSP. |
+| **PSP** | Collects on behalf of the sub-merchants it onboards, and calls the API for them. EximPe settles their collections to the PSP. |
 | **Sub-merchant** | A merchant onboarded by a PSP. Collections are tracked against it; its PSP settles the money onward to it. |
 | **Direct merchant** | A merchant with no parent PSP. Calls the API for itself and is settled directly by EximPe. |
-| **Remitter (Buyer)** | The person or business in India paying you. For LRS payments they are identified by their **PAN**. |
+| **Buyer** | Whoever in India is paying you. LRS rules and API fields call them the **remitter** and identify them by **PAN**. |
 
 As a PSP you onboard the businesses you collect for as sub-merchants. Collections and balances are tracked per sub-merchant, and EximPe settles them to you; you pay each sub-merchant onward.
 
@@ -45,17 +45,17 @@ A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Clien
 
 ### What does it cost me?
 
-Nothing comes out of your principal. The buyer pays **principal + our fee + GST on that fee + TCS**, so the full principal settles onward to you.
+Nothing comes out of the amount you are owed. The buyer pays the **amount to be collected** — the amount to be settled, plus our fee, the GST on that fee, and TCS — so the full amount to be settled reaches you.
 
 | | Who funds it | What it is |
 | :--- | :--- | :--- |
-| **Principal** | Buyer | The remittance — this is what settles to you |
+| **Amount to be settled** | Buyer | What reaches you abroad. `amount_to_be_settled` on submit. |
 | **MDR** | Buyer, on top | Our processing fee. Your rate is agreed with your KAM. |
 | **GST on the MDR** | Buyer, on top | Indian tax on that fee. |
 | **TCS** | Buyer, on top | LRS only. We hand it to the bank, which pays it to the government against the buyer's **PAN**. The buyer reclaims it as a tax credit. |
 
 <Warning>
-  **Collect the all-in total, not the principal.** [Quote LRS Amount](/api-reference/v3/lrs/quote) returns it as `total_payable_inr` — ask the buyer for exactly that. Collect only the principal and the payment is short, and it waits until the buyer tops up.
+  **Ask the buyer for the amount to be collected, not the amount to be settled.** [Quote LRS Amount](/api-reference/v3/lrs/quote) returns it as `total_payable_inr` — ask for exactly that. Collect only the amount to be settled and the payment is short, and it waits until the buyer tops up.
 </Warning>
 
 <Note>
@@ -110,9 +110,9 @@ The payment waits with the outstanding amount. The buyer tops up into the **same
 
 The rate at the time we settle, not the rate at the time your buyer paid.
 
-You collect in rupees. When the payment clears we convert your principal to your settlement currency at the rate applying on the settlement date, and send it to your bank abroad. See [What does it cost me?](#what-does-it-cost-me) for what the buyer pays on top.
+You collect in rupees. When the payment clears we convert the amount to be settled into your settlement currency at the rate applying on the settlement date, and send it to your bank abroad. See [What does it cost me?](#what-does-it-cost-me) for what the buyer pays on top.
 
-So the gap between the buyer paying and the money settling is exposure you carry. If you quote your customer a price in your own currency, price that gap in.
+So the gap between the buyer paying and the money settling is exposure you carry. If you quote your buyer a price in your own currency, price that gap in.
 
 ### How do I get settlement details?
 
@@ -126,7 +126,7 @@ If that balance does not cover the refund, the call fails with an error. Nothing
 
 ### Where does a refund go, and can I refund partially?
 
-A refund goes back to the remitter's **own account**. A payment can take more than one partial refund over its life.
+A refund goes back to the buyer's **own account**. A payment can take more than one partial refund over its life.
 
 ---
 
@@ -180,7 +180,7 @@ It should be. You tell us the remitter's PAN and we check it against the name on
 
 ### How is TCS calculated?
 
-2% on whatever the buyer has sent abroad above ₹10,00,000 in a financial year. The first ₹10 lakh each year is TCS-free. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure — collect it along with the principal, and it passes through to the government against the buyer's PAN.
+2% on whatever the buyer has sent abroad above ₹10,00,000 in a financial year. The first ₹10 lakh each year is TCS-free. [Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure — collect it on top of the amount to be settled, and it passes through to the government against the buyer's PAN.
 
 You do not declare anything — we compute it. Full mechanics in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance#tax-at-source-tcs).
 
@@ -190,7 +190,7 @@ Optional, but call it. Quoting reserves nothing and can be re-run freely. Show t
 
 ### What declaration does the buyer affirm?
 
-One, covering resident status, the LRS limit, and source of funds. It is a single field, `buyer_declaration`, and the exact wording to show the payer comes back as its `label` from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) — read it from there rather than hardcoding it.
+One, covering resident status, the LRS limit, and source of funds. It is a single field, `buyer_declaration`, and the exact wording to show the buyer comes back as its `label` from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) — read it from there rather than hardcoding it.
 
 ### Is there a deadline?
 

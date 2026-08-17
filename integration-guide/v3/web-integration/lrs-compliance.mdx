@@ -17,7 +17,7 @@ You give us the buyer, the amount, and the documents. We enforce the rest.
 
 | You | EximPe |
 | :--- | :--- |
-| Own the customer and the experience around the payment | Issue the virtual account and file the settlement with the bank |
+| Own the buyer relationship and the experience around the payment | Issue the virtual account and file the settlement with the bank |
 | Identify the buyer, collect their details and documents | Check the PAN, the documents, and the declaration |
 | Decide the INR amount, and any price you quote in your own currency | Add the tax, convert, and settle at the rate on the settlement date |
 
@@ -59,7 +59,7 @@ Three requirements — resident status, the LRS limit, and source of funds — a
 It maps onto a single field, `buyer_declaration`, on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details). Send `true` once the buyer has affirmed it.
 
 <Note>
-  Read the exact wording to show the payer from the requirement set — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns it as the `label` on `buyer_declaration`. Use that rather than copying the text above, so your screen stays right when the wording is revised.
+  Read the exact wording to show the buyer from the requirement set — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns it as the `label` on `buyer_declaration`. Use that rather than copying the text above, so your screen stays right when the wording is revised.
 </Note>
 
 ## Tax at source (TCS)
@@ -68,7 +68,7 @@ It maps onto a single field, `buyer_declaration`, on [Submit Verification Detail
 
 **EximPe works the figure out.** There is nothing for you or the buyer to declare — we compute it against our record of what that PAN has sent through us this financial year. If this payment is the one that crosses ₹10 lakh, only the part above the threshold is taxed.
 
-[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure. Collect it along with the principal. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
+[Quote LRS Amount](/api-reference/v3/lrs/quote) returns the exact figure. Collect it on top of the amount to be settled. The bank pays it to the government against the buyer's PAN, and the buyer claims it back as a tax credit — it shows up in their Form 26AS.
 
 <Note>
   We track LRS usage and **refuse anything that would breach the USD 250,000 annual cap**, on the data we can see. The bank is the wider backstop at settlement.
@@ -97,7 +97,7 @@ Documents are decided by the purpose code. For education:
 ¹ Alternatives — supplying either one clears both. `S1107` has no travel leg, so there is no visa and the university ID card stands alone.
 
 <Warning>
-  **Do not build a form off this table.** It is here so you know roughly what to ask a payer for. The authoritative set for a given payment — including the travel codes, and anything added as the rules change — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
+  **Do not build a form off this table.** It is here so you know roughly what to ask a buyer for. The authoritative set for a given payment — including the travel codes, and anything added as the rules change — comes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
 </Warning>
 
 <Info>

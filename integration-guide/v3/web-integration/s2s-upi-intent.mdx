@@ -5,7 +5,7 @@ description: "Enable direct UPI payments without redirection using EximPe’s se
 
 # Introduction
 
-The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend. Deliver a seamless checkout experience while maintaining control and confidence for your customers.
+The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend. Deliver a seamless checkout experience while maintaining control and confidence for your buyers.
 
 <CardGroup cols={3}>
   <Card title="No Redirect Hops" icon="arrow-right" href="#step-2-initiate-payment">
@@ -44,7 +44,7 @@ The following steps allow you to integrate the server-to-server UPI intent:
 2. **Frontend calls your Backend** to initiate the payment.
 3. **Backend calls EximPe Initiate Payment API** to get the `intent_uri`.
 4. **Backend returns `intent_uri`** to the Frontend.
-5. **Frontend invokes the UPI Intent** on the customer’s device.
+5. **Frontend invokes the UPI Intent** on the buyer’s device.
 6. **Check UPI transaction status** via API or Webhook.
 
 ## Step 1: Payment Page UI
@@ -108,8 +108,8 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
 
   - `collection_mode`: must be set to `"s2s"`
   - `upi_flow_type`: must be set to `"intent"`
-  - `buyer.ip_address`: the customer’s device IP address
-  - `buyer.user_agent`: the customer’s browser or app user-agent string
+  - `buyer.ip_address`: the buyer’s device IP address
+  - `buyer.user_agent`: the buyer’s browser or app user-agent string
 </Note>
 
 ### S2S UPI Intent Response
@@ -153,7 +153,7 @@ For S2S UPI Intent mode, the response includes:
 
 ## Step 3: Invoke UPI Intent
 
-The method for invoking a UPI payment depends on the customer's device and operating system.
+The method for invoking a UPI payment depends on the buyer's device and operating system.
 
 #### Desktop (PC)
 
@@ -180,7 +180,7 @@ upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
 
 #### Mobile (Android & iOS)
 
-For mobile devices, use the `intent_uri` to directly launch the customer's UPI application. This provides a seamless experience without manual data entry.
+For mobile devices, use the `intent_uri` to directly launch the buyer's UPI application. This provides a seamless experience without manual data entry.
 
 ##### 1. Specific App Invocation (Android & iOS)
 

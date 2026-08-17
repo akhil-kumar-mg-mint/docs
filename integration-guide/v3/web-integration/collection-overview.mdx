@@ -16,7 +16,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Create Merchant](/api-reference/v3/merchant/create) · [Merchant Approved webhook](/api-reference/v3/webhooks/merchant-approved)
   </Step>
   <Step title="Set up a way to get paid">
-    Create a virtual bank account and give the buyer its account number and IFSC.
+    Create a virtual account and give the buyer its account number and IFSC.
 
     [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
@@ -29,7 +29,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
   <Step title="Get your money">
-    We convert your principal at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole principal settles.
+    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
 
     [What it costs you](/integration-guide/v3/getting-started/faqs#what-does-it-cost-me) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
@@ -37,7 +37,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
 ## How the buyer pays
 
-Through a **virtual bank account** — an Indian account number we issue for you. Your buyer transfers rupees into it by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier.
+Through a **virtual account** — an Indian account number we issue for you. Your buyer transfers rupees into it by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier.
 
 Give them two things: the account number and the IFSC. See [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts).
 
@@ -48,11 +48,22 @@ Give them two things: the account number and the IFSC. See [Virtual Bank Account
 | **PSP** | You, if you collect on behalf of other businesses. You onboard them, you call the API for them, and we settle their money to you. |
 | **Sub-merchant** | A business onboarded by a PSP. Collections are tracked against it, and its PSP pays it onward. |
 | **Direct merchant** | You, if you collect only for yourself. We settle straight to you. |
-| **Remitter** | The buyer in India — the person or business paying you. For LRS payments they are identified by their PAN. |
+| **Buyer** | Whoever in India is paying you. In LRS rules and API fields they are the **remitter**, identified by PAN — `remitter_pan`, `remitter_relation`, and the remitter lock on an account. |
 
 <Warning>
   One virtual account takes payments from **many** buyers. So a credit landing does not tell you who paid — you tell us, in step 4.
 </Warning>
+
+## The two amounts
+
+These are not the same number, and mixing them up is the most common way a payment stalls.
+
+| Term | What it is | In the API |
+| :--- | :--- | :--- |
+| **Amount to be collected** | What you ask the buyer to transfer. The amount to be settled, plus our fee, the GST on that fee, and any tax. | `total_payable_inr` on the quote |
+| **Amount to be settled** | What reaches you abroad. This is the figure the buyer's payment is actually *for*. | `amount_to_be_settled` on submit |
+
+Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
 ## Payment statuses
 

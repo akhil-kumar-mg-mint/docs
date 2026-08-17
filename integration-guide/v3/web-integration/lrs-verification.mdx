@@ -15,7 +15,7 @@ Money has arrived and the payment cannot settle yet. We tell you exactly what it
 
 ## Do it in this order
 
-Every settlement blocker below comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the principal instead of the all-in total.
+Every settlement blocker below comes from doing one of these out of order. The two that cost the most are quoting before the PAN is verified, and asking the buyer for the amount to be settled instead of the amount to be collected.
 
 ```mermaid
 flowchart TD
@@ -23,7 +23,7 @@ flowchart TD
     B -->|"no — NAME_MISMATCH,<br/>INOPERATIVE_PAN"| B1["Resolve with the buyer.<br/>Do not quote yet."]
     B1 --> A
     B -->|yes| C["Quote the tax"]
-    C --> D["Ask the buyer for<br/><b>total_payable_inr</b><br/>principal + fee + GST + TCS"]
+    C --> D["Ask for the <b>amount to be collected</b><br/>total_payable_inr<br/>amount to be settled + fee + GST + TCS"]
     D --> E["Buyer transfers into the VBA"]
     E --> F["LRS_VERIFICATION_NEEDED<br/>names what is missing"]
     F --> G["Send fields and documents<br/>as you get them — they merge"]
@@ -68,7 +68,7 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verifi
   -H 'X-API-Version: 3.0.0'
 ```
 
-You get the whole requirement set — what is already satisfied and what is still owed — plus the `label` for each code. Those labels are written to be shown to a payer, including the exact wording they must be shown to affirm `buyer_declaration`.
+You get the whole requirement set — what is already satisfied and what is still owed — plus the `label` for each code. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
 
 The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
 
