@@ -12,7 +12,7 @@ You get a webhook the moment money lands.
 ## Before you start
 
 - An approved merchant account with virtual accounts enabled
-- Your `X-Client-ID` and `X-Client-Secret`
+- Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
 - A webhook URL on your account
 
 PSPs also send `X-Merchant-ID` naming the sub-merchant the account belongs to.
@@ -26,6 +26,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
   -H 'X-Client-ID: <client_id>' \
   -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
   -d '{}'
 ```
@@ -76,6 +77,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
   -H 'X-Client-ID: <client_id>' \
   -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
   -d '{
     "virtual_account_id": "24586202",

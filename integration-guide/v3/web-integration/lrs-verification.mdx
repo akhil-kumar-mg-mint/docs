@@ -47,7 +47,8 @@ Two calls are worth making up front, neither of which is part of the loop above.
 ```bash
 curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>'
+  -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0'
 ```
 
 You get the whole requirement set — what is already satisfied and what is still owed — plus the `label` for each code. Those labels are written to be shown to a payer, including the exact wording they must be shown to affirm `buyer_declaration`.
@@ -68,6 +69,7 @@ One endpoint, one envelope: `fields`, `documents`, `finalize`. What belongs insi
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0' \
   -F 'fields={"buyer_city":"Bengaluru","remitter_pan":"ABCDE1234F","buyer_declaration":true}' \
   -F 'document.student_passport=@passport.pdf' \
   -F 'document.university_id_card=@student-id.png'
