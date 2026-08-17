@@ -39,8 +39,8 @@ flowchart TD
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We name the exact fields and documents<br/>still needed, and any money short"]
     E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
     F{"Anything<br/>outstanding?"}
-    G{"Gateway<br/>verdict"}
-    H["Settled to you"]
+    G{"Our checks<br/>PAN, sender match, tax"}
+    H["With the bank,<br/>then settled to you"]
     X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — the whole set, if you missed<br/>the webhook or are building your form"]
 
     A --> B --> C --> D --> E --> F
@@ -74,7 +74,7 @@ The first two calls happen before any money moves. After that it is one call, re
 | The PAN will not verify | `verified: false` with a `reason` — `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
 | The buyer paid too little | `action_required`, `missing: ["outstanding"]`, and `outstanding` | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
 | Something is still missing | `status: "incomplete"`, and the entries in `fields` / `documents` with `satisfied: false` | Send just those. What you sent before is kept. |
-| A complete set was refused | `handed_off: true` with `status: "action_required"`, plus `missing` and often a `reason` | Fix what it names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; a `missing` entry of `primary_person` means the buyer is not the person the money is for, so name that person. |
+| A complete set failed our checks | `handed_off: true` with `status: "action_required"`, plus `missing` and often a `reason` | Fix what it names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; a `missing` entry of `primary_person` means the buyer is not the person the money is for, so name that person. |
 
 <Warning>
   **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).
@@ -154,12 +154,16 @@ The webhook tells you what is **missing**. This tells you **everything**, so use
 
 **Omit a key rather than sending `null` or an empty string.** A boolean is only satisfied by `true` — `false` reads as not yet answered.
 
-**`handed_off: true` does not mean the payment passed.** It means the gateway reached a verdict. Read `status`:
+**`handed_off: true` does not mean the payment passed.** It means our checks ran and reached a verdict. Read `status`:
 
 | `status` | What it means | What you do |
 | :--- | :--- | :--- |
-| `under_review` | Passed. With the bank now. | Nothing |
+| `under_review` | Passed our checks. With the bank now. | Nothing |
 | `action_required` | Accepted, but did not pass — PAN, sender match, or the money does not add up | Read `missing` and `reason`, fix, send again |
+
+<Warning>
+  **The same state has two names, and both are correct.** This call reports lowercase `under_review`. The webhook reports the same state on a different field, `verification_status`, as uppercase `IN_REVIEW`. Neither is a typo — match on the field you are reading, not on the word.
+</Warning>
 
 ## The payment has a deadline
 
@@ -169,7 +173,7 @@ Surface that date in your own UI and chase against it. It is the difference betw
 
 ## Only education completes today
 
-Travel purpose codes accept details and hold them against the payment, but the verification gateway's rules cover education only, so a travel payment will not advance yet. Education — `S0305` and `S1107` — is unaffected.
+Travel purpose codes accept details and hold them against the payment, but our verification rules cover education only, so a travel payment will not advance yet. Education — `S0305` and `S1107` — is unaffected.
 
 ## After it passes
 
