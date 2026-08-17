@@ -37,30 +37,35 @@ flowchart TD
     B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>total amount to collect</b> —<br/>inclusive of TCS and EximPe's charges"]
     C["Buyer transfers that amount<br/>into the virtual account"]
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We name the exact fields and documents<br/>still needed, and any money short"]
-    E["<code>GET /pg/lrs/payments/:id/verification</code><br/>The full requirement set, with labels<br/>you can show the buyer"]
-    F["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
-    G{"Anything<br/>outstanding?"}
-    H{"Gateway<br/>verdict"}
-    I["Settled to you"]
+    E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
+    F{"Anything<br/>outstanding?"}
+    G{"Gateway<br/>verdict"}
+    H["Settled to you"]
+    X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — the whole set, if you missed<br/>the webhook or are building your form"]
 
-    A --> B --> C --> D --> E --> F --> G
-    G -- "yes" --> F
-    G -- "no" --> H
-    H -- "<code>action_required</code>" --> F
-    H -- "<code>under_review</code>" --> I
+    A --> B --> C --> D --> E --> F
+    F -- "yes" --> E
+    F -- "no" --> G
+    G -- "<code>action_required</code>" --> E
+    G -- "<code>under_review</code>" --> H
+    D -.-> X
+    X -.-> E
 
     classDef step fill:#ffffff,stroke:#26a887,stroke-width:1.5px,color:#134e4a
     classDef gate fill:#f0faf7,stroke:#26a887,stroke-width:1.5px,color:#134e4a
     classDef emphasis fill:#e6f6f1,stroke:#15803d,stroke-width:2px,color:#134e4a
     classDef done fill:#15803d,stroke:#15803d,stroke-width:2px,color:#ffffff
+    classDef aside fill:#ffffff,stroke:#9ccdbf,stroke-width:1px,color:#4a7c6f
 
-    class A,C,D,E,F step
+    class A,C,D,E step
     class B emphasis
-    class G,H gate
-    class I done
+    class F,G gate
+    class H done
+    class X aside
+
 ```
 
-The first two calls happen before any money moves. The last two repeat until nothing is outstanding — partial sends merge, so send each thing as you get it rather than waiting for the full set.
+The first two calls happen before any money moves. After that it is one call, repeated until nothing is outstanding — partial sends merge, so send each thing as you get it rather than waiting for the full set. The dashed lookup is there when you need it, not on the way through.
 
 ### When it does not go straight through
 
@@ -86,24 +91,7 @@ Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 - **[Verify PAN](/api-reference/v3/lrs/verify-pan)** — do it first. Nothing downstream works until the PAN passes, and you do not want to have chased documents by then.
 - **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — this is what tells you **how much to collect**. It returns `total_payable_inr`: the amount to be settled, plus our fee, the GST on that fee, and any tax. Ask the buyer for that figure and the payment covers itself.
 
-## Step 1: Read what the payment needs
-
-```bash
-curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' \
-  -H 'X-API-Version: 3.0.0'
-```
-
-You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `label`, whether it is `waivable`, and `satisfied` — so the ones still owed are those with `satisfied: false`. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
-
-The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
-
-<Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
-  Full response, statuses, and what each purpose code asks for.
-</Card>
-
-## Step 2: Send what you have
+## Send what you have
 
 One endpoint, one envelope: `fields`, `documents`, `finalize`. What belongs inside is set by the purpose code.
 
@@ -137,6 +125,25 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verif
 
 <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
   Complete bodies for every purpose code, both send modes, and every error.
+</Card>
+
+## If you need the full picture
+
+The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the event, you are resuming a half-finished payment, or you are building the form and want every label. It is idempotent — call it whenever.
+
+```bash
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `label`, whether it is `waivable`, and `satisfied` — so the ones still owed are those with `satisfied: false`. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
+
+The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
+
+<Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
+  Full response, statuses, and what each purpose code asks for.
 </Card>
 
 ## Four things that will bite you
