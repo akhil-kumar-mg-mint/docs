@@ -124,10 +124,6 @@ Two ways to send. **Multipart** carries the files themselves, so five documents 
   </Tab>
 
   <Tab title="Travel">
-    <Warning>
-      **Travel does not complete yet.** The call accepts these details and holds them, but a travel payment will not advance — see [Only education completes today](#only-education-completes-today).
-    </Warning>
-
     ```bash Multipart
     curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
       -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
@@ -202,10 +198,6 @@ You get the whole requirement set as `fields` and `documents`. Each entry carrie
 Every LRS payment carries a `payment_verification_expiry`. Miss it and verification status becomes `EXPIRED`, which is terminal — the window closes, the money goes back to the buyer, and nothing you send afterwards reopens it.
 
 Surface that date in your own UI and chase against it. It is the difference between a payment that settles and one that unwinds.
-
-## Only education completes today
-
-Travel purpose codes accept details and hold them against the payment, but our verification rules cover education only, so a travel payment will not advance yet. Education — `S0305` and `S1107` — is unaffected.
 
 ## After it passes
 

@@ -12,19 +12,19 @@ A cross-border collection rail. An Indian buyer pays rupees into a virtual accou
 
 ### Does EximPe show my buyer a payment page?
 
-Not today. Virtual bank accounts are driven entirely from your own product, so the buyer stays in your experience throughout — they just make a bank transfer. Methods where EximPe hosts the buyer-facing page are on the roadmap; contact your KAM about what is available to you.
+No. Virtual accounts are driven entirely from your own product, so the buyer stays in your experience throughout — they just make a bank transfer. If you want EximPe to host the payment page instead, talk to your KAM.
 
 ### How does the buyer actually pay?
 
-Today, by a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual account you share with them. No SWIFT, no international wire, no intermediary banks.
+By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual account you share with them. No SWIFT, no international wire, no intermediary banks.
 
-Other Indian payment methods are coming. Whichever route the money takes, the payment behaves identically afterwards, so adding one later will not change what you have built.
+Whichever route the money takes, the payment behaves identically afterwards.
 
 ### What can I collect for?
 
 Every payment carries a FEMA **purpose code**, and the purpose code decides the compliance rules — who may pay, which documents are needed, and what tax applies. EximPe supports **LRS education** payments today, on purpose codes `S0305` and `S1107`.
 
-Your account is enabled for a specific set of purpose codes (its allowlist). To collect for a purpose outside it, contact your EximPe KAM.
+Your account is enabled for a specific set of purpose codes (its allowlist). If you want to collect for something else, get in touch with your EximPe KAM — we will tell you what it takes.
 
 ### Does the payment type change how I integrate?
 
@@ -170,7 +170,7 @@ EximPe retries: the 1st attempt is immediate, followed by retries at **1 minute*
 
   It is decided by **what the money is for**, not by who is paying. An individual buying goods or services from a foreign seller is making a purchase: no LRS limit, and **no TCS**. `is_lrs` on the payment's requirements tells you which kind you have.
 
-  **Education is live today.** Travel purpose codes are documented but cannot complete yet. The full rules live in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance); the API walk-through is [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+  The full rules live in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance); the API walk-through is [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
 </Info>
 
 ### Who is allowed to pay under LRS?
