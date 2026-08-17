@@ -3057,7 +3057,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields[].field` are the keys you put in `fields`, and its `action_required_documents[].document` are what you name the files.\n\n**Two ways to send it, one endpoint.**\n\n* `application/json` — `fields` as an object, `documents` as a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document).\n* `multipart/form-data` — the same `fields` and `documents` as JSON strings, plus the files themselves as parts named `document.<code>` (for example `document.student_passport`). No pre-upload round trip: five documents in one request instead of six.\n\n**Partial sends are merged, never replaced.** Send what you have; the response tells you what is left. Nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields[].field` are the keys you put in `fields`, and its `action_required_documents[].document` are the `code` you put in `documents`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint — a `multipart/form-data` request is a `415`.\n\n**Partial sends are merged, never replaced.** Send what you have; the response tells you what is left. Nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -3102,7 +3102,7 @@
                   },
                   "documents": {
                     "type": "array",
-                    "description": "Documents by reference, or waivers. Files sent inline as multipart parts do not need an entry here.",
+                    "description": "Documents by reference, or waivers.",
                     "items": {
                       "type": "object",
                       "required": [
@@ -3170,38 +3170,6 @@
                   }
                 ],
                 "finalize": true
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "description": "`fields` and `documents` are JSON encoded as strings. Each file is its own part named `document.<code>` — `document.student_passport`, `document.loa`. Parts whose name does not start with `document.` are ignored.",
-                "properties": {
-                  "fields": {
-                    "type": "string",
-                    "description": "The `fields` object, JSON encoded as a string.",
-                    "example": "{\"buyer_city\":\"Bengaluru\",\"payment_term\":\"Advance\"}"
-                  },
-                  "documents": {
-                    "type": "string",
-                    "description": "The `documents` array, JSON encoded as a string. Only needed for references and waivers.",
-                    "example": "[{\"code\":\"loa\",\"ref\":\"a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d\"}]"
-                  },
-                  "finalize": {
-                    "type": "string",
-                    "example": "true"
-                  },
-                  "document.student_passport": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Example of an inline file part. Any `document.<code>` part is accepted, where `<code>` is a document code from the requirements."
-                  }
-                },
-                "additionalProperties": {
-                  "type": "string",
-                  "format": "binary",
-                  "description": "Further `document.<code>` file parts."
-                }
               }
             }
           }
