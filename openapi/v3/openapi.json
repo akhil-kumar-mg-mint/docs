@@ -2766,7 +2766,63 @@
                       "example": "Verification requirements"
                     },
                     "data": {
-                      "$ref": "#/components/schemas/v3_VerificationState"
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/v3_VerificationState"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "verification": {
+                              "type": "object",
+                              "description": "The verification gateway's last word on this payment — the same block the POST returns. Absent until a complete set has been handed downstream, and absent is not approval. `status: \"complete\"` above means you sent everything the purpose code asks for, NOT that the payment passed; this is where you see that. Nothing is re-run to produce it.",
+                              "properties": {
+                                "handed_off": {
+                                  "type": "boolean"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "under_review",
+                                    "action_required"
+                                  ]
+                                },
+                                "tcs_check": {
+                                  "type": "string",
+                                  "enum": [
+                                    "match",
+                                    "mismatch",
+                                    "n/a"
+                                  ]
+                                },
+                                "missing": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "What did not pass, as tokens: `outstanding`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `purpose_code`, or `documents.<type>`. Empty on `under_review`."
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "One headline conclusion, or `null` — which is normal, not an error. On `handed_off: true` with `status: action_required`: `PAN_NOT_VERIFIED`, `SENDER_NAME_MISMATCH`, `PURPOSE_CODE_NOT_ALLOWED` or `PURPOSE_CODE_NOT_IN_REGISTRY`; a shortfall and every other multi-check refusal returns `null`. On `handed_off: false`: `GATEWAY_REJECTED`, `GATEWAY_UNAVAILABLE` (your details are saved — retry to complete) or `NO_DOWNSTREAM_GATEWAY`."
+                                },
+                                "outstanding": {
+                                  "type": "string",
+                                  "description": "Money still owed on this payment, in rupees, as a decimal string — principal plus fees, GST and TCS, less what was received. `\"0.00\"` when nothing is owed. Always present when `handed_off` is `true`.",
+                                  "example": "12500.00"
+                                }
+                              }
+                            },
+                            "verification_checked_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "When that verdict was reached. Beside the block rather than inside it, so `verification` stays identical to the submit response's.",
+                              "example": "2026-08-17T05:43:31+00:00"
+                            }
+                          }
+                        }
+                      ]
                     }
                   }
                 },
@@ -3132,109 +3188,155 @@
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "message": "Verification details received",
-                  "data": {
-                    "payment_id": "PR6938527534",
-                    "order_uid": "OD3376378679",
-                    "status": "incomplete",
-                    "is_lrs": true,
-                    "business_model": "B2C",
-                    "purpose_code": "S0305",
-                    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
-                    "requirement_label": "B2C · Education — LRS (with travel leg)",
-                    "missing_fields": [
-                      {
-                        "code": "student_name",
-                        "label": "Student name",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "remitter_pan",
-                        "label": "Remitter PAN",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "payment_term",
-                        "label": "Payment term",
-                        "requirement": "REQUIRED",
-                        "waivable": false
+                "examples": {
+                  "partial": {
+                    "summary": "Partial send — still incomplete",
+                    "description": "`finalize` applies only to a complete set, so nothing was handed downstream and there is no `verification` block.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_uid": "OD3376378679",
+                        "status": "incomplete",
+                        "is_lrs": true,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+                        "requirement_label": "B2C · Education — LRS (with travel leg)",
+                        "missing_fields": [
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "label": "Remitter PAN",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          },
+                          {
+                            "code": "payment_term",
+                            "label": "Payment term",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          }
+                        ],
+                        "missing_documents": [
+                          {
+                            "code": "student_passport",
+                            "label": "Student passport",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          },
+                          {
+                            "code": "student_visa",
+                            "label": "Student visa",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "university_id_card",
+                            "label": "University ID card",
+                            "requirement": "REQUIRED",
+                            "waivable": false,
+                            "alternative_group": "student_status_proof"
+                          },
+                          {
+                            "code": "loa",
+                            "label": "Letter of admission / offer letter",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          }
+                        ],
+                        "required_fields": [
+                          {
+                            "code": "buyer_name",
+                            "label": "Buyer / remitter name",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          },
+                          {
+                            "code": "student_name",
+                            "label": "Student name",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          }
+                        ],
+                        "required_documents": [
+                          {
+                            "code": "student_passport",
+                            "label": "Student passport",
+                            "requirement": "REQUIRED",
+                            "waivable": false
+                          },
+                          {
+                            "code": "invoice",
+                            "label": "Fee invoice",
+                            "requirement": "OPTIONAL",
+                            "waivable": false
+                          },
+                          {
+                            "code": "relationship_declaration",
+                            "label": "Relationship self-declaration",
+                            "requirement": "CONDITIONAL",
+                            "waivable": false,
+                            "condition": "relation_not_self"
+                          }
+                        ],
+                        "accepted": {
+                          "fields": [
+                            "buyer_city",
+                            "remitter_pan"
+                          ],
+                          "documents": [
+                            "student_passport"
+                          ]
+                        }
                       }
-                    ],
-                    "missing_documents": [
-                      {
-                        "code": "student_passport",
-                        "label": "Student passport",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "student_visa",
-                        "label": "Student visa",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "alternative_group": "student_status_proof"
-                      },
-                      {
-                        "code": "university_id_card",
-                        "label": "University ID card",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "alternative_group": "student_status_proof"
-                      },
-                      {
-                        "code": "loa",
-                        "label": "Letter of admission / offer letter",
-                        "requirement": "REQUIRED",
-                        "waivable": false
+                    }
+                  },
+                  "complete": {
+                    "summary": "Complete set — handed off, and refused",
+                    "description": "Everything the purpose code asks for was sent, so the set went to the verification gateway. `handed_off: true` means it reached a verdict, not that the payment passed — this one is short by ₹12,500 and stays in Action Required.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_uid": "OD3376378679",
+                        "status": "complete",
+                        "is_lrs": true,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
+                        "requirement_label": "B2C · Education — LRS (with travel leg)",
+                        "missing_fields": [],
+                        "missing_documents": [],
+                        "accepted": {
+                          "fields": [
+                            "amount_to_be_settled",
+                            "buyer_declaration"
+                          ],
+                          "documents": [
+                            "loa",
+                            "student_visa"
+                          ]
+                        },
+                        "verification": {
+                          "handed_off": true,
+                          "status": "action_required",
+                          "tcs_check": "match",
+                          "missing": [
+                            "outstanding"
+                          ],
+                          "reason": null,
+                          "outstanding": "12500.00"
+                        }
                       }
-                    ],
-                    "required_fields": [
-                      {
-                        "code": "buyer_name",
-                        "label": "Buyer / remitter name",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "student_name",
-                        "label": "Student name",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      }
-                    ],
-                    "required_documents": [
-                      {
-                        "code": "student_passport",
-                        "label": "Student passport",
-                        "requirement": "REQUIRED",
-                        "waivable": false
-                      },
-                      {
-                        "code": "invoice",
-                        "label": "Fee invoice",
-                        "requirement": "OPTIONAL",
-                        "waivable": false
-                      },
-                      {
-                        "code": "relationship_declaration",
-                        "label": "Relationship self-declaration",
-                        "requirement": "CONDITIONAL",
-                        "waivable": false,
-                        "condition": "relation_not_self"
-                      }
-                    ],
-                    "accepted": {
-                      "fields": [
-                        "buyer_city",
-                        "remitter_pan"
-                      ],
-                      "documents": [
-                        "student_passport"
-                      ]
                     }
                   }
                 }

@@ -425,12 +425,58 @@ Each entry in the four arrays is a requirement item:
   For education with a travel leg, the student visa and the university ID card are alternatives — either proves student status.
 </ParamField>
 
+## The gateway's last word
+
+Once a complete set has been handed to the verification gateway, the response
+also carries what came back — the **same `verification` block** the
+[submit response](/api-reference/v3/lrs/submit-verification-details#completion)
+returns, so there is one shape to parse whichever way you arrived at it:
+
+```json
+{
+  "status": "complete",
+  "missing_fields": [],
+  "missing_documents": [],
+  "verification": {
+    "handed_off": true,
+    "status": "action_required",
+    "tcs_check": "match",
+    "missing": ["outstanding"],
+    "reason": null,
+    "outstanding": "12500.00"
+  },
+  "verification_checked_at": "2026-08-17T05:43:31+00:00"
+}
+```
+
+<Warning>
+  **`status: "complete"` does not mean the payment passed.** It means you have
+  sent everything the purpose code asks for. Whether the payment then cleared
+  PAN verification, the sender match and the money check is what `verification`
+  tells you — and the example above is a payment sitting in Action Required,
+  ₹12,500 short, with an empty `missing_documents`. Reconcile on `verification`,
+  not on `status`.
+</Warning>
+
+`verification_checked_at` is when that verdict was reached. It sits beside the
+block rather than inside it, so the block itself stays identical to the submit
+response's.
+
+<Note>
+  **Absent until a complete set has been submitted** — and absent is not the same
+  as approved. No `verification` key means the gateway has never been asked about
+  this payment, so there is nothing to read into its silence.
+
+  Nothing is re-run when you call this. A `GET` never verifies a PAN, posts to an
+  LRS counter or moves a payment; it reports what the last attempt concluded.
+</Note>
+
 ## Statuses
 
 | `status` | Meaning |
 |---|---|
 | `incomplete` | Something is still owed. See `missing_fields` and `missing_documents`. |
-| `complete` | Nothing is outstanding. |
+| `complete` | Nothing is outstanding **of what the purpose code asks for**. Read `verification` for whether the payment itself passed. |
 | `not_applicable` | No requirements are defined for this payment's business model and purpose code — it follows the standard verification flow instead. |
 
 <Note>
