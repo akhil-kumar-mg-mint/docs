@@ -98,9 +98,8 @@ Yes. In sandbox, [Simulate VBA Transfer](/api-reference/v3/vba/simulate-transfer
 
 | State | Meaning |
 | :--- | :--- |
-| `ACTION_REQUIRED` | Money received; compliance details not yet supplied (or something is missing). |
-| `UNDER_REVIEW` | Verification submitted; awaiting bank processing. For LRS, the amount is posted to the buyer's LRS counter at this point. |
-| `ON_HOLD` | Needs manual attention. We tell you the reason. |
+| `ACTION_REQUIRED` | Money received, but something is still outstanding — details not sent yet, or sent and not passed. |
+| `UNDER_REVIEW` | Verification accepted; awaiting bank processing. For LRS, the amount is posted to the buyer's LRS counter at this point. |
 | `SETTLED` | Funds settled to the beneficiary. |
 
 ### The buyer paid less than the amount due. What now?

@@ -58,9 +58,8 @@ Give them two things: the account number and the IFSC. See [Virtual Bank Account
 
 | Status | What it means | What you do |
 | :--- | :--- | :--- |
-| `ACTION_REQUIRED` | We have the money, not the details | Send the compliance details |
-| `UNDER_REVIEW` | Details sent, bank is processing | Wait |
-| `ON_HOLD` | Something needs a human | Check the reason we give and act on it |
+| `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
+| `UNDER_REVIEW` | Details accepted, bank is processing | Wait |
 | `SETTLED` | Money is on its way to you | Nothing |
 
 <Warning>
