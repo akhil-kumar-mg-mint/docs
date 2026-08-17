@@ -3,7 +3,7 @@ title: "LRS Verification"
 description: "Clear an LRS payment for settlement: read what it needs, send fields and documents, repeat until nothing is left."
 ---
 
-Money has arrived and the payment cannot settle yet. We tell you exactly what it needs, you send it, and the payment completes itself once nothing is outstanding.
+Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have the funds but not the paperwork. We tell you exactly what it needs, you send it, and the payment completes itself once nothing is outstanding.
 
 <Info>
   New to the rules? Read [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance) first. This page is the API walk-through.
@@ -35,7 +35,7 @@ Every settlement blocker comes from doing one of these out of order. The quote i
 flowchart TD
     A["<code>POST /pg/pan/verify</code><br/>Check the buyer's PAN is real<br/>and matches their name"]
     B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>total amount to collect</b> —<br/>inclusive of TCS and EximPe's charges"]
-    C["Buyer transfers that amount<br/>into the virtual account"]
+    C["Buyer transfers that amount<br/>into the virtual account<br/>Payment created as <code>ACTION_REQUIRED</code>"]
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We name the exact fields and documents<br/>still needed, and any money short"]
     E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields and documents"]
     F{"Anything<br/>outstanding?"}
@@ -135,8 +135,6 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verifi
 ```
 
 You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `label`, whether it is `waivable`, and `satisfied` — so the ones still owed are those with `satisfied: false`. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
-
-The webhook tells you what is **missing**. This tells you **everything**, so use it when you are building the form, resuming a half-finished payment, or you think you missed an event. It is idempotent — call it whenever.
 
 <Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
   Full response, statuses, and what each purpose code asks for.
