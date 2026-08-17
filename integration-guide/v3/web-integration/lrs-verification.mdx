@@ -34,7 +34,7 @@ Every settlement blocker comes from doing one of these out of order. The quote i
 }}%%
 flowchart TD
     A["<code>POST /pg/pan/verify</code><br/>Check the buyer's PAN is real<br/>and matches their name"]
-    B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>TCS</b> to collect, plus our fee<br/>and the GST on it, added to the amount to be settled"]
+    B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>total amount to collect</b> —<br/>inclusive of TCS and EximPe's charges"]
     C["Buyer transfers that amount<br/>into the virtual account"]
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We list what the payment still owes"]
     E["<code>GET /pg/lrs/payments/:id/verification</code><br/>The full requirement set, with labels<br/>you can show the buyer"]
