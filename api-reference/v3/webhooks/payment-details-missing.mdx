@@ -5,23 +5,60 @@ description: "Technical reference for the webhook sent when a payment is recorde
 
 ---
 
+<Warning>
+  **This event is being retired. Move to [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed).**
+
+  Which of the two events you received for a payment that could not be filed
+  depended on which gateway the money arrived through, not on what was actually
+  wrong — a distinction no integration should have had to model. In an upcoming
+  release `VERIFICATION_NEEDED` becomes the single signal for all of it, raised
+  from one evaluation for every gateway, and **nothing will raise
+  `PAYMENT_DETAILS_MISSING` any more**.
+
+  If you handle this event today, handle `VERIFICATION_NEEDED` before that
+  release. See [What replaces it](#what-replaces-it) for the mapping.
+
+  The event type itself is not removed — historical deliveries and your stored
+  records keep reading correctly. You simply stop receiving new ones.
+</Warning>
+
+## What replaces it
+
+`VERIFICATION_NEEDED` carries the same information in a payload that also says
+*why* it fired, so you no longer have to infer the cause from which field names
+turned up:
+
+| This event | `VERIFICATION_NEEDED` |
+|---|---|
+| `data.order_uid` | `data.order_id` |
+| `data.payment_id` | `data.payment_id` (unchanged) |
+| `data.details_missing` | `data.action_required_fields` — the same field names |
+| — | `data.reasons`, an array of stable reason codes naming what is wrong |
+| — | `data.settlement_status`, so you can see the payment is parked |
+| — | `data.payment_verification_expiry`, the deadline where one applies |
+
+The reason codes distinguish cases this event conflated. A purpose code that was
+never declared and a purpose code that has dropped off your account's allow-list
+both showed up here as the bare string `purpose_code`; they arrive as
+`purpose_code_unresolved` and `purpose_code_not_allowed`, and they need different
+things done about them.
+
 <Note>
-  **This event is Cashfree-specific.** A Cashfree payment missing order fields
-  gets `PAYMENT_DETAILS_MISSING`. Every other gateway — HyperPG, PayU, ICICI
-  (including a credit landing in a Virtual Bank Account), the sandbox simulator
-  — reports the same gap through
-  [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed)
-  instead, in `action_required_fields`. If you integrate with more than one
-  gateway, handle both events for the missing-order-fields case.
+  **LRS payments are unaffected either way.** They receive
+  [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed)
+  today and will continue to — it names documents as well as fields, which neither
+  of the generic events does.
 </Note>
+
+---
 
 ## Event Overview
 
 **Event Type**: `PAYMENT_DETAILS_MISSING`  
 **Category**: Payment  
-**Description**: A Cashfree payment was recorded but one or more order fields required for payment verification are missing.
+**Description**: Payment was recorded but one or more order fields required for payment verification are missing.
 
-This webhook notifies you which fields that are missing for payment verification so you can supply them via the Partner API (order update or **upload-verification-details**) or dashboard. It is sent for Cashfree payments only — every other gateway reports the same gap through `VERIFICATION_NEEDED` (see the note above).
+This webhook notifies you which fields that are missing for payment verification so you can supply them via the Partner API (order update or **upload-verification-details**) or dashboard. It is used for any payment with missing verification details, including VBA transfer and regular payment success flows.
 
 <Note>
   **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which names the documents it needs as well as the fields. It never receives both.
@@ -33,9 +70,8 @@ This webhook notifies you which fields that are missing for payment verification
 
 The webhook is sent **only when all** of the following are true:
 
-1. **The payment gateway is Cashfree** – every other gateway reports missing order fields through [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) instead.
-2. **Merchant has webhook URL** – Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
-3. **At least one detail is missing** – The payment’s order is missing one or more verification fields (see [details_missing](#details_missing-field-names) below). If all six fields are present on the order, the webhook is not sent — `VERIFICATION_NEEDED` covers anything still outstanding from there (an unresolved classification, or a gateway-specific document/settlement flag).
+1. **Merchant has webhook URL** – Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+2. **At least one detail is missing** – The payment’s order is missing one or more verification fields (see [details_missing](#details_missing-field-names) below). If all six fields are present on the order, the webhook is not sent.
 
 ---
 
@@ -63,9 +99,10 @@ details that are missing, so they belong in the one list you already read. What
 we *did* resolve is not reported — you declared it.
 
 <Note>
-  On [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed),
-  the equivalent gap is reported the same way, as ordinary entries in
-  `action_required_fields`.
+  Both become reason codes on `VERIFICATION_NEEDED` when this event is retired —
+  see [What replaces it](#what-replaces-it). `purpose_code` splits in two there,
+  because "never declared" and "no longer allowed on this account" are not the
+  same problem.
 </Note>
 
 <Tip>
