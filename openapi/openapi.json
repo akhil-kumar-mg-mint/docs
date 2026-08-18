@@ -3580,7 +3580,7 @@
     "/pg/subscriptions/{subscription_id}/pre_debit_notification/": {
       "post": {
         "summary": "Send Pre-Debit Notification",
-        "description": "Trigger PayU\u2019s Pre-Debit Notification API for an upcoming debit.",
+        "description": "Trigger PayU’s Pre-Debit Notification API for an upcoming debit.",
         "tags": [
           "Subscriptions"
         ],
@@ -3672,7 +3672,7 @@
     "/pg/subscriptions/{subscription_id}/recurring_payment/": {
       "post": {
         "summary": "Trigger Recurring Payment",
-        "description": "Trigger a recurring payment installment via PayU\u2019s Recurring Payment Transaction API.",
+        "description": "Trigger a recurring payment installment via PayU’s Recurring Payment Transaction API.",
         "tags": [
           "Subscriptions"
         ],
@@ -4977,6 +4977,12 @@
                           "description": "Bank UTR / transaction reference. Empty string if not yet known.",
                           "example": "SBIN0123456789"
                         },
+                        "remarks": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Payer narration captured from the incoming bank credit (the same value accepted as `remarks` on Simulate VBA Transfer). `null` or empty when the bank did not provide one.",
+                          "example": "Payment for invoice INV-2041"
+                        },
                         "buyer_account_number": {
                           "type": "string",
                           "nullable": true,
@@ -5008,6 +5014,7 @@
                     "status": "CAPTURED",
                     "amount": 12500.0,
                     "payment_utr": "SBIN0123456789",
+                    "remarks": "Payment for invoice INV-2041",
                     "buyer_account_number": "1234567890",
                     "buyer_ifsc": "SBIN0001234",
                     "created_at": "2026-05-15T18:30:00.000000Z"
@@ -5248,6 +5255,12 @@
                                 "description": "Bank UTR / transaction reference. Empty string if not yet known.",
                                 "example": "SBIN0123456789"
                               },
+                              "remarks": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Payer narration captured from the incoming bank credit (the same value accepted as `remarks` on Simulate VBA Transfer). `null` or empty when the bank did not provide one.",
+                                "example": "Payment for invoice INV-2041"
+                              },
                               "buyer_account_number": {
                                 "type": "string",
                                 "nullable": true,
@@ -5289,6 +5302,7 @@
                         "status": "CAPTURED",
                         "amount": 12500.0,
                         "payment_utr": "SBIN0123456789",
+                        "remarks": "Payment for invoice INV-2041",
                         "buyer_account_number": "1234567890",
                         "buyer_ifsc": "SBIN0001234",
                         "created_at": "2026-05-15T18:30:00.000000Z"
