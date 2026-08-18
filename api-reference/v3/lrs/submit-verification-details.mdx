@@ -422,6 +422,35 @@ A complete set can fail to reach a verdict at all:
   Details are stored before verification is attempted and are never discarded by it.
 </Note>
 
+## Sandbox testing
+
+<Warning>
+  **Simulator merchants only.** On a merchant whose payment gateway is **Simulator**, the inline PAN check this endpoint runs (step 3 of the loop above) never runs a real check — `remitter_pan`, `remitter_name` and `remitter_dob` select a canned outcome instead. On every other gateway this always runs the real check, in every environment including UAT and staging.
+</Warning>
+
+A `remitter_pan` outside the table below always verifies clean, whatever `remitter_name` or `remitter_dob` you send, so a normal test submission does not have to dodge a magic value:
+
+| `remitter_pan` | Outcome |
+|---|---|
+| `SIMUL0000I` | Invalid PAN — `reason: "PAN_NOT_VERIFIED"`, stays `ACTION_REQUIRED` |
+| `SIMUL0000N` | Valid but not an individual PAN — same `reason`, same outcome |
+| `SIMUL0000O` | Valid individual PAN, but inoperative — same `reason`, same outcome |
+| `SIMUL0000E` | Verification service unreachable — reproduces a genuine outage: `status` is `ACTION_REQUIRED`, **no event fires**, and the fix is to repeat the same request unchanged, per the table in [When the handoff itself does not happen](#when-the-handoff-itself-does-not-happen) |
+| anything else | Valid — falls through to the name/dob check below |
+
+Once the PAN itself passes:
+
+| Condition | Outcome |
+|---|---|
+| `remitter_name` is exactly `SIMULATE MISMATCH` | Name does not match — `reason: "PAN_NOT_VERIFIED"` |
+| `remitter_dob` is `1900-01-01` | Date of birth does not match — same `reason` |
+
+<Note>
+  These PAN-level and name/dob-level checks are independent, and the PAN table always wins — a magic `remitter_pan` decides the outcome before `remitter_name`/`remitter_dob` are looked at, same order [Verify PAN](/api-reference/v3/lrs/verify-pan#what-fails-first) evaluates in. To reach the four failures a *verified* PAN can still produce later in the submit — a sender-name mismatch, a short credit, a TCS disagreement, a refused purpose code — send a plain (non-magic) PAN and drive those through the fields and amount you submit instead; this table only covers the PAN check itself.
+</Note>
+
+This selection also applies to [Verify PAN](/api-reference/v3/lrs/verify-pan) called standalone, for the same merchant.
+
 ## Where each value goes
 
 Most fields flow into the verification and settlement record. Two are collected
