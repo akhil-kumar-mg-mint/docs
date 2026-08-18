@@ -142,14 +142,6 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": true
       },
       {
-        "code": "payment_term",
-        "label": "Payment term",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false
-      },
-      {
         "code": "remitter_name",
         "label": "Remitter name (as per PAN)",
         "requirement": "REQUIRED",
@@ -424,7 +416,7 @@ lands here before it lands in any table.
 ### Fields
 
 Every LRS code asks for the common core (buyer name, address, contact, invoice number
-and date, invoice amount, purpose code, payment term), the remitter's verified identity
+and date, invoice amount, purpose code), the remitter's verified identity
 (`remitter_name`, `remitter_pan`, `remitter_dob`, `remitter_relation`),
 `buyer_declaration`, and `amount_to_be_settled`. On top of that:
 

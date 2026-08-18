@@ -63,7 +63,6 @@ sets:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "payment_term": "Advance",
     "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
@@ -107,7 +106,6 @@ sets:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "payment_term": "Advance",
     "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
@@ -146,7 +144,6 @@ sets:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "payment_term": "Advance",
     "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
@@ -195,7 +192,6 @@ sets:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "payment_term": "Advance",
     "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
@@ -244,7 +240,6 @@ sets:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "payment_term": "Advance",
     "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
@@ -429,14 +424,13 @@ A complete set can fail to reach a verdict at all:
 
 ## Where each value goes
 
-Most fields flow into the verification and settlement record. Three are collected
+Most fields flow into the verification and settlement record. Two are collected
 but held rather than forwarded, and it is worth knowing which:
 
 | Field | Where it goes |
 |---|---|
 | `buyer_name` | Held. The credit's own sender name on the order is authoritative — the LRS own-account check compares the verified PAN holder against *that*, so a submitted value must not overwrite it. |
 | `purpose_code` | Held. Read from the order, which is what the settlement file uses. |
-| `payment_term` | Held. Nothing in the settlement record holds it yet; your answer is kept against the payment until something does. |
 
 Everything else reaches the verification gateway. TCS is not collected at all —
 EximPe computes it.

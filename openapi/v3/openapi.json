@@ -2891,14 +2891,6 @@
                         "provided": true
                       },
                       {
-                        "code": "payment_term",
-                        "label": "Payment term",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
                         "code": "remitter_name",
                         "label": "Remitter name (as per PAN)",
                         "requirement": "REQUIRED",
@@ -3086,7 +3078,7 @@
                 "properties": {
                   "fields": {
                     "type": "object",
-                    "description": "Answers keyed by requirement code, e.g. `{\"remitter_pan\": \"ABCDE1234F\", \"payment_term\": \"Advance\"}`. Values are strings, numbers or booleans. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string.",
+                    "description": "Answers keyed by requirement code, e.g. `{\"remitter_pan\": \"ABCDE1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string.",
                     "additionalProperties": true,
                     "example": {
                       "buyer_city": "Bengaluru",
