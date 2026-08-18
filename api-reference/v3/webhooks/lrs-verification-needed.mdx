@@ -28,7 +28,7 @@ This webhook fires when a payment settling under an LRS purpose code is missing 
 
 1. **On a successful payment**, once the payment is recognised as LRS — its purpose code determines this.
 2. **After you supply verification details**, if the purpose code was not known earlier. A purpose code is often chosen at submission time, so a payment can only be recognised as LRS then; until it is, the generic events apply.
-3. **When a complete set does not pass verification.** Supplying everything the list named is not the end of it: the PAN still has to verify, the sender still has to match the account holder, and the credit still has to cover the amount. A payment that fails one of those comes back in this same event, with two extra keys — see [After a submit that did not pass](#after-a-submit-that-did-not-pass).
+3. **When a complete set does not pass verification.** Supplying everything the list named is not the end of it: the PAN still has to verify, the sender still has to match the account holder, and the credit still has to cover the amount. A payment that fails one of those comes back in this same event, same shape, the problem folded into the relevant entry's `message` — see [After a submit that did not pass](#after-a-submit-that-did-not-pass).
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
@@ -820,24 +820,6 @@ trimmed, so what you see is what arrives.
       The **documents** still owed, plus unsent optionals. Same shape, keyed on
       `document` instead of `field`.
     </ParamField>
-
-    <ParamField path="data.outstanding" type="string">
-      **Only on a submit that did not pass, and only when money is short.** The
-      amount still owed on this payment in rupees, as a decimal string —
-      principal plus fees, GST and TCS, less what was received.
-
-      Absent otherwise. A requirement-matrix event never carries it: nothing has
-      been priced at that point.
-
-      **Example**: `"12500.00"`
-    </ParamField>
-
-    <ParamField path="data.reason" type="string">
-      **Only on a submit that did not pass**, and only where one headline
-      conclusion explains it. See [the reason table](#after-a-submit-that-did-not-pass).
-
-      **Example**: `"PAN_NOT_VERIFIED"`
-    </ParamField>
   </Tab>
 
   <Tab title="Entries">
@@ -894,10 +876,11 @@ against the name and date of birth, matches the credit's sender to the account
 holder, recomputes TCS and checks that the money received covers what is being
 settled. Any of those can refuse.
 
-A refusal arrives as **this same event** — same type, same envelope, the same two
-`action_required_*` lists — because an LRS payment should learn what it owes in
-one vocabulary whether the answer came from the requirement matrix or from the
-checks that run after it. The `message` differs, and there are two extra keys:
+A refusal arrives as **this same event** — same type, same envelope, the exact
+same five keys as the requirement-matrix event above. Nothing is added: an LRS
+payment should learn what it owes in one vocabulary and one shape, whether the
+answer came from the requirement matrix or from the checks that run after it.
+Only the `message` and the entries differ:
 
 ```json
 {
@@ -912,17 +895,17 @@ checks that run after it. The `message` differs, and there are two extra keys:
     "action_required_fields": [
       {
         "field": "amount_to_be_settled",
-        "message": "The credit received does not cover the amount to settle plus fees and TCS. Either the buyer tops up the shortfall, or a smaller amount is declared.",
+        "message": "The credit received is short by ₹12500.00. Either the buyer tops up the shortfall, or a smaller amount is declared.",
         "waivable": false
       }
     ],
-    "action_required_documents": [],
-    "outstanding": "12500.00"
+    "action_required_documents": []
   }
 }
 ```
 
-A refusal with a single headline conclusion carries `reason` instead:
+A refusal with a single headline conclusion reads the same way — the conclusion
+is inside the entry, not a separate key:
 
 ```json
 {
@@ -941,8 +924,7 @@ A refusal with a single headline conclusion carries `reason` instead:
         "waivable": false
       }
     ],
-    "action_required_documents": [],
-    "reason": "PAN_NOT_VERIFIED"
+    "action_required_documents": []
   }
 }
 ```
@@ -953,50 +935,33 @@ A refusal with a single headline conclusion carries `reason` instead:
   re-send only that — a partial send is merged with what is already there.
 </Note>
 
-### `outstanding`
+There is no separate `outstanding` or `reason` key to branch on. Whatever they
+used to say now lives inside the relevant entry's `message` — the shortfall
+amount inside the `amount_to_be_settled` entry, a PAN mismatch inside
+`remitter_pan`, and so on. Read `action_required_fields` and
+`action_required_documents` the same way you already do for the
+requirement-matrix event; a submit failure names the same thing in the same
+place, never a second structure to learn.
 
-Present only when the credit does not cover the payment. `action_required_fields`
-tells you *that* it is short, under `amount_to_be_settled`; this is *by how much*,
-in rupees.
-
-You have two ways to clear it, and they are genuinely different: have the buyer
-transfer the shortfall (then link that credit as a top-up when you re-submit), or
-declare a smaller `amount_to_be_settled`. The same figure comes back on the
-[submit response](/api-reference/v3/lrs/submit-verification-details#completion),
-so you do not have to wait for this event to act on it.
-
-### `reason`
-
-A single machine-readable conclusion, present where one exists. It is a headline,
-not the whole story — read `action_required_fields` either way.
-
-| `reason` | What happened |
-|---|---|
-| `PAN_NOT_VERIFIED` | The remitter's PAN did not verify against the name and date of birth given. All three have to agree. |
-| `SENDER_NAME_MISMATCH` | The name on the credit is not the account holder the payment would settle for. A third-party credit cannot settle on someone else's PAN — re-declare the actual account holder as the remitter. |
-| `PURPOSE_CODE_NOT_ALLOWED` | The purpose code is not one this merchant account is enabled for. |
-| `PURPOSE_CODE_NOT_IN_REGISTRY` | The purpose code is not one we recognise for LRS. |
-
-<Note>
-  **A shortfall carries no `reason`.** Nor does any other refusal that came out of
-  the full check rather than from one of the conclusions above — those carry
-  `outstanding` and the two lists and nothing else. `reason` appears only when a
-  single named conclusion is the whole story, so treat its absence as normal and
-  act on `action_required_fields` either way.
-</Note>
+The shortfall amount is also on the
+[submit response](/api-reference/v3/lrs/submit-verification-details#completion)
+as `outstanding`, so you don't have to wait for this event to act on it — that
+field is on the synchronous API response, not this webhook, and is unaffected
+by anything on this page.
 
 ### The codes a refusal names
 
 A refusal reports itself in the same codes the requirement matrix uses, so a fix
 goes back through the same endpoint and the same key you collected it under:
 
-| Code | What to do |
-|---|---|
-| `remitter_pan` | Check the PAN, the remitter's name and the date of birth together, and re-send all three. |
-| `buyer_declaration` | The declaration was not affirmed. Re-send it once the payer has consented. |
-| `amount_to_be_settled` | Either the buyer tops up the shortfall or you declare a smaller amount. |
-| `purpose_code` | Declared on the order, not here — the code is not one this account may use. |
-| `documents.<type>` | Named as an entry in `action_required_documents`; send the file. |
+| Code | What it means | What to do |
+|---|---|---|
+| `remitter_pan` | The PAN did not verify against the name and date of birth given. | Check all three together and re-send. |
+| `remitter_name` | The name on the credit does not match the declared remitter — a third-party credit can't settle on someone else's PAN. | Re-declare the actual account holder as the remitter. |
+| `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
+| `amount_to_be_settled` | The credit received does not cover the amount to settle plus fees and TCS. The entry's `message` names the shortfall. | Have the buyer top up the shortfall, or declare a smaller amount. |
+| `purpose_code` | The code is not one this account may use, or not one we recognise for LRS. | Declared on the order, not here — use an enabled, recognised code. |
+| `documents.<type>` | Named as an entry in `action_required_documents`. | Send the file. |
 
 Two entries are conclusions rather than codes, and there is nothing to re-send
 under that name:

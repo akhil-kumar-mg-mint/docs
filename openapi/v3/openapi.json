@@ -3189,7 +3189,7 @@
                 "examples": {
                   "action_required": {
                     "summary": "ACTION_REQUIRED — something is still owed",
-                    "description": "A partial send, a `finalize: false` hold, and a complete set the gateway refused all answer the same way: the payment is still waiting on you. `GET /pg/lrs/payments/{payment_id}/verification/` for the codes still outstanding; a gateway refusal also arrives as an `LRS_VERIFICATION_NEEDED` event carrying a sentence per item, plus `outstanding` and `reason`.",
+                    "description": "A partial send, a `finalize: false` hold, and a complete set the gateway refused all answer the same way: the payment is still waiting on you. `GET /pg/lrs/payments/{payment_id}/verification/` for the codes still outstanding; a gateway refusal also arrives as an `LRS_VERIFICATION_NEEDED` event, the same shape as any other — a sentence per item, the shortfall or the headline reason folded into the relevant entry's message.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
