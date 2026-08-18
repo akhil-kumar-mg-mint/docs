@@ -5,7 +5,7 @@ openapi: 'POST /pg/settlements/mark-settled/'
 ---
 
 <Warning>
-  **Sandbox only.** This endpoint returns `400` in production. It operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.
+  **Sandbox only.** This endpoint returns `400` in production. It operates only on transactions created through the **Simulator** payment gateway — transactions from real payment rails are rejected.
 
   Your account must be assigned the Simulator gateway in sandbox. Contact your EximPe integration manager if it isn't.
 </Warning>
