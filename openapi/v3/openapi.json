@@ -913,7 +913,7 @@
     "/pg/vba/": {
       "get": {
         "summary": "List Virtual Bank Accounts",
-        "description": "Return a paginated list of Virtual Bank Accounts for the authenticated merchant or sub-merchant. Supports optional filtering by `vba_status` and `vba_provider`, and pagination via `page`.",
+        "description": "Return a paginated list of Virtual Bank Accounts for the authenticated merchant or sub-merchant. Supports optional filtering by `vba_status`, and pagination via `page`.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -938,19 +938,6 @@
               ]
             },
             "description": "Filter by VBA status."
-          },
-          {
-            "name": "vba_provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "CASHFREE",
-                "ICICI"
-              ]
-            },
-            "description": "Filter by VBA provider."
           },
           {
             "name": "page",
@@ -1720,13 +1707,13 @@
                               "buyer_account_number": {
                                 "type": "string",
                                 "nullable": true,
-                                "description": "Remitter (buyer) bank account number captured from the Cashfree VBA success webhook. `null` when not provided by the bank.",
+                                "description": "Remitter (buyer) bank account number captured from the incoming bank credit. `null` when not provided by the bank.",
                                 "example": "1234567890"
                               },
                               "buyer_ifsc": {
                                 "type": "string",
                                 "nullable": true,
-                                "description": "Remitter (buyer) bank IFSC code captured from the same webhook. `null` when not provided.",
+                                "description": "Remitter (buyer) bank IFSC code captured from the incoming bank credit. `null` when not provided.",
                                 "example": "SBIN0001234"
                               },
                               "created_at": {
@@ -1911,13 +1898,13 @@
                         "buyer_account_number": {
                           "type": "string",
                           "nullable": true,
-                          "description": "Remitter (buyer) bank account number captured from the Cashfree VBA success webhook. `null` when not provided by the bank.",
+                          "description": "Remitter (buyer) bank account number captured from the incoming bank credit. `null` when not provided by the bank.",
                           "example": "1234567890"
                         },
                         "buyer_ifsc": {
                           "type": "string",
                           "nullable": true,
-                          "description": "Remitter (buyer) bank IFSC code captured from the same webhook. `null` when not provided.",
+                          "description": "Remitter (buyer) bank IFSC code captured from the incoming bank credit. `null` when not provided.",
                           "example": "SBIN0001234"
                         },
                         "created_at": {
@@ -2004,7 +1991,7 @@
     "/pg/vba/simulate-transfer/": {
       "post": {
         "summary": "Simulate VBA Transfer",
-        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for both **Cashfree** and **ICICI** VBAs; the provider is resolved from the target VBA.\n\n- **Cashfree** VBAs call the Cashfree sandbox simulate API.\n- **ICICI** VBAs have no bank-side sandbox and the live credit-posting webhook is encrypted, so this synthesises the decrypted credit-posting payload and runs the real processor — creating the payment (in Action Required) and firing the partner webhook, skipping only the envelope crypto and MSG Hold.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.",
+        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for every VBA; how the credit is simulated is resolved from the target VBA's issuing bank — either the bank's sandbox simulate API is called, or (for banks without a sandbox) the incoming bank credit is synthesised and run through the real processing pipeline, creating the payment (in Action Required) and firing the partner webhook.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -2074,23 +2061,23 @@
                       },
                       "payment_date": {
                         "type": "string",
-                        "description": "ICICI only (optional). Payer payment date in DD/MM/YYYY format; maps to PayerPaymentDate. If omitted or unparseable, the payment's completion time falls back to the time the simulated credit is processed.",
+                        "description": "Optional. Payer payment date in DD/MM/YYYY format. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise. If omitted or unparseable, the payment's completion time falls back to the time the simulated credit is processed.",
                         "example": "07/07/2026"
                       },
                       "bank_txn_number": {
                         "type": "string",
-                        "description": "ICICI only (optional). Maps to BankInternalTransactionNumber, stored as the payment's bank reference number.",
-                        "example": "ICICITXN00012345"
+                        "description": "Optional. Bank internal transaction number, stored as the payment's bank reference number. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise.",
+                        "example": "BANKTXN00012345"
                       },
                       "remarks": {
                         "type": "string",
-                        "description": "Optional. Payer narration stored on the payment as payment_message. Applied for ICICI VBAs; ignored for Cashfree VBAs (Cashfree's simulate API has no narration field).",
+                        "description": "Optional. Payer narration stored on the payment as payment_message. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise (the bank-sandbox simulate API has no narration field).",
                         "example": "Invoice INV-2025-0091"
                       },
                       "sender_remark": {
                         "type": "string",
                         "deprecated": true,
-                        "description": "Deprecated alias of remarks (ICICI only). Used only when remarks is absent.",
+                        "description": "Deprecated alias of remarks. Used only when remarks is absent.",
                         "example": "Invoice INV-2025-0091"
                       }
                     }
@@ -2160,8 +2147,8 @@
                   }
                 },
                 "examples": {
-                  "cashfree": {
-                    "summary": "Cashfree VBA",
+                  "bank_sandbox": {
+                    "summary": "VBA simulated via the bank's sandbox",
                     "value": {
                       "success": true,
                       "message": "VBA transfer simulation successful",
@@ -2176,11 +2163,11 @@
                       }
                     }
                   },
-                  "icici": {
-                    "summary": "ICICI VBA (runs the real credit-posting processor)",
+                  "synthesised_credit": {
+                    "summary": "VBA simulated via the synthesised-credit path (runs the real processing pipeline)",
                     "value": {
                       "success": true,
-                      "message": "ICICI VBA transfer simulation processed",
+                      "message": "VBA transfer simulation processed",
                       "data": {
                         "result": {
                           "Response": "Success",
@@ -3274,7 +3261,7 @@
     "/pg/settlements/mark-settled/": {
       "post": {
         "summary": "Mark payments as settled (sandbox)",
-        "description": "Batches one or more captured payments — plus, optionally, refunds and chargebacks — into a single new settlement, applies a simulated fee schedule, and fires the [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) webhook. Use it to exercise your settlement handler and reconciliation without waiting for real money movement.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.\n\nThe batch is atomic: if any payment fails validation nothing is written, so a partially-settled batch is not a state you can reach.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Batches one or more captured payments — plus, optionally, refunds and chargebacks — into a single new settlement, applies a simulated fee schedule, and fires the [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) webhook. Use it to exercise your settlement handler and reconciliation without waiting for real money movement.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — transactions from real payment rails are rejected.\n\nThe batch is atomic: if any payment fails validation nothing is written, so a partially-settled batch is not a state you can reach.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "Settlement"
         ],
@@ -3457,7 +3444,7 @@
     "/pg/refunds/{refund_id}/simulate-status/": {
       "post": {
         "summary": "Set refund status (sandbox)",
-        "description": "Forces a refund straight to any status, bypassing the normal `INITIATED → REFUNDED/FAILED` progression, and fires the same webhook a real status change would. Lets one refund exercise every branch of your refund handler, including statuses a real rail reaches rarely.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — a real Cashfree or ICICI transaction is rejected.\n\nUnlike a real rail, a refund may be moved **out of** a terminal status (`REFUNDED` / `FAILED`) and back again — deliberately, so you do not need a fresh refund per branch.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Forces a refund straight to any status, bypassing the normal `INITIATED → REFUNDED/FAILED` progression, and fires the same webhook a real status change would. Lets one refund exercise every branch of your refund handler, including statuses a real rail reaches rarely.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — transactions from real payment rails are rejected.\n\nUnlike a real rail, a refund may be moved **out of** a terminal status (`REFUNDED` / `FAILED`) and back again — deliberately, so you do not need a fresh refund per branch.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "Refund"
         ],
@@ -7106,7 +7093,7 @@
     },
     {
       "name": "Virtual Bank Accounts",
-      "description": "Create and manage ICICI virtual accounts and read collected payments."
+      "description": "Create and manage virtual bank accounts and read collected payments."
     }
   ]
 }
