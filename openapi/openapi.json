@@ -4087,6 +4087,11 @@
                         "type": "string",
                         "description": "IFSC code of the destination VBA.",
                         "example": "UTIB0CCH274"
+                      },
+                      "remarks": {
+                        "type": "string",
+                        "description": "Optional. Payer narration stored on the payment as payment_message. Applied for ICICI VBAs; ignored for Cashfree VBAs (Cashfree's simulate API has no narration field).",
+                        "example": "Invoice INV-2025-0091"
                       }
                     }
                   }
@@ -4101,7 +4106,8 @@
                   "phone": "9876543210",
                   "remitter_account": "123456789012",
                   "remitter_ifsc": "YESB0CMSNOC",
-                  "vba_ifsc": "UTIB0CCH274"
+                  "vba_ifsc": "UTIB0CCH274",
+                  "remarks": "Invoice INV-2025-0091"
                 }
               }
             }

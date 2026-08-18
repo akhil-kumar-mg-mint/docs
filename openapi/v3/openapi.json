@@ -1039,14 +1039,6 @@
                                   "INACTIVE"
                                 ],
                                 "example": "ACTIVE"
-                              },
-                              "vba_provider": {
-                                "type": "string",
-                                "enum": [
-                                  "CASHFREE",
-                                  "ICICI"
-                                ],
-                                "example": "ICICI"
                               }
                             }
                           }
@@ -1072,8 +1064,7 @@
                         "vba_bank_code": "UTIB",
                         "vba_account_number": "9461257424586202",
                         "vba_ifsc": "UTIB0CCH274",
-                        "vba_status": "ACTIVE",
-                        "vba_provider": "ICICI"
+                        "vba_status": "ACTIVE"
                       },
                       {
                         "uid": "VBA_8e2a0b3c4d",
@@ -1082,8 +1073,7 @@
                         "vba_bank_code": "YESB",
                         "vba_account_number": "9461257424586203",
                         "vba_ifsc": "YESB0CMSNOC",
-                        "vba_status": "INACTIVE",
-                        "vba_provider": "CASHFREE"
+                        "vba_status": "INACTIVE"
                       }
                     ]
                   }
@@ -2084,17 +2074,23 @@
                       },
                       "payment_date": {
                         "type": "string",
-                        "description": "ICICI only (optional). Payer payment date; maps to PayerPaymentDate.",
-                        "example": "2026-07-07"
+                        "description": "ICICI only (optional). Payer payment date in DD/MM/YYYY format; maps to PayerPaymentDate. If omitted or unparseable, the payment's completion time falls back to the time the simulated credit is processed.",
+                        "example": "07/07/2026"
                       },
                       "bank_txn_number": {
                         "type": "string",
-                        "description": "ICICI only (optional). Maps to BankInternalTransactionNumber.",
+                        "description": "ICICI only (optional). Maps to BankInternalTransactionNumber, stored as the payment's bank reference number.",
                         "example": "ICICITXN00012345"
+                      },
+                      "remarks": {
+                        "type": "string",
+                        "description": "Optional. Payer narration stored on the payment as payment_message. Applied for ICICI VBAs; ignored for Cashfree VBAs (Cashfree's simulate API has no narration field).",
+                        "example": "Invoice INV-2025-0091"
                       },
                       "sender_remark": {
                         "type": "string",
-                        "description": "ICICI only (optional). Free-text narration; maps to SenderRemark.",
+                        "deprecated": true,
+                        "description": "Deprecated alias of remarks (ICICI only). Used only when remarks is absent.",
                         "example": "Invoice INV-2025-0091"
                       }
                     }
