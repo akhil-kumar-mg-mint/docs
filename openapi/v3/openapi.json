@@ -1039,14 +1039,6 @@
                                   "INACTIVE"
                                 ],
                                 "example": "ACTIVE"
-                              },
-                              "vba_provider": {
-                                "type": "string",
-                                "enum": [
-                                  "CASHFREE",
-                                  "ICICI"
-                                ],
-                                "example": "ICICI"
                               }
                             }
                           }
@@ -1072,8 +1064,7 @@
                         "vba_bank_code": "UTIB",
                         "vba_account_number": "9461257424586202",
                         "vba_ifsc": "UTIB0CCH274",
-                        "vba_status": "ACTIVE",
-                        "vba_provider": "ICICI"
+                        "vba_status": "ACTIVE"
                       },
                       {
                         "uid": "VBA_8e2a0b3c4d",
@@ -1082,8 +1073,7 @@
                         "vba_bank_code": "YESB",
                         "vba_account_number": "9461257424586203",
                         "vba_ifsc": "YESB0CMSNOC",
-                        "vba_status": "INACTIVE",
-                        "vba_provider": "CASHFREE"
+                        "vba_status": "INACTIVE"
                       }
                     ]
                   }
