@@ -2603,10 +2603,10 @@
         "operationId": "v3_post_pg_lrs_quote_"
       }
     },
-    "/pg/lrs/documents/": {
+    "/pg/payments/{payment_id}/documents/": {
       "post": {
         "summary": "Upload a supporting document",
-        "description": "Upload one LRS supporting document (offer letter, passport, fee invoice, ...) and get back a `ref`. Pass that `ref` together with its `type` in the `documents` array of **Submit LRS Verification**. Documents are uploaded up front, decoupled from any payment. The file's type, size and encryption are validated on upload.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
+        "description": "Upload one supporting document (offer letter, passport, fee invoice, ...) for a payment and get back a `ref`. Pass that `ref` together with its `type` in the `documents` array of **Submit Verification Details**. Upload each document as it arrives \u2014 the `ref` is what binds it to a checklist item later, so nothing has to be held back until the set is complete. The file's type, size and encryption are validated on upload.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document itself is merchant-scoped, so a `ref` stays valid across a retried attempt or a recurring installment. `POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
         "tags": [
           "LRS"
         ],
@@ -2616,6 +2616,18 @@
             "clientSecretAuth": [],
             "merchantAuth": [],
             "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the payment the document is for.",
+            "example": "PR6938527534"
           }
         ],
         "requestBody": {
@@ -2725,10 +2737,10 @@
             }
           }
         },
-        "operationId": "v3_post_pg_lrs_documents_"
+        "operationId": "v3_post_pg_payments_payment_id_documents_"
       }
     },
-    "/pg/lrs/payments/{payment_id}/verification/": {
+    "/pg/payments/{payment_id}/verification/": {
       "get": {
         "summary": "Get verification requirements",
         "description": "Returns everything a payment's purpose code calls for — every field and document, which are already satisfied, and which are still missing.\n\nThe [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is *missing*, with a label and a reason for each item. This returns the *whole* requirement set, including what is already satisfied — call it when you need the full picture, or to resume or reconcile if an event was missed.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
@@ -3189,7 +3201,7 @@
                 "examples": {
                   "action_required": {
                     "summary": "ACTION_REQUIRED — something is still owed",
-                    "description": "A partial send, a `finalize: false` hold, and a complete set the gateway refused all answer the same way: the payment is still waiting on you. `GET /pg/lrs/payments/{payment_id}/verification/` for the codes still outstanding; a gateway refusal also arrives as an `LRS_VERIFICATION_NEEDED` event, the same shape as any other — a sentence per item, the shortfall or the headline reason folded into the relevant entry's message.",
+                    "description": "A partial send, a `finalize: false` hold, and a complete set the gateway refused all answer the same way: the payment is still waiting on you. `GET /pg/payments/{payment_id}/verification/` for the codes still outstanding; a gateway refusal also arrives as an `LRS_VERIFICATION_NEEDED` event, the same shape as any other — a sentence per item, the shortfall or the headline reason folded into the relevant entry's message.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",

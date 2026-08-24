@@ -1023,7 +1023,7 @@ asks for in total — for that, call
     Show the payer each `message` for why the item is needed. A code containing `/` is one obligation — ask for either half.
   </Step>
   <Step title="POST it to the verification endpoint">
-    `POST /pg/lrs/payments/{payment_id}/verification/` — [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and files in one call. Partial sends are merged, so you can send as things arrive.
+    `POST /pg/payments/{payment_id}/verification/` — [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and files in one call. Partial sends are merged, so you can send as things arrive.
   </Step>
   <Step title="Read what is left">
     The response carries `fields` / `documents` after the write, each entry flagged `satisfied`. When nothing is left unsatisfied the payment is verified automatically.
