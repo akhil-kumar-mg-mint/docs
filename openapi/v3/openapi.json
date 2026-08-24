@@ -2004,7 +2004,7 @@
     "/pg/vba/simulate-transfer/": {
       "post": {
         "summary": "Simulate VBA Transfer",
-        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for every VBA; how the credit is simulated is resolved from the target VBA's issuing bank — either the bank's sandbox simulate API is called, or (for banks without a sandbox) the incoming bank credit is synthesised and run through the real processing pipeline, creating the payment (in Action Required) and firing the partner webhook.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.",
+        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for every VBA; how the credit is simulated is resolved from the target VBA's issuing bank — either the bank's sandbox simulate API is called, or (for banks without a sandbox) the incoming bank credit is synthesised and run through the real processing pipeline, creating the payment (in Action Required) and firing the partner webhook.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations — a repeat returns `409`. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.\n\nOn the synthesised-credit path the response is the payment that was created. A credit that breaches a rule on the account (inactive VBA, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded — real money is never dropped — but comes back with `status: failed` and the reason in `status_message`.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -2128,34 +2128,80 @@
                       "example": "VBA transfer simulation successful"
                     },
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "simulation_id": {
-                          "type": "string",
-                          "example": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW"
-                        },
-                        "entity": {
-                          "type": "string",
-                          "example": "VBA_TRANSFER"
-                        },
-                        "entity_id": {
-                          "type": "string",
-                          "example": "9461257424586202"
-                        },
-                        "entity_simulation": {
+                      "description": "Shape depends on how the credit was simulated. Banks with a sandbox return that sandbox's acknowledgement; banks without one return the payment the real processing pipeline created.",
+                      "oneOf": [
+                        {
+                          "title": "Synthesised credit — the payment that was created",
                           "type": "object",
                           "properties": {
-                            "payment_status": {
+                            "payment_id": {
                               "type": "string",
-                              "example": "Payment processed successfully"
+                              "description": "The created payment. Use it with Get Payment or List VBA Payments.",
+                              "example": "PR6115489451"
                             },
-                            "payment_error_code": {
+                            "order_id": {
                               "type": "string",
-                              "example": ""
+                              "example": "OD6767097620"
+                            },
+                            "reference_id": {
+                              "type": "string",
+                              "description": "Reference generated for the order behind this credit.",
+                              "example": "VBA-864042420509"
+                            },
+                            "status": {
+                              "type": "string",
+                              "description": "`captured` when the credit became a payment. `failed` when the credit was recorded but breached a rule on the account — the money is kept for reconciliation, and `status_message` says which rule.",
+                              "enum": [
+                                "captured",
+                                "failed"
+                              ],
+                              "example": "captured"
+                            },
+                            "settlement_status": {
+                              "type": "string",
+                              "description": "`action_required` on a captured credit — send the compliance details next. `not_applicable` when the credit was recorded `failed`.",
+                              "example": "action_required"
+                            },
+                            "status_message": {
+                              "type": "string",
+                              "nullable": true,
+                              "description": "Why the credit was recorded `failed`; `null` on a clean capture. One of: `VBA is inactive`, `Amount exceeds 25 lacs limit`, `Remitter not in allow-list`, `Amount outside allowed range`.",
+                              "example": null
+                            }
+                          }
+                        },
+                        {
+                          "title": "Bank sandbox — the bank's acknowledgement",
+                          "type": "object",
+                          "properties": {
+                            "simulation_id": {
+                              "type": "string",
+                              "example": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW"
+                            },
+                            "entity": {
+                              "type": "string",
+                              "example": "VBA_TRANSFER"
+                            },
+                            "entity_id": {
+                              "type": "string",
+                              "example": "9461257424586202"
+                            },
+                            "entity_simulation": {
+                              "type": "object",
+                              "properties": {
+                                "payment_status": {
+                                  "type": "string",
+                                  "example": "Payment processed successfully"
+                                },
+                                "payment_error_code": {
+                                  "type": "string",
+                                  "example": ""
+                                }
+                              }
                             }
                           }
                         }
-                      }
+                      ]
                     }
                   }
                 },
@@ -2177,24 +2223,32 @@
                     }
                   },
                   "synthesised_credit": {
-                    "summary": "VBA simulated via the synthesised-credit path (runs the real processing pipeline)",
+                    "summary": "Synthesised credit — captured (runs the real processing pipeline)",
                     "value": {
                       "success": true,
                       "message": "VBA transfer simulation processed",
                       "data": {
-                        "result": {
-                          "Response": "Success",
-                          "Code": "11"
-                        },
-                        "error": null,
-                        "error_kind": null,
-                        "payment": {
-                          "payment_request_uid": "PR_7d1f9a2b3c",
-                          "order_uid": "ORD_5e6f7a8b9c",
-                          "reference_id": "REF-2026-0042",
-                          "status": "PENDING",
-                          "settlement_status": "ACTION_REQUIRED"
-                        }
+                        "payment_id": "PR6115489451",
+                        "order_id": "OD6767097620",
+                        "reference_id": "VBA-864042420509",
+                        "status": "captured",
+                        "settlement_status": "action_required",
+                        "status_message": null
+                      }
+                    }
+                  },
+                  "synthesised_credit_failed": {
+                    "summary": "Synthesised credit — recorded but failed a rule on the account",
+                    "value": {
+                      "success": true,
+                      "message": "VBA transfer simulation processed",
+                      "data": {
+                        "payment_id": "PR2799500942",
+                        "order_id": "OD6892183700",
+                        "reference_id": "VBA-252507340603",
+                        "status": "failed",
+                        "settlement_status": "not_applicable",
+                        "status_message": "Amount outside allowed range"
                       }
                     }
                   }
@@ -2203,7 +2257,7 @@
             }
           },
           "400": {
-            "description": "Invalid request — missing required fields or duplicate UTR.",
+            "description": "Invalid request — missing required fields, or an amount that is not a positive number.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2234,6 +2288,26 @@
           },
           "404": {
             "description": "Virtual bank account not found for this merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The `utr` was already recorded by an earlier credit. Nothing was created — retry with a UTR you have not used.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "The simulated credit could not be recorded. Nothing was created; retry the same request.",
             "content": {
               "application/json": {
                 "schema": {
