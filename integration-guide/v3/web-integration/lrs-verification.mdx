@@ -37,12 +37,12 @@ flowchart TD
     B["<code>POST /pg/lrs/quote</code><br/>Tells you the <b>total amount to collect</b> —<br/>inclusive of TCS and EximPe's charges"]
     C["Buyer pays that amount<br/>Payment created as <code>ACTION_REQUIRED</code>"]
     D["Webhook <code>LRS_VERIFICATION_NEEDED</code><br/>We name the exact fields and documents<br/>still needed, and any money short"]
-    E["<code>POST /pg/lrs/payments/:id/verification</code><br/>Send fields, and documents as refs"]
+    E["<code>POST /pg/payments/:id/verification</code><br/>Send fields, and documents as refs"]
     F{"Anything<br/>outstanding?"}
     G{"Our checks<br/>PAN, sender match, tax"}
     H["With the bank,<br/>then settled to you"]
-    X["<code>GET /pg/lrs/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, with labels for the buyer"]
-    U["<code>POST /pg/lrs/documents</code><br/>Upload each document as it arrives,<br/>keep the <code>ref</code> it returns"]
+    X["<code>GET /pg/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, with labels for the buyer"]
+    U["<code>POST /pg/payments/:id/documents</code><br/>Upload each document as it arrives,<br/>keep the <code>ref</code> it returns"]
 
     A --> B --> C --> D --> E --> F
     F -- "yes" --> E
@@ -91,12 +91,12 @@ Steps 1 and 2 are not part of the verification loop, and both are easy to skip.
 
 ## Send what you have
 
-Two calls, and they are decoupled. Upload each document when you get it and keep the `ref` it returns; then send the fields and those refs together as JSON.
+Two calls, and they are independent. Upload each document when you get it and keep the `ref` it returns; then send the fields and those refs together as JSON. Both hang off the payment, so nothing has to be held back until the set is complete.
 
 **Uploading a document** is `multipart/form-data` — a `file` and a `type`:
 
 ```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/documents/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
   -H 'X-API-Version: 3.0.0' \
@@ -158,7 +158,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/lrs/documents/' \
 The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the webhook, when you are picking up a payment someone started days ago, or when you are building the screen you show the buyer and want every label up front. It is idempotent — call it whenever.
 
 ```bash
-curl -X GET 'https://api-pacb-uat.eximpe.com/pg/lrs/payments/<payment_id>/verification/' \
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
   -H 'X-API-Version: 3.0.0'
@@ -186,7 +186,7 @@ You get the whole requirement set as `fields` and `documents`. Each entry carrie
 | `ACTION_REQUIRED` | Something is still owed — the set is short, you held it back with `finalize: false`, or it did not pass our checks | Find out what, then send it |
 
 <Warning>
-  **`ACTION_REQUIRED` never means your details were discarded.** Everything you sent is kept. `GET /pg/lrs/payments/:payment_id/verification/` names what is still outstanding; a failed check also arrives as an `LRS_VERIFICATION_NEEDED` event with a sentence per item.
+  **`ACTION_REQUIRED` never means your details were discarded.** Everything you sent is kept. `GET /pg/payments/:payment_id/verification/` names what is still outstanding; a failed check also arrives as an `LRS_VERIFICATION_NEEDED` event with a sentence per item.
 </Warning>
 
 ## The payment has a deadline

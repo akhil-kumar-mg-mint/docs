@@ -1,7 +1,7 @@
 ---
 title: 'Submit Verification Details'
 description: "Send a payment's verification details — fields and document refs — in one JSON call, keyed by the codes the requirements name."
-openapi: 'POST /pg/lrs/payments/{payment_id}/verification/'
+openapi: 'POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -76,19 +76,19 @@ sets:
   "documents": [
     {
       "code": "student_passport",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "student_visa",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "loa",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "relationship_declaration",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     }
   ],
   "finalize": true
@@ -118,15 +118,15 @@ sets:
   "documents": [
     {
       "code": "university_id_card",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "loa",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "relationship_declaration",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     }
   ],
   "finalize": true
@@ -154,27 +154,27 @@ sets:
   "documents": [
     {
       "code": "passenger_list",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_passports",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_visas",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "invoice",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "ticket",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "relationship_declaration",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     }
   ],
   "finalize": true
@@ -202,27 +202,27 @@ sets:
   "documents": [
     {
       "code": "passenger_list",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_passports",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_visas",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "invoice",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "ticket",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "relationship_declaration",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     }
   ],
   "finalize": true
@@ -250,27 +250,27 @@ sets:
   "documents": [
     {
       "code": "passenger_list",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_passports",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "traveller_visas",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "invoice",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "ticket",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     },
     {
       "code": "relationship_declaration",
-      "ref": "<ref from POST /pg/lrs/documents>"
+      "ref": "<ref from POST /pg/payments/:payment_id/documents>"
     }
   ],
   "finalize": true
