@@ -178,6 +178,40 @@ Complete bodies for every LRS purpose code, built from the live checklists:
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
 </Warning>
 
+### B2B services is the short one
+
+The same envelope carries the non-LRS checklists. A complete **B2B services** body — `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106` against `business_model: "B2B"` — is the nine common fields and one document, with **no identity item at all**: no `remitter_pan`, no `iec`, nothing verified against an external register.
+
+```json S0802 — B2B services
+{
+  "fields": {
+    "buyer_name": "Acme Consulting GmbH",
+    "buyer_address_line_1": "Friedrichstrasse 12",
+    "buyer_city": "Berlin",
+    "buyer_state": "Berlin",
+    "buyer_postal_code": "10117",
+    "buyer_email": "ap@acme-consulting.de",
+    "buyer_phone": "+4930123456",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01"
+  },
+  "documents": [
+    { "code": "invoice", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
+  ],
+  "finalize": true
+}
+```
+
+A complete services set that files answers `status: "in_review"` — the payment is with EximPe Ops for review.
+
+<Note>
+  **No amount and no declaration key.** There is no `principal` and no `collected_tcs`: the amount that settles is the credit itself, read from the payment. TCS does not apply outside LRS. The declaration is recorded by the act of filing a complete set rather than sent as a field. All three are `400`s if you send them, like any unknown key.
+</Note>
+
+<Info>
+  The whole flow — classify, read, upload, submit, then the post-settlement delivery-proof step — is in [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
+</Info>
+
 ## Values
 
 Field values are strings, numbers or booleans.

@@ -1,0 +1,44 @@
+---
+title: 'Delete Settlement Document'
+description: "Remove one attached post-settlement document while the submission is still a draft."
+openapi: 'DELETE /pg/payments/{payment_id}/settlement-documents/{document_id}/'
+---
+
+## Overview
+
+Detaches one post-settlement compliance document. Use it to replace a file you attached by mistake before submitting the set.
+
+```bash
+curl -X DELETE 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement-documents/0f7c2a1e9b4d4c8e/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0'
+```
+
+```json
+{
+  "success": true,
+  "message": "Document deleted",
+  "data": null
+}
+```
+
+<Warning>
+  **Only while the set is a draft.** Once you have called [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) the set is locked and this returns a `400`. Check the set before you submit, not after.
+</Warning>
+
+<Note>
+  **The uploaded file is untouched.** This removes the attachment, not the upload — the `ref` stays valid and can be attached again. What you cannot do is undelete the attachment itself; attach the `ref` afresh instead.
+</Note>
+
+`document_id` comes from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) or from the attach response. An id that is not an active document on this payment reads as not found.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Attach Settlement Document" icon="paperclip" href="/api-reference/v3/b2b/attach-settlement-document">
+    Attach an uploaded file by its `ref`.
+  </Card>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    What is attached so far.
+  </Card>
+</CardGroup>

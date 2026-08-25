@@ -30,7 +30,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
     A Virtual Account credit arrives with no Create Order call behind it, so those same basic facts get filled in afterward in the EximPe dashboard instead.
 
-    For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+    For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step and no tax at all — see [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
   </Step>
   <Step title="Get your money">
     We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
@@ -80,6 +80,10 @@ These are not the same number, and mixing them up is the most common way a payme
 
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
+<Note>
+  **This split is an LRS thing.** A B2B services payment has no `principal` to declare and no tax to quote — the amount that settles is the credit itself, read from the payment. There is nothing to reconcile and nothing to get wrong.
+</Note>
+
 ## Payment statuses
 
 | `verification_status` | What it means | What you do |
@@ -120,5 +124,8 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
   </Card>
   <Card title="Send compliance details" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
     Read what the payment needs, send it, repeat until nothing is left.
+  </Card>
+  <Card title="B2B services" icon="briefcase" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    A business paying for a service: no identity step, no tax, plus a document step after settlement.
   </Card>
 </CardGroup>

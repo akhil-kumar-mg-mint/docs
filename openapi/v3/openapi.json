@@ -3765,6 +3765,469 @@
           }
         }
       }
+    },
+    "/pg/payments/{payment_id}/settlement-documents/": {
+      "get": {
+        "summary": "List post-settlement documents",
+        "description": "Every active post-settlement compliance document attached to one settled B2B-services payment.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attached documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Settlement documents"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "document_id": {
+                                "type": "string",
+                                "description": "UID of the attached document. Pass it as `document_id` to delete.",
+                                "example": "0f7c2a1e9b4d4c8e"
+                              },
+                              "doc_type": {
+                                "type": "string",
+                                "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                                "enum": [
+                                  "delivery_proof"
+                                ],
+                                "example": "delivery_proof"
+                              },
+                              "file_name": {
+                                "type": "string",
+                                "description": "The stored file's name.",
+                                "example": "delivery-note.pdf"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Validation error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Payment not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Attach a post-settlement document",
+        "description": "Attach a file you already uploaded through `POST /pg/payments/{payment_id}/documents/` as one post-settlement compliance document, by its `ref`. This endpoint never takes a file directly.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "doc_type",
+                  "ref"
+                ],
+                "properties": {
+                  "doc_type": {
+                    "type": "string",
+                    "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                    "enum": [
+                      "delivery_proof"
+                    ],
+                    "example": "delivery_proof"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "The `ref` returned by the document upload. Must belong to the calling merchant.",
+                    "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document attached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Document attached"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "document_id": {
+                          "type": "string",
+                          "description": "UID of the attached document. Pass it as `document_id` to delete.",
+                          "example": "0f7c2a1e9b4d4c8e"
+                        },
+                        "doc_type": {
+                          "type": "string",
+                          "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                          "enum": [
+                            "delivery_proof"
+                          ],
+                          "example": "delivery_proof"
+                        },
+                        "file_name": {
+                          "type": "string",
+                          "description": "The stored file's name.",
+                          "example": "delivery-note.pdf"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Validation error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Payment not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/settlement-documents/{document_id}/": {
+      "delete": {
+        "summary": "Delete a post-settlement document",
+        "description": "Remove one attached document while the submission is still a draft. The underlying uploaded file is untouched — only this attachment goes away.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 15
+            },
+            "description": "`document_id` from the list or attach response.",
+            "example": "0f7c2a1e9b4d4c8e"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Document deleted"
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Validation error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Payment not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/settlement/submit/": {
+      "post": {
+        "summary": "Submit post-settlement documents",
+        "description": "Lock the post-settlement document set once it is complete. B2B services requires at least one `delivery_proof`. After this the set is no longer editable.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Documents submitted"
+                    },
+                    "data": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Validation error"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": false
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Payment not found."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7226,6 +7689,10 @@
     {
       "name": "Virtual Bank Accounts",
       "description": "Create and manage virtual bank accounts and read collected payments."
+    },
+    {
+      "name": "B2B Verification",
+      "description": "Verification and post-settlement compliance for B2B payments."
     }
   ]
 }
