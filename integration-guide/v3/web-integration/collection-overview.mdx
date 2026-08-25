@@ -67,7 +67,7 @@ These are not the same number, and mixing them up is the most common way a payme
 | Term | What it is | In the API |
 | :--- | :--- | :--- |
 | **Amount to be collected** | What you ask the buyer to transfer. The amount to be settled, plus our fee, the GST on that fee, and any tax. | `total_payable_inr` on the quote |
-| **Amount to be settled** | What reaches you abroad. This is the figure the buyer's payment is actually *for*. | `amount_to_be_settled` on submit |
+| **Amount to be settled** | What reaches you abroad. This is the figure the buyer's payment is actually *for*. | `principal` on submit |
 
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
@@ -88,7 +88,7 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 ## When things go wrong
 
-**The buyer paid too little.** The payment waits, and `outstanding` says by how much. Declare a smaller `amount_to_be_settled` for what actually arrived, and submit again.
+**The buyer paid too little.** The payment waits, and the `outstanding` entry on the event names the shortfall. Either have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `principal` for what actually arrived and submit again.
 
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 

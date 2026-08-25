@@ -7,32 +7,29 @@ description: "Technical reference for the LRS_VERIFICATION_NEEDED webhook event,
 
 ## Event Overview
 
-**Event Type**: `LRS_VERIFICATION_NEEDED`  
-**Category**: Payment Verification  
+**Event Type**: `LRS_VERIFICATION_NEEDED`
+**Category**: Payment Verification
 **Description**: An LRS payment needs verification details before it can settle
 
-This webhook fires when a payment settling under an LRS purpose code is missing details required for its purpose code. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding.
+This webhook fires when a payment settling under an LRS purpose code is missing details its checklist calls for. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding, and carries a pointer to where you send them.
 
 <Note>
-  **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) or [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
+  **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) or [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing). Two events carrying different lists for the same outstanding work would leave you chasing both.
 </Note>
 
 <Note>
-  Fires for all five LRS purpose codes — `S0305` and `S1107` (education), and
-  `S0306`, `S0304` and `S0303` (travel). The codes it names differ per purpose
-  code; see [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)
-  for what each one asks for.
+  Fires for all five LRS purpose codes — `S0305` and `S1107` (education), and `S0303`, `S0304` and `S0306` (travel). What it names differs per code; see [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) for the whole set.
 </Note>
 
 ### When the webhook is sent
 
-1. **On a successful payment**, once the payment is recognised as LRS — its purpose code determines this.
-2. **After you supply verification details**, if the purpose code was not known earlier. A purpose code is often chosen at submission time, so a payment can only be recognised as LRS then; until it is, the generic events apply.
+1. **On a successful payment**, once the payment is recognised as LRS — its purpose code decides this.
+2. **After you declare a purpose code**, if it was not known earlier. A code is often chosen at submission time, so a payment can only be recognised as LRS then; until it is, the generic events apply.
 3. **When a complete set does not pass verification.** Supplying everything the list named is not the end of it: the PAN still has to verify, the sender still has to match the account holder, and the credit still has to cover the amount. A payment that fails one of those comes back in this same event, same shape, the problem folded into the relevant entry's `message` — see [After a submit that did not pass](#after-a-submit-that-did-not-pass).
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
-- The payment is actually missing something — a payment with everything already supplied gets no event
+- The payment is actually owed something — a payment with everything already supplied gets **no event at all**. Silence is the "nothing owed" signal.
 
 ---
 
@@ -45,7 +42,7 @@ The webhook is created **only if**:
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | Delivered on a rate-paced queue, so a burst of payments arrives smoothly rather than all at once |
+| **Pacing** | Delivered on a per-merchant rate-capped queue, so a burst of payments arrives smoothly rather than all at once |
 
 ### Headers
 
@@ -55,141 +52,62 @@ The webhook is created **only if**:
 | `User-Agent` | `Eximpe-Webhook/1.0` |
 | `X-Webhook-Event` | `LRS_VERIFICATION_NEEDED` |
 | `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
-| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
 
-**Signature verification (recommended):**  
-Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
 
 ---
 
 ## Payload Schema
 
-The payment, every item it still owes and why, and where to send them.
+The payment, its state, every item it still owes and why, and where to send them.
 
-These are complete, unedited payloads — one per LRS purpose code. Nothing is
-trimmed, so what you see is what arrives.
+These are complete, unedited payloads — nothing is trimmed.
 
 <CodeGroup>
 
 ```json Education, with travel leg (S0305)
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:30:00.123456Z",
+  "event_time": "2026-08-14T10:30:00.123456",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
   "data": {
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_pan",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_relation",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_passport_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
+      { "code": "buyer_name", "message": "Buyer / remitter name" },
+      { "code": "buyer_address_line_1", "message": "Buyer address line 1" },
+      { "code": "buyer_city", "message": "Buyer city" },
+      { "code": "buyer_state", "message": "Buyer state" },
+      { "code": "buyer_postal_code", "message": "Buyer PIN code" },
+      { "code": "buyer_email", "message": "Buyer email" },
+      { "code": "buyer_phone", "message": "Buyer phone" },
+      { "code": "invoice_number", "message": "Invoice number" },
+      { "code": "invoice_date", "message": "Invoice date" },
+      { "code": "remitter_name", "message": "Remitter name (as per PAN)" },
+      { "code": "remitter_pan", "message": "Remitter PAN" },
+      { "code": "remitter_dob", "message": "Remitter date of birth (as per PAN)" },
+      { "code": "remitter_relation", "message": "Remitter's relation to the person the remittance is for" },
+      { "code": "buyer_declaration", "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose" },
+      { "code": "principal", "message": "Amount to be settled for this payment, in INR" },
+      { "code": "collected_tcs", "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)" }
     ],
+    "payment_verification_expiry": null,
     "action_required_documents": [
-      {
-        "document": "student_passport",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "student_visa/university_id_card",
-        "message": "Send either student_visa or university_id_card — one satisfies both.",
-        "waivable": false
-      },
-      {
-        "document": "loa",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "invoice",
-        "message": "Optional for this purpose code.",
-        "waivable": false
-      }
-    ]
+      { "code": "offer_letter", "message": "Letter of admission from the institution" },
+      { "code": "passport", "message": "Student's passport" },
+      { "code": "student_id_or_visa", "message": "Student visa or university ID card (either)" }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR6938527534/verification/"
+    }
   }
 }
 ```
@@ -197,559 +115,83 @@ trimmed, so what you see is what arrives.
 ```json Education, fees only (S1107)
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:31:12.884210Z",
+  "event_time": "2026-08-14T10:31:12.884210",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
   "data": {
     "payment_id": "PR8125440971",
     "order_id": "OD5590284413",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_pan",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_relation",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
-    ],
+    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "payment_verification_expiry": null,
     "action_required_documents": [
-      {
-        "document": "university_id_card",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "loa",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "invoice",
-        "message": "Optional for this purpose code.",
-        "waivable": false
-      }
-    ]
+      { "code": "offer_letter", "message": "Letter of admission from the institution" },
+      { "code": "student_id", "message": "University ID card" }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR8125440971/verification/"
+    }
   }
 }
 ```
 
-```json Travel - other (S0306)
+```json Travel (S0303 / S0304 / S0306)
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:32:41.005917Z",
+  "event_time": "2026-08-14T10:32:41.005917",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440002",
   "data": {
     "payment_id": "PR7042318866",
     "order_id": "OD8451220934",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_pan",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_relation",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
-    ],
+    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "payment_verification_expiry": null,
     "action_required_documents": [
-      {
-        "document": "passenger_list",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_passports",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_visas",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      },
-      {
-        "document": "invoice",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "ticket",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      }
-    ]
+      { "code": "passenger_list", "message": "Passenger list — name and passport number of every traveller" },
+      { "code": "traveller_passports", "message": "Passports of all travellers" },
+      { "code": "traveller_visas", "message": "Visas of all travellers", "waivable": true },
+      { "code": "ticket", "message": "Travel tickets", "waivable": true },
+      { "code": "invoice", "message": "Invoice for the trip" }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR7042318866/verification/"
+    }
   }
 }
 ```
 
-```json Travel - medical (S0304)
+```json S0305, after the relation is declared as PARENT
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:33:08.447362Z",
-  "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440003",
-  "data": {
-    "payment_id": "PR2288140537",
-    "order_id": "OD1904663270",
-    "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_pan",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_relation",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
-    ],
-    "action_required_documents": [
-      {
-        "document": "passenger_list",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_passports",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_visas",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      },
-      {
-        "document": "invoice",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "ticket",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      }
-    ]
-  }
-}
-```
-
-```json Travel - pilgrimage (S0303)
-{
-  "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T10:34:55.219043Z",
-  "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440004",
-  "data": {
-    "payment_id": "PR9317025648",
-    "order_id": "OD4726180395",
-    "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_pan",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "remitter_relation",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
-    ],
-    "action_required_documents": [
-      {
-        "document": "passenger_list",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_passports",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "traveller_visas",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      },
-      {
-        "document": "invoice",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "ticket",
-        "message": "Required for this purpose code. May be waived with a recorded reason.",
-        "waivable": true
-      }
-    ]
-  }
-}
-```
-
-```json S0305, relation not self
-{
-  "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-14T11:02:19.730558Z",
+  "event_time": "2026-08-14T11:02:19.730558",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440005",
   "data": {
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      {
-        "field": "buyer_address_line_1",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_city",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_state",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_postal_code",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_email",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_phone",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "invoice_date",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "buyer_declaration",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "amount_to_be_settled",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_name",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_dob",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "field": "student_passport_number",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      }
+      { "code": "principal", "message": "Amount to be settled for this payment, in INR" },
+      { "code": "collected_tcs", "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)" },
+      { "code": "primary_person_name", "message": "Name of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
+      { "code": "primary_person_dob", "message": "Date of birth of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
+      { "code": "primary_person_passport_number", "message": "Passport number of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" }
     ],
+    "payment_verification_expiry": null,
     "action_required_documents": [
-      {
-        "document": "student_passport",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "student_visa/university_id_card",
-        "message": "Send either student_visa or university_id_card — one satisfies both.",
-        "waivable": false
-      },
-      {
-        "document": "loa",
-        "message": "Required for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "invoice",
-        "message": "Optional for this purpose code.",
-        "waivable": false
-      },
-      {
-        "document": "relationship_declaration",
-        "message": "Required because the remitter is not the person the remittance is for.",
-        "waivable": false
-      }
-    ]
+      { "code": "relationship_declaration", "message": "Self-declaration of the remitter's relationship to the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
+      { "code": "offer_letter", "message": "Letter of admission from the institution" }
+    ],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR6938527534/verification/"
+    }
   }
 }
 ```
@@ -757,14 +199,9 @@ trimmed, so what you see is what arrives.
 </CodeGroup>
 
 <Note>
-  The three travel codes — `S0306`, `S0304`, `S0303` — carry identical
-  requirement sets. They differ in what the remittance is *for*, not in what
-  you must collect.
+  The three travel codes carry identical checklists. They differ in what the remittance is *for*, not in what you must collect.
 
-  The last tab is the same payment as the first, after the payer declared a
-  `remitter_relation` other than `SELF`. Two things changed: the relationship
-  self-declaration appeared as `CONDITIONALLY_REQUIRED`, and the remitter
-  identity fields dropped off the list, because declaring them satisfied them.
+  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice and remitter fields dropped off, because declaring them satisfied them; and four `PAYING_FOR_SOMEONE_ELSE` items **appeared**, because declaring `remitter_relation` as `PARENT` is what makes them owed.
 </Note>
 
 ---
@@ -778,9 +215,9 @@ trimmed, so what you see is what arrives.
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
 
-      **Example**: `"2026-08-14T10:30:00.123456Z"`
+      **Example**: `"2026-08-14T10:30:00.123456"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
@@ -794,7 +231,7 @@ trimmed, so what you see is what arrives.
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      The payment, what it owes, and where to send it
+      The payment, its state, what it owes, and where to send it
     </ParamField>
   </Tab>
 
@@ -804,56 +241,71 @@ trimmed, so what you see is what arrives.
     </ParamField>
 
     <ParamField path="data.order_id" type="string" required>
-      UID of the order the payment belongs to
+      UID of the order the payment belongs to.
+    </ParamField>
+
+    <ParamField path="data.verification_status" type="string" required>
+      The payment's own settlement state at the moment the event was raised — normally `ACTION_REQUIRED`, or `INFO_PENDING` earlier in the flow.
+
+      It is read live rather than asserted, because this event is sent both when a payment first owes its details and when a submit was refused, and it must say what is true at that moment.
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
-      Human-readable summary. Safe to log; not a value to branch on.
+      Human-readable summary. Two values today — one for the requirement list, one for a refusal. Safe to log; not a value to branch on.
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array" required>
-      The **fields** still owed, plus any optional ones you have not sent. See
-      **Entries** below.
+      The **fields** still owed. See **Entries** below.
     </ParamField>
 
     <ParamField path="data.action_required_documents" type="array" required>
-      The **documents** still owed, plus unsent optionals. Same shape, keyed on
-      `document` instead of `field`.
+      The **documents** still owed. Same entry shape.
+    </ParamField>
+
+    <ParamField path="data.payment_verification_expiry" type="string | null" required>
+      A gateway-set verification deadline where one exists. **Always `null` on the LRS rails**, which have no such clock.
+
+      The key is sent regardless so the payload shape does not change under you depending on which rail a payment arrived through — [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) carries a real date here.
+    </ParamField>
+
+    <ParamField path="data.submit" type="object" required>
+      Where to send the answer: `{ "method": "POST", "path": "/pg/payments/{payment_id}/verification/" }`.
+
+      Follow it rather than building the path yourself, and a route change costs you nothing.
     </ParamField>
   </Tab>
 
   <Tab title="Entries">
-    <ParamField path="field" type="string" required>
-      In `action_required_fields`: the code, and the key you put in `fields` when you
-      [submit](/api-reference/v3/lrs/submit-verification-details).
-    </ParamField>
+    Every entry in both lists carries `code` and `message`. The rest appear **only when they apply**, so their absence is meaningful: no `waivable` key means the item cannot be waived.
 
-    <ParamField path="document" type="string" required>
-      In `action_required_documents`: the code, and the document `code` when you submit —
-      either as a multipart part named `document.<code>`, or as an entry in `documents`.
-
-      **A code containing `/` is two alternatives merged** — see below.
+    <ParamField path="code" type="string" required>
+      The identifier, and the key you send the answer back under — as a key in `fields`, or as a document's `code`.
     </ParamField>
 
     <ParamField path="message" type="string" required>
-      Why the item is wanted, in a sentence — safe to render to a payer, and the
-      entry's whole explanation.
+      A sentence about the item, safe to render to a payer.
 
-      | It says | Meaning |
-      |---|---|
-      | "Required for this purpose code." | Owed outright |
-      | "Required because …" | Owed because a condition now holds; the sentence names it |
-      | "Optional for this purpose code." | Accepted but not owed; listed until you send it |
-      | "Send either X or Y — one satisfies both." | A merged alternative |
-      | "… May be waived with a recorded reason." | Appended when `waivable` is `true` |
+      On the requirement list it describes what the item **is**. On a [refusal](#after-a-submit-that-did-not-pass) the same key says what **went wrong** instead — one key, always the plainest thing there is to say about the item in that context.
     </ParamField>
 
-    <ParamField path="waivable" type="boolean" required>
-      When `true` you may record a `waiver_reason` instead of supplying the document —
-      a visa the destination does not require, a ticket not yet issued.
+    <ParamField path="waivable" type="boolean">
+      Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file — a visa the destination does not require, a ticket not yet issued.
 
-      The item is still listed until you do; `waivable` describes how it may be
-      discharged, not whether it is required. The `message` says so too.
+      The item is still listed until you do; `waivable` describes how it may be discharged, not whether it is required.
+    </ParamField>
+
+    <ParamField path="condition" type="string">
+      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `remitter_relation` has been declared as something other than `SELF`.
+
+      An item with this key was **not** on the earlier event and is not arbitrary — the key names what brought it in.
+    </ParamField>
+
+    <ParamField path="optional" type="boolean">
+      Reserved. Optional items never block completion, so they are never outstanding, so they never appear on this event. Read them from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which lists the whole set.
+    </ParamField>
+
+    <ParamField path="one_of" type="string">
+      A group name — items sharing one substitute for each other. No checklist uses it today; where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).
     </ParamField>
   </Tab>
 </Tabs>
@@ -861,158 +313,129 @@ trimmed, so what you see is what arrives.
 ---
 
 <Note>
-  **Entries carry no label.** A code, a sentence, and a waiver flag is all an
-  entry has. For the human-readable name of a code — and for the exact wording a
-  payer must be shown to affirm `buyer_declaration` — call
-  [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements),
-  which returns the whole requirement set rather than just what is outstanding.
+  **This event lists only what is outstanding.** Optional items and conditional items whose condition does not hold never appear, and neither does anything already supplied. For the whole set — including optionals you could still offer a payer — call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which returns the same entries plus `satisfied` and `provided`.
 </Note>
 
 ## After a submit that did not pass
 
-Sending everything the list named is not the same as passing. Once a set is
-complete it goes to the verification gateway, which verifies the remitter's PAN
-against the name and date of birth, matches the credit's sender to the account
-holder, recomputes TCS and checks that the money received covers what is being
-settled. Any of those can refuse.
+Sending everything the list named is not the same as passing. Once a set is complete it goes to the verification gateway, which verifies the remitter's PAN against the name and date of birth, matches the credit's sender to the account holder, recomputes TCS and checks that the money received covers what is being settled. Any of those can refuse.
 
-A refusal arrives as **this same event** — same type, same envelope, the exact
-same five keys as the requirement-matrix event above. Nothing is added: an LRS
-payment should learn what it owes in one vocabulary and one shape, whether the
-answer came from the requirement matrix or from the checks that run after it.
-Only the `message` and the entries differ:
+A refusal arrives as **this same event** — same type, same envelope, the same eight keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
 
-```json
+<CodeGroup>
+
+```json The credit is short
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-16T10:30:00.123456Z",
+  "event_time": "2026-08-16T10:30:00.123456",
   "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440010",
   "data": {
     "payment_id": "PR4497584646",
     "order_id": "OD4646580935",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [
       {
-        "field": "amount_to_be_settled",
-        "message": "The credit received is short by ₹12500.00. Either the buyer tops up the shortfall, or a smaller amount is declared.",
-        "waivable": false
+        "code": "outstanding",
+        "message": "The credit received does not cover this payment: ₹12500.00 is still short."
       }
     ],
-    "action_required_documents": []
+    "payment_verification_expiry": null,
+    "action_required_documents": [],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR4497584646/verification/"
+    }
   }
 }
 ```
 
-A refusal with a single headline conclusion reads the same way — the conclusion
-is inside the entry, not a separate key:
-
-```json
+```json The PAN would not verify
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
-  "event_time": "2026-08-16T10:30:00.123456Z",
+  "event_time": "2026-08-16T10:31:44.882013",
   "version": "3.0.0",
-  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440011",
   "data": {
     "payment_id": "PR4497584646",
     "order_id": "OD4646580935",
+    "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [
       {
-        "field": "remitter_pan",
-        "message": "The remitter's PAN could not be verified against the name and date of birth given. Check all three and re-send.",
-        "waivable": false
+        "code": "remitter_pan",
+        "message": "The remitter's PAN could not be verified against the name and date of birth given. Check all three and re-send."
       }
     ],
-    "action_required_documents": []
+    "payment_verification_expiry": null,
+    "action_required_documents": [],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR4497584646/verification/"
+    }
   }
 }
 ```
+
+```json The sender is not the account holder
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-08-16T10:33:02.417755",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440012",
+  "data": {
+    "payment_id": "PR4497584646",
+    "order_id": "OD4646580935",
+    "verification_status": "ACTION_REQUIRED",
+    "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
+    "action_required_fields": [
+      {
+        "code": "remitter_name",
+        "message": "The name on the credit received does not match the declared remitter. A third-party credit cannot settle on someone else's PAN — declare the actual account holder as the remitter."
+      }
+    ],
+    "payment_verification_expiry": null,
+    "action_required_documents": [],
+    "submit": {
+      "method": "POST",
+      "path": "/pg/payments/PR4497584646/verification/"
+    }
+  }
+}
+```
+
+</CodeGroup>
 
 <Note>
-  **The payment stays in Action Required and stays submittable.** Nothing is lost:
-  everything you sent is still held against the payment. Fix what is named and
-  re-send only that — a partial send is merged with what is already there.
+  **The payment stays in Action Required and stays submittable.** Nothing is lost: everything you sent is still held against the payment. Fix what is named and re-send only that — a partial send is merged with what is already there.
 </Note>
 
-There is no separate `outstanding` or `reason` key to branch on. Whatever they
-used to say now lives inside the relevant entry's `message` — the shortfall
-amount inside the `amount_to_be_settled` entry, a PAN mismatch inside
-`remitter_pan`, and so on. Read `action_required_fields` and
-`action_required_documents` the same way you already do for the
-requirement-matrix event; a submit failure names the same thing in the same
-place, never a second structure to learn.
-
-The shortfall amount is also on the
-[submit response](/api-reference/v3/lrs/submit-verification-details#completion)
-as `outstanding`, so you don't have to wait for this event to act on it — that
-field is on the synchronous API response, not this webhook, and is unaffected
-by anything on this page.
+There is no separate `outstanding` or `reason` key to branch on. Whatever they used to say now lives inside the relevant entry's `message` — the shortfall's rupee figure inside the `outstanding` entry, a PAN mismatch inside `remitter_pan`, and so on. Read the two lists the same way you already do for the requirement event; a refusal names the same thing in the same place, never a second structure to learn.
 
 ### The codes a refusal names
 
-A refusal reports itself in the same codes the requirement matrix uses, so a fix
-goes back through the same endpoint and the same key you collected it under:
+The gateway's own vocabulary is translated into the codes you collected under, so a fix goes back through the same endpoint and the same key:
 
 | Code | What it means | What to do |
 |---|---|---|
 | `remitter_pan` | The PAN did not verify against the name and date of birth given. | Check all three together and re-send. |
-| `remitter_name` | The name on the credit does not match the declared remitter — a third-party credit can't settle on someone else's PAN. | Re-declare the actual account holder as the remitter. |
+| `remitter_name` | The name on the credit does not match the declared remitter. | Re-declare the actual account holder as the remitter. |
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
-| `amount_to_be_settled` | The credit received does not cover the amount to settle plus fees and TCS. The entry's `message` names the shortfall. | Have the buyer top up the shortfall, or declare a smaller amount. |
-| `purpose_code` | The code is not one this account may use, or not one we recognise for LRS. | Declared on the order, not here — use an enabled, recognised code. |
-| `documents.<type>` | Named as an entry in `action_required_documents`. | Send the file. |
-
-Two entries are conclusions rather than codes, and there is nothing to re-send
-under that name:
-
-| Entry | What it means |
-|---|---|
-| `primary_person` | The remitter is not the person the remittance is for, so that person has to be named — send `student_name`, `student_dob` and `student_passport_number`. |
-| `tcs` | The TCS figure does not reconcile with our own calculation. You do not declare TCS; if this appears, raise it with us rather than re-sending. |
-
-## Alternatives arrive merged
-
-Where two documents satisfy each other, you get **one** entry, not two:
-
-```json
-{
-  "document": "student_visa/university_id_card",
-  "message": "Send either student_visa or university_id_card — one satisfies both.",
-  "waivable": false
-}
-```
+| `primary_person_name` | The remitter is not the person the remittance is for, so that person has to be named. | Send `primary_person_name`, `primary_person_dob` and `primary_person_passport_number`. |
+| `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
+| `tcs` | The TCS reported does not match what this remittance attracts. | Re-quote with [Quote LRS Amount](/api-reference/v3/lrs/quote) and re-send `collected_tcs`. |
+| A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
 <Warning>
-  **The joined code is a label, not something to send back.** Submit one of the
-  halves — `student_visa` *or* `university_id_card` — which is why the `message`
-  spells them out. Posting `student_visa/university_id_card` is a `400`.
+  **`outstanding` is a conclusion, not a code.** It is the one entry with nothing to re-send under that name: the credit is short by the amount its `message` states. Either the buyer tops up — link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up) — or a smaller `principal` is declared.
 </Warning>
-
-Sending either one makes the whole entry disappear from the next event. Two rows
-for one obligation reads as two obligations, and chasing a payer for both is the
-most common way to make this flow feel worse than it is.
-
-## Optionals are listed until you send them
-
-An optional item — the fee invoice on `S0305` — appears with the message
-"Optional for this purpose code." and stops appearing once you supply it.
-
-It is listed because an optional document nobody is told about is one nobody
-sends. It never blocks completion: a payment with only optionals outstanding is
-complete.
 
 ## Conditionals can appear later
 
-An item like the relationship self-declaration only shows up once its condition
-holds. Declaring `remitter_relation` as anything other than `SELF` brings it in,
-so it can arrive in an event **after** you thought you had the full list. Its
-`message` names the condition, so the arrival is explicable rather than arbitrary.
+An item like the relationship self-declaration only shows up once its condition holds. Declaring `remitter_relation` as anything other than `SELF` brings in four items at once — the three `primary_person_*` fields and `relationship_declaration` — so they can arrive in an event **after** you thought you had the full list. Each carries `condition`, so the arrival is explicable rather than arbitrary.
 
-The reverse also happens: answering the remitter identity fields removes them
-from the next event. The list is what is *outstanding*, not what the purpose code
-asks for in total — for that, call
-[Get Verification Requirements](/api-reference/v3/lrs/verification-requirements).
+The reverse also happens: answering the remitter identity fields removes them from the next event. The list is what is *outstanding*, not what the checklist asks for in total.
 
 ---
 
@@ -1020,23 +443,26 @@ asks for in total — for that, call
 
 <Steps>
   <Step title="Collect what the entries name">
-    Show the payer each `message` for why the item is needed. A code containing `/` is one obligation — ask for either half.
+    Show the payer each `message`. Everything in `action_required_documents` needs a file — or, where `waivable` is `true`, a reason instead.
   </Step>
-  <Step title="POST it to the verification endpoint">
-    `POST /pg/payments/{payment_id}/verification/` — [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and files in one call. Partial sends are merged, so you can send as things arrive.
+  <Step title="Upload the files">
+    [Upload Document](/api-reference/v3/lrs/upload-document) returns a `ref` per file, under the same `code` the entry names.
+  </Step>
+  <Step title="POST to the path in `submit`">
+    [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and document refs in one call. Partial sends are merged, so you can send as things arrive.
   </Step>
   <Step title="Read what is left">
-    The response carries `fields` / `documents` after the write, each entry flagged `satisfied`. When nothing is left unsatisfied the payment is verified automatically.
+    The response carries `outstanding` — the codes still owed after that write. When it is empty and `status` is `in_review`, the payment is with us.
   </Step>
 </Steps>
 
 <Note>
-  Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` adds the relationship self-declaration, because that document is only owed in that case. Always read the response rather than assuming the original list was final.
+  **Respond `2xx` as soon as you have accepted the payload**, so the delivery is not retried, and verify the signature before acting on it.
 </Note>
 
 ## Do not hardcode the codes
 
-The requirement set is configuration and is revised as the underlying regulatory matrix is — new purpose codes become supported, a document turns waivable, a field stops being needed.
+The checklist is configuration and is revised as the underlying regulatory matrix is — new purpose codes become supported, a document turns waivable, a field stops being needed.
 
 Drive your form from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), and a revision reaches your integration without a release on your side. Hardcode the codes and it will not.
 
@@ -1044,9 +470,15 @@ Drive your form from [Get Verification Requirements](/api-reference/v3/lrs/verif
 
 <CardGroup cols={2}>
   <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
-    Send the answer back, fields and files in one call.
+    Send the answer back, under these same codes.
   </Card>
   <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
-    The same list, on demand — for resuming or reconciling.
+    The whole set, on demand — for resuming or reconciling.
+  </Card>
+  <Card title="Upload Document" icon="file-arrow-up" href="/api-reference/v3/lrs/upload-document">
+    Turn a file into a `ref`.
+  </Card>
+  <Card title="PAYMENT_UNDER_REVIEW" icon="webhook" href="/api-reference/v3/webhooks/payment-under-review">
+    The event that says nothing is owed any more.
   </Card>
 </CardGroup>

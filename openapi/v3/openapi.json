@@ -2693,7 +2693,7 @@
     "/pg/payments/{payment_id}/documents/": {
       "post": {
         "summary": "Upload a supporting document",
-        "description": "Upload one supporting document (offer letter, passport, fee invoice, ...) for a payment and get back a `ref`. Pass that `ref` together with its `type` in the `documents` array of **Submit Verification Details**. Upload each document as it arrives \u2014 the `ref` is what binds it to a checklist item later, so nothing has to be held back until the set is complete. The file's type, size and encryption are validated on upload.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document itself is merchant-scoped, so a `ref` stays valid across a retried attempt or a recurring installment. `POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
+        "description": "Uploads one supporting file for a payment's verification and answers with a `ref`. Send that `ref` under the document's checklist code in the `documents` array of [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — uploading a file does not answer a requirement; the submit does.\n\nUpload each file as it arrives; nothing has to be held back until the set is complete. Extension, size (10 MB) and PDF encryption are validated here, so a bad file fails on upload rather than at submit time.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document itself is merchant-scoped, so a `ref` stays valid across a retried attempt or a recurring installment, and a `ref` that is not yours reads as unknown rather than as someone else's file. Uploads are immutable — to replace one, upload again and submit the new `ref` under the same code.\n\n`POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
         "tags": [
           "LRS"
         ],
@@ -2731,27 +2731,23 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "The document file to upload."
+                    "description": "The document file. Allowed extensions: pdf, png, jpg, jpeg, docx, xlsx, csv. Maximum 10 MB. Password-protected PDFs are rejected."
                   },
                   "type": {
                     "type": "string",
-                    "description": "Document type. Must be a code the purpose codes you are enabled for actually ask for — read them from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than assuming.",
+                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised.",
                     "enum": [
-                      "fee_invoice",
                       "offer_letter",
                       "passport",
-                      "relationship_declaration",
                       "student_id_or_visa",
                       "student_id",
-                      "student_passport",
-                      "student_visa",
-                      "university_id_card",
-                      "loa",
-                      "invoice",
+                      "fee_invoice",
                       "passenger_list",
                       "traveller_passports",
                       "traveller_visas",
-                      "ticket"
+                      "ticket",
+                      "invoice",
+                      "relationship_declaration"
                     ],
                     "example": "offer_letter"
                   }
@@ -2781,7 +2777,7 @@
                       "properties": {
                         "ref": {
                           "type": "string",
-                          "description": "Reference to pass as `documents[].ref` in Submit LRS Verification.",
+                          "description": "Reference to pass as `documents[].ref` on Submit Verification Details.",
                           "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
                         },
                         "type": {
@@ -2813,6 +2809,24 @@
               }
             }
           },
+          "404": {
+            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_005",
+                    "message": "Payment not found",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Unexpected error uploading the document.",
             "content": {
@@ -2830,7 +2844,7 @@
     "/pg/payments/{payment_id}/verification/": {
       "get": {
         "summary": "Get verification requirements",
-        "description": "Returns everything a payment's purpose code calls for — every field and document, which are already satisfied, and which are still missing.\n\nThe [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is *missing*, with a label and a reason for each item. This returns the *whole* requirement set, including what is already satisfied — call it when you need the full picture, or to resume or reconcile if an event was missed.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Returns everything a payment's checklist calls for — every field and document, which are already satisfied, and which are still outstanding. The checklist is chosen by two facts on the order: its business model and its purpose code. Until both are declared no checklist claims the payment, and this endpoint asks for them instead — `business_model` and `purpose_code` come back `null`, and the two facts are listed as ordinary outstanding fields.\n\nThe [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is *missing*. This returns the *whole* set. Both describe the same items in the same shape, from the same read — an entry here is an entry there plus `satisfied` and `provided`.\n\n**There is no rolled-up `status`.** \"Every box is ticked\" is not \"the payment passed\", and the POST on this same URL returns a `status` of its own. Fold your own roll-up from the items, and read `settlement_status` for where the payment actually stands — including whether sending anything is still possible.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -2856,7 +2870,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The payment's requirements and their current state.",
+            "description": "The payment's checklist and the current state of each item.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2875,244 +2889,175 @@
                     }
                   }
                 },
+                "examples": {
+                  "classified": {
+                    "summary": "A classified payment (S0305)",
+                    "description": "Extract — the real response lists every item the checklist holds. `buyer_name` came in with the payment itself; the conditional items are satisfied vacuously until `remitter_relation` says otherwise; the optional fee invoice never blocks completion.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification requirements",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_id": "OD3376378679",
+                        "settlement_status": "ACTION_REQUIRED",
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "message": "Buyer / remitter name",
+                            "satisfied": true,
+                            "provided": true
+                          },
+                          {
+                            "code": "buyer_city",
+                            "message": "Buyer city",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "message": "Remitter PAN",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_relation",
+                            "message": "Remitter's relation to the person the remittance is for",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "primary_person_name",
+                            "message": "Name of the person the remittance is for",
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "PAYING_FOR_SOMEONE_ELSE"
+                          },
+                          {
+                            "code": "principal",
+                            "message": "Amount to be settled for this payment, in INR",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "collected_tcs",
+                            "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)",
+                            "satisfied": false,
+                            "provided": false
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "relationship_declaration",
+                            "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "PAYING_FOR_SOMEONE_ELSE"
+                          },
+                          {
+                            "code": "offer_letter",
+                            "message": "Letter of admission from the institution",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "passport",
+                            "message": "Student's passport",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_id_or_visa",
+                            "message": "Student visa or university ID card (either)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "fee_invoice",
+                            "message": "Fee invoice",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "unclassified": {
+                    "summary": "Nothing has classified the payment",
+                    "description": "No checklist claims the payment yet, so the two facts that would resolve one are listed as ordinary outstanding fields. Send them back through the POST and the real checklist appears.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification requirements",
+                      "data": {
+                        "payment_id": "PR4471903288",
+                        "order_id": "OD9925177340",
+                        "settlement_status": "ACTION_REQUIRED",
+                        "business_model": null,
+                        "purpose_code": null,
+                        "fields": [
+                          {
+                            "code": "business_model",
+                            "message": "Business model (B2B or B2C)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "purpose_code",
+                            "message": "FEMA/FETERS purpose code for this order",
+                            "satisfied": false,
+                            "provided": false
+                          }
+                        ],
+                        "documents": []
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No verification checklist covers this payment's business model and purpose code, so there is nothing to report. An *unclassified* payment is not this case — it answers 200, asking for the two classifying facts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
                 "example": {
-                  "success": true,
-                  "message": "Verification requirements",
-                  "data": {
-                    "payment_id": "PR6938527534",
-                    "order_uid": "OD3376378679",
-                    "status": "incomplete",
-                    "is_lrs": true,
-                    "business_model": "B2C",
-                    "purpose_code": "S0305",
-                    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
-                    "requirement_label": "B2C · Education — LRS (with travel leg)",
-                    "fields": [
-                      {
-                        "code": "buyer_name",
-                        "label": "Buyer / remitter name",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": true,
-                        "provided": true
-                      },
-                      {
-                        "code": "buyer_address_line_1",
-                        "label": "Buyer address line 1",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_city",
-                        "label": "Buyer city",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_state",
-                        "label": "Buyer state",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_postal_code",
-                        "label": "Buyer PIN code",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_email",
-                        "label": "Buyer email",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_phone",
-                        "label": "Buyer phone",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "invoice_number",
-                        "label": "Invoice number",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "invoice_date",
-                        "label": "Invoice date",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "invoice_amount",
-                        "label": "Invoice amount",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": true,
-                        "provided": true
-                      },
-                      {
-                        "code": "purpose_code",
-                        "label": "FEMA purpose code",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": true,
-                        "provided": true
-                      },
-                      {
-                        "code": "remitter_name",
-                        "label": "Remitter name (as per PAN)",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "remitter_pan",
-                        "label": "Remitter PAN",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "remitter_dob",
-                        "label": "Remitter date of birth (as per PAN)",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "remitter_relation",
-                        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "buyer_declaration",
-                        "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "amount_to_be_settled",
-                        "label": "Amount to be settled for this payment, in INR",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "student_name",
-                        "label": "Student name",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "student_dob",
-                        "label": "Student date of birth",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "student_passport_number",
-                        "label": "Student passport number",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      }
-                    ],
-                    "documents": [
-                      {
-                        "code": "student_passport",
-                        "label": "Student passport",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "student_visa",
-                        "label": "Student visa",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false,
-                        "alternative_group": "student_status_proof"
-                      },
-                      {
-                        "code": "university_id_card",
-                        "label": "University ID card",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false,
-                        "alternative_group": "student_status_proof"
-                      },
-                      {
-                        "code": "loa",
-                        "label": "Letter of admission / offer letter",
-                        "requirement": "REQUIRED",
-                        "waivable": false,
-                        "satisfied": false,
-                        "provided": false
-                      },
-                      {
-                        "code": "invoice",
-                        "label": "Fee invoice",
-                        "requirement": "OPTIONAL",
-                        "waivable": false,
-                        "satisfied": true,
-                        "provided": false
-                      },
-                      {
-                        "code": "relationship_declaration",
-                        "label": "Relationship self-declaration",
-                        "requirement": "CONDITIONAL",
-                        "waivable": false,
-                        "satisfied": true,
-                        "provided": false,
-                        "condition": "relation_not_self"
-                      }
-                    ]
+                  "success": false,
+                  "error": {
+                    "code": 40359,
+                    "message": "Invalid LRS request.",
+                    "details": {
+                      "detail": "No verification checklist covers this payment's business model and purpose code."
+                    }
                   }
                 }
               }
             }
           },
           "404": {
-            "description": "No such payment for this merchant.",
+            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_005",
+                    "message": "Payment not found",
+                    "details": {}
+                  }
                 }
               }
             }
@@ -3131,7 +3076,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the requirements and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: the event's `action_required_fields[].field` are the keys you put in `fields`, and its `action_required_documents[].document` are the `code` you put in `documents`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint — a `multipart/form-data` request is a `415`.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response is two keys**: `payment_id` and `status`. For what is still owed, [`GET`](/api-reference/v3/lrs/verification-requirements) this same path or read the event — both name it in the codes you just sent.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Sends verification details for a payment, keyed by the same codes the checklist and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding an LRS set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -3164,19 +3109,20 @@
                 "properties": {
                   "fields": {
                     "type": "object",
-                    "description": "Answers keyed by requirement code, e.g. `{\"remitter_pan\": \"ABCDE1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string.",
+                    "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; amounts (`principal`, `collected_tcs`) are decimal strings in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
                     "additionalProperties": true,
                     "example": {
                       "buyer_city": "Bengaluru",
-                      "remitter_pan": "ABCDE1234F",
+                      "remitter_pan": "ABCPK1234F",
                       "remitter_relation": "SELF",
                       "buyer_declaration": true,
-                      "amount_to_be_settled": "150000.00"
+                      "principal": "150000.00",
+                      "collected_tcs": "0.00"
                     }
                   },
                   "documents": {
                     "type": "array",
-                    "description": "Documents by reference, or waivers.",
+                    "description": "Documents by reference, or waivers. Each entry names exactly one of `ref` and `waiver_reason`; sending both, neither, or the same code twice in one call is a 400.",
                     "items": {
                       "type": "object",
                       "required": [
@@ -3185,29 +3131,25 @@
                       "properties": {
                         "code": {
                           "type": "string",
-                          "description": "The requirement code this document answers.",
+                          "description": "The checklist code this document answers.",
                           "enum": [
-                            "fee_invoice",
                             "offer_letter",
                             "passport",
-                            "relationship_declaration",
                             "student_id_or_visa",
                             "student_id",
-                            "student_passport",
-                            "student_visa",
-                            "university_id_card",
-                            "loa",
-                            "invoice",
+                            "fee_invoice",
                             "passenger_list",
                             "traveller_passports",
                             "traveller_visas",
-                            "ticket"
+                            "ticket",
+                            "invoice",
+                            "relationship_declaration"
                           ],
-                          "example": "student_passport"
+                          "example": "offer_letter"
                         },
                         "ref": {
                           "type": "string",
-                          "description": "A `ref` returned by Upload Document. Send this or `waiver_reason`, not neither.",
+                          "description": "A `ref` returned by Upload Document. Send this or `waiver_reason`, never both.",
                           "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
                         },
                         "waiver_reason": {
@@ -3221,26 +3163,43 @@
                   "finalize": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether to run a complete set through the verification gateway. Never forces an incomplete one through."
+                    "description": "Whether to run a complete LRS set through the verification gateway. Never forces an incomplete one through."
+                  },
+                  "linked_payment_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The earlier payment this one tops up — the buyer was short, or paid the TCS separately. Resolved against your own payments; a link that cannot be resolved is refused. Read by the call that files, so send it with the call that completes the set.",
+                    "example": "PR6938527534"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "REMAINING_AMOUNT",
+                      "TCS_PAYMENT"
+                    ],
+                    "description": "Why the two payments are linked; an audit label on the link. `REMAINING_AMOUNT` — covering a principal shortfall. `TCS_PAYMENT` — paying the TCS separately. Only valid together with `linked_payment_id`.",
+                    "example": "REMAINING_AMOUNT"
                   }
                 }
               },
               "example": {
                 "fields": {
                   "buyer_city": "Bengaluru",
-                  "remitter_pan": "ABCDE1234F",
+                  "remitter_pan": "ABCPK1234F",
                   "remitter_relation": "SELF",
                   "buyer_declaration": true,
-                  "amount_to_be_settled": "150000.00"
+                  "principal": "150000.00",
+                  "collected_tcs": "0.00"
                 },
                 "documents": [
                   {
-                    "code": "student_passport",
+                    "code": "offer_letter",
                     "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
                   },
                   {
                     "code": "traveller_visas",
-                    "waiver_reason": "Destination is visa-free"
+                    "waiver_reason": "Destination is visa-free for this passport"
                   }
                 ],
                 "finalize": true
@@ -3250,7 +3209,7 @@
         },
         "responses": {
           "200": {
-            "description": "Details received. The body says where the payment now stands, and nothing else.",
+            "description": "Details received. The body says where the payment now stands and what is still owed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3266,6 +3225,11 @@
                     },
                     "data": {
                       "type": "object",
+                      "required": [
+                        "payment_id",
+                        "status",
+                        "outstanding"
+                      ],
                       "properties": {
                         "payment_id": {
                           "type": "string",
@@ -3275,38 +3239,83 @@
                         "status": {
                           "type": "string",
                           "enum": [
-                            "IN_REVIEW",
-                            "ACTION_REQUIRED"
+                            "incomplete",
+                            "complete",
+                            "in_review",
+                            "action_required"
                           ],
-                          "description": "Where the payment stands after this call. `IN_REVIEW` — the set was complete, the verification gateway took it, and nothing more is owed from you. `ACTION_REQUIRED` — something still is: the set is short, you passed `finalize: false`, or the gateway did not pass the payment. It never means your details were discarded.",
-                          "example": "ACTION_REQUIRED"
+                          "description": "Lower-case, always one of four. `incomplete` — something is still owed; `outstanding` names it. `complete` — nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and needs no gateway handoff). `in_review` — the set was complete, the gateway took it, and it passed. `action_required` — the set was complete and filed, and the gateway did not pass the payment. It never means your details were discarded.",
+                          "example": "incomplete"
+                        },
+                        "outstanding": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "The codes still owed after this write — the same codes you would get by filtering the GET on `satisfied: false`. Empty when nothing is.",
+                          "example": [
+                            "remitter_pan",
+                            "offer_letter"
+                          ]
                         }
                       }
                     }
                   }
                 },
                 "examples": {
-                  "action_required": {
-                    "summary": "ACTION_REQUIRED — something is still owed",
-                    "description": "A partial send, a `finalize: false` hold, and a complete set the gateway refused all answer the same way: the payment is still waiting on you. `GET /pg/payments/{payment_id}/verification/` for the codes still outstanding; a gateway refusal also arrives as an `LRS_VERIFICATION_NEEDED` event, the same shape as any other — a sentence per item, the shortfall or the headline reason folded into the relevant entry's message.",
+                  "incomplete": {
+                    "summary": "incomplete — something is still owed",
+                    "description": "A partial send. `outstanding` is the list; you do not need a second call to read it.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
                       "data": {
                         "payment_id": "PR6938527534",
-                        "status": "ACTION_REQUIRED"
+                        "status": "incomplete",
+                        "outstanding": [
+                          "remitter_pan",
+                          "remitter_dob",
+                          "offer_letter"
+                        ]
                       }
                     }
                   },
                   "in_review": {
-                    "summary": "IN_REVIEW — the payment is with us",
-                    "description": "Everything the purpose code asks for was sent, the set went through the verification gateway, and it passed. Nothing further to send.",
+                    "summary": "in_review — the payment is with us",
+                    "description": "Everything the checklist asks for was sent, the set went through the verification gateway, and it passed. Nothing further to send.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
                       "data": {
                         "payment_id": "PR6938527534",
-                        "status": "IN_REVIEW"
+                        "status": "in_review",
+                        "outstanding": []
+                      }
+                    }
+                  },
+                  "action_required": {
+                    "summary": "action_required — the gateway did not pass it",
+                    "description": "An empty `outstanding` with this status is not a contradiction: the checklist is satisfied, the gateway refused. The verdict arrives as an LRS_VERIFICATION_NEEDED event with the conclusion folded into the relevant entry's message. No event at all means the handoff itself did not land — repeat the same request.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "status": "action_required",
+                        "outstanding": []
+                      }
+                    }
+                  },
+                  "complete": {
+                    "summary": "complete — staged, not filed",
+                    "description": "The checklist is satisfied but nothing went to the gateway: either you passed `finalize: false`, or this payment's checklist is not an LRS one.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification details received",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "status": "complete",
+                        "outstanding": []
                       }
                     }
                   }
@@ -3315,7 +3324,7 @@
             }
           },
           "400": {
-            "description": "Invalid request — an unknown code, a value that is not a scalar, an unusable document reference, or a waiver on a document that cannot be waived. The offending code is named in `error.details`.",
+            "description": "Invalid request — an unknown code, a blank value, a misplaced field/document code, an unusable document reference, a duplicate document code, or a waiver on a document that cannot be waived. Every offending code is named in `error.details`, so one call reports every problem at once.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3324,10 +3333,12 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "ERR_LRS_001",
-                    "message": "Unknown or misplaced field(s).",
+                    "code": 40359,
+                    "message": "Invalid LRS request.",
                     "details": {
-                      "buyer_citty": "Not a requirement of this payment's purpose code."
+                      "buyer_citty": "Not a requirement of this payment's checklist.",
+                      "invoice": "This is a document code; send it under 'documents'.",
+                      "ticket": "Sent more than once in this call."
                     }
                   }
                 }
@@ -3335,11 +3346,39 @@
             }
           },
           "404": {
-            "description": "No such payment for this merchant.",
+            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_005",
+                    "message": "Payment not found",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This payment's verification has already been filed, so its details can no longer be changed. Staging closes once `settlement_status` reaches `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` — read it from the GET before sending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40360,
+                    "message": "Payment is not in a state that accepts verification details.",
+                    "details": {
+                      "detail": "This payment's verification has already been filed; its details can no longer be changed here."
+                    }
+                  }
                 }
               }
             }
@@ -7021,108 +7060,126 @@
       },
       "v3_VerificationRequirementItem": {
         "type": "object",
-        "description": "One field or document a payment's purpose code calls for. The `code` is the key you send it back under.",
+        "description": "One field or document a payment's checklist calls for. `code` is the key you send it back under. `code` and `message` are always present; the remaining keys appear only when they apply, so their absence is meaningful — no `waivable` key means the item cannot be waived.",
+        "required": [
+          "code",
+          "message"
+        ],
         "properties": {
           "code": {
             "type": "string",
             "description": "Stable identifier. Use it as the key in `fields`, or as the `code` of a document.",
-            "example": "student_passport"
+            "example": "offer_letter"
           },
-          "label": {
+          "message": {
             "type": "string",
-            "description": "Human-readable description, safe to show a payer.",
-            "example": "Student passport"
-          },
-          "requirement": {
-            "type": "string",
-            "enum": [
-              "REQUIRED",
-              "CONDITIONAL",
-              "OPTIONAL"
-            ],
-            "description": "`REQUIRED` is always owed. `CONDITIONAL` is owed only in the case named by `condition`. `OPTIONAL` never blocks completion, but the webhook keeps offering it until you send it.",
-            "example": "REQUIRED"
-          },
-          "waivable": {
-            "type": "boolean",
-            "description": "When true you may send `waiver_reason` instead of a file. The item stays `satisfied: false` until you do — the waiver is yours to record, not ours to assume.",
-            "example": false
-          },
-          "condition": {
-            "type": "string",
-            "description": "Present on `CONDITIONAL` items only. `relation_not_self` means the item is owed when the remitter is not the person the remittance is for.",
-            "example": "relation_not_self"
-          },
-          "alternative_group": {
-            "type": "string",
-            "description": "Items sharing a group satisfy each other — send any one and the whole group clears. Send none and all of them stay listed so you can choose.",
-            "example": "student_status_proof"
+            "description": "A sentence about the item, safe to show a payer. On a submit-failure event the same key says what went wrong instead.",
+            "example": "Letter of admission from the institution"
           },
           "satisfied": {
             "type": "boolean",
-            "description": "Whether this item is met. `false` blocks `status` from reaching `complete`. An OPTIONAL item, and a CONDITIONAL item whose condition does not hold, are satisfied without having been sent.",
+            "description": "Whether the item still blocks completion. `false` is what \"missing\" means. Present on this endpoint; absent on the webhook, which lists only outstanding items.",
             "example": false
           },
           "provided": {
             "type": "boolean",
-            "description": "Whether it has actually been sent, or we already held it. `satisfied: true` with `provided: false` means nothing is owed and nothing was sent — an OPTIONAL item, or a CONDITIONAL that does not apply.",
+            "description": "Whether a value actually exists — you sent it, or we already held it. `satisfied: true` with `provided: false` means nothing is owed and nothing was sent: an optional item, or a conditional one that does not apply.",
             "example": false
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "Present, and always `true`, on items that never block completion. Absent on required items — there is no `\"optional\": false`.",
+            "example": true
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "PAYING_FOR_SOMEONE_ELSE",
+              "PHYSICAL_GOODS_ONLY"
+            ],
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` — `remitter_relation` is declared as something other than `SELF`. `PHYSICAL_GOODS_ONLY` — the order ships physical goods.",
+            "example": "PAYING_FOR_SOMEONE_ELSE"
+          },
+          "waivable": {
+            "type": "boolean",
+            "description": "Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file. The item stays `satisfied: false` until you do — the waiver is yours to record, not ours to assume.",
+            "example": true
+          },
+          "one_of": {
+            "type": "string",
+            "description": "A group name; items sharing one substitute for each other. No checklist uses it today — where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).",
+            "example": "student_status_proof"
           }
         }
       },
       "v3_VerificationState": {
         "type": "object",
-        "description": "What a payment needs and what it already has — the whole requirement set, unlike the LRS_VERIFICATION_NEEDED webhook, which lists only what is outstanding.",
+        "description": "What a payment needs and what it already has — the whole checklist, unlike the LRS_VERIFICATION_NEEDED webhook, which lists only what is outstanding. There is deliberately no rolled-up completion field: each item carries its own `satisfied`, and `settlement_status` reports where the payment itself stands.",
+        "required": [
+          "payment_id",
+          "order_id",
+          "settlement_status",
+          "business_model",
+          "purpose_code",
+          "fields",
+          "documents"
+        ],
         "properties": {
           "payment_id": {
             "type": "string",
             "example": "PR6938527534"
           },
-          "order_uid": {
+          "order_id": {
             "type": "string",
             "example": "OD3376378679"
           },
-          "status": {
+          "settlement_status": {
             "type": "string",
             "enum": [
-              "incomplete",
-              "complete",
-              "not_applicable"
+              "NOT_APPLICABLE",
+              "PAYMENT_PENDING",
+              "PAYMENT_FAILED",
+              "INFO_PENDING",
+              "ACTION_REQUIRED",
+              "UNDER_REVIEW",
+              "VERIFIED",
+              "READY_FOR_SETTLEMENT",
+              "SETTLED",
+              "SETTLEMENT_ERROR",
+              "ON_HOLD",
+              "EXPIRED",
+              "REJECTED"
             ],
-            "description": "`incomplete` — something is still owed. `complete` — nothing is. `not_applicable` — no requirements are defined for this payment's business model and purpose code.",
-            "example": "incomplete"
-          },
-          "is_lrs": {
-            "type": "boolean",
-            "description": "Whether this payment draws against the payer's LRS limit.",
-            "example": true
+            "description": "The payment's own state — not a roll-up of the checklist. Staging closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends. Read it before you POST.",
+            "example": "ACTION_REQUIRED"
           },
           "business_model": {
             "type": "string",
+            "nullable": true,
+            "enum": [
+              "B2B",
+              "B2C",
+              null
+            ],
+            "description": "`null` while nothing has declared it. Send it, together with `purpose_code`, to resolve the checklist.",
             "example": "B2C"
           },
           "purpose_code": {
             "type": "string",
+            "nullable": true,
+            "description": "The FEMA/FETERS purpose code the order settles under, or `null` while none is declared.",
             "example": "S0305"
-          },
-          "purpose_code_description": {
-            "type": "string",
-            "example": "Travel for education (including fees, hostel expenses etc.)"
-          },
-          "requirement_label": {
-            "type": "string",
-            "example": "B2C · Education — LRS (with travel leg)"
           },
           "fields": {
             "type": "array",
-            "description": "Every field this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
+            "description": "Every field this checklist calls for, satisfied or not. What is still owed is the subset with `satisfied: false`. On an unclassified payment this holds the two classifying facts instead.",
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
             }
           },
           "documents": {
             "type": "array",
-            "description": "Every document this purpose code calls for, satisfied or not. What is still owed is the subset with `satisfied: false`.",
+            "description": "Every document this checklist calls for, satisfied or not. Empty on an unclassified payment.",
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
             }

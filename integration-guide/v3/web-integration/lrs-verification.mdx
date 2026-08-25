@@ -41,14 +41,14 @@ flowchart TD
     F{"Anything<br/>outstanding?"}
     G{"Our checks<br/>PAN, sender match, tax"}
     H["With the bank,<br/>then settled to you"]
-    X["<code>GET /pg/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, with labels for the buyer"]
+    X["<code>GET /pg/payments/:id/verification</code><br/>Optional — everything the payment needs,<br/>satisfied or not, plus the payment's own state"]
     U["<code>POST /pg/payments/:id/documents</code><br/>Upload each document as it arrives,<br/>keep the <code>ref</code> it returns"]
 
     A --> B --> C --> D --> E --> F
     F -- "yes" --> E
     F -- "no" --> G
-    G -- "<code>ACTION_REQUIRED</code>" --> E
-    G -- "<code>IN_REVIEW</code>" --> H
+    G -- "<code>action_required</code>" --> E
+    G -- "<code>in_review</code>" --> H
     D -.-> X
     X -.-> E
     U -.-> E
@@ -74,9 +74,9 @@ The first two calls happen before any money moves. After that it is one call, re
 | What happened | What you see | What to do |
 | :--- | :--- | :--- |
 | The PAN will not verify | `verified: false` with a `reason` — `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH` | Resolve it with the buyer **before** you quote. Nothing downstream works until it passes. |
-| The buyer paid too little | `status: "ACTION_REQUIRED"`, and an `LRS_VERIFICATION_NEEDED` event carrying `outstanding` — how much is short | Have them transfer the shortfall and link it as a top-up, or declare a smaller `amount_to_be_settled` |
-| Something is still missing | `status: "incomplete"`, and the entries in `fields` / `documents` with `satisfied: false` | Send just those. What you sent before is kept. |
-| A complete set failed our checks | `status: "ACTION_REQUIRED"` on the submit response, and an `LRS_VERIFICATION_NEEDED` event carrying a sentence per item plus `outstanding` and `reason` | Fix what the event names and send again. `reason` is usually `PAN_NOT_VERIFIED` or `SENDER_NAME_MISMATCH`; an item of `primary_person` means the buyer is not the person the money is for, so name that person. |
+| The buyer paid too little | `status: "action_required"`, and an `LRS_VERIFICATION_NEEDED` event whose `outstanding` entry names the shortfall in its `message` | Have them transfer the shortfall and link it as a top-up with `linked_payment_id`, or declare a smaller `principal` |
+| Something is still missing | `status: "incomplete"`, and `outstanding` on the same response naming every code still owed | Send just those. What you sent before is kept. |
+| A complete set failed our checks | `status: "action_required"` with an **empty** `outstanding`, and an `LRS_VERIFICATION_NEEDED` event carrying a sentence per item | Fix what the event names and send again. It usually names `remitter_pan` or `remitter_name`; an entry of `primary_person_name` means the buyer is not the person the money is for, so name that person. |
 
 <Warning>
   **The clock runs from the moment the money lands, not from when you start.** If the verification expiry passes at any point in that loop, the payment is gone — see [The payment has a deadline](#the-payment-has-a-deadline).
@@ -100,27 +100,33 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/documents
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' \
   -H 'X-API-Version: 3.0.0' \
-  -F 'type=loa' \
+  -F 'type=offer_letter' \
   -F 'file=@admission-letter.pdf'
 ```
 
-**Sending the details** is one JSON call. The envelope never changes — `fields`, `documents`, `finalize` — and what belongs inside is set by the payment's purpose code.
+**Sending the details** is one JSON call. The envelope never changes — `fields`, `documents`, `finalize` — and what belongs inside is set by the payment's checklist, which its business model and purpose code choose together.
 
 <Tabs>
   <Tab title="Education">
     ```json
     {
       "fields": {
-        "remitter_pan": "ABCDE1234F",
-        "remitter_relation": "SELF",
+        "remitter_name": "RAVI KUMAR",
+        "remitter_pan": "ABCPK1234F",
+        "remitter_dob": "1985-04-12",
+        "remitter_relation": "PARENT",
         "buyer_declaration": true,
-        "amount_to_be_settled": "150000.00",
-        "student_name": "Ananya Kumar",
-        "student_dob": "2005-09-30"
+        "principal": "150000.00",
+        "collected_tcs": "0.00",
+        "primary_person_name": "Ananya Kumar",
+        "primary_person_dob": "2005-09-30",
+        "primary_person_passport_number": "Z1234567"
       },
       "documents": [
-        { "code": "loa", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
-        { "code": "student_passport", "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e" }
+        { "code": "offer_letter", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
+        { "code": "passport", "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e" },
+        { "code": "student_id_or_visa", "ref": "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f" },
+        { "code": "relationship_declaration", "ref": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f90" }
       ]
     }
     ```
@@ -130,15 +136,20 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/documents
     ```json
     {
       "fields": {
+        "remitter_name": "RAVI KUMAR",
         "remitter_pan": "ABCPK1234F",
-        "remitter_relation": "PARENT",
+        "remitter_dob": "1985-04-12",
+        "remitter_relation": "SELF",
         "buyer_declaration": true,
-        "amount_to_be_settled": "150000.00"
+        "principal": "150000.00",
+        "collected_tcs": "0.00"
       },
       "documents": [
         { "code": "passenger_list", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" },
         { "code": "traveller_passports", "ref": "b2c3d4e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e" },
-        { "code": "traveller_visas", "waiver_reason": "Destination is visa-free" }
+        { "code": "traveller_visas", "waiver_reason": "Destination is visa-free" },
+        { "code": "ticket", "ref": "c3d4e5f6-7a8b-9c0d-1e2f-3a4b5c6d7e8f" },
+        { "code": "invoice", "ref": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f90" }
       ]
     }
     ```
@@ -155,7 +166,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/documents
 
 ## If you need the full picture
 
-The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the webhook, when you are picking up a payment someone started days ago, or when you are building the screen you show the buyer and want every label up front. It is idempotent — call it whenever.
+The webhook already tells you what is missing, so this call is not part of the loop. Reach for it when you missed the webhook, when you are picking up a payment someone started days ago, or when you are building the screen you show the buyer and want every message up front. It is idempotent — call it whenever.
 
 ```bash
 curl -X GET 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/verification/' \
@@ -164,7 +175,9 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/payments/<payment_id>/verificati
   -H 'X-API-Version: 3.0.0'
 ```
 
-You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `label`, whether it is `waivable`, and `satisfied` — so the ones still owed are those with `satisfied: false`. Those labels are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
+You get the whole requirement set as `fields` and `documents`. Each entry carries a `code`, a `message`, `satisfied` and `provided` — so the ones still owed are those with `satisfied: false`. Those messages are written to be shown to a buyer, including the exact wording they must be shown to affirm `buyer_declaration`.
+
+The response also carries **`settlement_status`**, the payment's own state. Read it before you send: once a payment is `UNDER_REVIEW` or beyond, its verification has been filed and further sends are refused.
 
 <Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
   Full response, statuses, and what each purpose code asks for.
@@ -178,22 +191,26 @@ You get the whole requirement set as `fields` and `documents`. Each entry carrie
 
 **Omit a key rather than sending `null` or an empty string.** A boolean is only satisfied by `true` — `false` reads as not yet answered.
 
-**The response tells you where the payment stands, and nothing else.** Two values, and you read `status` for both:
+**The response tells you what is still owed.** `outstanding` is the list of codes, and `status` is where the payment stands — lower-case, one of four:
 
 | `status` | What it means | What you do |
 | :--- | :--- | :--- |
-| `IN_REVIEW` | The set was complete, it went through our checks, and it passed. With us now. | Nothing |
-| `ACTION_REQUIRED` | Something is still owed — the set is short, you held it back with `finalize: false`, or it did not pass our checks | Find out what, then send it |
+| `incomplete` | Something is still owed. `outstanding` names it. | Send the rest |
+| `complete` | Nothing outstanding, nothing filed — you passed `finalize: false`, or this is not an LRS checklist | Nothing, unless you held it back |
+| `in_review` | The set was complete, it went through our checks, and it passed. With us now. | Nothing |
+| `action_required` | The set was complete and filed, and it did not pass our checks | Read the event, fix what it names, send just that |
+
+`action_required` with an **empty** `outstanding` is the important pair: the checklist is satisfied, our checks refused. That verdict only arrives on the event.
 
 <Warning>
-  **`ACTION_REQUIRED` never means your details were discarded.** Everything you sent is kept. `GET /pg/payments/:payment_id/verification/` names what is still outstanding; a failed check also arrives as an `LRS_VERIFICATION_NEEDED` event with a sentence per item.
+  **`action_required` never means your details were discarded.** Everything you sent is kept. A failed check arrives as an `LRS_VERIFICATION_NEEDED` event with a sentence per item; re-send only what it names.
 </Warning>
 
 ## The payment has a deadline
 
-Every LRS payment carries a `payment_verification_expiry`. Miss it and verification status becomes `EXPIRED`, which is terminal — the window closes, the money goes back to the buyer, and nothing you send afterwards reopens it.
+A payment that never completes its verification is refunded to the buyer. That is terminal — the window closes and nothing you send afterwards reopens it.
 
-Surface that date in your own UI and chase against it. It is the difference between a payment that settles and one that unwinds.
+Where the verification gateway names a deadline of its own, it arrives as `payment_verification_expiry` on the event; on the Virtual Bank Account rails that key is `null`, because no gateway set a date. Either way, treat the arrival of the money as when the clock started, surface it in your own UI, and chase against it. It is the difference between a payment that settles and one that unwinds.
 
 ## After it passes
 
