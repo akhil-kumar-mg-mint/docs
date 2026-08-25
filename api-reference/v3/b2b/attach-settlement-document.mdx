@@ -61,13 +61,26 @@ Attaching the same `ref` under the same `doc_type` twice does not create a secon
 
 ## When it is refused
 
-| Cause | What to do |
-|---|---|
-| The payment is not settled | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Post-settlement documents only exist after settlement. |
-| The set has already been submitted | It is locked. Nothing further can be attached or deleted. |
-| `doc_type` is not `delivery_proof` | That is the only type B2B services defines. |
-| The `ref` is unknown | A `ref` that is not your own reads as unknown. Upload the file under the calling merchant — PSPs must send `X-Merchant-ID` naming the settling sub-merchant. |
-| The payment is not a B2B-services payment | B2B goods has no partner-API settlement path. |
+Every refusal is a `400` in the standard envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_B2B_SETTLEMENT_003",
+    "message": "Documents can only be uploaded after the payment is settled.",
+    "details": "Documents can only be uploaded after the payment is settled."
+  }
+}
+```
+
+| Cause | `code` | What to do |
+|---|---|---|
+| The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Post-settlement documents only exist after settlement. |
+| The set has already been submitted | `ERR_B2B_SETTLEMENT_002` | It is locked. Nothing further can be attached or deleted. |
+| `doc_type` is not `delivery_proof` | `40359` | That is the only type B2B services defines. `details` is keyed by field: `{"doc_type": "Unknown document type."}`. |
+| The `ref` is unknown | `ERR_B2B_SETTLEMENT_001` | A `ref` that is not your own reads as unknown. Upload the file under the calling merchant — PSPs must send `X-Merchant-ID` naming the settling sub-merchant. |
+| The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
 
 <Note>
   **PSP callers must send `X-Merchant-ID`** on both calls, naming the settling sub-merchant. The upload is scoped to the merchant that made it, and the attach resolves the `ref` against that same merchant — mismatch them and the `ref` reads as unknown.

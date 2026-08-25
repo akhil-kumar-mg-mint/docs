@@ -34,12 +34,25 @@ Submitting with nothing attached is a `400`. Attach first, then submit.
 
 ## When it is refused
 
-| Cause | What to do |
-|---|---|
-| Nothing attached | Attach at least one `delivery_proof`. |
-| Already submitted | Nothing to do — the step is done. |
-| The payment is not settled | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
-| The payment is not a B2B-services payment | B2B goods has no partner-API settlement path. |
+Every refusal is a `400` in the standard envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_B2B_SETTLEMENT_004",
+    "message": "Upload all required documents before submitting.",
+    "details": "Upload all required documents before submitting."
+  }
+}
+```
+
+| Cause | `code` | What to do |
+|---|---|---|
+| Nothing attached | `ERR_B2B_SETTLEMENT_004` | Attach at least one `delivery_proof`. |
+| Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
+| The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
+| The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
 
 ## Related
 

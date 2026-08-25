@@ -21,16 +21,23 @@ It is safe to call at any time — it reads, it never re-runs anything.
   "success": true,
   "message": "Settlement documents",
   "data": {
+    "state": "DRAFT",
+    "is_settled": true,
+    "is_multi": true,
+    "required_doc_types": ["delivery_proof"],
+    "submitted_at": null,
     "documents": [
       {
-        "document_id": "0f7c2a1e9b4d4c8e",
+        "document_id": "0f7c2a1e9b4d",
         "doc_type": "delivery_proof",
-        "file_name": "delivery-note.pdf"
+        "file_name": "delivery-note.pdf",
+        "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"
       },
       {
-        "document_id": "3b91d5c7ae624f10",
+        "document_id": "3b91d5c7ae62",
         "doc_type": "delivery_proof",
-        "file_name": "signed-acceptance.pdf"
+        "file_name": "signed-acceptance.pdf",
+        "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"
       }
     ]
   }
@@ -38,6 +45,26 @@ It is safe to call at any time — it reads, it never re-runs anything.
 ```
 
 An empty `documents` array means nothing has been attached yet — not that nothing is owed.
+
+<ParamField path="state" type="string" required>
+  `FRESH` (nothing attached yet), `DRAFT` (attached, still editable) or `SUBMITTED` (locked). Read this before attaching: once it is `SUBMITTED`, attach and delete are both refused with `ERR_B2B_SETTLEMENT_002`.
+</ParamField>
+
+<ParamField path="is_settled" type="boolean" required>
+  Whether the payment has settled. Documents can only be attached after it has; attaching earlier is refused with `ERR_B2B_SETTLEMENT_003`.
+</ParamField>
+
+<ParamField path="is_multi" type="boolean" required>
+  `true` for B2B services. Read it together with `required_doc_types` — see below.
+</ParamField>
+
+<ParamField path="required_doc_types" type="string[]" required>
+  Every type this flow accepts. Because `is_multi` is `true`, the set is complete once **one** file of **any** listed type is attached — not one of each. A single-file flow (`is_multi: false`) would need one of every type.
+</ParamField>
+
+<ParamField path="submitted_at" type="string | null" required>
+  ISO-8601 timestamp of the submission, or `null` while the set is still `FRESH` or `DRAFT`.
+</ParamField>
 
 <ParamField path="document_id" type="string" required>
   Pass this to [Delete Settlement Document](/api-reference/v3/b2b/delete-settlement-document) while the submission is still a draft.
@@ -49,6 +76,10 @@ An empty `documents` array means nothing has been attached yet — not that noth
 
 <ParamField path="file_name" type="string" required>
   The stored file's name, for display.
+</ParamField>
+
+<ParamField path="file" type="string" required>
+  A pre-signed, time-limited URL for the stored file. Fetch it if you need the document back; do not store the URL itself, as it expires.
 </ParamField>
 
 ## What is listed

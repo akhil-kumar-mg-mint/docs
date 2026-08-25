@@ -3812,6 +3812,46 @@
                     "data": {
                       "type": "object",
                       "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "FRESH",
+                            "DRAFT",
+                            "SUBMITTED"
+                          ],
+                          "description": "FRESH = nothing attached, DRAFT = attached and still editable, SUBMITTED = locked.",
+                          "example": "DRAFT"
+                        },
+                        "is_settled": {
+                          "type": "boolean",
+                          "description": "Whether the payment has settled. Documents can only be attached after it has.",
+                          "example": true
+                        },
+                        "is_multi": {
+                          "type": "boolean",
+                          "description": "True for B2B services: the set is complete once one file of any required type is attached, not one of each.",
+                          "example": true
+                        },
+                        "required_doc_types": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "delivery_proof"
+                            ]
+                          },
+                          "description": "Every document type this flow accepts. Read with is_multi.",
+                          "example": [
+                            "delivery_proof"
+                          ]
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true,
+                          "description": "When the set was submitted, or null while it is FRESH or DRAFT.",
+                          "example": null
+                        },
                         "documents": {
                           "type": "array",
                           "items": {
@@ -3834,6 +3874,11 @@
                                 "type": "string",
                                 "description": "The stored file's name.",
                                 "example": "delivery-note.pdf"
+                              },
+                              "file": {
+                                "type": "string",
+                                "description": "Pre-signed, time-limited URL for the stored file. Fetch it if you need the document back; it expires, so do not store it.",
+                                "example": "https://bucket.s3.amazonaws.com/lrs_documents/308/8207383264/delivery-note.pdf?X-Amz-Signature=..."
                               }
                             }
                           }
