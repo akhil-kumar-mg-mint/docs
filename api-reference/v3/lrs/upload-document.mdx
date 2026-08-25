@@ -1,5 +1,116 @@
 ---
-title: 'Upload LRS Document'
-description: "Upload a supporting document and get a ref to pass in Submit LRS Verification. Multipart file + type."
+title: 'Upload Document'
+description: "Upload a supporting file and get back a ref to send under its checklist code. Multipart file + type."
 openapi: 'POST /pg/payments/{payment_id}/documents/'
 ---
+
+## Overview
+
+Uploads one supporting file for a payment's verification and answers with a **`ref`**. You then send that `ref` under the document's checklist code when you [submit verification details](/api-reference/v3/lrs/submit-verification-details):
+
+```json
+{ "documents": [{ "code": "offer_letter", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }] }
+```
+
+Upload each file as it arrives. Nothing has to be held back until the set is complete — the `ref` is what binds a file to a checklist item, and it does that later, on the submit.
+
+<Note>
+  **Two calls, not one.** Uploading a file does not answer a requirement; it stores a file. The requirement is answered when the submit names the `ref` under a `code`. That separation is what lets a payer send a passport on Monday and a letter of admission on Thursday without you tracking a half-built request.
+</Note>
+
+## The request
+
+`multipart/form-data`, two parts:
+
+| Part | |
+|---|---|
+| `file` | The document itself. |
+| `type` | What kind of document it is — one of the codes below. |
+
+The path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint: your own payments, and your sub-merchants'.
+
+## Document types
+
+`type` must be one of these. They are the codes the checklists ask for, so the value you upload under is the same value you submit under:
+
+| `type` | |
+|---|---|
+| `offer_letter` | Letter of admission from the institution |
+| `passport` | Student's passport |
+| `student_id_or_visa` | Student visa **or** university ID card — one code, either document |
+| `student_id` | University ID card (`S1107`, which has no travel leg) |
+| `fee_invoice` | Fee invoice |
+| `passenger_list` | Name and passport number of every traveller |
+| `traveller_passports` | Passports of all travellers |
+| `traveller_visas` | Visas of all travellers |
+| `ticket` | Travel tickets |
+| `invoice` | Commercial invoice, or the invoice for a trip |
+| `relationship_declaration` | Self-declaration of the remitter's relationship to the person the remittance is for |
+
+<Warning>
+  **Read the types you actually need from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)** rather than mapping this table into your code. It is the complete set any checklist can ask for, not the set *this* payment asks for, and it grows as the regulatory matrix is revised.
+</Warning>
+
+## The file
+
+Validated on upload, so a bad file fails here rather than at submit time.
+
+| | |
+|---|---|
+| Extensions | `pdf` · `png` · `jpg` · `jpeg` · `docx` · `xlsx` · `csv` |
+| Maximum size | 10 MB |
+| Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
+
+## The response
+
+`201`, with the `ref`:
+
+```json
+{
+  "success": true,
+  "message": "Document uploaded",
+  "data": {
+    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "type": "offer_letter"
+  }
+}
+```
+
+<ParamField path="ref" type="string" required>
+  The upload's identifier. Send it as `documents[].ref` on the verification submit.
+
+  The stored file is scoped to **your merchant account**, not to the payment in the path — so a `ref` stays valid across a retried attempt or a recurring installment, and a `ref` that is not yours reads as unknown rather than as someone else's file.
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  Echoes the `type` you sent.
+</ParamField>
+
+## Replacing a document
+
+Uploads are immutable. To replace one, upload the file again — you get a new `ref` — and submit that `ref` under the same `code`. The newer row supersedes the older without discarding it.
+
+## Waiving instead of uploading
+
+Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit:
+
+```json
+{ "documents": [{ "code": "traveller_visas", "waiver_reason": "Destination is visa-free for this passport" }] }
+```
+
+A waiver on a document that is not waivable is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
+
+<Note>
+  `POST /pg/lrs/documents/` predates this route and still works as an alias over the same implementation. New integrations should use the payment-scoped path.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    Which documents this payment actually needs.
+  </Card>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
+    Where the `ref` is bound to a checklist code.
+  </Card>
+</CardGroup>

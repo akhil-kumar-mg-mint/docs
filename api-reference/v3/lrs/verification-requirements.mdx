@@ -1,16 +1,16 @@
 ---
 title: 'Get Verification Requirements'
-description: "Read everything a payment's purpose code calls for — every field and document, and which are still missing."
+description: "Everything a payment's checklist calls for — every field and document, which are satisfied, and what state the payment itself is in."
 openapi: 'GET /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
 
-Returns the verification requirements for one payment: every field and document its purpose code calls for, which are already satisfied, and which are still outstanding.
+Returns the verification requirements for one payment: every field and document its checklist calls for, which are already satisfied, and which are still outstanding.
 
-The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook tells you what a payment is **missing** — a code, a sentence, and whether it can be waived. This tells you the **whole** requirement set, and it is the only place that carries a code's human-readable `label`, including the exact wording a payer must be shown to affirm `buyer_declaration`.
+The checklist is chosen by two facts on the order — its **business model** and its **purpose code**. Until both are declared no checklist claims the payment, and this endpoint asks for them instead.
 
-Call it when the event arrives, and render your collection form from the response.
+The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook lists what a payment is **missing**. This returns the **whole** set. Both describe the same items in the same shape, from the same read — an entry here is an entry there plus `satisfied` and `provided`.
 
 <Note>
   **Do not hardcode the field list.** Requirements are configuration, not code, and are revised as the underlying regulatory matrix is. Reading them from here means a revision reaches your integration without a release on your side.
@@ -19,23 +19,23 @@ Call it when the event arrives, and render your collection form from the respons
 ## When to use it
 
 <Steps>
-  <Step title="You need the whole set">
-    The event lists what is outstanding. Call this when you also need what is already satisfied — reconciling your own record against ours, or rendering a progress view.
-  </Step>
   <Step title="You missed an event">
-    Webhooks get lost, retried, or arrive mid-deploy. This endpoint is authoritative and idempotent — call it any time.
+    Webhooks get lost, retried, or arrive mid-deploy. This endpoint is authoritative and idempotent — call it any time. It is also the only place that reports `settlement_status`, which tells you whether sending anything is still possible.
+  </Step>
+  <Step title="You need the whole set">
+    The event lists what is outstanding. Call this when you also need what is already satisfied — reconciling your record against ours, or rendering a progress view.
   </Step>
   <Step title="You are resuming">
     A payer supplied three documents last week and two today. Call this to see where the payment stands before asking for anything.
   </Step>
   <Step title="You are building the form">
-    `fields` and `documents` describe the whole set, satisfied or not, with labels safe to show a payer. Filter on `satisfied` for what is still owed.
+    `fields` and `documents` describe the whole set, satisfied or not, with a `message` per item safe to show a payer. Filter on `satisfied` for what is still owed.
   </Step>
 </Steps>
 
 ## Response
 
-Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, the same payment after a complete set was submitted and **refused**, and a payment no requirement set applies to.
+Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, a payment nothing has classified, and a travel payment whose documents include waivable ones.
 
 <CodeGroup>
 
@@ -45,282 +45,295 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
   "message": "Verification requirements",
   "data": {
     "payment_id": "PR6938527534",
-    "order_uid": "OD3376378679",
-    "status": "incomplete",
-    "is_lrs": true,
+    "order_id": "OD3376378679",
+    "settlement_status": "ACTION_REQUIRED",
     "business_model": "B2C",
     "purpose_code": "S0305",
-    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
-    "requirement_label": "B2C · Education — LRS (with travel leg)",
     "fields": [
       {
         "code": "buyer_name",
-        "label": "Buyer / remitter name",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": true,
-        "provided": true
+        "message": "Buyer / remitter name",
+        "satisfied": false,
+        "provided": false
       },
       {
         "code": "buyer_address_line_1",
-        "label": "Buyer address line 1",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer address line 1",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_city",
-        "label": "Buyer city",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer city",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_state",
-        "label": "Buyer state",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer state",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_postal_code",
-        "label": "Buyer PIN code",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer PIN code",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_email",
-        "label": "Buyer email",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer email",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_phone",
-        "label": "Buyer phone",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Buyer phone",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "invoice_number",
-        "label": "Invoice number",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Invoice number",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "invoice_date",
-        "label": "Invoice date",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Invoice date",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "invoice_amount",
-        "label": "Invoice amount",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": true,
-        "provided": true
-      },
-      {
-        "code": "purpose_code",
-        "label": "FEMA purpose code",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": true,
-        "provided": true
-      },
-      {
         "code": "remitter_name",
-        "label": "Remitter name (as per PAN)",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Remitter name (as per PAN)",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "remitter_pan",
-        "label": "Remitter PAN",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Remitter PAN",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "remitter_dob",
-        "label": "Remitter date of birth (as per PAN)",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Remitter date of birth (as per PAN)",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "remitter_relation",
-        "label": "Remitter's relation to the person the remittance is for (SELF / PARENT / GUARDIAN / SPOUSE / SIBLING / OTHER)",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "Remitter's relation to the person the remittance is for",
         "satisfied": false,
         "provided": false
       },
       {
         "code": "buyer_declaration",
-        "label": "The remitter has declared that they are a person resident in India; that this remittance, together with all remittances made during the current financial year, is within the applicable LRS limit; and that this remittance is not for any purpose prohibited under Rule 3 read with Schedule I of the Foreign Exchange Management (Current Account Transactions) Rules, 2000.",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "amount_to_be_settled",
-        "label": "Amount to be settled for this payment, in INR",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "code": "primary_person_name",
+        "message": "Name of the person the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "primary_person_dob",
+        "message": "Date of birth of the person the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "primary_person_passport_number",
+        "message": "Passport number of the person the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "principal",
+        "message": "Amount to be settled for this payment, in INR",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "student_name",
-        "label": "Student name",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false
-      },
-      {
-        "code": "student_dob",
-        "label": "Student date of birth",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false
-      },
-      {
-        "code": "student_passport_number",
-        "label": "Student passport number",
-        "requirement": "REQUIRED",
-        "waivable": false,
+        "code": "collected_tcs",
+        "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)",
         "satisfied": false,
         "provided": false
       }
     ],
     "documents": [
       {
-        "code": "student_passport",
-        "label": "Student passport",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false
-      },
-      {
-        "code": "student_visa",
-        "label": "Student visa",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false,
-        "alternative_group": "student_status_proof"
-      },
-      {
-        "code": "university_id_card",
-        "label": "University ID card",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false,
-        "alternative_group": "student_status_proof"
-      },
-      {
-        "code": "loa",
-        "label": "Letter of admission / offer letter",
-        "requirement": "REQUIRED",
-        "waivable": false,
-        "satisfied": false,
-        "provided": false
-      },
-      {
-        "code": "invoice",
-        "label": "Fee invoice",
-        "requirement": "OPTIONAL",
-        "waivable": false,
-        "satisfied": true,
-        "provided": false
-      },
-      {
         "code": "relationship_declaration",
-        "label": "Relationship self-declaration",
-        "requirement": "CONDITIONAL",
-        "waivable": false,
+        "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
         "satisfied": true,
         "provided": false,
-        "condition": "relation_not_self"
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "offer_letter",
+        "message": "Letter of admission from the institution",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "passport",
+        "message": "Student's passport",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "student_id_or_visa",
+        "message": "Student visa or university ID card (either)",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "fee_invoice",
+        "message": "Fee invoice",
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       }
     ]
   }
 }
 ```
 
-```json Everything satisfied
+```json Nothing has classified this payment
 {
   "success": true,
   "message": "Verification requirements",
   "data": {
-    "payment_id": "PR1101324780",
-    "order_uid": "OD8963809589",
-    "status": "complete",
-    "is_lrs": true,
-    "business_model": "B2C",
-    "purpose_code": "S0305",
-    "purpose_code_description": "Travel for education (including fees, hostel expenses etc.)",
-    "requirement_label": "B2C · Education — LRS (with travel leg)",
+    "payment_id": "PR4471903288",
+    "order_id": "OD9925177340",
+    "settlement_status": "ACTION_REQUIRED",
+    "business_model": null,
+    "purpose_code": null,
     "fields": [
-      "… as above, every entry now satisfied: true …"
+      {
+        "code": "business_model",
+        "message": "Business model (B2B or B2C)",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "purpose_code",
+        "message": "FEMA/FETERS purpose code for this order",
+        "satisfied": false,
+        "provided": false
+      }
     ],
-    "documents": [
-      "… as above, every entry now satisfied: true …"
-    ]
+    "documents": []
   }
 }
 ```
 
-```json No requirements apply
+```json S0306, travel — waivable documents
 {
   "success": true,
-  "message": "No verification requirements apply",
+  "message": "Verification requirements",
   "data": {
-    "payment_id": "PR4471903288",
-    "order_uid": "OD9925177340",
-    "is_lrs": false,
-    "status": "not_applicable",
-    "detail": "No verification requirements are defined for this payment's business model and purpose code.",
-    "fields": [],
-    "documents": []
+    "payment_id": "PR7042318866",
+    "order_id": "OD8451220934",
+    "settlement_status": "ACTION_REQUIRED",
+    "business_model": "B2C",
+    "purpose_code": "S0306",
+    "fields": ["… the same buyer, invoice, remitter and amount fields as S0305, minus the student ones …"],
+    "documents": [
+      {
+        "code": "relationship_declaration",
+        "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "passenger_list",
+        "message": "Passenger list — name and passport number of every traveller",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "traveller_passports",
+        "message": "Passports of all travellers",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "traveller_visas",
+        "message": "Visas of all travellers",
+        "satisfied": false,
+        "provided": false,
+        "waivable": true
+      },
+      {
+        "code": "ticket",
+        "message": "Travel tickets",
+        "satisfied": false,
+        "provided": false,
+        "waivable": true
+      },
+      {
+        "code": "invoice",
+        "message": "Invoice for the trip",
+        "satisfied": false,
+        "provided": false
+      }
+    ]
   }
 }
 ```
 
 </CodeGroup>
 
-`required_*` is the whole set; `missing_*` is the subset still outstanding. Here 21 fields are required and 18 are missing — `buyer_name`, `invoice_amount` and `purpose_code` came in with the payment itself.
-
-The second example is the one worth reading twice: **`status: "complete"` means nothing is outstanding of what the purpose code asks for — not that the payment passed.** Whether it then cleared PAN verification, the sender match and the money check is reported by the [submit response](/api-reference/v3/lrs/submit-verification-details#completion) and by [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). This endpoint does not repeat it.
-
 <Note>
-  `documents` lists six for `S0305`, of which four are `satisfied: false`. The optional invoice is not owed because it is optional, and the relationship self-declaration is not owed because its condition cannot be evaluated until you declare `remitter_relation`. Both are still listed, with `provided: false` — that is how you know they exist.
+  **The unclassified response is not an error.** `business_model` and `purpose_code` come back `null`, and the two facts that would resolve them are listed as ordinary outstanding fields — same shape as any other entry. [Send them back](/api-reference/v3/lrs/submit-verification-details) under those codes and the real checklist appears on the next call.
 </Note>
 
 ## Reading the response
+
+### The payment
+
+<ParamField path="payment_id" type="string" required>
+  The payment. It is also the `payment_id` in this endpoint's own path.
+</ParamField>
+
+<ParamField path="order_id" type="string" required>
+  The order the payment belongs to. Every verification event names it under this key too.
+</ParamField>
+
+<ParamField path="settlement_status" type="string" required>
+  **The payment's own state — not a roll-up of the checklist.** This is the one thing an item list cannot tell you, and it is why this endpoint is worth calling when an event was missed: it says whether acting on the list is still possible at all.
+
+  | Value | What it means for you |
+  |---|---|
+  | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
+  | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
+  | `UNDER_REVIEW` | Filed and with us. **Sending is closed** — see below. |
+  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
+  | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
+
+  A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.
+
+  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+</ParamField>
+
+<ParamField path="business_model" type="string | null" required>
+  `B2B` or `B2C`, or `null` while nothing has declared it.
+</ParamField>
+
+<ParamField path="purpose_code" type="string | null" required>
+  The FEMA/FETERS purpose code the order settles under, or `null` while none is declared.
+</ParamField>
+
+### The items
 
 There is one list per kind, holding the whole set. There is no separate "missing" array — what is still owed is a filter:
 
@@ -328,139 +341,174 @@ There is one list per kind, holding the whole set. There is no separate "missing
 const outstanding = data.fields.filter(f => !f.satisfied)
 ```
 
-Each entry in `fields` and `documents` is a requirement item:
-
-<ParamField path="satisfied" type="boolean" required>
-  Whether this item is met. `false` is what "missing" used to mean: it blocks `status` from reaching `complete`.
-
-  An `OPTIONAL` item is `satisfied` from the very first response, and a `CONDITIONAL` item whose condition does not hold is satisfied vacuously. Neither blocks completion.
-</ParamField>
-
-<ParamField path="provided" type="boolean" required>
-  Whether you have actually sent it, or we already held it. Read alongside `satisfied`:
-
-  | `satisfied` | `provided` | Means |
-  |---|---|---|
-  | `false` | `false` | Owed. Send it. |
-  | `true` | `true` | Done. |
-  | `true` | `false` | Nothing owed, nothing sent — an `OPTIONAL` item, or a `CONDITIONAL` that does not apply to this payment. |
-
-  That last row is why `satisfied` alone is not enough. To offer optionals to a payer as well as chase what is owed, widen the filter:
-
-  ```js
-  const offerable = data.fields.filter(
-    f => !f.satisfied || (f.requirement === "OPTIONAL" && !f.provided)
-  )
-  ```
-</ParamField>
+Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` and `provided`. The remaining keys appear **only when they apply**, so their absence is meaningful: no `optional` key means the item is required, no `waivable` key means it cannot be waived.
 
 <ParamField path="code" type="string" required>
   The identifier you send the answer back under — as a key in `fields`, or as a document's `code`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
 </ParamField>
 
-<ParamField path="label" type="string" required>
-  A human-readable description, safe to render to a payer.
+<ParamField path="message" type="string" required>
+  A human-readable description of the item, safe to render to a payer. On `buyer_declaration` it is the wording the payer must be shown before affirming.
+
+  The same key on a [submit-failure event](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass) carries a sentence about what went wrong instead. One key, always the plainest thing there is to say about the item.
 </ParamField>
 
-<ParamField path="requirement" type="string" required>
-  `REQUIRED`, `CONDITIONAL` or `OPTIONAL`.
+<ParamField path="satisfied" type="boolean" required>
+  Whether this item still blocks completion. `false` is what "missing" means.
 
-  A `CONDITIONAL` item is owed only in the case named by `condition`. It is not listed as missing while that case cannot yet be determined — for example, the relationship declaration only becomes owed once you tell us the remitter is not the person the remittance is for.
-
-  An `OPTIONAL` item never blocks completion, but the webhook keeps offering it until you send it — an optional invoice nobody is told about is one nobody sends.
+  An `optional` item is satisfied from the very first response, and a conditional item whose condition does not hold is satisfied vacuously. Neither blocks completion.
 </ParamField>
 
-<ParamField path="waivable" type="boolean" required>
-  When `true`, you may send a `waiver_reason` instead of a file — a visa that the destination does not require, a ticket not yet issued.
+<ParamField path="provided" type="boolean" required>
+  Whether a value actually exists — you sent it, or we already held it. Read alongside `satisfied`:
+
+  | `satisfied` | `provided` | Means |
+  |---|---|---|
+  | `false` | `false` | Owed. Send it. |
+  | `true` | `true` | Done. |
+  | `true` | `false` | Nothing owed, nothing sent — an optional item, or a conditional one that does not apply to this payment. |
+
+  That last row is why `satisfied` alone is not enough. To offer optionals to a payer as well as chase what is owed, widen the filter:
+
+  ```js
+  const offerable = data.documents.filter(
+    d => !d.satisfied || (d.optional && !d.provided)
+  )
+  ```
+</ParamField>
+
+<ParamField path="optional" type="boolean">
+  Present, and always `true`, on items that never block completion. Absent on required items — there is no `"optional": false`.
+
+  An optional item is listed until you supply it, because an optional document nobody is told about is one nobody sends.
+</ParamField>
+
+<ParamField path="condition" type="string">
+  Present on conditional items, naming the case that makes them owed.
+
+  | Value | Owed when |
+  |---|---|
+  | `PAYING_FOR_SOMEONE_ELSE` | `remitter_relation` is declared as anything other than `SELF`. |
+  | `PHYSICAL_GOODS_ONLY` | The order ships physical goods. |
+
+  While the condition cannot yet be evaluated — the relation has not been declared — the item reads `satisfied: true`, `provided: false`. It is still listed, so you know it exists.
+</ParamField>
+
+<ParamField path="waivable" type="boolean">
+  Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file — a visa the destination does not require, a ticket not yet issued.
 
   A waivable document stays `satisfied: false` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
 </ParamField>
 
-<ParamField path="condition" type="string">
-  Present on `CONDITIONAL` items. `relation_not_self` means the item is owed when the remitter is not the person the remittance is for.
+<ParamField path="one_of" type="string">
+  A group name. Items sharing a group substitute for each other: send any one and the whole group clears.
+
+  No checklist uses this today — where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`). The key is part of the contract because a future revision may split such a pair, and an integration that reads it will absorb that without a release.
 </ParamField>
 
-<ParamField path="alternative_group" type="string">
-  Items sharing a group satisfy each other. Send any one and the whole group clears; send none and all of them stay listed so you can choose.
+## No `status`, deliberately
 
-  For education with a travel leg, the student visa and the university ID card are alternatives — either proves student status.
-</ParamField>
+Earlier versions returned a rolled-up `status` of `complete` / `incomplete` / `not_applicable`. It is gone, for two reasons:
 
-## Statuses
+- **It answered the wrong question.** "Every box is ticked" is not "the payment passed". A payment can be complete on its checklist and still be refused at the gateway — a PAN that will not verify, a sender who is not the account holder, a credit that does not cover the amount.
+- **It collided.** The `POST` on this same URL returns a `status` too, and there the word reports what the gateway did. One word, two meanings, same path.
 
-| `status` | Meaning |
-|---|---|
-| `incomplete` | Something is still owed — the `satisfied: false` entries of `fields` and `documents`. |
-| `complete` | Nothing is outstanding **of what the purpose code asks for**. Not a statement about whether the payment passed — see below. |
-| `not_applicable` | No requirements are defined for this payment's business model and purpose code — it follows the standard verification flow instead. |
+Fold your own roll-up when you want one, against a definition you chose:
 
-<Warning>
-  **`status: "complete"` does not mean the payment passed.** It means you have sent everything the purpose code asks for. Whether the payment then cleared PAN verification, the sender match and the money check is not reported here — a payment can read `complete` while sitting in Action Required, short of the amount it needs.
+```js
+const complete = [...data.fields, ...data.documents].every(i => i.satisfied)
+```
 
-  That verdict comes back on the [submit response](/api-reference/v3/lrs/submit-verification-details#completion) and, thereafter, on [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Reconcile on those, not on `status`.
-</Warning>
+For where the payment actually stands, read `settlement_status`, the [submit response](/api-reference/v3/lrs/submit-verification-details#the-response), or [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed).
 
 <Note>
   **Nothing is re-run when you call this.** A `GET` never verifies a PAN, posts to an LRS counter or moves a payment; it reports the requirement set and what has been collected against it.
 </Note>
 
-<Note>
-  A payment reads `not_applicable` most often because no purpose code has been declared on it yet. The ordinary [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) events name exactly which fact is missing — `purpose_code` or `business_model` — in their own missing-field list. Supply it and call this again.
-</Note>
+## Errors
 
-## What each purpose code asks for
+| Status | When |
+|---|---|
+| `404` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else, so the endpoint never confirms another merchant's payment id. |
+| `400` | The payment is classified, but no checklist covers that business model and purpose code — there is nothing to report. An **unclassified** payment is not this case: it answers `200`, asking for the two classifying facts. |
 
-The exact set is always what this endpoint returns — this is a summary, and a revision
-lands here before it lands in any table.
+## What each checklist asks for
 
-### Fields
+The exact set is always what this endpoint returns — this is a summary, and a revision lands there before it lands in any table.
 
-Every LRS code asks for the common core (buyer name, address, contact, invoice number
-and date, invoice amount, purpose code), the remitter's verified identity
-(`remitter_name`, `remitter_pan`, `remitter_dob`, `remitter_relation`),
-`buyer_declaration`, and `amount_to_be_settled`. On top of that:
+### Every checklist starts here
 
-| Purpose code | Cell | Extra fields |
-|---|---|---|
-| `S0305` | Education, with a travel leg | `student_name`, `student_dob`, `student_passport_number` |
-| `S1107` | Education, fees only — no travel leg | `student_name`, `student_dob` |
-| `S0306` · `S0304` · `S0303` | Travel | — |
+Buyer and invoice basics, read straight off the order:
 
-`buyer_declaration` is a single affirmation whose `label` is the full text the payer
-must be shown — resident in India, within the applicable LRS limit for the financial
-year, and not for a purpose prohibited under Rule 3 read with Schedule I of the FEM
-(Current Account Transactions) Rules, 2000. Send `true` once they have affirmed it.
+`buyer_name` · `buyer_address_line_1` · `buyer_city` · `buyer_state` · `buyer_postal_code` · `buyer_email` · `buyer_phone` · `invoice_number` · `invoice_date`
 
-`amount_to_be_settled` is the amount to settle for this payment, in INR. TCS is not
-collected — EximPe computes it.
+The one exception is the light B2C set (`S0101`, `S0802`, `S0301`), which asks for `buyer_name` and an optional invoice, and nothing else.
 
-### Documents
+### LRS checklists
 
-| Document | `S0305` | `S1107` | `S0306` · `S0304` · `S0303` |
+`S0305`, `S1107`, `S0303`, `S0304` and `S0306` add the remitter's verified identity, the declaration and the amounts:
+
+| Code | Asks for |
+|---|---|
+| `remitter_name` | Remitter name, as per PAN |
+| `remitter_pan` | Remitter PAN |
+| `remitter_dob` | Remitter date of birth, as per PAN |
+| `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
+| `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
+| `principal` | The amount to settle for this payment, in INR |
+| `collected_tcs` | TCS collected from the payer for this payment, in INR — `"0.00"` if none |
+| `primary_person_name` · `primary_person_dob` · `primary_person_passport_number` | Conditional: owed once `remitter_relation` is not `SELF` |
+
+<Warning>
+  **`collected_tcs` is collected, not computed for you.** It is what you took from the payer on this credit. Send `"0.00"` when nothing was collected — the key is still required, and omitting it leaves the payment outstanding. Quote the figure with [Quote LRS Amount](/api-reference/v3/lrs/quote) before you collect it.
+</Warning>
+
+Documents, per purpose code:
+
+| Document code | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
 |---|:---:|:---:|:---:|
-| Student passport | required | — | — |
-| Student visa | required¹ | — | — |
-| University ID card | required¹ | required | — |
-| Letter of admission (LOA) | required | required | — |
-| Passenger list | — | — | required |
-| Traveller passports | — | — | required |
-| Traveller visas | — | — | required, waivable |
-| Ticket | — | — | required, waivable |
-| Invoice | optional | optional | required |
-| Relationship self-declaration | conditional² | conditional² | conditional² |
-
-¹ Alternatives — supplying either one clears both. `S1107` has no travel leg, so no visa
-exists and the university ID card stands alone.
-
-² Required only when `remitter_relation` is not `SELF`.
+| `offer_letter` — letter of admission | required | required | — |
+| `passport` — student's passport | required | — | — |
+| `student_id_or_visa` — student visa **or** university ID card | required | — | — |
+| `student_id` — university ID card | — | required | — |
+| `fee_invoice` | optional | optional | — |
+| `passenger_list` | — | — | required |
+| `traveller_passports` | — | — | required |
+| `traveller_visas` | — | — | required, waivable |
+| `ticket` | — | — | required, waivable |
+| `invoice` — invoice for the trip | — | — | required |
+| `relationship_declaration` | conditional | conditional | conditional |
 
 <Note>
-  The three travel codes share one requirement set. They differ in what the remittance
-  is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
+  **`student_id_or_visa` is one code that accepts either document.** Upload a visa or a university ID card under this single code — there is no separate `student_visa` or `university_id_card` to send, and no alternative group to reconcile. `S1107` has no travel leg, so no visa exists and the university ID stands alone as `student_id`.
 </Note>
+
+### B2B checklists
+
+| Code | Extra fields | Documents |
+|---|---|---|
+| `S0101` — goods | `product_description`, `iec`, and `hs_code` (conditional: physical goods) | `invoice` |
+| `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | `buyer_pan` | `invoice` |
 
 ## The requirement set can grow
 
-Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the relationship self-declaration to `satisfied: false`, because that document is only owed in that case.
+Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the three `primary_person_*` fields and the relationship self-declaration to `satisfied: false`, because they are only owed in that case.
 
-This is expected. Re-read `fields` and `documents` from the response after every write rather than assuming the list you started with is final.
+This is expected. Re-read `fields` and `documents` after every write rather than assuming the list you started with is final.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
+    Send the answers back, under these same codes.
+  </Card>
+  <Card title="Upload Document" icon="file-arrow-up" href="/api-reference/v3/lrs/upload-document">
+    Upload a file and get the `ref` a document entry needs.
+  </Card>
+  <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
+    The same items, pushed to you, when a payment owes them.
+  </Card>
+  <Card title="Quote LRS Amount" icon="calculator" href="/api-reference/v3/lrs/quote">
+    TCS and the all-in total, before the buyer transfers.
+  </Card>
+</CardGroup>

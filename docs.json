@@ -445,6 +445,7 @@
                   "api-reference/v3/webhooks/payment-details-missing",
                   "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/lrs-verification-needed",
+                  "api-reference/v3/webhooks/payment-under-review",
                   "api-reference/v3/webhooks/payment-failed",
                   "api-reference/v3/webhooks/payment-refunded",
                   "api-reference/v3/webhooks/refund-failed",

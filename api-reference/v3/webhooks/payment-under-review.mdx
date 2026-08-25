@@ -1,0 +1,177 @@
+---
+title: "PAYMENT UNDER REVIEW"
+description: "Technical reference for the PAYMENT_UNDER_REVIEW webhook event, sent when a payment's verification has been accepted and nothing further is needed from you."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `PAYMENT_UNDER_REVIEW`
+**Category**: Payment Verification
+**Description**: The payment's verification was accepted; it is with us and needs nothing from you
+
+This is the event that ends the verification conversation. Everything the payment's checklist asked for was supplied, the verification gateway took the set and passed it, and the payment moved to **Under Review** while it works its way to settlement.
+
+<Note>
+  **It carries the same body as the events that ask for details, with an empty list.** Every event in this family answers one question — *what does this payment still need from me?* Here the answer is nothing, and `action_required_fields` is `[]` because that is what nothing looks like.
+
+  If you already handle [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), you can route this event through the same handler and it will do the right thing.
+</Note>
+
+### When the webhook is sent
+
+1. **An LRS submit passed.** A complete set was filed through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), the gateway verified the PAN, matched the sender to the account holder, reconciled TCS and confirmed the credit covers the amount. The synchronous response to that same call reads `"status": "in_review"`.
+2. **In sandbox**, when a simulated payment is moved to Under Review — either by supplying the last outstanding verification field, or by choosing that settlement status on the simulator page.
+
+The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_UNDER_REVIEW` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first. Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one.
+
+---
+
+## Payload Schema
+
+```json
+{
+  "event_type": "PAYMENT_UNDER_REVIEW",
+  "event_time": "2026-08-25T09:14:07.418322",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440020",
+  "data": {
+    "payment_id": "PR6938527534",
+    "order_id": "OD3376378679",
+    "verification_status": "UNDER_REVIEW",
+    "message": "Payment is under review",
+    "action_required_fields": [],
+    "payment_verification_expiry": null
+  }
+}
+```
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"PAYMENT_UNDER_REVIEW"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
+
+      **Example**: `"2026-08-25T09:14:07.418322"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Envelope version (e.g. "3.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for this webhook event (UUID), useful for idempotency
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      The payment and its state
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment
+    </ParamField>
+
+    <ParamField path="data.order_id" type="string" required>
+      UID of the order the payment belongs to
+    </ParamField>
+
+    <ParamField path="data.verification_status" type="string" required>
+      Always `"UNDER_REVIEW"` on this event — it is the payment's own settlement state, read at the moment the event was raised.
+    </ParamField>
+
+    <ParamField path="data.message" type="string" required>
+      Always `"Payment is under review"`. Safe to log or show; not a value to branch on.
+    </ParamField>
+
+    <ParamField path="data.action_required_fields" type="array" required>
+      Always empty on this event. Nothing is owed — that is the whole point of it.
+    </ParamField>
+
+    <ParamField path="data.payment_verification_expiry" type="string | null" required>
+      A gateway-set verification deadline where one exists. `null` here: nothing is being asked of you, so no clock is running.
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---
+
+## What to do when you receive it
+
+1. **Respond `2xx`** as soon as you have accepted the payload, so the delivery is not retried.
+2. **Verify the signature** against the raw request body.
+3. **Record the payment as under review** and stop chasing the payer. Nothing more is needed from either of you.
+4. **Wait for settlement.** [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) is the next event in this payment's life.
+
+<Warning>
+  **Sending is closed from here.** A payment in `UNDER_REVIEW` refuses further verification details — the staged rows are now the record of what was actually filed with the gateway, and a later edit would leave the two disagreeing. `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are closed for the same reason.
+
+  If something genuinely has to change after this point, raise it with us rather than re-submitting.
+</Warning>
+
+<Note>
+  **Under Review is not the same as verified.** It means the set was accepted and the payment is with us. A `VERIFIED` payment sends no event of its own, because there is nothing for you to act on either way — settlement is the signal to wait for.
+</Note>
+
+## The family this event belongs to
+
+Four events share one body, so a single handler can read all of them:
+
+| Event | `action_required_fields` | Means |
+|---|---|---|
+| [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) | Plain field codes | Something is owed. |
+| [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) | Entry objects, plus `action_required_documents` and `submit` | Something is owed on an LRS payment. |
+| `PAYMENT_UNDER_REVIEW` | `[]` | Nothing is owed; the payment is with us. |
+
+The one difference worth knowing: on `LRS_VERIFICATION_NEEDED` the list holds **objects** (`{code, message, …}`); on the other two it holds **strings**. Check the element type, or route on `event_type`.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
+    The call whose success raises this event.
+  </Card>
+  <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
+    The event that says something is still owed.
+  </Card>
+  <Card title="PAYMENT_SETTLED" icon="circle-check" href="/api-reference/v3/webhooks/payment-settled">
+    The next event in the payment's life.
+  </Card>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    Read `settlement_status` to confirm where a payment stands.
+  </Card>
+</CardGroup>

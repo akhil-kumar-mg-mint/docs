@@ -6,7 +6,7 @@ description: "The rules for LRS payments from individuals in India: who can pay,
 <Info>
   **LRS** is the Liberalised Remittance Scheme — the RBI rules for an **individual** in India sending money abroad for a personal purpose, like education fees or travel.
 
-  **The test is what the money is for, not who is paying.** An individual buying goods or services from a foreign seller is making a purchase, not a remittance: it does not draw against their LRS limit, and **no TCS applies**. Only the purposes on this page do. If you are unsure which you have, `is_lrs` on the payment's requirements says so outright.
+  **The test is what the money is for, not who is paying.** An individual buying goods or services from a foreign seller is making a purchase, not a remittance: it does not draw against their LRS limit, and **no TCS applies**. Only the purposes on this page do. If you are unsure which you have, the purpose code decides it — and so does the event you receive: an LRS payment gets `LRS_VERIFICATION_NEEDED`, everything else gets `VERIFICATION_NEEDED`.
 </Info>
 
 When an individual in India sends money abroad, LRS decides whether they are allowed to, how much, what tax applies, and what paperwork is needed. EximPe is licensed by the RBI as a **Payment Aggregator – Cross Border**, and a partner bank makes the actual transfer.
@@ -84,7 +84,7 @@ Collect it on top of the amount to be settled. The bank pays it to the governmen
 
 Everything else on this page — who may pay, the limit, the declaration, the tax — is the same for every LRS payment. This is the only part that varies, and it varies by **purpose code**.
 
-**Common to every LRS payment.** The buyer's name, address and contact; the invoice number, date and amount; the purpose code and payment term; the remitter's name, PAN, date of birth and relation; `buyer_declaration`; and `amount_to_be_settled`. Every purpose code asks for these. [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) is the authoritative list for any given payment.
+**Common to every LRS payment.** The buyer's name, address and contact; the invoice number and date; the remitter's name, PAN, date of birth and relation; `buyer_declaration`; and the two amounts — `principal`, what is to be settled, and `collected_tcs`, what you took from the payer as TCS (`"0.00"` if none). Every LRS purpose code asks for these. [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) is the authoritative list for any given payment.
 
 What follows is what each code adds on top — first what its group shares, then anything specific to the code itself.
 
