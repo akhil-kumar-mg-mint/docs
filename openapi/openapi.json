@@ -2981,9 +2981,9 @@
                     "order_id": "550e8400-e29b-41d4-a716-446655440000",
                     "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
                     "subscription_type": "UPI_RECURRING",
-                    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "intent_uri": "pa=merchant@examplebank&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
                     "qr_code": {
-                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "url": "upi://pay?pa=merchant@examplebank&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
                       "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
                     },
                     "subscription": {
@@ -5861,9 +5861,9 @@
                     "order_id": "550e8400-e29b-41d4-a716-446655440000",
                     "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
                     "subscription_type": "UPI_RECURRING",
-                    "intent_uri": "pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                    "intent_uri": "pa=merchant@examplebank&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
                     "qr_code": {
-                      "url": "upi://pay?pa=merchant@payu&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
+                      "url": "upi://pay?pa=merchant@examplebank&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
                       "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
                     },
                     "subscription": {
