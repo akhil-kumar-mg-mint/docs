@@ -14,7 +14,7 @@ description: "Technical reference for the LRS_VERIFICATION_NEEDED webhook event,
 This webhook fires when a payment settling under an LRS purpose code is missing details its checklist calls for. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding, and carries a pointer to where you send them.
 
 <Note>
-  **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) or [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing). Two events carrying different lists for the same outstanding work would leave you chasing both.
+  **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
 </Note>
 
 <Note>
