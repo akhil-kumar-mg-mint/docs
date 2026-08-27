@@ -61,7 +61,7 @@ The payment status is `ACTION_REQUIRED`. We have the money but not the paperwork
 <Warning>
   **The sender on the credit does not identify the payment.** You tell us who paid, and what for, in the next step.
 
-  For LRS payments there is an extra rule: the money must come from the remitter's own account, and we check the sending account's name against the PAN you give us. Other payment types have no such restriction.
+  For LRS payments there is an extra rule: the money must come from the remitter's own account, and we check the sending account's name against the PAN you give us.
 </Warning>
 
 Next, send us the compliance details so the payment can settle.
@@ -96,49 +96,17 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
 
 <Warning>Sandbox only. This endpoint does not exist in production.</Warning>
 
-You get back the payment the credit created:
+You get back the payment the credit created — `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
 
-```json
-{
-  "success": true,
-  "message": "VBA transfer simulation processed",
-  "data": {
-    "payment_id": "PR6115489451",
-    "order_id": "OD6767097620",
-    "reference_id": "VBA-864042420509",
-    "status": "captured",
-    "settlement_status": "action_required",
-    "status_message": null
-  }
-}
-```
-
-`captured` with `action_required` is the happy path — the money is in, and the compliance details are what is missing.
-
-A credit that breaks a rule on the account is still recorded. We never drop real money, so instead of rejecting it we keep it for reconciliation and tell you why:
-
-```json
-{
-  "status": "failed",
-  "settlement_status": "not_applicable",
-  "status_message": "Amount outside allowed range"
-}
-```
-
-`status_message` is the only place that reason appears. It is one of:
-
-| `status_message` | What happened |
-| :--- | :--- |
-| `VBA is inactive` | The account was deactivated before the money arrived. |
-| `Remitter not in allow-list` | The account has a remitter lock and this sender is not on it. |
-| `Amount outside allowed range` | The account has an amount lock and this amount falls outside it. |
-| `Amount exceeds 25 lacs limit` | Above the per-credit ceiling. |
-
-Anything that stops a payment being created is an error status, not a `200`: a repeated `utr` is `409`, a malformed amount is `400`.
+A credit that breaks a rule on the account (the VBA is inactive, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded rather than rejected — we never drop real money — and comes back `failed` with the reason in `status_message`.
 
 <Note>
   The same rules apply to real credits. Simulating one is the way to see what a locked account does to a transfer before a buyer sends money into it.
 </Note>
+
+<Card title="Simulate VBA Transfer API" icon="code" href="/api-reference/v3/vba/simulate-transfer">
+  Every field, every `status_message`, and the full response shape.
+</Card>
 
 ## Finding payments
 
