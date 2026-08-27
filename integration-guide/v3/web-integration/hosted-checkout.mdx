@@ -1,0 +1,382 @@
+---
+title: "Hosted Checkout"
+description: "Collect a payment on an EximPe-hosted page without building or maintaining your own checkout UI"
+---
+
+# Introduction
+
+Hosted Checkout is a pre-built payment page. You create an order from your server, hand the returned session to the EximPe JS SDK, and the buyer completes the payment on EximPe's page — card and UPI credentials never touch your servers.
+
+<CardGroup cols={3}>
+  <Card title="No UI to build" icon="credit-card" href="#step-2-open-the-checkout-page">
+    One SDK call opens a payment page that already handles every method you have enabled
+  </Card>
+  <Card title="Nothing sensitive to hold" icon="shield-check" href="#security-notes">
+    Card and UPI credentials are entered on EximPe's page, so they stay outside your PCI scope
+  </Card>
+  <Card title="Verified server-side" icon="server" href="#step-3-verify-the-payment">
+    Confirm every outcome from your backend — never from the browser redirect alone
+  </Card>
+</CardGroup>
+
+<Info>
+  **Collection is only half the flow.** A successful payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required** like any other v3 payment, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
+</Info>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **Domain Whitelist**: Your website domain whitelisted for integration
+- **Return URL**: A URL on your site that EximPe redirects the buyer back to
+- **Webhook URL**: A secure endpoint to receive payment status updates
+- **Encryption Key**: Needed to verify the callback hash in [Step 4](#step-4-verify-the-callback-hash)
+
+<Note>
+  PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the order belongs to.
+</Note>
+
+The integration is three steps, plus verification:
+
+1. **Your backend creates an order** and receives a `session_id`.
+2. **Your frontend opens the checkout page** with that session, via the EximPe JS SDK.
+3. **Your backend confirms the outcome** from the Order Status API or the webhook.
+
+## Step 1: Create an order
+
+Create the order from your **backend** — never from the browser, which would expose your client secret.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": "2499.99",
+  "currency": "INR",
+  "reference_id": "ORD_2024_WH_001234",
+  "collection_mode": "hosted_payment",
+  "return_url": "https://yourdomain.com/payment/callback/",
+  "buyer": {
+    "name": "Priya Sharma",
+    "email": "priya.sharma@techcorp.in",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "403, Crystal Tower, Linking Road",
+      "line_2": "Near Metro Station",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400050"
+    }
+  },
+  "product": {
+    "name": "Sony WH-1000XM5 Wireless Headphones",
+    "description": "Premium noise-cancelling wireless headphones",
+    "hs_code": "85183000",
+    "hs_code_description": "Headphones and earphones, whether or not combined with a microphone",
+    "type_of_goods": "physical_goods"
+  },
+  "invoice": {
+    "number": "INV_WH_2024_0621",
+    "date": "2024-06-21"
+  }
+}'
+```
+
+```json Response
+{
+  "success": true,
+  "message": "Checkout session created successfully",
+  "data": {
+    "session_id": "b4db5e1c82db8636094f54e3293218172ae2ab87dee6ce4e97c82db6c63f243a",
+    "order_id": "OD5916184980"
+  }
+}
+```
+
+</CodeGroup>
+
+<Note>
+  `collection_mode` has no server-side default — send `"hosted_payment"` explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
+
+  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`) only to pre-select a method on the checkout page.
+</Note>
+
+<Warning>
+  **Session validity.** The `session_id` is valid for **15 minutes**. If the buyer does not finish in that window, create a new order to get a fresh session — an expired or already-completed session is rejected.
+</Warning>
+
+<Card title="Create Order API" icon="book-open" href="/api-reference/v3/order/create">
+  Every parameter, constraint, and response field for this endpoint.
+</Card>
+
+## Step 2: Open the checkout page
+
+<Steps>
+  <Step title="Include the JS SDK">
+    Load the SDK from a versioned URL with Subresource Integrity (SRI):
+
+    ```html
+    <script
+      src="https://cdn.eximpe.com/sdk/eximpe-sdk-1.4.0.min.js"
+      integrity="sha384-rvrIcrtaUS0sEFb/PFFvzNM4ZpoEjw9Jsa1BixxtJ2dGZxWA3UQ8gbDvDpUBWzKL"
+      crossorigin="anonymous"
+    ></script>
+    ```
+  </Step>
+
+  <Step title="Initialize the SDK">
+    `mode` is required and must be `sandbox` or `production`; anything else throws `ERR_SDK_001`. It also picks the API host for you — `https://api-pacb-uat.eximpe.com` in sandbox, `https://api-pacb.eximpe.com` in production.
+
+    ```javascript
+    const eximpe = new Eximpe({
+      mode: "sandbox" // or "production"
+    });
+    ```
+  </Step>
+
+  <Step title="Open the checkout">
+    Pass the `session_id` from Step 1:
+
+    ```javascript
+    eximpe.checkout({
+      sessionId: "your-session-id",
+      redirectTarget: "_self" // default
+    });
+    ```
+  </Step>
+</Steps>
+
+### Error handling
+
+`checkout()` returns a promise — always attach a `.catch()`. An invalid or expired session surfaces as:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_AUTH_000",
+    "message": "Missing credentials",
+    "details": {
+      "session_id": "Invalid or expired session"
+    }
+  }
+}
+```
+
+<Note>
+  **Common causes**: the session is older than 15 minutes, it is malformed, or it has already been used for a completed payment. In every case the fix is the same — create a new order.
+</Note>
+
+### Complete example
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EximPe Checkout Integration</title>
+  <script
+    src="https://cdn.eximpe.com/sdk/eximpe-sdk-1.4.0.min.js"
+    integrity="sha384-rvrIcrtaUS0sEFb/PFFvzNM4ZpoEjw9Jsa1BixxtJ2dGZxWA3UQ8gbDvDpUBWzKL"
+    crossorigin="anonymous"
+  ></script>
+</head>
+<body>
+  <button id="payButton">Pay Now</button>
+
+  <script>
+    window.onload = function () {
+      const eximpe = new Eximpe({ mode: "sandbox" });
+
+      document.getElementById("payButton").addEventListener("click", async () => {
+        // Fetch the session from YOUR backend, which called Create Order.
+        const res = await fetch("/api/create-order", { method: "POST" });
+        const { session_id: sessionId } = await res.json();
+
+        eximpe.checkout({ sessionId }).catch((error) => {
+          console.error("Checkout error:", error);
+        });
+      });
+    };
+  </script>
+</body>
+</html>
+```
+
+## Step 3: Verify the payment
+
+Once the buyer completes or abandons the payment, EximPe redirects them to your `return_url` — **the same redirect happens whether the payment succeeded or failed.** Confirm the real outcome from your backend before you deliver anything.
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/orders/OD5916184980/status/' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+```json Response
+{
+  "success": true,
+  "message": "Order status fetched successfully",
+  "data": {
+    "order_id": "OD5916184980",
+    "status": "payment_successful",
+    "status_message": "Payment captured successfully",
+    "created_at": "2025-09-04T10:12:41Z",
+    "last_updated_at": "2025-09-04T10:15:48Z"
+  }
+}
+```
+
+</CodeGroup>
+
+An order reports one of three statuses:
+
+| Status | Meaning | What to do |
+| :--- | :--- | :--- |
+| `payment_pending` | Still being processed | Keep waiting; check again or wait for the webhook |
+| `payment_successful` | Payment captured | Proceed — then assert compliance ([Step 5](#step-5-assert-compliance)) |
+| `failed` | Payment failed or was abandoned | Show a failure message and offer a retry |
+
+<Warning>
+  **Never treat the redirect as proof of payment.** A buyer can reach your `return_url` without having paid. Only `payment_successful`, read from your backend, means the money was captured.
+</Warning>
+
+<Note>
+  Use the `order_id` from Step 1 here — not the `session_id`.
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Get Order Status API" icon="book-open" href="/api-reference/v3/order/get-status">
+    Full request and response reference.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/integration-guide/v3/web-integration/webhooks">
+    Get pushed the outcome instead of polling for it.
+  </Card>
+</CardGroup>
+
+## Step 4: Verify the callback hash
+
+When EximPe redirects to your `return_url`, it POSTs the payment details as form data, signed with a `hash`. Verify that hash before you read anything else from the body.
+
+```bash Sample callback
+curl '{return_url}' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'order_id=OD6567064038&payment_id=PR2352113376&status=captured&message=Payment+captured+successfully&mop_type=UPI&bank_ref_num=OD6567064038-PR2352113376&payment_completed_at=2025-06-25+12%3A15%3A48%2B00%3A00&hash=078692abdb83a5873a5e17d416f326a4589ed6ac02aed36739a5900fd8b5650f'
+```
+
+| Field | Description |
+| :--- | :--- |
+| `order_id` | Your order identifier |
+| `payment_id` | EximPe's payment transaction ID |
+| `status` | Payment status — `captured`, `failed`, or `invalid` |
+| `message` | Human-readable status message |
+| `mop_type` | Method of payment (`UPI`, `CREDIT_CARD`, …) |
+| `bank_ref_num` | Bank reference number |
+| `payment_completed_at` | Payment completion timestamp |
+| `hash` | HMAC-SHA256 signature over the fields below |
+
+The hash is an HMAC-SHA256 over exactly six fields, in this order, joined with `|`, keyed by your encryption key:
+
+```
+order_id|payment_id|status|mop_type|bank_ref_num|payment_completed_at
+```
+
+<Warning>
+  `message` is sent in the callback but is **not** part of the hash. Include only the six fields above, in that order, or your signature will never match.
+</Warning>
+
+```python
+import hashlib
+import hmac
+
+HASH_KEYS = [
+    "order_id",
+    "payment_id",
+    "status",
+    "mop_type",
+    "bank_ref_num",
+    "payment_completed_at",
+]
+
+
+def verify_callback_hash(form_data: dict, encryption_key: str) -> bool:
+    """Verify the hash signature on an EximPe callback."""
+    received_hash = form_data.get("hash")
+    if not received_hash:
+        return False
+
+    message = "|".join(str(form_data.get(key, "")) for key in HASH_KEYS)
+    expected_hash = hmac.new(
+        encryption_key.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(received_hash, expected_hash)
+```
+
+Use it in your `return_url` handler, then still confirm the order status from Step 3:
+
+```python
+def handle_payment_callback(request):
+    form_data = request.POST.dict()
+
+    if not verify_callback_hash(form_data, YOUR_ENCRYPTION_KEY):
+        return HttpResponse("Hash verification failed", status=400)
+
+    # Signature is good — now confirm the outcome from the Order Status API
+    # before delivering anything.
+    order_id = form_data["order_id"]
+    ...
+```
+
+<Warning>
+  Always compare with `hmac.compare_digest()`, never `==`. A plain string comparison leaks timing information about the expected signature.
+</Warning>
+
+## Step 5: Assert compliance
+
+A collected payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
+
+For **LRS** payments this is the same flow used for virtual account collections: we tell you what the payment needs, you send it, and it completes itself once nothing is outstanding.
+
+<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+  The step-by-step compliance flow, shared by every v3 collection method.
+</Card>
+
+## Security Notes
+
+<CardGroup cols={2}>
+  <Card title="Create orders server-side">
+    Your `X-Client-Secret` must never reach the browser. Create the order from your backend and send only the `session_id` to the frontend.
+  </Card>
+  <Card title="Verify before you deliver">
+    Confirm `payment_successful` from the Order Status API or the webhook. The redirect to your `return_url` proves nothing on its own.
+  </Card>
+  <Card title="Pin the SDK">
+    Load the SDK from a versioned URL with an `integrity` attribute, so a changed file at the CDN cannot execute on your page.
+  </Card>
+  <Card title="Keep secrets out of requests">
+    Never put your encryption key, salt, or a plaintext hash string into a payment request or anything the browser can read.
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Contact Support" icon="mail" href="mailto:support@eximpe.com">
+    📩 support@eximpe.com — 24/7, response within 1 business day
+  </Card>
+  <Card title="API Reference" icon="book-open" href="/api-reference/v3/order/create">
+    📚 Create Order, Get Order Status, and the v3 webhook payloads
+  </Card>
+</CardGroup>

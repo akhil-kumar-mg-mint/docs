@@ -3899,9 +3899,6 @@
       "v3_Address": {
         "type": "object",
         "required": [
-          "line_1",
-          "city",
-          "state",
           "postal_code"
         ],
         "properties": {

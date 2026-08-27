@@ -3,7 +3,7 @@
   "theme": "mint",
   "name": "EximPe Docs",
   "url": "https://docs.eximpe.com",
-  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json"],
+  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json", "openapi/v3-orders.json"],
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
@@ -359,6 +359,8 @@
                 "group": "Collecting Payments",
                 "pages": [
                   "integration-guide/v3/web-integration/collection-overview",
+                  "integration-guide/v3/web-integration/hosted-checkout",
+                  "integration-guide/v3/web-integration/s2s-upi-intent",
                   "integration-guide/v3/web-integration/virtual-accounts",
                   "integration-guide/v3/web-integration/webhooks"
                 ]
