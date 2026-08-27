@@ -49,6 +49,17 @@ Set `collection_mode` to `s2s`, `mop_type` to `upi`, and `upi_flow_type` to `int
 - `buyer.ip_address`: Customer's IP address
 - `buyer.user_agent`: Customer's browser user agent
 
+### Optional Parameters
+
+Both apply to either collection mode and resolve independently of each other:
+
+- `business_model`: Whether the buyer is a business (`B2B`) or a consumer (`B2C`)
+- `purpose_code`: The FEMA/FETERS purpose code this order settles under (e.g. `S0802`)
+
+<Note>
+  Omit either one and EximPe derives it from your KYC. A `purpose_code` is auto-filled only when your account has exactly one allowed code; where the KYC is ambiguous the field is left unset for later classification.
+</Note>
+
 <Note>
   `collection_mode` is not defaulted — send it explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
 </Note>
@@ -72,6 +83,8 @@ The following tables define the request parameters, including nested objects, ty
 | mop_type | string | Conditional | Method of payment. | Optional for `hosted_payment` (enum: `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`) — pre-selects a method on the checkout page; must be `upi` for the S2S UPI Intent flow |
 | upi_flow_type | string | Conditional | UPI flow when `mop_type` is `upi` and `collection_mode` is `s2s`. | Must be `intent` for the S2S UPI Intent flow; not used for `hosted_payment` |
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
+| business_model | string | No | Whether the buyer is a business or a consumer. | Enum: `B2B`, `B2C`; derived from your KYC when omitted |
+| purpose_code | string | No | FEMA/FETERS purpose code this order settles under. | Must be active and enabled on your account (e.g. `S0101`, `S0802`); derived from your KYC when omitted |
 | buyer | object | Conditional | Buyer/customer details. | Required, unless your Hosted Checkout is configured to collect buyer details on the payment page. See Buyer object |
 | product | object | Yes | Product or service being purchased. | See Product object |
 | invoice | object | Yes | Invoice metadata. | See Invoice object |
@@ -140,6 +153,16 @@ For S2S UPI Intent mode, the response includes:
   In the **sandbox environment**, the response carries an extra `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without a real UPI app or a mobile device. The result follows the test VPA you use in the simulator. This field is **not returned in production**.
 </Tip>
 
+### Purpose code errors
+
+A `purpose_code` you send is validated, not silently dropped:
+
+| Condition | Code | Message |
+|---|---|---|
+| Unknown or inactive code | `40310` | Invalid Purpose code given. |
+| Valid code, not enabled on your account | `40311` | Purpose code is not enabled for this merchant. |
+| `business_model` outside `B2B` / `B2C` | `400` | `"business_model": ["\"X\" is not a valid choice."]` |
+
 ## Examples
 
 <CodeGroup>
@@ -152,6 +175,8 @@ For S2S UPI Intent mode, the response includes:
   "collection_mode": "hosted_payment",
   "mop_type": "upi",
   "return_url": "https://yourdomain.com/payment/callback/",
+  "business_model": "B2C",
+  "purpose_code": "S0101",
   "buyer": {
     "name": "Alice Smith",
     "email": "alice.smith@example.com",
@@ -256,6 +281,12 @@ For S2S UPI Intent mode, the response includes:
 </CodeGroup>
 
 ## Implementation Notes
+
+### Classification
+
+- Neither `business_model` nor `purpose_code` is echoed in the create response. Read them back with [Get Order Details](/api-reference/v3/order/get).
+- Both are create-time only — `PATCH /pg/orders/{order_id}/` does not accept them.
+- `business_model` is stored `NOT NULL` with a `B2C` default, so an order EximPe could not classify reads back as `B2C`, indistinguishable from one you sent as `B2C`. An unresolved `purpose_code`, being nullable, reads back as `null`.
 
 ### Hosted Checkout
 

@@ -46,6 +46,8 @@
                     "collection_mode": "hosted_payment",
                     "mop_type": "upi",
                     "return_url": "https://yourdomain.com/payment/callback/",
+                    "business_model": "B2C",
+                    "purpose_code": "S0101",
                     "buyer": {
                       "name": "Alice Smith",
                       "email": "alice.smith@example.com",
@@ -352,6 +354,19 @@
             "enum": [
               "intent"
             ]
+          },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "description": "Whether the buyer is a business (B2B) or a consumer (B2C). Optional \u2014 derived from the merchant's KYC when omitted."
+          },
+          "purpose_code": {
+            "type": "string",
+            "description": "FEMA/FETERS purpose code this order settles under (e.g. S0802). Optional \u2014 derived from the merchant's allowed purpose codes when omitted and exactly one is allowed.",
+            "example": "S0802"
           },
           "buyer": {
             "$ref": "#/components/schemas/v3_Buyer"
