@@ -2735,7 +2735,7 @@
                   },
                   "type": {
                     "type": "string",
-                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised.",
+                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised. `delivery_proof` is the one type here that no checklist asks for: it is a post-settlement compliance document, uploaded through this endpoint and then attached by `ref` to [Attach a post-settlement document](/api-reference/v3/b2b-verification/attach-settlement-document).",
                     "enum": [
                       "offer_letter",
                       "passport",
@@ -2747,7 +2747,8 @@
                       "traveller_visas",
                       "ticket",
                       "invoice",
-                      "relationship_declaration"
+                      "relationship_declaration",
+                      "delivery_proof"
                     ],
                     "example": "offer_letter"
                   }
@@ -2778,7 +2779,7 @@
                         "ref": {
                           "type": "string",
                           "description": "Reference to pass as `documents[].ref` on Submit Verification Details.",
-                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                          "example": "8207383264"
                         },
                         "type": {
                           "type": "string",
@@ -2792,7 +2793,7 @@
                   "success": true,
                   "message": "Document uploaded",
                   "data": {
-                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                    "ref": "8207383264",
                     "type": "offer_letter"
                   }
                 }
@@ -3373,6 +3374,33 @@
                         "details": "Invoice number already exists."
                       }
                     }
+                  },
+                  "already_classified": {
+                    "summary": "The business model and purpose code cannot be changed once set",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "business_model": "Already set on the order; it cannot be changed here.",
+                          "purpose_code": "Already set on the order; it cannot be changed here."
+                        }
+                      }
+                    }
+                  },
+                  "blank_value": {
+                    "summary": "A blank value is refused rather than silently dropped",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_city": "Blank value; omit the key instead."
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -3865,7 +3893,7 @@
                           "type": "string",
                           "format": "date-time",
                           "nullable": true,
-                          "description": "When the set was submitted, or null while it is FRESH or DRAFT.",
+                          "description": "When the set was submitted, or null while it is FRESH or DRAFT. Naive UTC — no offset is sent.",
                           "example": null
                         },
                         "documents": {
@@ -3924,6 +3952,17 @@
                         "details": "Payment is not in a state that accepts verification details. Payment not found."
                       }
                     }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
                   }
                 }
               }
@@ -3980,7 +4019,7 @@
                     "type": "string",
                     "maxLength": 64,
                     "description": "The `ref` returned by the document upload. Must belong to the calling merchant.",
-                    "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                    "example": "8207383264"
                   }
                 }
               }
@@ -4023,6 +4062,11 @@
                           "type": "string",
                           "description": "The stored file's name.",
                           "example": "delivery-note.pdf"
+                        },
+                        "file": {
+                          "type": "string",
+                          "description": "Pre-signed, time-limited URL for the stored file. It expires, so do not store it.",
+                          "example": "https://bucket.s3.amazonaws.com/lrs_documents/308/8207383264/delivery-note.pdf?X-Amz-Signature=..."
                         }
                       }
                     }
@@ -4088,11 +4132,20 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": 40359,
-                        "message": "Invalid LRS request.",
-                        "details": {
-                          "doc_type": "Unknown document type."
-                        }
+                        "code": "ERR_B2B_SETTLEMENT_005",
+                        "message": "Unknown document type.",
+                        "details": "Unknown document type."
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
                       }
                     }
                   }
@@ -4158,7 +4211,9 @@
                       "example": "Document deleted"
                     },
                     "data": {
-                      "type": "null"
+                      "type": "object",
+                      "description": "Always an empty object on a write that returns nothing.",
+                      "example": {}
                     }
                   }
                 }
@@ -4218,6 +4273,17 @@
                         }
                       }
                     }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
                   }
                 }
               }
@@ -4270,7 +4336,9 @@
                       "example": "Documents submitted"
                     },
                     "data": {
-                      "type": "null"
+                      "type": "object",
+                      "description": "Always an empty object on a write that returns nothing.",
+                      "example": {}
                     }
                   }
                 }
@@ -4326,6 +4394,17 @@
                         "code": "ERR_B2B_SETTLEMENT_002",
                         "message": "Documents have already been submitted and can no longer be changed.",
                         "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
                       }
                     }
                   }
