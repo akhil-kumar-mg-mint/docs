@@ -69,7 +69,7 @@ The following tables define the request parameters, including nested objects, ty
 | currency | string | Yes | 3-letter ISO currency code. | Supported: `INR` |
 | reference_id | string | Yes | Merchant-side unique reference for the order. | 1–50 chars; use letters, numbers, and dashes; unique per merchant while order is active |
 | collection_mode | string | Yes | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; no default — send it explicitly |
-| mop_type | string | Conditional | Method of payment. | Optional for `hosted_payment` (enum: `credit_card`, `debit_card`, `upi`, `net_banking`, `wallet`, `qr`) — pre-selects a method on the checkout page; must be `upi` for the S2S UPI Intent flow |
+| mop_type | string | Conditional | Method of payment. | Optional for `hosted_payment` (enum: `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`) — pre-selects a method on the checkout page; must be `upi` for the S2S UPI Intent flow |
 | upi_flow_type | string | Conditional | UPI flow when `mop_type` is `upi` and `collection_mode` is `s2s`. | Must be `intent` for the S2S UPI Intent flow; not used for `hosted_payment` |
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
 | buyer | object | Conditional | Buyer/customer details. | Required, unless your Hosted Checkout is configured to collect buyer details on the payment page. See Buyer object |
