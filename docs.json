@@ -359,6 +359,7 @@
                 "group": "Collecting Payments",
                 "pages": [
                   "integration-guide/v3/web-integration/collection-overview",
+                  "integration-guide/v3/web-integration/hosted-checkout",
                   "integration-guide/v3/web-integration/virtual-accounts",
                   "integration-guide/v3/web-integration/webhooks"
                 ]
