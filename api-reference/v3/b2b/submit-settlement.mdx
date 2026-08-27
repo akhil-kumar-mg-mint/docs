@@ -53,6 +53,7 @@ Every refusal is a `400` in the standard envelope:
 | Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
 | The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
 | The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
+| The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
 
 ## Related
 

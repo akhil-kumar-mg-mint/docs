@@ -427,10 +427,12 @@ For where the payment actually stands, read `settlement_status`, the [submit res
 
 ## Errors
 
-| Status | When |
+Every refusal is a `400`; the code inside the envelope is what tells them apart.
+
+| `error.code` | When |
 |---|---|
-| `404` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else, so the endpoint never confirms another merchant's payment id. |
-| `400` | The payment is classified, but no checklist covers that business model and purpose code — there is nothing to report. An **unclassified** payment is not this case: it answers `200`, asking for the two classifying facts. |
+| `40360` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else, so the endpoint never confirms another merchant's payment id. |
+| `40359` | The payment is classified, but no checklist covers that business model and purpose code — there is nothing to report. An **unclassified** payment is not this case: it answers `200`, asking for the two classifying facts. |
 
 ## What each checklist asks for
 

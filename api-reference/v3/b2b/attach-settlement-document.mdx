@@ -81,6 +81,7 @@ Every refusal is a `400` in the standard envelope:
 | `doc_type` is not `delivery_proof` | `40359` | That is the only type B2B services defines. `details` is keyed by field: `{"doc_type": "Unknown document type."}`. |
 | The `ref` is unknown | `ERR_B2B_SETTLEMENT_001` | A `ref` that is not your own reads as unknown. Upload the file under the calling merchant — PSPs must send `X-Merchant-ID` naming the settling sub-merchant. |
 | The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
+| The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
 
 <Note>
   **PSP callers must send `X-Merchant-ID`** on both calls, naming the settling sub-merchant. The upload is scoped to the merchant that made it, and the attach resolves the `ref` against that same merchant — mismatch them and the `ref` reads as unknown.

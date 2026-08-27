@@ -2800,28 +2800,36 @@
             }
           },
           "400": {
-            "description": "Invalid request — unknown document type, or the file failed type/size/encryption validation.",
+            "description": "The payment id does not resolve for this caller, or the file is not an accepted type.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "bad_file": {
+                    "summary": "The document type is not one this API accepts",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "type": "Unknown document type."
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -3025,38 +3033,34 @@
             }
           },
           "400": {
-            "description": "No verification checklist covers this payment's business model and purpose code, so there is nothing to report. An *unclassified* payment is not this case — it answers 200, asking for the two classifying facts.",
+            "description": "The payment id does not resolve for this caller, or no checklist covers its cell.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40359,
-                    "message": "Invalid LRS request.",
-                    "details": {
-                      "detail": "No verification checklist covers this payment's business model and purpose code."
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
+                  },
+                  "no_checklist": {
+                    "summary": "The order is classified into a cell no checklist covers",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": "Invalid LRS request. No verification checklist covers this payment's business model and purpose code."
+                      }
+                    }
                   }
                 }
               }
@@ -3303,59 +3307,71 @@
             }
           },
           "400": {
-            "description": "Invalid request — an unknown code, a blank value, a misplaced field/document code, an unusable document reference, a duplicate document code, or a waiver on a document that cannot be waived. Every offending code is named in `error.details`, so one call reports every problem at once.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40359,
-                    "message": "Invalid LRS request.",
-                    "details": {
-                      "buyer_citty": "Not a requirement of this payment's checklist.",
-                      "invoice": "This is a document code; send it under 'documents'.",
-                      "ticket": "Sent more than once in this call."
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "This payment's verification has already been filed, so its details can no longer be changed. Staging closes once `settlement_status` reaches `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` — read it from the GET before sending.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40360,
-                    "message": "Payment is not in a state that accepts verification details.",
-                    "details": {
-                      "detail": "This payment's verification has already been filed; its details can no longer be changed here."
+                  },
+                  "already_filed": {
+                    "summary": "Staging closes once the verification has been filed",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment's verification has already been filed; its details can no longer be changed here."
+                      }
+                    }
+                  },
+                  "unknown_codes": {
+                    "summary": "Codes that are not requirements of this payment's checklist",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_citty": "Not a requirement of this payment's checklist.",
+                          "invoice": "This is a document code; send it under 'documents'."
+                        }
+                      }
+                    }
+                  },
+                  "order_refused_the_write": {
+                    "summary": "Filing writes the values onto the order, which validates them",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_postal_code": "Enter a valid Indian PIN code."
+                        }
+                      }
+                    }
+                  },
+                  "duplicate_invoice_number": {
+                    "summary": "The invoice number is already used by another payment",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": "Invoice number already exists."
+                      }
                     }
                   }
                 }
@@ -3891,39 +3907,22 @@
             }
           },
           "400": {
-            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "description": "The payment id does not resolve for this caller, or it is not a B2B-services payment.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Validation error"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Payment not found."
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
                   }
                 }
@@ -4033,39 +4032,68 @@
             }
           },
           "400": {
-            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "description": "The payment id does not resolve, the ref is unknown, the doc type is not accepted, the payment has not settled, or the set is already submitted.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Validation error"
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Payment not found."
+                  },
+                  "unknown_ref": {
+                    "summary": "The ref is not an upload belonging to this caller",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_001",
+                        "message": "Document not found for this payment.",
+                        "details": "Document not found for this payment."
+                      }
+                    }
+                  },
+                  "not_settled": {
+                    "summary": "Documents cannot be attached before the payment settles",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_003",
+                        "message": "Documents can only be uploaded after the payment is settled.",
+                        "details": "Documents can only be uploaded after the payment is settled."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "The set is locked once submitted",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "unknown_doc_type": {
+                    "summary": "delivery_proof is the only type B2B services defines",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "doc_type": "Unknown document type."
+                        }
+                      }
                     }
                   }
                 }
@@ -4138,39 +4166,57 @@
             }
           },
           "400": {
-            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "description": "The payment or document id does not resolve, or the set is already submitted.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Validation error"
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Payment not found."
+                  },
+                  "document_not_found": {
+                    "summary": "No active document with that id on this payment",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_001",
+                        "message": "Document not found for this payment.",
+                        "details": "Document not found for this payment."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "A submitted set can no longer be edited",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "malformed_document_id": {
+                    "summary": "document_id is at most 15 alphanumeric/dash characters",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "document_id": "Ensure this field has no more than 15 characters."
+                        }
+                      }
                     }
                   }
                 }
@@ -4232,39 +4278,55 @@
             }
           },
           "400": {
-            "description": "Unknown `doc_type`, an unresolvable `ref`, the payment is not settled, or the submission is no longer editable.",
+            "description": "The payment id does not resolve, it has not settled, the set is empty, or it is already submitted.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Validation error"
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant, or the payment is not a B2B-services payment.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": false
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Payment not found."
+                  },
+                  "not_settled": {
+                    "summary": "Nothing can be filed before the payment settles",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_003",
+                        "message": "Documents can only be uploaded after the payment is settled.",
+                        "details": "Documents can only be uploaded after the payment is settled."
+                      }
+                    }
+                  },
+                  "incomplete": {
+                    "summary": "B2B services needs at least one delivery_proof",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_004",
+                        "message": "Upload all required documents before submitting.",
+                        "details": "Upload all required documents before submitting."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "Submitting twice is refused",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
                     }
                   }
                 }

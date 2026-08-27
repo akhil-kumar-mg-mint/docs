@@ -86,6 +86,26 @@ An empty `documents` array means nothing has been attached yet — not that noth
 
 Only **active** documents. A document you deleted is gone from this list and stays gone; deletion is a soft delete on our side, but there is no undelete through the API — attach the file again.
 
+## When it is refused
+
+Reading the set is refused only when the payment itself does not qualify. Both cases are a `400` carrying `40360`; the `details` string says which.
+
+| Cause | `code` | What to do |
+|---|---|---|
+| The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
+| The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40360,
+    "message": "Payment is not in a state that accepts verification details.",
+    "details": "Payment is not in a state that accepts verification details. Payment not found."
+  }
+}
+```
+
 ## Related
 
 <CardGroup cols={2}>

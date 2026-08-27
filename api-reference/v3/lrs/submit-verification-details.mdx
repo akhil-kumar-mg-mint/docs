@@ -385,11 +385,12 @@ A complete set can fail to reach a verdict at all:
 
 Every refusal is answered in the standard error envelope.
 
-| Status | When |
+Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+
+| `error.code` | When |
 |---|---|
-| `400` | The send itself is wrong — see the codes below. Also: the payment has no checklist, and you did not send the classifying pair. |
-| `404` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else. |
-| `409` | The verification has already been filed; details can no longer be changed. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
+| `40359` | The send itself is wrong — see the codes below. Also: the payment has no checklist, and you did not send the classifying pair. |
+| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
 
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
 
