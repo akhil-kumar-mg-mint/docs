@@ -14,8 +14,9 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
 | **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
-| **Payment Details Missing** | A non-LRS payment is missing fields we need | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) |
-| **Verification Needed** | Verification becomes `VERIFIED`, `IN_REVIEW`, `ACTION_REQUIRED`, or `EXPIRED` | Track the outcome, or fix what is flagged |
+| **Payment Details Missing** | A non-LRS payment is missing fields we need. **Being retired** — some rails already send Verification Needed instead | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details), and handle Verification Needed too |
+| **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
+| **Payment Under Review** | A payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |
 | **Payment Settled** | Money is settled to you | Update your books |
 | **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
@@ -63,7 +64,22 @@ Set Refund Status is the useful one for coverage: force a single refund through 
 
 ## Check the message is really from us
 
-Every webhook carries an HMAC-SHA256 signature in the `X-Webhook-Signature` header. Verify it before you act on anything — otherwise anyone who finds your URL can tell you a payment succeeded.
+Every webhook carries an HMAC-SHA256 signature. Verify it before you act on anything — otherwise anyone who finds your URL can tell you a payment succeeded.
+
+There are two headers, and you get both on every delivery:
+
+| Header | Signed material |
+| :--- | :--- |
+| `X-Webhook-Signature-V2` | `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)`, sent as `t=<timestamp>,v2=<hex>` |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex |
+
+<Tip>
+  **Prefer V2.** Its timestamp is *inside* the signed material, so a delivery someone captured cannot be replayed later with a fresh one — split the header on `,`, take `t` and `v2`, rebuild `HMAC-SHA256(key, t + "." + raw_body)`, and reject anything whose `t` is older than your tolerance. V1 stays alongside it so nobody has to migrate on our schedule; the walk-through below covers V1.
+</Tip>
+
+<Warning>
+  **Hash the raw bytes you received.** We serialise the body once and send exactly those bytes, so the request body as it arrived is the signed material. Parsing the JSON and re-serialising it produces different bytes and a signature that will never match.
+</Warning>
 
 <Steps>
   <Step title="Take the signature from the header">

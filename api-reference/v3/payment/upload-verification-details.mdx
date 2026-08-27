@@ -10,6 +10,10 @@ The Upload Payment Verification Details endpoint allows you to upload payment ve
 
 Use this endpoint when you receive a [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook, or a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected verification fields.
 
+<Note>
+  **This endpoint takes order fields.** Once a payment is classified it answers to a checklist, and those codes — `buyer_city`, `remitter_pan`, `iec`, document codes — go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) instead. If you are unsure which endpoint takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements): anything it lists is answered on that same path.
+</Note>
+
 ## When this applies
 
 Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `PAYMENT_DETAILS_MISSING` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
@@ -27,7 +31,9 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
     Call this endpoint with the missing fields for that payment `uid`.
   </Step>
   <Step title="Verification outcome">
-    The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook reports the result — `VERIFIED`, `IN_REVIEW`, or `ACTION_REQUIRED` with the fields still needing attention.
+    The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook reports the result — `IN_REVIEW`, or `ACTION_REQUIRED` with the fields still needing attention.
+
+    A **verified** payment sends no webhook at all: `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it.
   </Step>
 </Steps>
 

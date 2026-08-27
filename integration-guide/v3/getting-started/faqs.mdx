@@ -51,7 +51,7 @@ Nothing comes out of the amount you are owed. The buyer pays the **amount to be 
 
 | | Who funds it | What it is |
 | :--- | :--- | :--- |
-| **Amount to be settled** | Buyer | What reaches you abroad. `amount_to_be_settled` on submit. |
+| **Amount to be settled** | Buyer | What reaches you abroad. `principal` on submit. |
 | **MDR** | Buyer, on top | Our processing fee. Your rate is agreed with your KAM. |
 | **GST on the MDR** | Buyer, on top | Indian tax on that fee. |
 | **TCS** | Buyer, on top | LRS only. We hand it to the bank, which pays it to the government against the buyer's **PAN**. The buyer reclaims it as a tax credit. |
@@ -121,7 +121,7 @@ Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLE
 
 ### The buyer paid less than the amount due. What now?
 
-The payment waits, and `outstanding` tells you by how much. Clear it by declaring a smaller `amount_to_be_settled` — the amount that actually arrived — and submitting again.
+The payment waits, and the `outstanding` entry on the `LRS_VERIFICATION_NEEDED` event names the shortfall in its `message`. Clear it either way: have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `principal` — the amount that actually arrived — and submit again.
 
 ### What exchange rate do I get?
 
@@ -168,7 +168,7 @@ EximPe retries: the 1st attempt is immediate, followed by retries at **1 minute*
 <Info>
   **LRS** is the Liberalised Remittance Scheme — the RBI rules for an **individual** in India sending money abroad for a personal purpose, like education fees or travel.
 
-  It is decided by **what the money is for**, not by who is paying. An individual buying goods or services from a foreign seller is making a purchase: no LRS limit, and **no TCS**. `is_lrs` on the payment's requirements tells you which kind you have.
+  It is decided by **what the money is for**, not by who is paying. An individual buying goods or services from a foreign seller is making a purchase: no LRS limit, and **no TCS**. The purpose code tells you which kind you have — and so does the event you receive: an LRS payment gets `LRS_VERIFICATION_NEEDED`, everything else gets `VERIFICATION_NEEDED`.
 
   The full rules live in [LRS & Compliance](/integration-guide/v3/web-integration/lrs-compliance); the API walk-through is [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
 </Info>

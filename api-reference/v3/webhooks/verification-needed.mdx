@@ -7,24 +7,31 @@ description: "Technical reference for the VERIFICATION_NEEDED webhook event, inc
 
 ## Event Overview
 
-**Event Type**: `VERIFICATION_NEEDED`  
-**Category**: Payment Verification  
-**Description**: Payment verification status has been updated
+**Event Type**: `VERIFICATION_NEEDED`
+**Category**: Payment Verification
+**Description**: A payment needs verification details before it can settle
 
-This webhook is triggered when the payment verification status is updated for collect-from-India payments (after receiving a verification update from the payment gateway).
+This webhook names what a payment still owes before it can be filed. It is the general verification ask — every rail raises it, and it carries one body wherever it comes from.
+
+<Note>
+  **One event, one body.** `VERIFICATION_NEEDED` used to mean two different payloads depending on which rail the money arrived through: one shape from the card and collect flows, another from Virtual Bank Account credits that also carried the credit's amount and account details. A partner needed two handlers for one event type. Every producer now builds the same six keys, and the credit's own facts ride [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful), which is the event that exists to describe the money.
+</Note>
+
+<Note>
+  **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which names documents as well as fields. It never receives both.
+
+  A payment whose purpose code is not yet known still receives this one; the LRS event takes over once the code is declared.
+</Note>
 
 ### When the webhook is sent
 
-The webhook is sent in the following scenarios:
+1. **A Virtual Bank Account credit became a payment** that is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
+2. **The verification gateway reported a change** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
+3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix.
 
-1. **Action Required** (`ACTION_REQUIRED`): Additional or corrected information is needed
-2. **In Review** (`IN_REVIEW`): The payment moved into review; nothing is needed from you
-3. **Expired** (`EXPIRED`): The verification window closed before the details were accepted
+A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
-A verified payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
-
-The webhook is created **only if**:
-- Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
+The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
 
 ---
 
@@ -37,6 +44,7 @@ The webhook is created **only if**:
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+| **Pacing** | Delivered on a per-merchant rate-capped queue, so a burst of payments arrives smoothly rather than all at once |
 
 ### Headers
 
@@ -46,10 +54,12 @@ The webhook is created **only if**:
 | `User-Agent` | `Eximpe-Webhook/1.0` |
 | `X-Webhook-Event` | `VERIFICATION_NEEDED` |
 | `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
-| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
 
-**Signature verification (recommended):**  
-Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
 
 ---
 
@@ -57,32 +67,56 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 
 <CodeGroup>
 
-```json Example: Action Required
+```json Action Required
 {
   "event_type": "VERIFICATION_NEEDED",
-  "event_time": "2025-02-13T10:30:00.123456Z",
+  "event_time": "2026-02-13T10:30:00.123456",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
   "data": {
-    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "payment_id": "PR7712349900",
+    "order_id": "OD1122334455",
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
     "action_required_fields": ["buyer_name", "hs_code", "purpose_code"],
-    "payment_verification_expiry": "2025-02-20T23:59:59"
+    "payment_verification_expiry": "2026-02-20T23:59:59"
   }
 }
 ```
 
-```json Example: In Review
+```json Nothing has classified the payment
 {
   "event_type": "VERIFICATION_NEEDED",
-  "event_time": "2025-02-13T10:30:00.123456Z",
+  "event_time": "2026-02-13T10:31:41.902244",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440001",
+  "data": {
+    "payment_id": "PR7712349900",
+    "order_id": "OD1122334455",
+    "verification_status": "ACTION_REQUIRED",
+    "message": "Payment verification action required",
+    "action_required_fields": [
+      "business_model",
+      "purpose_code",
+      "buyer_name",
+      "product_description",
+      "invoice_number",
+      "buyer_postal_code"
+    ],
+    "payment_verification_expiry": null
+  }
+}
+```
+
+```json In Review
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2026-02-13T10:32:18.550913",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440002",
   "data": {
-    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "payment_id": "PR7712349900",
+    "order_id": "OD1122334455",
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
     "action_required_fields": [],
@@ -91,24 +125,28 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 }
 ```
 
-```json Example: Expired
+```json Expired
 {
   "event_type": "VERIFICATION_NEEDED",
-  "event_time": "2025-02-13T10:30:00.123456Z",
+  "event_time": "2026-02-13T10:33:02.117408",
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440003",
   "data": {
-    "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "payment_id": "PR7712349900",
+    "order_id": "OD1122334455",
     "verification_status": "EXPIRED",
     "message": "Payment verification action required",
     "action_required_fields": ["invoice_file", "hs_code"],
-    "payment_verification_expiry": "2025-02-12T23:59:59"
+    "payment_verification_expiry": "2026-02-12T23:59:59"
   }
 }
 ```
 
 </CodeGroup>
+
+<Note>
+  `message` reads "Payment verification action required" on every one of these, including `IN_REVIEW`. It is a constant on this event type, not a description of the state — **branch on `verification_status`, never on `message`.**
+</Note>
 
 ---
 
@@ -121,9 +159,9 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created
-      
-      **Example**: `"2025-02-13T10:30:00.123456Z"`
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
+
+      **Example**: `"2026-02-13T10:30:00.123456"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
@@ -132,87 +170,134 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 
     <ParamField path="sequence_number" type="string" required>
       Unique identifier for this webhook event (UUID), useful for idempotency
-      
+
       **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Verification status details (payment_id, order_id, verification_status, message, action_required_fields, payment_verification_expiry)
+      Six keys, always the same six: `payment_id`, `order_id`, `verification_status`, `message`, `action_required_fields`, `payment_verification_expiry`
     </ParamField>
   </Tab>
 
   <Tab title="Data Object Fields">
     <ParamField path="data.payment_id" type="string" required>
       UID of the payment
-      
-      **Example**: `"a1b2c3d4-e5f6-7890-abcd-ef1234567890"`
+
+      **Example**: `"PR7712349900"`
     </ParamField>
 
     <ParamField path="data.order_id" type="string" required>
       UID of the order for this payment
-      
-      **Example**: `"98765432-10ab-cdef-9876-543210fedcba"`
+
+      **Example**: `"OD1122334455"`
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
-      Current verification status. One of: `ACTION_REQUIRED`, `IN_REVIEW`, `EXPIRED`. A verified payment sends no event, so `VERIFIED` never appears here.
-      
-      **Example**: `"ACTION_REQUIRED"`
+      The payment's verification state. One of `ACTION_REQUIRED`, `IN_REVIEW`, `EXPIRED` — and `ON_HOLD` in sandbox. A verified payment sends no event, so `VERIFIED` never appears here.
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
-      Human-readable message describing the verification status
-      
-      **Example**: `"Payment verification action required"`
+      A constant on this event type: `"Payment verification action required"`. Safe to log; not a value to branch on.
     </ParamField>
 
-    <ParamField path="data.action_required_fields" type="array" required>
-      List of field names that require merchant action. Mostly order fields; it also carries `purpose_code` or `business_model` when that classifying fact has not been declared. Empty array when nothing is outstanding.
-      
-      **Possible values**: `buyer_name`, `buyer_address`, `buyer_postal_code`, `product_description`, `invoice_number`, `invoice_file`, `hs_code`, `country_of_origin`, `purpose_code`, `business_model`
-      
-      **Example**: `["buyer_name", "hs_code", "purpose_code"]`
+    <ParamField path="data.action_required_fields" type="array of strings" required>
+      Plain field codes that need your action. Empty when nothing is outstanding.
+
+      **Strings, not objects.** [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) carries objects in a key of the same name, because it also has a sentence and a set of flags to say per item. If one handler reads both events, check the element type or route on `event_type`.
     </ParamField>
 
     <ParamField path="data.payment_verification_expiry" type="string | null" required>
-      ISO 8601 datetime by which verification must be complete.
+      ISO 8601 datetime by which verification must be complete, or `null` where no clock is running.
 
       Past this point the payment can no longer be verified: `verification_status` becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat each event's value as authoritative — it can move, and an event is sent when it does.
 
-      Every `ACTION_REQUIRED` payment carries one. Where the payment gateway names a deadline of its own that is what you get; otherwise it is **10 days from the time the payment completed**. `null` on an `IN_REVIEW` event, where nothing is being asked of you and no clock is running.
+      The value is whatever the verification gateway named, carried through unchanged. It is `null` where the gateway named nothing: on an `IN_REVIEW` event, where nothing is being asked of you, and on the Virtual Bank Account rails, which have no deadline of this kind at all.
 
-      **Example**: `"2025-02-20T23:59:59"`
+      **`null` is not "no clock".** A payment that never completes its verification is refunded to the buyer regardless; this key only reports the gateway's own stated deadline where one exists.
+
+      **Example**: `"2026-02-20T23:59:59"`
     </ParamField>
   </Tab>
 </Tabs>
 
 ---
 
-## What to Do When You Receive This Webhook
+## Reading `action_required_fields`
 
-1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
-2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
-3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
-4. **Handle based on verification status**:
-   - **`ACTION_REQUIRED`**: 
-     - Check `data.action_required_fields` to see what needs updating
-     - Notify merchant/admin about required actions
-     - Update the specified fields using the [Upload Verification Details API](/api-reference/v3/payment/upload-verification-details)
-   - **`IN_REVIEW`**: Nothing to do. Record that the payment is under review.
-   - **`EXPIRED`**: The verification window has closed and the amount is refunded to the buyer. `action_required_fields` records what lapsed, but nothing you send reopens it — close the payment out on your side.
-5. **Watch `payment_verification_expiry`** while the status is `ACTION_REQUIRED`. It is the deadline the payment is working to — 10 days from the payment completing, unless the gateway named a date of its own — and it can move between events.
-  
-### Action Required Fields Reference
+The codes come from whichever check raised the event, and there are two vocabularies. Both are answered through an API, and the codes tell you which one.
 
-When `verification_status` is `ACTION_REQUIRED`, the `action_required_fields` array contains field names that need attention:
+### Order fields
 
-| Field Name | Description |
-|------------|-------------|
+Raised by the verification gateway's own report, and by the plain order-field check on a credit that has not been classified:
+
+| Field | Description |
+|---|---|
 | `buyer_name` | Full name of the buyer/importer |
 | `buyer_address` | Complete address of the buyer |
 | `buyer_postal_code` | Postal/ZIP code of the buyer |
 | `product_description` | Description of goods/services |
 | `invoice_number` | Invoice or order number |
+| `invoice_file` | The commercial invoice |
 | `hs_code` | Harmonized System code for goods |
-| `purpose_code` | FEMA purpose code — none has been declared for this order |
-| `business_model` | Buyer type — nothing has declared `B2C` or `B2B` |
+| `country_of_origin` | Country the goods ship from |
+
+Supply these with [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details).
+
+### Classification
+
+Two facts decide which checklist a payment answers to, and either one that has not been declared appears in the same list:
+
+| Field | Meaning |
+|---|---|
+| `purpose_code` | No FEMA/FETERS purpose code has been declared for this order. |
+| `business_model` | Nothing has *declared* whether the buyer is `B2C` or `B2B`. |
+
+<Warning>
+  **`business_model` is listed when nothing has declared it — not when it is empty.** It is never empty; it defaults to `B2C`. A default nobody stood behind is worth telling you about, and sending `"business_model": "B2C"` is a real answer rather than a no-op.
+</Warning>
+
+<Tip>
+  **Declaring the pair changes what you are asked for.** Without a purpose code there is no checklist, so the event can only name the generic order fields. Declare both — through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — and the payment's real checklist takes over. If that checklist is an LRS one, the payment switches to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and stops receiving this event.
+</Tip>
+
+### Checklist codes
+
+Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
+
+<Note>
+  **Do not hardcode the list.** [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the whole set for a payment, each item carrying its own `satisfied` flag, and it is revised as the underlying regulatory matrix is. Read it rather than reproducing it.
+</Note>
+
+---
+
+## What to Do When You Receive This Webhook
+
+1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the delivery is not retried.
+2. **Verify the signature** against the raw request body — prefer `X-Webhook-Signature-V2`.
+3. **Use `payment_id` and `order_id`** to reconcile with your system.
+4. **Handle based on `verification_status`**:
+   - **`ACTION_REQUIRED`** — read `action_required_fields`, collect what it names, and send it back. If you are unsure which endpoint takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements): anything it lists is answered on that same path.
+   - **`IN_REVIEW`** — nothing to do. Record that the payment is under review.
+   - **`EXPIRED`** — the verification window closed and the amount is refunded to the buyer. `action_required_fields` records what lapsed, but nothing you send reopens it. Close the payment out on your side.
+5. **Watch `payment_verification_expiry`** while the status is `ACTION_REQUIRED` and it is not `null`. It is the deadline the payment is working to, and it can move between events.
+
+<Note>
+  **The event is not the only way to read this.** [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) is authoritative and idempotent — call it any time an event was missed, arrived out of order, or you simply want to reconcile. It also reports `settlement_status`, which tells you whether sending anything is still possible.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    The whole set, on demand, with `settlement_status`.
+  </Card>
+  <Card title="Upload Payment Verification Details" icon="pen-to-square" href="/api-reference/v3/payment/upload-verification-details">
+    Where the order fields go.
+  </Card>
+  <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
+    The LRS payment's version of this event.
+  </Card>
+  <Card title="PAYMENT_UNDER_REVIEW" icon="webhook" href="/api-reference/v3/webhooks/payment-under-review">
+    Same body, empty list — nothing is owed any more.
+  </Card>
+</CardGroup>
