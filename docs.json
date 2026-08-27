@@ -366,6 +366,12 @@
                 ]
               },
               {
+                "group": "B2B Services (Payments from Businesses)",
+                "pages": [
+                  "integration-guide/v3/web-integration/b2b-services-verification"
+                ]
+              },
+              {
                 "group": "LRS (Education & Travel Payments from Individuals)",
                 "pages": [
                   "integration-guide/v3/web-integration/lrs-compliance",

@@ -5,11 +5,11 @@ description: "Enable direct UPI payments without redirection using EximPe’s se
 
 # Introduction
 
-The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend. Deliver a seamless checkout experience while maintaining control and confidence for your buyers.
+The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by initiating transactions from your backend.
 
 <CardGroup cols={3}>
   <Card title="No Redirect Hops" icon="arrow-right" href="#step-2-initiate-payment">
-    Initiate transactions directly from your server to improve user experience
+    Initiate transactions directly from your server — the buyer stays on your page
   </Card>
   <Card title="Flexible Intent Invocation" icon="phone" href="#step-3-invoke-upi-intent">
     Call the Initiate Payment API when the user selects an app (Mobile) or scans a QR code (Desktop)
@@ -20,12 +20,12 @@ The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by
 </CardGroup>
 
 <Info>
-  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required** like any other v3 payment, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance) below.
+  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required**, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance) below.
 </Info>
 
 ### Intent Invocation
 
-Intent invocation is simply the act of packaging your UPI payment details (amount, payee VPA, reference, etc.) into a deep-link URI and then launching the user’s UPI app directly from your front end. With a **specific intent**, you target a known app (e.g. Google Pay), while a **generic intent** lets Android show an app picker (on iOS it falls back to the default handler), all without bouncing users through extra web redirects.
+Intent invocation packages your UPI payment details — amount, payee VPA, reference — into a deep-link URI, then launches the buyer's UPI app directly from your front end. With a **specific intent**, you target a known app (e.g. Google Pay); a **generic intent** lets Android show an app picker (on iOS it falls back to the default handler).
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ Before you begin, ensure you have:
 - **cURL or HTTP Client**: Capability to make HTTPS `POST` and `GET` requests from your server.
 - **UPI Knowledge**: Familiarity with UPI intent URL parameters and encoding.
 
-The following steps allow you to integrate the server-to-server UPI intent:
+Steps:
 
 1. **User selects UPI App (Mobile) or QR Code (Desktop)** on your frontend.
 2. **Frontend calls your Backend** to initiate the payment.
@@ -59,7 +59,7 @@ On desktop browsers, prepare a container to display a **QR Code**. When the user
 
 <img src="/images/upi-app-selection.png" alt="UPI App Selection UI" style={{ width: '200px', marginBottom: '20px' }} />
 
-For mobile devices, design a list of popular UPI apps (like Google Pay, PhonePe, Paytm) for the buyer to select from. This provides the best user experience.
+For mobile devices, design a list of popular UPI apps (like Google Pay, PhonePe, Paytm) for the buyer to select from.
 
 ## Step 2: Initiate Payment
 
@@ -104,7 +104,7 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
 ```
 
 <Note>
-  For the S2S UPI Intent request, you must include these additional parameters beyond the standard checkout fields:
+  For the S2S UPI Intent request, include these parameters alongside `amount`, `currency`, `reference_id`, `return_url`, `buyer`, `product`, and `invoice`:
 
   - `collection_mode`: must be set to `"s2s"`
   - `upi_flow_type`: must be set to `"intent"`
@@ -180,7 +180,7 @@ upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
 
 #### Mobile (Android & iOS)
 
-For mobile devices, use the `intent_uri` to directly launch the buyer's UPI application. This provides a seamless experience without manual data entry.
+For mobile devices, use the `intent_uri` to directly launch the buyer's UPI application — no manual data entry needed.
 
 ##### 1. Specific App Invocation (Android & iOS)
 
@@ -271,7 +271,7 @@ upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
 </Note>
 
 <Note>
-  **Pro Tip:** For the best user experience, detect the user's device type. Show a QR code on Desktop and a list of UPI apps (or a "Pay via UPI" button) on Mobile.
+  **Pro Tip:** Detect the buyer's device type. Show a QR code on Desktop and a list of UPI apps (or a "Pay via UPI" button) on Mobile.
 </Note>
 
 ### Step 3: Check UPI Transaction Status
@@ -299,10 +299,8 @@ For more information, see the [Payment Successful response](/api-reference/v3/we
 
 A collected UPI payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
 
-For **LRS** payments this is the same flow used for virtual account collections: we tell you what the payment needs, you send it, and it completes itself once nothing is outstanding.
-
 <Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-  The step-by-step compliance flow, shared by every v3 collection method.
+  What a payment needs, and how to send it.
 </Card>
 
 ---

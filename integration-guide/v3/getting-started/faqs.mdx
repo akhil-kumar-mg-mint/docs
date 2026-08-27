@@ -1,6 +1,6 @@
 ---
 title: "FAQ"
-description: "Common questions about EximPe's cross-border collection rail: virtual accounts, the payment lifecycle, settlements, webhooks, and the LRS education rules."
+description: "Common questions about EximPe's cross-border collection rail: how buyers pay, the payment lifecycle, settlements, webhooks, and the LRS rules."
 ---
 
 
@@ -12,17 +12,17 @@ A cross-border collection rail. An Indian buyer pays rupees into a virtual accou
 
 ### Does EximPe show my buyer a payment page?
 
-No. Virtual accounts are driven entirely from your own product, so the buyer stays in your experience throughout — they just make a bank transfer. If you want EximPe to host the payment page instead, talk to your KAM.
+Optionally. With [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout), the buyer pays on an EximPe-hosted page. With a [virtual account](/integration-guide/v3/web-integration/virtual-accounts), they stay in your own product and make a bank transfer instead.
 
 ### How does the buyer actually pay?
 
-By a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into the virtual account you share with them. No SWIFT, no international wire, no intermediary banks.
+Either a card, UPI, net banking, or QR payment on the checkout page, or a standard domestic bank transfer — **NEFT, RTGS, or IMPS** — into a virtual account you share with them.
 
 Whichever route the money takes, the payment behaves identically afterwards.
 
 ### What can I collect for?
 
-Every payment carries a FEMA **purpose code**, and the purpose code decides the compliance rules — who may pay, which documents are needed, and what tax applies. EximPe supports **LRS education** payments today, on purpose codes `S0305` and `S1107`.
+Every payment carries a FEMA **purpose code**, and the purpose code decides the compliance rules — who may pay, which documents are needed, and what tax applies. See [what you can collect for](/integration-guide/v3/getting-started/introduction#what-you-can-collect-for) for the current list.
 
 Your account is enabled for a specific set of purpose codes (its allowlist). If you want to collect for something else, get in touch with your EximPe KAM — we will tell you what it takes.
 
