@@ -8,7 +8,7 @@ openapi: 'POST /pg/payments/{uid}/upload-verification-details/'
 
 The Upload Payment Verification Details endpoint allows you to upload payment verification details for a payment. This updates the associated order with the provided information and uploads the verification details to the payment gateway.
 
-Use this endpoint when you receive a [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook, or a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected verification fields.
+Use this endpoint when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected verification fields.
 
 <Note>
   **This endpoint takes order fields.** Once a payment is classified it answers to a checklist, and those codes — `buyer_city`, `remitter_pan`, `iec`, document codes — go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) instead. If you are unsure which endpoint takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements): anything it lists is answered on that same path.
@@ -16,7 +16,7 @@ Use this endpoint when you receive a [`PAYMENT_DETAILS_MISSING`](/api-reference/
 
 ## When this applies
 
-Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `PAYMENT_DETAILS_MISSING` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
+Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `VERIFICATION_NEEDED` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
 
 ## Verification flow
 
@@ -25,7 +25,7 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
     A credit is received and a payment is created against the order.
   </Step>
   <Step title="Missing fields reported">
-    If verification fields are absent, the [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook fires with a `details_missing` array naming each one.
+    If verification fields are absent, the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook fires with an `action_required_fields` array naming each one.
   </Step>
   <Step title="Supply the details">
     Call this endpoint with the missing fields for that payment `uid`.

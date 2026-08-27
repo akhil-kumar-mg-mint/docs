@@ -444,7 +444,6 @@
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
                   "api-reference/v3/webhooks/payment-successful",
-                  "api-reference/v3/webhooks/payment-details-missing",
                   "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/lrs-verification-needed",
                   "api-reference/v3/webhooks/payment-under-review",
