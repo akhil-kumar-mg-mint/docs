@@ -1,13 +1,10 @@
 ---
 title: 'Submit Payment Verification Details'
 description: 'Send a payment’s verification details — buyer, invoice and goods fields — in a single JSON call.'
+openapi: 'POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
-
-```http
-POST /pg/payments/{payment_id}/verification/
-```
 
 When a payment needs verification details before it can settle, this is where you send them. One call carries every field the payment is waiting on, and you can send them as you collect them rather than all at once.
 
@@ -36,22 +33,9 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
   </Step>
 </Steps>
 
-## Authentication
+## A worked example
 
-| Header | |
-|---|---|
-| `X-Client-ID` | Your application identifier |
-| `X-Client-Secret` | Your secret key |
-| `X-API-Version` | `3.0.0` |
-| `X-Merchant-ID` | Required for PSP merchants, naming the settling sub-merchant |
-
-## Request
-
-| Key | Type | |
-|---|---|---|
-| `fields` | object | Your answers, keyed by code. Values are strings, numbers or booleans. |
-| `documents` | array | Files you have already uploaded, as `{ "code": …, "ref": … }`. |
-| `finalize` | boolean | Defaults to `true`. Pass `false` to record details without completing the payment's verification. |
+Your answers go in `fields`, keyed by code; files you have already uploaded go in `documents` as `{ "code": …, "ref": … }`.
 
 ```json
 {

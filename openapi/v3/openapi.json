@@ -3076,7 +3076,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the checklist and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding an LRS set is run through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**PSP callers must send `X-Merchant-ID`.**",
         "tags": [
           "LRS"
         ],
@@ -3112,12 +3112,10 @@
                     "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; amounts (`principal`, `collected_tcs`) are decimal strings in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
                     "additionalProperties": true,
                     "example": {
+                      "buyer_name": "Acme Imports Pvt Ltd",
                       "buyer_city": "Bengaluru",
-                      "remitter_pan": "ABCPK1234F",
-                      "remitter_relation": "SELF",
-                      "buyer_declaration": true,
-                      "principal": "150000.00",
-                      "collected_tcs": "0.00"
+                      "invoice_number": "INV-2026-0041",
+                      "invoice_date": "2026-08-01"
                     }
                   },
                   "documents": {
@@ -3131,21 +3129,8 @@
                       "properties": {
                         "code": {
                           "type": "string",
-                          "description": "The checklist code this document answers.",
-                          "enum": [
-                            "offer_letter",
-                            "passport",
-                            "student_id_or_visa",
-                            "student_id",
-                            "fee_invoice",
-                            "passenger_list",
-                            "traveller_passports",
-                            "traveller_visas",
-                            "ticket",
-                            "invoice",
-                            "relationship_declaration"
-                          ],
-                          "example": "offer_letter"
+                          "description": "The checklist code this document answers, as named by the verification webhook or GET /pg/payments/{payment_id}/verification/. The codes are configuration and are revised over time \u2014 read them rather than hardcoding them.",
+                          "example": "invoice"
                         },
                         "ref": {
                           "type": "string",
@@ -3185,21 +3170,15 @@
               },
               "example": {
                 "fields": {
+                  "buyer_name": "Acme Imports Pvt Ltd",
                   "buyer_city": "Bengaluru",
-                  "remitter_pan": "ABCPK1234F",
-                  "remitter_relation": "SELF",
-                  "buyer_declaration": true,
-                  "principal": "150000.00",
-                  "collected_tcs": "0.00"
+                  "invoice_number": "INV-2026-0041",
+                  "invoice_date": "2026-08-01"
                 },
                 "documents": [
                   {
-                    "code": "offer_letter",
+                    "code": "invoice",
                     "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
-                  },
-                  {
-                    "code": "traveller_visas",
-                    "waiver_reason": "Destination is visa-free for this passport"
                   }
                 ],
                 "finalize": true
@@ -3254,8 +3233,8 @@
                           },
                           "description": "The codes still owed after this write — the same codes you would get by filtering the GET on `satisfied: false`. Empty when nothing is.",
                           "example": [
-                            "remitter_pan",
-                            "offer_letter"
+                            "invoice_number",
+                            "invoice"
                           ]
                         }
                       }
@@ -3273,9 +3252,9 @@
                         "payment_id": "PR6938527534",
                         "status": "incomplete",
                         "outstanding": [
-                          "remitter_pan",
-                          "remitter_dob",
-                          "offer_letter"
+                          "invoice_number",
+                          "invoice_date",
+                          "invoice"
                         ]
                       }
                     }
