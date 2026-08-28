@@ -8,7 +8,7 @@ openapi: 'POST /pg/payments/{uid}/upload-verification-details/'
 
 The Upload Payment Verification Details endpoint allows you to upload payment verification details for a payment. This updates the associated order with the provided information and uploads the verification details to the payment gateway.
 
-Use this endpoint when you receive a [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook, or a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected verification fields.
+Use this endpoint when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected order fields.
 
 <Note>
   **This endpoint takes order fields.** Once a payment is classified it answers to a checklist, and those codes — `buyer_city`, `remitter_pan`, `iec`, document codes — go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) instead. If you are unsure which endpoint takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements): anything it lists is answered on that same path.
@@ -16,7 +16,7 @@ Use this endpoint when you receive a [`PAYMENT_DETAILS_MISSING`](/api-reference/
 
 ## When this applies
 
-Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `PAYMENT_DETAILS_MISSING` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
+Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `VERIFICATION_NEEDED` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
 
 ## Verification flow
 
@@ -25,7 +25,7 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
     A credit is received and a payment is created against the order.
   </Step>
   <Step title="Missing fields reported">
-    If verification fields are absent, the [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook fires with a `details_missing` array naming each one.
+    If verification fields are absent, the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook fires with an `action_required_fields` array naming each one.
   </Step>
   <Step title="Supply the details">
     Call this endpoint with the missing fields for that payment `uid`.
@@ -37,11 +37,36 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
   </Step>
 </Steps>
 
-## Declaring the purpose code and business model
+## Send the whole set, every time
 
-Most of what this endpoint takes is a fact about the goods or the buyer. Two of them are not: `purpose_code` and `business_model` say what the payment *is*, and they are what the platform files it under.
+<Warning>
+  **This call replaces the order's verification fields; it does not patch them.** Every request writes `buyer_name`, `type_of_goods`, `product_description`, `buyer_address`, `invoice_number` and `buyer_postal_code` back onto the order. All but `buyer_address` are mandatory, so the one you can silently lose is the address: leave it out and the order's existing address is **cleared**, not preserved. Send the complete set on every call — not only the codes the webhook named.
 
-They appear in `action_required_fields` on [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) when nothing has declared them, alongside the ordinary order fields:
+  `hs_code` is the exception: it is left alone when omitted.
+</Warning>
+
+Two fields deserve a note of their own:
+
+| Field | |
+|---|---|
+| `type_of_goods` | Required on **every** call, even though it never appears in `action_required_fields` — the verification gateway does not ask for it, but this request body does. |
+| `hs_code` | Required only when `type_of_goods` is `PHYSICAL_GOODS`. `GOODS`, `DIGITAL_GOODS` and `SERVICE` are accepted without it. |
+
+## Classification is not sent here
+
+<Warning>
+  **`purpose_code` and `business_model` are not accepted by this endpoint.** They classify the order rather than describe the goods, and sending them here is ignored — the call still answers `200`, and the payment stays unclassified.
+
+  Send them in `fields` on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details):
+
+  ```json
+  { "fields": { "business_model": "B2C", "purpose_code": "S0305" } }
+  ```
+
+  The two must travel **together** in one call — the stored business model is a column default until classification lands, so a purpose code stamped against a defaulted model would be exactly the guess this flow exists to avoid. Once set, neither can be changed.
+</Warning>
+
+One `VERIFICATION_NEEDED` event can name work for both endpoints, so split the list rather than sending it all to one:
 
 ```json
 {
@@ -49,42 +74,47 @@ They appear in `action_required_fields` on [`VERIFICATION_NEEDED`](/api-referenc
 }
 ```
 
-Send them back the same way you send anything else on that list:
-
-```json
-{
-  "buyer_name": "Acme Imports Pvt Ltd",
-  "hs_code": "6109",
-  "purpose_code": "S0305",
-  "business_model": "B2C"
-}
-```
-
-| Field | What it says |
-|---|---|
-| `purpose_code` | The FEMA/FETERS purpose code this order settles under. Must be one your merchant account is enabled for — an unrecognised or un-enabled code is rejected with a `400` rather than stored. |
-| `business_model` | `B2C` or `B2B`. |
+`buyer_name` and `hs_code` come here. `purpose_code` goes to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), where an unrecognised or un-enabled code is rejected with a `400` rather than stored.
 
 <Note>
-  **Both are optional, and omitting one is not the same as clearing it.** Leave either out and whatever was already declared stays. Correcting a buyer's postal code does not retract the purpose code you declared last week.
+  **`business_model` is listed when nothing has *declared* it — not when it is empty.** It is never empty; it defaults to `B2C`. That is why the webhook can name it on an order that already reads `B2C`, and why sending `"business_model": "B2C"` is a real answer rather than a no-op.
 </Note>
 
-<Warning>
-  **Sending `business_model` is what makes it declared.** The field defaults to `B2C`, so an order nobody has classified and an order that genuinely is B2C read the same until you say which. That is why the webhook can list `business_model` as outstanding on an order that already shows `B2C` — and why sending `"business_model": "B2C"` is a real answer, not a no-op.
-</Warning>
-
 <Tip>
-  For a payment settling under an LRS purpose code, declaring these switches it over: it stops receiving `VERIFICATION_NEEDED` and starts receiving [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which carries the full purpose-code-specific requirement set — documents included — instead of a flat list of field names.
+  For a payment settling under an LRS purpose code, declaring the pair switches it over: it stops receiving `VERIFICATION_NEEDED` and starts receiving [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which carries the full purpose-code-specific requirement set — documents included — instead of a flat list of field names.
 </Tip>
 
-## Test Data
+## Codes this endpoint cannot answer
 
-When testing this API in the **sandbox environment**, you must use the following specific test values for the API to work correctly:
+Two order-field codes can appear in `action_required_fields` that have no place in this request body:
+
+| Code | Where it is answered |
+|---|---|
+| `invoice_file` | The commercial invoice is a file on the order. Upload it with `POST /pg/orders/{order_id}/documents/`, sending `document_type: INVOICE`. |
+| `country_of_origin` | Not settable through the API today. Raise it with support if the gateway asks for it. |
+
+## Errors
+
+Beyond the ordinary validation errors on the body, the endpoint refuses the call with a `400` — error code `ERR_PAYMENT_003`, the reason in `error.details.error` — when:
+
+| Condition | Message |
+|---|---|
+| The payment's verification window has closed (`settlement_status` is `EXPIRED`) | `Payment has expired; cannot upload verification details` |
+| The payment is not on a gateway that supports this upload | `Verification upload is not supported for this payment` |
+| A Cashfree payment has no gateway reference yet | `Payment has no gateway reference id; cannot upload verification details` |
+
+## The response
+
+`uploaded_documents`, `missing_documents` and `errors` are relayed from the payment gateway, so their contents vary by rail: production Cashfree returns the gateway's own document records, while the sandbox `SIMULATOR` gateway returns plain order-field names. Treat the three arrays as opaque and read the payment's state from [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) or [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) instead.
+
+## Sandbox
+
+The sandbox does not forward what you send to the verification gateway — it files a fixed fixture instead, so the values below are what sandbox reports back regardless of the request:
 
 - **buyer_name**: `John`
 - **buyer_postal_code**: `560034`
-- **product_description**: `This is a test product for test purpose.`
+- **product_description**: `This is a test product for test purpose`
 
 <Note>
-  Requests using other values will not verify successfully in sandbox.
+  Your own values are still written to the order, so the order fields you can read back afterwards are the ones you sent. Only the gateway-facing call is fixed.
 </Note>
