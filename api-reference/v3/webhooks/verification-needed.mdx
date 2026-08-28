@@ -241,7 +241,7 @@ Raised by the verification gateway's own report, and by the plain order-field ch
 | `hs_code` | Harmonized System code for goods |
 | `country_of_origin` | Country the goods ship from |
 
-Supply these with [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) — with two exceptions. `invoice_file` is a file on the order, uploaded with `POST /pg/orders/{order_id}/documents/` and `document_type: INVOICE`. `country_of_origin` is not settable through the API today; raise it with support if the gateway asks for it.
+Supply these with [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details) — with two exceptions. `invoice_file` is a file on the order, uploaded with `POST /pg/orders/{order_id}/documents/` and `document_type: INVOICE`. `country_of_origin` is not settable through the API today; raise it with support if the gateway asks for it.
 
 ### Classification
 
@@ -295,7 +295,7 @@ Once a payment is classified and its checklist is **not** an LRS one, the list h
   <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
     The whole set, on demand, with `settlement_status`.
   </Card>
-  <Card title="Upload Payment Verification Details" icon="pen-to-square" href="/api-reference/v3/payment/upload-verification-details">
+  <Card title="Submit Payment Verification Details" icon="paper-plane" href="/api-reference/v3/payment/submit-verification-details">
     Where the order fields go.
   </Card>
   <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">

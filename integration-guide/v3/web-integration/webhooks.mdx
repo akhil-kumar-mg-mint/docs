@@ -14,7 +14,7 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
 | **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
-| **Payment Details Missing** | A non-LRS payment is missing fields we need. **Being retired** — some rails already send Verification Needed instead | Supply them via [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details), and handle Verification Needed too |
+| **Payment Details Missing** | A non-LRS payment is missing fields we need. **Being retired** — some rails already send Verification Needed instead | Supply them via [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details), and handle Verification Needed too |
 | **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
 | **Payment Under Review** | A payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |

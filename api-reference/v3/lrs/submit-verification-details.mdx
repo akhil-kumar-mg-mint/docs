@@ -1,12 +1,18 @@
 ---
-title: 'Submit Verification Details'
-description: "Send a payment's verification details — fields and document refs — in one JSON call, keyed by the codes its checklist names."
+title: 'Submit LRS Verification Details'
+description: "What an LRS payment is asked for, and how to send it — the remitter's identity, the declarations, and the documents its purpose code requires."
 openapi: 'POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
 
-Sends verification details for a payment, keyed by the same codes that [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use.
+An LRS payment answers a longer list than an ordinary one: the remitter's verified identity, the LRS declarations, the TCS collected, and a set of documents that depends on the purpose code. This page is that list, and what happens once it is complete.
+
+<Note>
+  **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers. If you do not handle LRS payments, the other page is all you need.
+</Note>
+
+Send details keyed by the same codes that [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use.
 
 There is nothing to map between them — every one of those places names an item under `code`:
 
@@ -44,20 +50,10 @@ There is one endpoint and one envelope — `fields`, `documents`, `finalize` —
 
 You never have to work out which set applies: `GET` the same path and it tells you, or read the codes off the event.
 
-<Warning>
-  **A payment nothing has classified accepts only two keys.** Until the order has a business model and a purpose code no checklist claims the payment, so nothing else can be validated — sending anything more is refused rather than half-applied. Send the pair first, in one call, and the checklist appears:
-
-  ```json
-  { "fields": { "business_model": "B2C", "purpose_code": "S0305" } }
-  ```
-
-  They may travel in the same call as the rest, but they must travel **together**: the stored business model is a column default until classification lands, so a purpose code stamped against a defaulted model would be exactly the guess this flow exists to avoid. Once set, the pair is what the payment settles under and cannot be changed here.
-</Warning>
-
 <Note>
-  **Neither is a checklist item, and an order can already be classified before you send anything.** They never appear in the `GET`'s `fields[]`, nor in [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) — they decide *which* checklist answers for the payment rather than belonging to one. You can state both when you create the order, and where your KYC names exactly one business model and one purpose code we resolve them for you, so many orders arrive here already classified.
+  **Declaring an LRS purpose code is what makes a payment an LRS one.** Send `business_model` and `purpose_code` together in `fields` — see [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#which-codes-to-send) for the rules that govern the pair — and if the code is one of the five below, the payment switches to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and starts being asked for everything on this page.
 
-  `GET` the payment before you send: a classification-stage answer means the pair is owed, a checklist means it is already set — and sending it again is a `400`, not a no-op.
+  Until the pair is set no checklist claims the payment, so nothing else can be validated. The pair may ride in the same call as the rest.
 </Note>
 
 Complete bodies for every LRS purpose code, built from the live checklists:
@@ -409,6 +405,9 @@ Most fields flow into the verification and settlement record. Two are collected 
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Submit Payment Verification Details" icon="paper-plane" href="/api-reference/v3/payment/submit-verification-details">
+    The same endpoint, for a payment that is not an LRS one.
+  </Card>
   <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
     What this payment needs, and what it already has.
   </Card>

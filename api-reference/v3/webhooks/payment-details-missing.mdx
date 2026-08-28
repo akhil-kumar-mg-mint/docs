@@ -248,7 +248,7 @@ What the list holds depends on whether the payment has been classified.
 | `buyer_postal_code` | Buyer's postal/ZIP code. |
 | `hs_code` | HS code — only checked when the order ships physical goods. |
 
-Supply these through [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details), or the classifying pair through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
+Supply these through [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details), or the classifying pair through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
 
 **After classification** — the outstanding codes of the payment's own checklist, which is a longer and more specific list: `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_email`, `buyer_phone`, `invoice_date`, `iec`, `buyer_pan`, `invoice`, and so on. These are answered through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
 
@@ -263,5 +263,5 @@ Supply these through [Upload Payment Verification Details](/api-reference/v3/pay
 1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
 2. **Verify the signature** against the raw request body — prefer `X-Webhook-Signature-V2`.
 3. **Use `order_uid` and `payment_id`** to fetch full order/payment details from the Partner API if needed (e.g. amount, status).
-4. **Supply what `details_missing` names.** Order fields go to [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details); the classifying pair and any checklist codes go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details). If you are unsure which takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements) — anything it lists is answered on that same path.
+4. **Supply what `details_missing` names.** Order fields go to [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details); the classifying pair and any checklist codes go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details). If you are unsure which takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements) — anything it lists is answered on that same path.
 5. **Handle [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) as well.** It already carries this list for some rails, and will carry it for all of them.
