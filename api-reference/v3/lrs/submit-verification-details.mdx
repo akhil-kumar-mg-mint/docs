@@ -1,12 +1,18 @@
 ---
-title: 'Submit Verification Details'
-description: "Send a payment's verification details — fields and document refs — in one JSON call, keyed by the codes its checklist names."
+title: 'Submit LRS Verification Details'
+description: "What an LRS payment is asked for, and how to send it — the remitter's identity, the declarations, and the documents its purpose code requires."
 openapi: 'POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
 
-Sends verification details for a payment, keyed by the same codes that [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use.
+An LRS payment answers a longer list than an ordinary one: the remitter's verified identity, the LRS declarations, the TCS collected, and a set of documents that depends on the purpose code. This page is that list, and what happens once it is complete.
+
+<Note>
+  **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers. If you do not handle LRS payments, the other page is all you need.
+</Note>
+
+Send details keyed by the same codes that [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) and the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) webhook use.
 
 There is nothing to map between them — every one of those places names an item under `code`:
 
@@ -44,15 +50,11 @@ There is one endpoint and one envelope — `fields`, `documents`, `finalize` —
 
 You never have to work out which set applies: `GET` the same path and it tells you, or read the codes off the event.
 
-<Warning>
-  **A payment nothing has classified accepts only two keys.** Until the order has a business model and a purpose code no checklist claims the payment, so nothing else can be validated — sending anything more is refused rather than half-applied. Send the pair first, in one call, and the checklist appears:
+<Note>
+  **Declaring an LRS purpose code is what makes a payment an LRS one.** Send `business_model` and `purpose_code` together in `fields` — see [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#which-codes-to-send) for the rules that govern the pair — and if the code is one of the five below, the payment switches to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and starts being asked for everything on this page.
 
-  ```json
-  { "fields": { "business_model": "B2C", "purpose_code": "S0305" } }
-  ```
-
-  They may travel in the same call as the rest, but they must travel **together**: the stored business model is a column default until classification lands, so a purpose code stamped against a defaulted model would be exactly the guess this flow exists to avoid. Once set, the pair is what the payment settles under and cannot be changed here.
-</Warning>
+  Until the pair is set no checklist claims the payment, so nothing else can be validated. The pair may ride in the same call as the rest.
+</Note>
 
 Complete bodies for every LRS purpose code, built from the live checklists:
 
@@ -186,7 +188,8 @@ Field values are strings, numbers or booleans.
 | Amounts (`principal`, `collected_tcs`) | A decimal string in rupees, e.g. `"150000.00"` |
 | `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | `true`, once the payer has affirmed the wording in the item's `message` |
-| `business_model` | `B2B` or `B2C` |
+| `business_model` | `B2B` or `B2C`. Case-insensitive. |
+| `purpose_code` | A FEMA/FETERS code your merchant account is allow-listed for, e.g. `S0305`. Case-insensitive. |
 
 <Warning>
   **An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
@@ -234,6 +237,10 @@ When a credit is a further payment against an earlier one — the buyer was shor
 Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins.
 
 This is deliberate: nobody collects a passport scan, a visa and a letter of admission in the same instant.
+
+<Note>
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without going to the verification gateway.
+</Note>
 
 <Warning>
   **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends — the staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/lrs/verification-requirements) the same path to read `settlement_status` before you send.
@@ -324,14 +331,16 @@ When a complete set is filed it runs through the verification gateway — PAN ve
 
 A complete set can fail to reach a verdict at all:
 
-| What happened | `status` | Event |
+| What happened | Answer | Event |
 |---|---|---|
-| A dependency was briefly unreachable. **Your details are saved**; repeat the request to complete it, re-sending nothing. | `action_required` | none |
-| Verification declined the payment — for example it is already past submit. | `action_required` | none |
-| The gateway reached a verdict and refused. | `action_required` | `LRS_VERIFICATION_NEEDED` |
+| A dependency was briefly unreachable. **Your details are saved** — staging commits before the handoff is attempted, so repeat the same request and re-send nothing. | an error, not `200` | none |
+| Verification declined the payment — for example it is already past submit. | an error, not `200` | none |
+| The gateway reached a verdict and refused. | `200`, `status: action_required` | `LRS_VERIFICATION_NEEDED` |
 
 <Note>
-  **`action_required` with an empty `outstanding` and no event means the handoff did not land.** Repeat the same request — the set is still complete, so it is retried rather than re-sent, and an outage costs you one call. A refusal the gateway actually reached always arrives as an event, so silence is what tells the two apart.
+  **An error is not a lost send.** Everything staged before the handoff is held against the payment, so a failed dependency costs you a repeat of the same request rather than a re-collection of the details.
+
+  Only the last row answers `200`. A refusal the gateway actually reached is a successful call that reports `action_required` and always arrives as an event too; an error response means the handoff never got that far.
 </Note>
 
 <Note>
@@ -400,6 +409,9 @@ Most fields flow into the verification and settlement record. Two are collected 
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Submit Payment Verification Details" icon="paper-plane" href="/api-reference/v3/payment/submit-verification-details">
+    The same endpoint, for a payment that is not an LRS one.
+  </Card>
   <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
     What this payment needs, and what it already has.
   </Card>

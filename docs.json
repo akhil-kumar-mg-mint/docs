@@ -394,7 +394,7 @@
               {
                 "group": "Payment",
                 "pages": [
-                  "api-reference/v3/payment/upload-verification-details"
+                  "api-reference/v3/payment/submit-verification-details"
                 ]
               },
               {
@@ -493,5 +493,11 @@
       "instagram": "https://www.instagram.com/exim.pe/?hl=en",
       "linkedin": "https://www.linkedin.com/company/eximpe/?viewAsMember=true"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/api-reference/v3/payment/upload-verification-details",
+      "destination": "/api-reference/v3/payment/submit-verification-details"
+    }
+  ]
 }
