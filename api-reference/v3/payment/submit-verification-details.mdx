@@ -89,6 +89,10 @@ Document codes work the same way; an import payment is typically asked for `invo
 
 Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins. Nobody collects an invoice, an address and an IEC in the same instant.
 
+<Note>
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without it.
+</Note>
+
 <Warning>
   **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends — `GET` the payment and read `settlement_status` before you send.
 </Warning>

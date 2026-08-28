@@ -238,6 +238,10 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 
 This is deliberate: nobody collects a passport scan, a visa and a letter of admission in the same instant.
 
+<Note>
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without going to the verification gateway.
+</Note>
+
 <Warning>
   **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends — the staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/lrs/verification-requirements) the same path to read `settlement_status` before you send.
 </Warning>
