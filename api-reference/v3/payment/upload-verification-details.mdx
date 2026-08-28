@@ -1,120 +1,190 @@
 ---
-title: 'Upload Payment Verification Details'
-description: 'Upload payment verification details for a payment and update the associated order.'
-openapi: 'POST /pg/payments/{uid}/upload-verification-details/'
+title: 'Submit Payment Verification Details'
+description: 'Send a payment’s verification details — buyer, invoice and goods fields — in a single JSON call.'
 ---
 
 ## Overview
 
-The Upload Payment Verification Details endpoint allows you to upload payment verification details for a payment. This updates the associated order with the provided information and uploads the verification details to the payment gateway.
+```http
+POST /pg/payments/{payment_id}/verification/
+```
 
-Use this endpoint when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, and need to supply the missing or corrected order fields.
+When a payment needs verification details before it can settle, this is where you send them. One call carries every field the payment is waiting on, and you can send them as you collect them rather than all at once.
+
+Use it when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`.
 
 <Note>
-  **This endpoint takes order fields.** Once a payment is classified it answers to a checklist, and those codes — `buyer_city`, `remitter_pan`, `iec`, document codes — go to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) instead. If you are unsure which endpoint takes a given code, [`GET` the payment's verification requirements](/api-reference/v3/lrs/verification-requirements): anything it lists is answered on that same path.
+  **This replaces `POST /pg/payments/{uid}/upload-verification-details/`**, which is deprecated. The old endpoint took one fixed set of fields, rewrote them all on every call, and worked on a single gateway. Move existing integrations across when convenient; build new ones here.
 </Note>
 
 ## When this applies
 
-Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing any of the fields required for payment verification, the platform emits `VERIFICATION_NEEDED` listing exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
-
-## Verification flow
+Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing anything the payment needs before it can settle, the platform emits `VERIFICATION_NEEDED` naming exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
 
 <Steps>
   <Step title="Payment recorded">
     A credit is received and a payment is created against the order.
   </Step>
   <Step title="Missing fields reported">
-    If verification fields are absent, the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook fires with an `action_required_fields` array naming each one.
+    [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) fires with an `action_required_fields` array naming each one.
   </Step>
   <Step title="Supply the details">
-    Call this endpoint with the missing fields for that payment `uid`.
+    `POST` them to this endpoint, under the same codes the event used.
   </Step>
-  <Step title="Verification outcome">
-    The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook reports the result — `IN_REVIEW`, or `ACTION_REQUIRED` with the fields still needing attention.
-
-    A **verified** payment sends no webhook at all: `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it.
+  <Step title="Read what is left">
+    The response carries `outstanding` — the codes still owed after that call.
   </Step>
 </Steps>
 
-## Send the whole set, every time
+## Authentication
 
-<Warning>
-  **This call replaces the order's verification fields; it does not patch them.** Every request writes `buyer_name`, `type_of_goods`, `product_description`, `buyer_address`, `invoice_number` and `buyer_postal_code` back onto the order. All but `buyer_address` are mandatory, so the one you can silently lose is the address: leave it out and the order's existing address is **cleared**, not preserved. Send the complete set on every call — not only the codes the webhook named.
-
-  `hs_code` is the exception: it is left alone when omitted.
-</Warning>
-
-Two fields deserve a note of their own:
-
-| Field | |
+| Header | |
 |---|---|
-| `type_of_goods` | Required on **every** call, even though it never appears in `action_required_fields` — the verification gateway does not ask for it, but this request body does. |
-| `hs_code` | Required only when `type_of_goods` is `PHYSICAL_GOODS`. `GOODS`, `DIGITAL_GOODS` and `SERVICE` are accepted without it. |
+| `X-Client-ID` | Your application identifier |
+| `X-Client-Secret` | Your secret key |
+| `X-API-Version` | `3.0.0` |
+| `X-Merchant-ID` | Required for PSP merchants, naming the settling sub-merchant |
 
-## Classification is not sent here
+## Request
 
-<Warning>
-  **`purpose_code` and `business_model` are not accepted by this endpoint.** They classify the order rather than describe the goods, and sending them here is ignored — the call still answers `200`, and the payment stays unclassified.
-
-  Send them in `fields` on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details):
-
-  ```json
-  { "fields": { "business_model": "B2C", "purpose_code": "S0305" } }
-  ```
-
-  The two must travel **together** in one call — the stored business model is a column default until classification lands, so a purpose code stamped against a defaulted model would be exactly the guess this flow exists to avoid. Once set, neither can be changed.
-</Warning>
-
-One `VERIFICATION_NEEDED` event can name work for both endpoints, so split the list rather than sending it all to one:
+| Key | Type | |
+|---|---|---|
+| `fields` | object | Your answers, keyed by code. Values are strings, numbers or booleans. |
+| `documents` | array | Files you have already uploaded, as `{ "code": …, "ref": … }`. |
+| `finalize` | boolean | Defaults to `true`. Pass `false` to record details without completing the payment's verification. |
 
 ```json
 {
-  "action_required_fields": ["buyer_name", "hs_code", "purpose_code"]
+  "fields": {
+    "buyer_name": "Acme Imports Pvt Ltd",
+    "product_description": "Cotton knitted t-shirts",
+    "invoice_number": "INV-2026-0041",
+    "buyer_postal_code": "560001",
+    "hs_code": "6109"
+  }
 }
 ```
 
-`buyer_name` and `hs_code` come here. `purpose_code` goes to [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), where an unrecognised or un-enabled code is rejected with a `400` rather than stored.
+<Note>
+  **JSON only.** Files are never posted here. Upload a file with `POST /pg/payments/{payment_id}/documents/`, which returns a `ref`, then name that `ref` under its code in `documents`.
+</Note>
+
+## Which codes to send
+
+**The codes come from the payment, not from a fixed list.** Read them off `action_required_fields` on the webhook, or call `GET /pg/payments/{payment_id}/verification/` at any time for the full set with a `satisfied` flag on each item. What a payment is asked for depends on what it is, and it changes as the underlying regulatory requirements do — read the codes rather than hardcoding them, and a revision reaches you without a release on your side.
+
+These are the ones an import payment is most often asked for:
+
+| Code | |
+|---|---|
+| `buyer_name` | Name of the buyer / importer |
+| `product_description` | Description of the goods or services |
+| `invoice_number` | Invoice or order number |
+| `invoice_date` | Invoice date, `YYYY-MM-DD` |
+| `buyer_address_line_1` | Street address of the buyer |
+| `buyer_city` · `buyer_state` · `buyer_postal_code` | Rest of the buyer's address |
+| `buyer_email` · `buyer_phone` | Buyer contact details |
+| `hs_code` | Harmonised System code — asked for when the order ships physical goods |
+| `iec` | Importer-Exporter Code of the buying business |
+
+Document codes work the same way; an import payment is typically asked for `invoice`.
+
+<Note>
+  **`type_of_goods` is not sent here.** It is part of the order's product details, declared when you create the order, and it is never listed as outstanding.
+</Note>
+
+## Declaring the purpose code and business model
+
+Two facts place the payment: its **business model** and its **purpose code**. Until both are set, nothing else about the payment can be checked — so if `VERIFICATION_NEEDED` lists them, send them first.
+
+They go in `fields`, like anything else:
+
+```json
+{
+  "fields": {
+    "business_model": "B2B",
+    "purpose_code": "S0101"
+  }
+}
+```
+
+| Field | |
+|---|---|
+| `business_model` | `B2B` or `B2C`. |
+| `purpose_code` | The FEMA/FETERS code this order settles under. It must be one your merchant account is enabled for — an unrecognised or un-enabled code is a `400`, never a stored value. |
+
+<Warning>
+  **They must travel together, and only once.** Send one without the other and the call is refused naming the one you left out. Once set, the pair is what the payment settles under and sending either again is a `400`.
+
+  They may ride in the same call as the rest of your answers; they simply cannot be checked until both are present.
+</Warning>
 
 <Note>
   **`business_model` is listed when nothing has *declared* it — not when it is empty.** It is never empty; it defaults to `B2C`. That is why the webhook can name it on an order that already reads `B2C`, and why sending `"business_model": "B2C"` is a real answer rather than a no-op.
+
+  Many orders arrive already classified — you can state both when you create the order, and where your KYC names exactly one business model and one purpose code we resolve them for you. `GET` the payment first if you are unsure.
 </Note>
 
-<Tip>
-  For a payment settling under an LRS purpose code, declaring the pair switches it over: it stops receiving `VERIFICATION_NEEDED` and starts receiving [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which carries the full purpose-code-specific requirement set — documents included — instead of a flat list of field names.
-</Tip>
+## Send as much or as little as you have
 
-## Codes this endpoint cannot answer
+Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins. Nobody collects an invoice, an address and an IEC in the same instant.
 
-Two order-field codes can appear in `action_required_fields` that have no place in this request body:
-
-| Code | Where it is answered |
-|---|---|
-| `invoice_file` | The commercial invoice is a file on the order. Upload it with `POST /pg/orders/{order_id}/documents/`, sending `document_type: INVOICE`. |
-| `country_of_origin` | Not settable through the API today. Raise it with support if the gateway asks for it. |
-
-## Errors
-
-Beyond the ordinary validation errors on the body, the endpoint refuses the call with a `400` — error code `ERR_PAYMENT_003`, the reason in `error.details.error` — when:
-
-| Condition | Message |
-|---|---|
-| The payment's verification window has closed (`settlement_status` is `EXPIRED`) | `Payment has expired; cannot upload verification details` |
-| The payment is not on a gateway that supports this upload | `Verification upload is not supported for this payment` |
-| A Cashfree payment has no gateway reference yet | `Payment has no gateway reference id; cannot upload verification details` |
+<Warning>
+  **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends — `GET` the payment and read `settlement_status` before you send.
+</Warning>
 
 ## The response
 
-`uploaded_documents`, `missing_documents` and `errors` are relayed from the payment gateway, so their contents vary by rail: production Cashfree returns the gateway's own document records, while the sandbox `SIMULATOR` gateway returns plain order-field names. Treat the three arrays as opaque and read the payment's state from [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) or [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) instead.
+```json
+{
+  "success": true,
+  "message": "Verification details received",
+  "data": {
+    "payment_id": "PR7712349900",
+    "status": "incomplete",
+    "outstanding": ["invoice_number", "hs_code"]
+  }
+}
+```
 
-## Sandbox
-
-The sandbox does not forward what you send to the verification gateway — it files a fixed fixture instead, so the values below are what sandbox reports back regardless of the request:
-
-- **buyer_name**: `John`
-- **buyer_postal_code**: `560034`
-- **product_description**: `This is a test product for test purpose`
+| Key | |
+|---|---|
+| `payment_id` | The payment these details were recorded against. |
+| `status` | `incomplete` — something is still owed, and `outstanding` names it. `complete` — nothing is outstanding. |
+| `outstanding` | The codes still owed **after** this write. Empty when nothing is. You do not need a second call to learn what is left. |
 
 <Note>
-  Your own values are still written to the order, so the order fields you can read back afterwards are the ones you sent. Only the gateway-facing call is fixed.
+  Payments that go through an additional verification step can return two further values, `in_review` and `action_required`. They do not arise on this flow.
 </Note>
+
+## Errors
+
+A refused send answers in the standard error envelope, with `details` keyed by the offending code — so one call reports every problem at once:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": {
+      "buyer_citty": "Not a requirement of this payment's checklist.",
+      "invoice": "This is a document code; send it under 'documents'."
+    }
+  }
+}
+```
+
+| Message | Cause |
+|---|---|
+| `Not a requirement of this payment's checklist.` | The code is not one this payment asks for. |
+| `This is a document code; send it under 'documents'.` | A document code appeared as a key in `fields`. |
+| `This is a field code; send it under 'fields'.` | The reverse. |
+| `Blank value; omit the key instead.` | `null`, `""`, or whitespace. Omit the key rather than sending an empty value. |
+| `Sent more than once in this call.` | The same document code twice in one `documents` array. |
+| `Unknown document ref.` | The `ref` is not one of your uploads. |
+| `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
+
+<Warning>
+  **An unknown key is a `400`, not a silent drop.** A misspelled `invoice_number` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
+</Warning>

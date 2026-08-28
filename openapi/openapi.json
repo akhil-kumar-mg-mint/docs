@@ -1328,7 +1328,8 @@
     "/pg/payments/{uid}/upload-verification-details/": {
       "post": {
         "summary": "Upload Payment Verification Details",
-        "description": "Upload payment verification details for a payment and update the associated order.",
+        "description": "**Deprecated \u2014 use POST /pg/payments/{payment_id}/verification/ instead.** Uploads a fixed set of order fields for a payment and pushes them to the payment gateway. It carries no documents and no classification, rewrites the whole set on every call, and is refused on any gateway other than Cashfree. Kept for existing integrations.",
+        "deprecated": true,
         "tags": [
           "Payments"
         ],
