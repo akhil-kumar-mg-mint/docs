@@ -145,7 +145,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
 </CodeGroup>
 
 <Note>
-  `message` reads "Payment verification action required" on every one of these, including `IN_REVIEW`. It is a constant on this event type, not a description of the state — **branch on `verification_status`, never on `message`.**
+  `message` reads "Payment verification action required" on every one of these, including `IN_REVIEW` — it is not a description of the state. It is not fixed either: the sandbox `ON_HOLD` event says "Payment settlement is on hold". **Branch on `verification_status`, never on `message`.**
 </Note>
 
 ---
@@ -197,7 +197,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
-      A constant on this event type: `"Payment verification action required"`. Safe to log; not a value to branch on.
+      A human-readable summary, usually `"Payment verification action required"`. It varies with the state — the sandbox `ON_HOLD` event carries a different sentence — so it is safe to log but never to branch on.
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array of strings" required>
@@ -241,7 +241,7 @@ Raised by the verification gateway's own report, and by the plain order-field ch
 | `hs_code` | Harmonized System code for goods |
 | `country_of_origin` | Country the goods ship from |
 
-Supply these with [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details).
+Supply these with [Upload Payment Verification Details](/api-reference/v3/payment/upload-verification-details) — with two exceptions. `invoice_file` is a file on the order, uploaded with `POST /pg/orders/{order_id}/documents/` and `document_type: INVOICE`. `country_of_origin` is not settable through the API today; raise it with support if the gateway asks for it.
 
 ### Classification
 
@@ -263,6 +263,10 @@ Two facts decide which checklist a payment answers to, and either one that has n
 ### Checklist codes
 
 Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
+
+<Note>
+  **Declaring the classification does not raise a fresh event on a non-LRS payment.** The follow-up ask is only re-sent when the new checklist is an LRS one, where it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Otherwise, read the new checklist's codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
+</Note>
 
 <Note>
   **Do not hardcode the list.** [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the whole set for a payment, each item carrying its own `satisfied` flag, and it is revised as the underlying regulatory matrix is. Read it rather than reproducing it.
