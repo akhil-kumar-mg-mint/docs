@@ -54,6 +54,12 @@ You never have to work out which set applies: `GET` the same path and it tells y
   They may travel in the same call as the rest, but they must travel **together**: the stored business model is a column default until classification lands, so a purpose code stamped against a defaulted model would be exactly the guess this flow exists to avoid. Once set, the pair is what the payment settles under and cannot be changed here.
 </Warning>
 
+<Note>
+  **Neither is a checklist item, and an order can already be classified before you send anything.** They never appear in the `GET`'s `fields[]`, nor in [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) — they decide *which* checklist answers for the payment rather than belonging to one. You can state both when you create the order, and where your KYC names exactly one business model and one purpose code we resolve them for you, so many orders arrive here already classified.
+
+  `GET` the payment before you send: a classification-stage answer means the pair is owed, a checklist means it is already set — and sending it again is a `400`, not a no-op.
+</Note>
+
 Complete bodies for every LRS purpose code, built from the live checklists:
 
 <CodeGroup>
@@ -186,7 +192,8 @@ Field values are strings, numbers or booleans.
 | Amounts (`principal`, `collected_tcs`) | A decimal string in rupees, e.g. `"150000.00"` |
 | `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | `true`, once the payer has affirmed the wording in the item's `message` |
-| `business_model` | `B2B` or `B2C` |
+| `business_model` | `B2B` or `B2C`. Case-insensitive. |
+| `purpose_code` | A FEMA/FETERS code your merchant account is allow-listed for, e.g. `S0305`. Case-insensitive. |
 
 <Warning>
   **An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
@@ -324,14 +331,16 @@ When a complete set is filed it runs through the verification gateway — PAN ve
 
 A complete set can fail to reach a verdict at all:
 
-| What happened | `status` | Event |
+| What happened | Answer | Event |
 |---|---|---|
-| A dependency was briefly unreachable. **Your details are saved**; repeat the request to complete it, re-sending nothing. | `action_required` | none |
-| Verification declined the payment — for example it is already past submit. | `action_required` | none |
-| The gateway reached a verdict and refused. | `action_required` | `LRS_VERIFICATION_NEEDED` |
+| A dependency was briefly unreachable. **Your details are saved** — staging commits before the handoff is attempted, so repeat the same request and re-send nothing. | an error, not `200` | none |
+| Verification declined the payment — for example it is already past submit. | an error, not `200` | none |
+| The gateway reached a verdict and refused. | `200`, `status: action_required` | `LRS_VERIFICATION_NEEDED` |
 
 <Note>
-  **`action_required` with an empty `outstanding` and no event means the handoff did not land.** Repeat the same request — the set is still complete, so it is retried rather than re-sent, and an outage costs you one call. A refusal the gateway actually reached always arrives as an event, so silence is what tells the two apart.
+  **An error is not a lost send.** Everything staged before the handoff is held against the payment, so a failed dependency costs you a repeat of the same request rather than a re-collection of the details.
+
+  Only the last row answers `200`. A refusal the gateway actually reached is a successful call that reports `action_required` and always arrives as an event too; an error response means the handoff never got that far.
 </Note>
 
 <Note>
