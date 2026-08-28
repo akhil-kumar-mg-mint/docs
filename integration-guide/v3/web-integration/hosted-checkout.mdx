@@ -20,7 +20,7 @@ Hosted Checkout is a pre-built payment page. You create an order from your serve
 </CardGroup>
 
 <Info>
-  **Collection is only half the flow.** A successful payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required** like any other v3 payment, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
+  **Collection is only half the flow.** A successful payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required**, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
 </Info>
 
 ## Prerequisites
@@ -347,10 +347,8 @@ def handle_payment_callback(request):
 
 A collected payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
 
-For **LRS** payments this is the same flow used for virtual account collections: we tell you what the payment needs, you send it, and it completes itself once nothing is outstanding.
-
 <Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-  The step-by-step compliance flow, shared by every v3 collection method.
+  What a payment needs, and how to send it.
 </Card>
 
 ## Security Notes

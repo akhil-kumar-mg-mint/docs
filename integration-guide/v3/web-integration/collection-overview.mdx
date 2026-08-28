@@ -16,15 +16,19 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Create Merchant](/api-reference/v3/merchant/create) · [Merchant Approved webhook](/api-reference/v3/webhooks/merchant-approved)
   </Step>
   <Step title="Set up a way to get paid">
-    Today that is a virtual account: create one and give the buyer its account number and IFSC.
+    Two ways to collect: send the buyer to an EximPe-hosted payment page, or give them a virtual account to pay into directly.
 
-    [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
+    [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
   <Step title="The buyer pays">
     We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet.
   </Step>
   <Step title="Send the compliance details">
     Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
+
+    For a B2C payment, the `buyer`, `product`, and `invoice` fields you already sent at [Create Order](/api-reference/v3/order/create) are enough — there's nothing further to send.
+
+    A Virtual Account credit arrives with no Create Order call behind it, so those same basic facts get filled in afterward in the EximPe dashboard instead.
 
     For LRS payments we tell you exactly what is needed, you send it, and it completes itself. See [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
   </Step>
@@ -37,14 +41,19 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
 ## How the buyer pays
 
-Money can reach you by more than one Indian payment method. **Today that means a virtual account** — an Indian account number we issue for you, which your buyer pays into by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier. Give them two things: the account number and the IFSC.
+Money can reach you by more than one Indian payment method.
 
-<Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
-  Create one, share it, and handle the money arriving.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Hosted Checkout" icon="credit-card" href="/integration-guide/v3/web-integration/hosted-checkout">
+    Create an order, send the buyer to EximPe's payment page, and they pay by card, UPI, net banking, or QR. Nothing sensitive touches your servers.
+  </Card>
+  <Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
+    An Indian account number we issue for you. The buyer pays into it by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier. Give them the account number and the IFSC.
+  </Card>
+</CardGroup>
 
 <Note>
-  **The method only decides how the money arrives.** Once a payment exists it behaves the same way whichever route it came by — same statuses, same webhooks, same compliance step, same settlement. So everything from step 3 onwards is unaffected by which method you use, and adding a method later does not change the integration you have already built.
+  **The method only decides how the money arrives.** Once a payment exists it behaves the same way whichever route it came by — same statuses, same webhooks, same compliance step, same settlement.
 </Note>
 
 ## Who is who
@@ -103,7 +112,10 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 ## Next
 
 <CardGroup cols={2}>
-  <Card title="Set up collection" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
+  <Card title="Hosted Checkout" icon="credit-card" href="/integration-guide/v3/web-integration/hosted-checkout">
+    Take your first payment on an EximPe-hosted page.
+  </Card>
+  <Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
     Create a virtual account and take your first payment.
   </Card>
   <Card title="Send compliance details" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">

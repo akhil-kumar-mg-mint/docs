@@ -366,6 +366,12 @@
                 ]
               },
               {
+                "group": "B2B Services (Payments from Businesses)",
+                "pages": [
+                  "integration-guide/v3/web-integration/b2b-services-verification"
+                ]
+              },
+              {
                 "group": "LRS (Education & Travel Payments from Individuals)",
                 "pages": [
                   "integration-guide/v3/web-integration/lrs-compliance",
@@ -444,7 +450,6 @@
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
                   "api-reference/v3/webhooks/payment-successful",
-                  "api-reference/v3/webhooks/payment-details-missing",
                   "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/lrs-verification-needed",
                   "api-reference/v3/webhooks/payment-under-review",
