@@ -86,6 +86,8 @@ These are the ones an import payment is most often asked for:
 | `buyer_email` · `buyer_phone` | Buyer contact details |
 | `hs_code` | Harmonised System code — asked for when the order ships physical goods |
 | `iec` | Importer-Exporter Code of the buying business |
+| `business_model` | `B2B` or `B2C` |
+| `purpose_code` | The FEMA/FETERS code this order settles under, e.g. `S0101`. It must be one your merchant account is enabled for — an unrecognised or un-enabled code is a `400`, never a stored value. |
 
 Document codes work the same way; an import payment is typically asked for `invoice`.
 
@@ -93,37 +95,11 @@ Document codes work the same way; an import payment is typically asked for `invo
   **`type_of_goods` is not sent here.** It is part of the order's product details, declared when you create the order, and it is never listed as outstanding.
 </Note>
 
-## Declaring the purpose code and business model
-
-Two facts place the payment: its **business model** and its **purpose code**. Until both are set, nothing else about the payment can be checked — so if `VERIFICATION_NEEDED` lists them, send them first.
-
-They go in `fields`, like anything else:
-
-```json
-{
-  "fields": {
-    "business_model": "B2B",
-    "purpose_code": "S0101"
-  }
-}
-```
-
-| Field | |
-|---|---|
-| `business_model` | `B2B` or `B2C`. |
-| `purpose_code` | The FEMA/FETERS code this order settles under. It must be one your merchant account is enabled for — an unrecognised or un-enabled code is a `400`, never a stored value. |
-
 <Warning>
-  **They must travel together, and only once.** Send one without the other and the call is refused naming the one you left out. Once set, the pair is what the payment settles under and sending either again is a `400`.
+  **`business_model` and `purpose_code` must travel together, and only once.** They place the payment, and until both are set nothing else about it can be checked — so send them first, or in the same call as the rest. Send one without the other and the call is refused naming the one you left out; once set, sending either again is a `400`.
 
-  They may ride in the same call as the rest of your answers; they simply cannot be checked until both are present.
+  `business_model` is listed when nothing has *declared* it, not when it is empty — it defaults to `B2C`, so sending `"business_model": "B2C"` is a real answer rather than a no-op. Many orders arrive already classified, so `GET` the payment first if you are unsure.
 </Warning>
-
-<Note>
-  **`business_model` is listed when nothing has *declared* it — not when it is empty.** It is never empty; it defaults to `B2C`. That is why the webhook can name it on an order that already reads `B2C`, and why sending `"business_model": "B2C"` is a real answer rather than a no-op.
-
-  Many orders arrive already classified — you can state both when you create the order, and where your KYC names exactly one business model and one purpose code we resolve them for you. `GET` the payment first if you are unsure.
-</Note>
 
 ## Send as much or as little as you have
 
