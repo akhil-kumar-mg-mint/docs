@@ -13,6 +13,10 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
   **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. LRS is always scoped to the sub-merchant, never the PSP.
 </Note>
 
+## Do it in this order
+
+<img src="/images/diagrams/lrs-verification-flow.svg" alt="Flowchart showing how to clear an LRS payment for settlement: verify PAN and quote the amount, wait for the buyer to pay, respond to the verification webhook by submitting details, and loop until the response status is settled or the deadline passes and it is refunded." />
+
 ## Before the buyer pays
 
 Two calls, in order:

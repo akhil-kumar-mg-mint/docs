@@ -22,52 +22,7 @@ Your Indian buyer has paid for a service. We know the amount and the date; we do
 
 There is no pre-payment step here. Everything happens after the money lands.
 
-```mermaid
-%%{init: {
-  "theme": "base",
-  "themeVariables": {
-    "fontFamily": "ui-sans-serif, system-ui, -apple-system, sans-serif",
-    "fontSize": "13px",
-    "primaryColor": "#ffffff",
-    "primaryTextColor": "#15803d",
-    "primaryBorderColor": "#26a887",
-    "lineColor": "#26a887",
-    "tertiaryColor": "#ffffff",
-    "edgeLabelBackground": "#ffffff"
-  },
-  "flowchart": { "curve": "basis", "htmlLabels": true, "wrappingWidth": 340, "nodeSpacing": 44, "rankSpacing": 48 }
-}}%%
-flowchart TD
-    A["Buyer pays<br/>Payment created as <code>ACTION_REQUIRED</code>"]
-    B["Webhook <code>VERIFICATION_NEEDED</code><br/>Names the fields still outstanding"]
-    U["Upload the invoice<br/>Keep the <code>ref</code> it returns"]
-    C["Submit the details<br/>Purpose code, buyer, invoice, declaration"]
-    D{"We review it"}
-    E["<code>ACTION_REQUIRED</code> again<br/>with a comment saying what to fix"]
-    F["<code>VERIFIED</code><br/>then settled to you abroad"]
-    G["Refunded to the buyer<br/>Terminal"]
-    H["Upload proof of delivery<br/>After the money has gone"]
-
-    A --> B --> C --> D
-    U -.-> C
-    D -- "sent back" --> E
-    E --> C
-    D -- "approved" --> F
-    D -- "rejected" --> G
-    F --> H
-
-    classDef step fill:#ffffff,stroke:#26a887,stroke-width:1.5px,color:#134e4a
-    classDef gate fill:#f0faf7,stroke:#26a887,stroke-width:1.5px,color:#134e4a
-    classDef done fill:#15803d,stroke:#15803d,stroke-width:2px,color:#ffffff
-    classDef dead fill:#ffffff,stroke:#b45309,stroke-width:1.5px,color:#7c2d12
-    classDef aside fill:#ffffff,stroke:#9ccdbf,stroke-width:1px,color:#4a7c6f
-
-    class A,B,C,E step
-    class D gate
-    class F done
-    class G dead
-    class U,H aside
-```
+<img src="/images/diagrams/b2b-services-verification-flow.svg" alt="Flowchart showing a B2B Services payment moving from webhook notification through document submission and review, ending in settlement abroad or a refund to the buyer." />
 
 Submit is a single call, not a loop of partial sends. We check the whole set at once and either take it into review or tell you what is wrong with it.
 

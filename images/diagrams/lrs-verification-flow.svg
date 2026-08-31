@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 720 740" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="lrsflow-title lrsflow-desc">
+      <title id="lrsflow-title">LRS verification — do it in this order</title>
+      <desc id="lrsflow-desc">Flowchart showing how to clear an LRS payment for settlement: verify PAN and quote the amount, wait for the buyer to pay, respond to the verification webhook by submitting details, and loop until the response status is settled or the deadline passes and it is refunded.</desc>
+
+      <defs><style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#26a887"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#15803d"/>
+        </marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ===================== ARROWS (drawn before boxes) ===================== -->
+
+      <!-- Spine -->
+      <line x1="200" y1="112" x2="200" y2="144" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="200" y1="216" x2="200" y2="248" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="200" y1="340" x2="200" y2="372" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="200" y1="444" x2="200" y2="476" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- Happy path: Response status to Settled to you (accent) -->
+      <line x1="200" y1="596" x2="200" y2="628" stroke="#15803d" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Aside dead-end: Webhook fires to Refunded to buyer (deadline passes), jogged through the open band above Webhook fires -->
+      <path d="M 360,280 H 392 V 232 H 568 V 256" fill="none" stroke="#26a887" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- Aside input: Upload documents to Submit verification details -->
+      <line x1="456" y1="408" x2="360" y2="408" stroke="#26a887" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+      <!-- Loop back: Response status (incomplete) to Submit verification details -->
+      <line x1="140" y1="508" x2="140" y2="444" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Response status (action_required) to Webhook fires again -->
+      <line x1="320" y1="536" x2="456" y2="536" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Webhook fires again to Submit verification details (loop back), routed through the empty lane gutter, above the action_required line so it never crosses it -->
+      <path d="M 456,510 H 400 V 430 H 360" fill="none" stroke="#26a887" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- ===================== ARROW LABELS ===================== -->
+
+      <rect x="42" y="468" width="88" height="16" rx="2" fill="#ffffff"/>
+      <text x="86" y="480" fill="#4a7c6f" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">incomplete</text>
+
+      <rect x="326" y="514" width="124" height="16" rx="2" fill="#ffffff"/>
+      <text x="388" y="526" fill="#4a7c6f" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">action_required</text>
+
+      <rect x="416" y="212" width="128" height="16" rx="2" fill="#ffffff"/>
+      <text x="480" y="224" fill="#4a7c6f" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">deadline passes</text>
+
+      <rect x="211" y="604" width="78" height="16" rx="2" fill="#ffffff"/>
+      <text x="250" y="616" fill="#4a7c6f" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.04em">in_review</text>
+
+      <!-- ===================== NODES ===================== -->
+
+      <!-- A: Verify PAN + quote amount (entry point, step) -->
+      <rect x="40" y="40" width="320" height="72" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1"/>
+      <text x="200" y="70" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Verify PAN + quote LRS amount</text>
+      <text x="200" y="92" fill="#4a7c6f" font-size="11" font-family="'Geist', sans-serif" text-anchor="middle">before the buyer pays</text>
+
+      <!-- B: Buyer pays -->
+      <rect x="40" y="144" width="320" height="72" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1"/>
+      <text x="200" y="174" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Buyer pays</text>
+      <text x="200" y="196" fill="#4a7c6f" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">ACTION_REQUIRED</text>
+
+      <!-- C: Webhook fires -->
+      <rect x="40" y="248" width="320" height="92" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1"/>
+      <text x="200" y="278" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Webhook fires</text>
+      <text x="200" y="298" fill="#4a7c6f" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">LRS_VERIFICATION_NEEDED</text>
+      <text x="200" y="318" fill="#4a7c6f" font-size="11" font-family="'Geist', sans-serif" text-anchor="middle">Names what's still outstanding</text>
+
+      <!-- D: Submit verification details (hub) -->
+      <rect x="40" y="372" width="320" height="72" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="200" y="402" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Submit verification details</text>
+      <text x="200" y="424" fill="#4a7c6f" font-size="11" font-family="'Geist', sans-serif" text-anchor="middle">Fields + documents, partial sends merge</text>
+
+      <!-- S: Response status (decision gate) -->
+      <polygon points="200,476 320,536 200,596 80,536" fill="#f0faf7" stroke="#26a887" stroke-width="1"/>
+      <text x="200" y="540" fill="#15803d" font-size="15" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Response status</text>
+
+      <!-- H: Settled to you (terminal / success) -->
+      <rect x="40" y="628" width="320" height="72" rx="32" fill="#15803d" stroke="#15803d" stroke-width="2"/>
+      <text x="200" y="658" fill="#ffffff" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Settled to you</text>
+      <text x="200" y="680" fill="#ffffff" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle" opacity="0.85">in_review</text>
+
+      <!-- X: Refunded to buyer (terminal / dead end) -->
+      <rect x="456" y="256" width="224" height="72" rx="32" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/>
+      <text x="568" y="286" fill="#7c2d12" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Refunded to buyer</text>
+      <text x="568" y="308" fill="#7c2d12" font-size="11" font-family="'Geist', sans-serif" text-anchor="middle" opacity="0.8">deadline passed · terminal</text>
+
+      <!-- U: Upload documents (aside input) -->
+      <rect x="456" y="372" width="224" height="72" rx="6" fill="#ffffff" stroke="#9ccdbf" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="568" y="402" fill="#4a7c6f" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Upload documents</text>
+      <text x="568" y="424" fill="#4a7c6f" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">keep the ref</text>
+
+      <!-- G: Webhook fires again -->
+      <rect x="456" y="500" width="224" height="72" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1"/>
+      <text x="568" y="530" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Webhook fires again</text>
+      <text x="568" y="552" fill="#4a7c6f" font-size="11" font-family="'Geist', sans-serif" text-anchor="middle">names what to fix</text>
+    </svg>
