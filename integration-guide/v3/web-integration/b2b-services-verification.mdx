@@ -1,6 +1,6 @@
 ---
 title: "B2B Services Verification"
-description: "Clear a B2B services payment for settlement: classify it, send the buyer and invoice details, attach the invoice, then attach proof of delivery once the money has gone."
+description: "Clear a B2B services payment for settlement: classify it, send the buyer and invoice details, attach the invoice, then upload proof of delivery once the money has gone."
 ---
 
 Your Indian buyer has paid for a service. We know the amount and the date; we do not know what the service was or who bought it. You tell us, we review it, and the payment settles.
@@ -122,7 +122,7 @@ The response says where the payment stands:
 
 **Rejected is terminal, and the money goes straight back.** A rejection is not a stronger send-back. It closes the payment, and we automatically initiate a full refund to the buyer — you cannot resubmit or correct it. Only a **send-back** reopens the payment for editing. Read the decision, not just the fact that something came back.
 
-**Proof of delivery comes after settlement, not before.** It's a separate submission that only opens once the payment reaches `SETTLED`. Attaching it early is not possible, and holding your settlement waiting to attach it is a mistake people make once.
+**Proof of delivery comes after settlement, not before.** It's a separate submission that only opens once the payment reaches `SETTLED`. Uploading it early is not possible, and holding your settlement waiting to send it is a mistake people make once.
 
 **Editing closes the moment the set is filed.** While a payment is in review, the fields and the invoice are frozen — no corrections, no swapping the file. If you spot a mistake after filing, wait for the send-back and fix it then.
 
@@ -130,17 +130,9 @@ The response says where the payment stands:
 
 Once the money has reached you, one thing is still owed: evidence that the service was actually delivered. It sits outside the verification flow — nobody reviews it, and it does not gate your settlement — but it is what backs the remittance if the transaction is ever examined.
 
-It is three calls, not one, because uploading a file and attaching it are separate steps:
+Upload one or more files under `delivery_proof` via the same document endpoint as the invoice — a signed acceptance note, a milestone sign-off, a delivery confirmation email, a timesheet. It only opens once the payment reaches `SETTLED`, and the set locks once you submit it, so upload everything before you do.
 
-1. **Upload each proof** via the same document endpoint as the invoice, with `type=delivery_proof` — a signed acceptance note, a milestone sign-off, a delivery confirmation email, a timesheet. Keep the `ref` each upload returns.
-2. **Attach each one** by calling [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document) with `{"doc_type": "delivery_proof", "ref": "<ref>"}` — once per file. At least one is required; there is no limit on how many.
-3. **Lock the set** with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) once everything is attached.
-
-Both attach and submit refuse until the payment has actually reached `SETTLED` — there is nothing to attach documents to before then.
-
-<Warning>
-  **Submitting is final.** Once locked, nothing further can be attached or deleted. Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you submit — its `state` (`FRESH` / `DRAFT` / `SUBMITTED`) tells a draft from one already filed. Attached a file by mistake? [Delete Settlement Document](/api-reference/v3/b2b/delete-settlement-document) removes it, but only while the set is still a draft.
-</Warning>
+{/* The exact submission mechanics for this step (how the set is locked, whether a file can be removed before locking) are still settling on the API side — check the API reference before hardcoding against them. */}
 
 ## Payment statuses
 
@@ -150,7 +142,7 @@ Read `settlement_status` on the payment — [Get Verification Requirements](/api
 | :--- | :--- | :--- |
 | `ACTION_REQUIRED` · `INFO_PENDING` | We have the money but not an accepted set of details — either you have not submitted yet, or we sent it back | Read the comment, fix what it names, submit again |
 | `UNDER_REVIEW` | Filed and with our team. Editing is closed. Also what a rejection leaves the payment showing — see below. | Wait |
-| `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Approved. Settlement follows. No webhook fires for the approval itself. | Attach proof of delivery once it settles |
+| `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Approved. Settlement follows. No webhook fires for the approval itself. | Upload proof of delivery once it settles |
 | `EXPIRED` · `ON_HOLD` | The window closed, or the payment is held, before a set was accepted. Terminal — the money returns to the buyer. | Nothing to recover |
 
 A rejection does not move `settlement_status` to anything named "rejected" — the payment stays `UNDER_REVIEW`, and we automatically raise a full refund. You learn about it from the refund rather than from this field.
@@ -167,11 +159,5 @@ A rejection does not move `settlement_status` to anything named "rejected" — t
   </Card>
   <Card title="Webhooks" icon="bell" href="/integration-guide/v3/web-integration/webhooks">
     Every event, the payload, and how to verify the signature.
-  </Card>
-  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
-    What's attached so far, and whether the set is still a draft.
-  </Card>
-  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
-    The shared upload endpoint behind both the invoice and every proof of delivery.
   </Card>
 </CardGroup>
