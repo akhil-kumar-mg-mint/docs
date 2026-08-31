@@ -1,0 +1,67 @@
+---
+title: 'Submit Settlement Documents'
+description: "Lock a settled B2B-services payment's post-settlement document set once it is complete."
+openapi: 'POST /pg/payments/{payment_id}/settlement/submit/'
+---
+
+## Overview
+
+Closes the post-settlement compliance step. Call it once every delivery proof is attached.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement/submit/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0'
+```
+
+```json
+{
+  "success": true,
+  "message": "Documents submitted",
+  "data": {}
+}
+```
+
+## What "complete" means here
+
+B2B services requires **at least one active `delivery_proof`**. That is the whole test — there is no per-type checklist as there is on the goods flow.
+
+Submitting with nothing attached is a `400`. Attach first, then submit.
+
+<Warning>
+  **Submitting is final.** The set becomes read-only: no further [attach](/api-reference/v3/b2b/attach-settlement-document) and no further [delete](/api-reference/v3/b2b/delete-settlement-document). Read the set back before you call this.
+</Warning>
+
+## Errors
+
+Every refusal is a `400` in the standard envelope:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_B2B_SETTLEMENT_004",
+    "message": "Upload all required documents before submitting.",
+    "details": "Upload all required documents before submitting."
+  }
+}
+```
+
+| Cause | `code` | What to do |
+|---|---|---|
+| Nothing attached | `ERR_B2B_SETTLEMENT_004` | Attach at least one `delivery_proof`. |
+| Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
+| The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
+| The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
+| The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    Read the set back before locking it.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+</CardGroup>

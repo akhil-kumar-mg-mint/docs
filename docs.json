@@ -446,6 +446,18 @@
                 ]
               },
               {
+                "group": "B2B Services",
+                "pages": [
+                  "api-reference/v3/b2b/upload-document",
+                  "api-reference/v3/b2b/verification-requirements",
+                  "api-reference/v3/b2b/submit-verification-details",
+                  "api-reference/v3/b2b/list-settlement-documents",
+                  "api-reference/v3/b2b/attach-settlement-document",
+                  "api-reference/v3/b2b/delete-settlement-document",
+                  "api-reference/v3/b2b/submit-settlement"
+                ]
+              },
+              {
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",

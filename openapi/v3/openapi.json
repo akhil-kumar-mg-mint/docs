@@ -2735,7 +2735,7 @@
                   },
                   "type": {
                     "type": "string",
-                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised.",
+                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised. `delivery_proof` is the one type here that no checklist asks for: it is a post-settlement compliance document, uploaded through this endpoint and then attached by `ref` to [Attach a post-settlement document](/api-reference/v3/b2b/attach-settlement-document).",
                     "enum": [
                       "offer_letter",
                       "passport",
@@ -2747,7 +2747,8 @@
                       "traveller_visas",
                       "ticket",
                       "invoice",
-                      "relationship_declaration"
+                      "relationship_declaration",
+                      "delivery_proof"
                     ],
                     "example": "offer_letter"
                   }
@@ -2778,7 +2779,7 @@
                         "ref": {
                           "type": "string",
                           "description": "Reference to pass as `documents[].ref` on Submit Verification Details.",
-                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                          "example": "8207383264"
                         },
                         "type": {
                           "type": "string",
@@ -2792,7 +2793,7 @@
                   "success": true,
                   "message": "Document uploaded",
                   "data": {
-                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+                    "ref": "8207383264",
                     "type": "offer_letter"
                   }
                 }
@@ -2800,28 +2801,36 @@
             }
           },
           "400": {
-            "description": "Invalid request — unknown document type, or the file failed type/size/encryption validation.",
+            "description": "The payment id does not resolve for this caller, or the file is not an accepted type. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "bad_file": {
+                    "summary": "The document type is not one this API accepts",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "type": "Unknown document type."
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -3025,38 +3034,34 @@
             }
           },
           "400": {
-            "description": "No verification checklist covers this payment's business model and purpose code, so there is nothing to report. An *unclassified* payment is not this case — it answers 200, asking for the two classifying facts.",
+            "description": "The payment id does not resolve for this caller, or no checklist covers its cell.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40359,
-                    "message": "Invalid LRS request.",
-                    "details": {
-                      "detail": "No verification checklist covers this payment's business model and purpose code."
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
+                  },
+                  "no_checklist": {
+                    "summary": "The order is classified into a cell no checklist covers",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": "Invalid LRS request. No verification checklist covers this payment's business model and purpose code."
+                      }
+                    }
                   }
                 }
               }
@@ -3303,59 +3308,98 @@
             }
           },
           "400": {
-            "description": "Invalid request — an unknown code, a blank value, a misplaced field/document code, an unusable document reference, a duplicate document code, or a waiver on a document that cannot be waived. Every offending code is named in `error.details`, so one call reports every problem at once.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "type": "object"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40359,
-                    "message": "Invalid LRS request.",
-                    "details": {
-                      "buyer_citty": "Not a requirement of this payment's checklist.",
-                      "invoice": "This is a document code; send it under 'documents'.",
-                      "ticket": "Sent more than once in this call."
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
                     }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such payment for this merchant. The same answer whether the payment does not exist or belongs to someone else — the endpoint never confirms another merchant's payment id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_PAYMENT_005",
-                    "message": "Payment not found",
-                    "details": {}
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "This payment's verification has already been filed, so its details can no longer be changed. Staging closes once `settlement_status` reaches `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` — read it from the GET before sending.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40360,
-                    "message": "Payment is not in a state that accepts verification details.",
-                    "details": {
-                      "detail": "This payment's verification has already been filed; its details can no longer be changed here."
+                  },
+                  "already_filed": {
+                    "summary": "Staging closes once the verification has been filed",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment's verification has already been filed; its details can no longer be changed here."
+                      }
+                    }
+                  },
+                  "unknown_codes": {
+                    "summary": "Codes that are not requirements of this payment's checklist",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_citty": "Not a requirement of this payment's checklist.",
+                          "invoice": "This is a document code; send it under 'documents'."
+                        }
+                      }
+                    }
+                  },
+                  "order_refused_the_write": {
+                    "summary": "Filing writes the values onto the order, which validates them",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_postal_code": "Enter a valid Indian PIN code."
+                        }
+                      }
+                    }
+                  },
+                  "duplicate_invoice_number": {
+                    "summary": "The invoice number is already used by another payment",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": "Invoice number already exists."
+                      }
+                    }
+                  },
+                  "already_classified": {
+                    "summary": "The business model and purpose code cannot be changed once set",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "business_model": "Already set on the order; it cannot be changed here.",
+                          "purpose_code": "Already set on the order; it cannot be changed here."
+                        }
+                      }
+                    }
+                  },
+                  "blank_value": {
+                    "summary": "A blank value is refused rather than silently dropped",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid LRS request.",
+                        "details": {
+                          "buyer_city": "Blank value; omit the key instead."
+                        }
+                      }
                     }
                   }
                 }
@@ -3759,6 +3803,611 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/settlement-documents/": {
+      "get": {
+        "summary": "List post-settlement documents",
+        "description": "Every active post-settlement compliance document attached to one settled B2B-services payment.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The attached documents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Settlement documents"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "FRESH",
+                            "DRAFT",
+                            "SUBMITTED"
+                          ],
+                          "description": "FRESH = nothing attached, DRAFT = attached and still editable, SUBMITTED = locked.",
+                          "example": "DRAFT"
+                        },
+                        "is_settled": {
+                          "type": "boolean",
+                          "description": "Whether the payment has settled. Documents can only be attached after it has.",
+                          "example": true
+                        },
+                        "is_multi": {
+                          "type": "boolean",
+                          "description": "True for B2B services: the set is complete once one file of any required type is attached, not one of each.",
+                          "example": true
+                        },
+                        "required_doc_types": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "delivery_proof"
+                            ]
+                          },
+                          "description": "Every document type this flow accepts. Read with is_multi.",
+                          "example": [
+                            "delivery_proof"
+                          ]
+                        },
+                        "submitted_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true,
+                          "description": "When the set was submitted, or null while it is FRESH or DRAFT. Naive UTC — no offset is sent.",
+                          "example": null
+                        },
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "document_id": {
+                                "type": "string",
+                                "description": "UID of the attached document. Pass it as `document_id` to delete.",
+                                "example": "4193006825"
+                              },
+                              "doc_type": {
+                                "type": "string",
+                                "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                                "enum": [
+                                  "delivery_proof"
+                                ],
+                                "example": "delivery_proof"
+                              },
+                              "file_name": {
+                                "type": "string",
+                                "description": "The stored file's name.",
+                                "example": "delivery-note.pdf"
+                              },
+                              "file": {
+                                "type": "string",
+                                "description": "Pre-signed, time-limited URL for the stored file. Fetch it if you need the document back; it expires, so do not store it.",
+                                "example": "https://bucket.s3.amazonaws.com/lrs_documents/308/8207383264/delivery-note.pdf?X-Amz-Signature=..."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The payment id does not resolve for this caller, or it is not a B2B-services payment.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Attach a post-settlement document",
+        "description": "Attach a file you already uploaded through `POST /pg/payments/{payment_id}/documents/` as one post-settlement compliance document, by its `ref`. This endpoint never takes a file directly.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "doc_type",
+                  "ref"
+                ],
+                "properties": {
+                  "doc_type": {
+                    "type": "string",
+                    "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                    "enum": [
+                      "delivery_proof"
+                    ],
+                    "example": "delivery_proof"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "The `ref` returned by the document upload. Must belong to the calling merchant.",
+                    "example": "8207383264"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document attached.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Document attached"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "document_id": {
+                          "type": "string",
+                          "description": "UID of the attached document. Pass it as `document_id` to delete.",
+                          "example": "4193006825"
+                        },
+                        "doc_type": {
+                          "type": "string",
+                          "description": "Post-settlement compliance document type. B2B services has one: `delivery_proof`.",
+                          "enum": [
+                            "delivery_proof"
+                          ],
+                          "example": "delivery_proof"
+                        },
+                        "file_name": {
+                          "type": "string",
+                          "description": "The stored file's name.",
+                          "example": "delivery-note.pdf"
+                        },
+                        "file": {
+                          "type": "string",
+                          "description": "Pre-signed, time-limited URL for the stored file. It expires, so do not store it.",
+                          "example": "https://bucket.s3.amazonaws.com/lrs_documents/308/8207383264/delivery-note.pdf?X-Amz-Signature=..."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The payment id does not resolve, the ref is unknown, the doc type is not accepted, the payment has not settled, or the set is already submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "unknown_ref": {
+                    "summary": "The ref is not an upload belonging to this caller",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_001",
+                        "message": "Document not found for this payment.",
+                        "details": "Document not found for this payment."
+                      }
+                    }
+                  },
+                  "not_settled": {
+                    "summary": "Documents cannot be attached before the payment settles",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_003",
+                        "message": "Documents can only be uploaded after the payment is settled.",
+                        "details": "Documents can only be uploaded after the payment is settled."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "The set is locked once submitted",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "unknown_doc_type": {
+                    "summary": "delivery_proof is the only type B2B services defines",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_005",
+                        "message": "Unknown document type.",
+                        "details": "Unknown document type."
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/settlement-documents/{document_id}/": {
+      "delete": {
+        "summary": "Delete a post-settlement document",
+        "description": "Remove one attached document while the submission is still a draft. The underlying uploaded file is untouched — only this attachment goes away.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 15
+            },
+            "description": "`document_id` from the list or attach response.",
+            "example": "4193006825"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Document deleted"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Always an empty object on a write that returns nothing.",
+                      "example": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The payment or document id does not resolve, or the set is already submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "document_not_found": {
+                    "summary": "No active document with that id on this payment",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_001",
+                        "message": "Document not found for this payment.",
+                        "details": "Document not found for this payment."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "A submitted set can no longer be edited",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "malformed_document_id": {
+                    "summary": "document_id is at most 15 alphanumeric/dash characters",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40359,
+                        "message": "Invalid B2B services request.",
+                        "details": {
+                          "document_id": "Ensure this field has no more than 15 characters."
+                        }
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/settlement/submit/": {
+      "post": {
+        "summary": "Submit post-settlement documents",
+        "description": "Lock the post-settlement document set once it is complete. B2B services requires at least one `delivery_proof`. After this the set is no longer editable.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "tags": [
+          "B2B Verification"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "UID of the settled B2B-services payment the documents belong to.",
+            "example": "PR6938527534"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documents submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Documents submitted"
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "Always an empty object on a write that returns nothing.",
+                      "example": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The payment id does not resolve, it has not settled, the set is empty, or it is already submitted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "payment_not_found": {
+                    "summary": "The payment id is unknown, or belongs to another merchant",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. Payment not found."
+                      }
+                    }
+                  },
+                  "not_settled": {
+                    "summary": "Nothing can be filed before the payment settles",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_003",
+                        "message": "Documents can only be uploaded after the payment is settled.",
+                        "details": "Documents can only be uploaded after the payment is settled."
+                      }
+                    }
+                  },
+                  "incomplete": {
+                    "summary": "B2B services needs at least one delivery_proof",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_004",
+                        "message": "Upload all required documents before submitting.",
+                        "details": "Upload all required documents before submitting."
+                      }
+                    }
+                  },
+                  "already_submitted": {
+                    "summary": "Submitting twice is refused",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_B2B_SETTLEMENT_002",
+                        "message": "Documents have already been submitted and can no longer be changed.",
+                        "details": "Documents have already been submitted and can no longer be changed."
+                      }
+                    }
+                  },
+                  "not_b2b_services": {
+                    "summary": "The payment is not a B2B-services one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40360,
+                        "message": "Payment is not in a state that accepts verification details.",
+                        "details": "Payment is not in a state that accepts verification details. This payment is not a B2B-services payment."
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -7226,6 +7875,10 @@
     {
       "name": "Virtual Bank Accounts",
       "description": "Create and manage virtual bank accounts and read collected payments."
+    },
+    {
+      "name": "B2B Verification",
+      "description": "Verification and post-settlement compliance for B2B payments."
     }
   ]
 }

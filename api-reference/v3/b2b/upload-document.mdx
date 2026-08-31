@@ -1,0 +1,114 @@
+---
+title: 'Upload Document'
+description: "Upload a B2B services file — the commercial invoice, or a delivery proof after settlement — and get back a ref."
+openapi: 'POST /pg/payments/{payment_id}/documents/'
+---
+
+## Overview
+
+Uploads one file for a B2B services payment and answers with a **`ref`**. What you do with that `ref` depends on which of the two document steps you are in:
+
+| You uploaded | You then | With |
+|---|---|---|
+| the commercial invoice | send the `ref` under its checklist code | [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) |
+| a delivery proof, after the payment settles | attach the `ref` to the settlement submission | [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document) |
+
+```json
+{ "documents": [{ "code": "invoice", "ref": "8207383264" }] }
+```
+
+<Note>
+  **Two calls, not one.** Uploading a file does not answer a requirement; it stores a file. The requirement is answered when a later call names the `ref`. That separation is what lets the same upload endpoint serve both the verification step and the post-settlement one.
+</Note>
+
+## The request
+
+`multipart/form-data`, two parts:
+
+| Part | |
+|---|---|
+| `file` | The document itself. |
+| `type` | What kind of document it is — one of the codes below. |
+
+The path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint: your own payments, and your sub-merchants'.
+
+<Note>
+  **PSPs send `X-Merchant-ID`**, naming the settling sub-merchant. The stored file is scoped to the merchant that uploaded it, and every endpoint that later resolves the `ref` resolves it against that same merchant — mismatch them and the `ref` reads as unknown.
+</Note>
+
+## Document types
+
+B2B services uses two:
+
+| `type` | | Where it goes |
+|---|---|---|
+| `invoice` | Commercial invoice | The verification checklist |
+| `delivery_proof` | Evidence the service was delivered — a signed acceptance note, a milestone sign-off, a delivery confirmation, a timesheet | The post-settlement document set |
+
+The endpoint itself accepts every document code any flow defines, so an unknown-to-you code is not necessarily rejected. These two are the ones a B2B services payment has any use for.
+
+<Warning>
+  **`delivery_proof` is not a checklist item.** It never appears in [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements), because it is owed *after* settlement rather than before it. Do not go looking for it there.
+</Warning>
+
+## The file
+
+Validated on upload, so a bad file fails here rather than at submit time.
+
+| | |
+|---|---|
+| Extensions | `pdf` · `png` · `jpg` · `jpeg` · `docx` · `xlsx` · `csv` |
+| Maximum size | 10 MB |
+| Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
+
+## The response
+
+`201`, with the `ref`:
+
+```json
+{
+  "success": true,
+  "message": "Document uploaded",
+  "data": {
+    "ref": "8207383264",
+    "type": "invoice"
+  }
+}
+```
+
+<ParamField path="ref" type="string" required>
+  The upload's identifier. Send it as `documents[].ref` on the verification submit, or as `ref` on the settlement attach.
+
+  The stored file is scoped to **your merchant account**, not to the payment in the path — so a `ref` stays valid across a retried attempt, and a `ref` that is not yours reads as unknown rather than as someone else's file.
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  Echoes the `type` you sent.
+</ParamField>
+
+## Replacing a document
+
+Uploads are immutable. To replace the invoice, upload the file again — you get a new `ref` — and submit that `ref` under the same `code`. The newer row supersedes the older without discarding it.
+
+A delivery proof already attached is removed with [Delete Settlement Document](/api-reference/v3/b2b/delete-settlement-document) instead, and only while the settlement set is still a draft.
+
+## No waivers on this flow
+
+Some checklists let a document be discharged with a `waiver_reason` instead of a file. **The B2B services checklist has no waivable item** — the commercial invoice is required, and there is nothing to waive. A `waiver_reason` sent on this flow is a `400`.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/b2b/verification-requirements">
+    What this payment actually needs.
+  </Card>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/b2b/submit-verification-details">
+    Where the `ref` is bound to a checklist code.
+  </Card>
+  <Card title="Attach Settlement Document" icon="paperclip" href="/api-reference/v3/b2b/attach-settlement-document">
+    Where a `delivery_proof` `ref` is attached, after settlement.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+</CardGroup>
