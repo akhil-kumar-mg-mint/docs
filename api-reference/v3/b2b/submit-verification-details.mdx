@@ -195,6 +195,10 @@ Every refusal is a `400`, whatever the reason — the code inside the envelope i
 | `40359` | The send itself is wrong — see the messages below. Also: the payment has no requirement set, and you did not send the classifying pair. |
 | `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. |
 
+<Note>
+  **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a B2B services payment reads `Invalid B2B services request.` and an LRS payment reads something else. The code is the stable part.
+</Note>
+
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
 
 ```json
@@ -202,7 +206,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
   "success": false,
   "error": {
     "code": 40359,
-    "message": "Invalid LRS request.",
+    "message": "Invalid B2B services request.",
     "details": {
       "buyer_citty": "Not a requirement of this payment's checklist.",
       "invoice": "This is a document code; send it under 'documents'."
@@ -237,7 +241,7 @@ Filing is also what writes the staged buyer and invoice fields onto the order, a
   "success": false,
   "error": {
     "code": 40359,
-    "message": "Invalid LRS request.",
+    "message": "Invalid B2B services request.",
     "details": "Invoice number already exists."
   }
 }

@@ -2801,7 +2801,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve for this caller, or the file is not an accepted type.",
+            "description": "The payment id does not resolve for this caller, or the file is not an accepted type. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3308,7 +3308,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4267,7 +4267,7 @@
                       "success": false,
                       "error": {
                         "code": 40359,
-                        "message": "Invalid LRS request.",
+                        "message": "Invalid B2B services request.",
                         "details": {
                           "document_id": "Ensure this field has no more than 15 characters."
                         }
