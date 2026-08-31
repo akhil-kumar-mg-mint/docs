@@ -57,7 +57,7 @@
       <!-- C: Submit the details -->
       <rect x="144" y="376" width="560" height="64" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
       <text x="424" y="404" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Submit the details</text>
-      <text x="424" y="424" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">Purpose code · buyer · invoice · declaration</text>
+      <text x="424" y="424" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">Classify · buyer fields · invoice</text>
 
       <!-- D: We review it (decision diamond) -->
       <polygon points="424,488 564,552 424,616 284,552" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
