@@ -125,7 +125,7 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 }
 ```
 
-```json S0303 / S0304 / S0306 - Travel
+```json S0306 - Travel, other (today's body for S0303 / S0304 too — see note below)
 {
   "fields": {
     "buyer_name": "Ravi Kumar",
@@ -159,20 +159,22 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 </CodeGroup>
 
 <Note>
-  The three travel codes take an identical body. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
+  The three travel codes take an identical body **today**. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
+
+  That's expected to change for two of them: `S0304` (medical treatment) and `S0303` (pilgrimage) are getting purpose-specific documents on top of the common travel set — a hospital or treatment document for medical, a pilgrimage-specific document for the other. Not finalized yet; we'll confirm the exact codes before either goes live for you. `S0306` stays as shown.
 
   The education examples declare `remitter_relation` as `PARENT`, which is what makes `relationship_declaration` and the three `primary_person_*` fields owed. Declare `SELF` and all four drop out — as they have in the travel example.
 </Note>
 
 ### What differs, and what does not
 
-| | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
-|---|:---:|:---:|:---:|
-| Buyer and invoice fields | same | same | same |
-| Remitter identity, declaration, `principal`, `collected_tcs` | same | same | same |
-| `primary_person_*` when the relation is not `SELF` | ✓ | ✓ | ✓ |
-| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | `passenger_list`, `traveller_passports`, `traveller_visas`, `ticket`, `invoice` |
-| Optional documents | `fee_invoice` | `fee_invoice` | — |
+| | `S0305` | `S1107` | `S0306` | `S0304` | `S0303` |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Buyer and invoice fields | same | same | same | same | same |
+| Remitter identity, declaration, `principal`, `collected_tcs` | same | same | same | same | same |
+| `primary_person_*` when the relation is not `SELF` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | `passenger_list`, `traveller_passports`, `traveller_visas`, `ticket`, `invoice` | same as `S0306`, **+ medical documents (TBD)** | same as `S0306`, **+ pilgrimage documents (TBD)** |
+| Optional documents | `fee_invoice` | `fee_invoice` | — | — | — |
 
 <Warning>
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
