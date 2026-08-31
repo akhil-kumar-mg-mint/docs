@@ -118,8 +118,13 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
   | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
   | `UNDER_REVIEW` | Filed and with EximPe Ops. **Sending is closed.** |
-  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/list-settlement-documents) opens. |
+  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/submit-settlement) opens. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
+  | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
+  | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
+  | `NOT_APPLICABLE` | The payment carries no settlement workflow at all. |
+
+  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows; the rest are here so an unexpected value is a value you can look up rather than a surprise.
 
   Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. Read this key before you send, and you will not collect a refusal you had no way to see coming.
 </ParamField>

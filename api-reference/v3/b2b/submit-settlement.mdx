@@ -1,17 +1,19 @@
 ---
 title: 'Submit Settlement Documents'
-description: "Lock a settled B2B-services payment's post-settlement document set once it is complete."
+description: "File a settled B2B-services payment's delivery proofs by ref, and lock the set — in one call."
 openapi: 'POST /pg/payments/{payment_id}/settlement/submit/'
 ---
 
 ## Overview
 
-Closes the post-settlement compliance step. Call it once every delivery proof is attached.
+Closes the post-settlement compliance step. Send the `ref` of every delivery proof you uploaded; this call resolves them, files them against the payment, and locks the set.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement/submit/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0'
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{ "refs": ["8207383264", "5512907744"] }'
 ```
 
 ```json
@@ -22,14 +24,36 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlemen
 }
 ```
 
+<Note>
+  **There is no attach step, and no draft.** The draft window is the upload step: an upload is durable and scoped to your merchant account, so collect proof over days, hold the refs, and send them when the set is ready. This is the same shape [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) uses for its documents — upload once, reference by id, file in the call that completes the set.
+</Note>
+
+## The request
+
+One key.
+
+<ParamField body="refs" type="string[]" required>
+  The `ref` of each file to file against this payment, from [Upload Document](/api-reference/v3/b2b/upload-document).
+
+  Every ref must be one of **your own** uploads — a ref belonging to another merchant reads as unknown rather than as someone else's file. A ref repeated in one call files one document.
+</ParamField>
+
+<Note>
+  **No `doc_type`.** Each upload already carries the type it was stored under, and this call reads it from there. A ref uploaded under a type this flow does not file is refused with `ERR_B2B_SETTLEMENT_005` — for B2B services that means anything other than `delivery_proof`.
+</Note>
+
 ## What "complete" means here
 
-B2B services requires **at least one active `delivery_proof`**. That is the whole test — there is no per-type checklist as there is on the goods flow.
+B2B services requires **at least one `delivery_proof`**. That is the whole test — there is no per-type checklist as there is on the goods flow, and many files ride under the single type.
 
-Submitting with nothing attached is a `400`. Attach first, then submit.
+Sending `refs: []`, or omitting the key, is a `400`.
 
 <Warning>
-  **Submitting is final.** The set becomes read-only: no further [attach](/api-reference/v3/b2b/attach-settlement-document) and no further [delete](/api-reference/v3/b2b/delete-settlement-document). Read the set back before you call this.
+  **The whole call is one transaction.** If any ref is refused, nothing from that call is filed and the set stays `FRESH`. Fix the named ref and send the complete list again — you are not left with half a set.
+</Warning>
+
+<Warning>
+  **Submitting is final.** The set becomes read-only; a second submit is refused with `ERR_B2B_SETTLEMENT_002`. Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you call this.
 </Warning>
 
 ## Errors
@@ -49,15 +73,24 @@ Every refusal is a `400` in the standard envelope:
 
 | Cause | `code` | What to do |
 |---|---|---|
-| Nothing attached | `ERR_B2B_SETTLEMENT_004` | Attach at least one `delivery_proof`. |
-| Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
+| `refs` is empty or absent | `ERR_B2B_SETTLEMENT_004` | Send at least one `delivery_proof` ref. |
+| A ref is not one of your uploads | `ERR_B2B_SETTLEMENT_001` | The same answer whether it does not exist or belongs to another merchant. |
+| A ref was uploaded under a type this flow does not file | `ERR_B2B_SETTLEMENT_005` | Upload it again with `type=delivery_proof`. |
 | The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
+| Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
 | The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
 | The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
+
+<Note>
+  **The refs are the payload, so they are answered for first.** An unknown ref is reported before the payment's own state is judged — a `400` carrying `ERR_B2B_SETTLEMENT_001` does not tell you the payment has settled, only that the ref did not resolve. An empty list, which names no ref, does surface the state: an unsettled payment answers `ERR_B2B_SETTLEMENT_003` rather than `_004`.
+</Note>
 
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
+    Upload each delivery proof and keep its `ref`.
+  </Card>
   <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
     Read the set back before locking it.
   </Card>

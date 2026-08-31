@@ -121,7 +121,11 @@ One entry, naming the invoice's checklist code and the `ref` you got from [Uploa
 Sending the same code twice in one call is a `400`. Sending it again in a **later** call is fine — the newer ref replaces the earlier row.
 
 <Note>
-  **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file.
+  **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file. Sending one is a `400` reading `This document cannot be waived.`, keyed by the document's code.
+</Note>
+
+<Note>
+  **`linked_payment_id` and `reason` are ignored here.** The shared request body accepts them, but they mark a payment as a top-up of an earlier one — an LRS concept. B2B services has none, so both are read and discarded rather than refused. Do not send them expecting a link.
 </Note>
 
 ## Partial sends are merged
@@ -194,9 +198,14 @@ Every refusal is a `400`, whatever the reason — the code inside the envelope i
 |---|---|
 | `40359` | The send itself is wrong — see the messages below. Also: the payment has no requirement set, and you did not send the classifying pair. |
 | `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. |
+| `ERR_IMPORT_VERIFICATION_001` | The `invoice_number` is already used by another of your payments. Raised only by the call that files — see [below](#raised-only-by-the-call-that-files). |
+| `ERR_B2B_SERVICES_004` | The verification has left your hands — under review, approved or rejected — and can no longer be edited. |
+| `ERR_B2B_SERVICES_006` | A document being filed does not belong to this payment. |
 
 <Note>
   **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a B2B services payment reads `Invalid B2B services request.` and an LRS payment reads something else. The code is the stable part.
+
+  Not every refusal is `40359`. A few carry a code of their own, listed above — they are the specific ones, and they say more than the shared code does. Treat any code you do not recognise as a `400` you should not retry unchanged.
 </Note>
 
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
@@ -223,6 +232,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
 | `Unknown document ref.` | The `ref` is not one of your uploads. A `ref` uploaded under a different merchant reads as unknown. |
+| `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not true. No B2B services item is waivable, so every `waiver_reason` on this flow lands here. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
 ### Raised only by the call that files
@@ -234,21 +244,21 @@ A second group appears only when a complete set is filed, as the staged values a
 | `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
 | `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a PIN code in the India Post directory. A foreign postal code lands here — the buyer is the Indian remitter, not your customer abroad. |
 
-Filing is also what writes the staged buyer and invoice fields onto the order, and the order validates them on write — which is where that PIN code is judged. `invoice_number` is unique per merchant, so a collision surfaces here too. Like every other refusal on this endpoint it answers under `40359`, with the reason in `details`:
+Filing is also what writes the staged buyer and invoice fields onto the order, and the order validates them on write — which is where that PIN code is judged. `invoice_number` is unique per merchant, so a collision surfaces here too. Unlike the refusals above it does **not** answer under `40359` — it carries its own code:
 
 ```json
 {
   "success": false,
   "error": {
-    "code": 40359,
-    "message": "Invalid B2B services request.",
+    "code": "ERR_IMPORT_VERIFICATION_001",
+    "message": "Invoice number already exists.",
     "details": "Invoice number already exists."
   }
 }
 ```
 
 <Note>
-  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that staged it.
+  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that staged it — raise a new number and send that field again.
 
   These all arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date — or writes anything to the order — until the set is complete. Your details are still saved; fix the named code and re-send only that.
 </Note>

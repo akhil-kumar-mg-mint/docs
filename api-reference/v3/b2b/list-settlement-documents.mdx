@@ -1,14 +1,14 @@
 ---
 title: 'List Settlement Documents'
-description: "Every post-settlement compliance document attached to a settled B2B-services payment."
+description: "Every post-settlement compliance document filed against a settled B2B-services payment, and whether the set is locked."
 openapi: 'GET /pg/payments/{payment_id}/settlement-documents/'
 ---
 
 ## Overview
 
-Once a B2B-services payment is **settled**, one more compliance step remains: evidence that the service was actually delivered. This endpoint reads what has been attached so far.
+Once a B2B-services payment is **settled**, one more compliance step remains: evidence that the service was actually delivered. This endpoint reads what has been filed so far, and whether the set is locked.
 
-It is safe to call at any time — it reads, it never re-runs anything.
+It is safe to call at any time — it reads, it never re-runs anything. That includes **before** the payment settles: it answers with `is_settled: false` rather than refusing. Only [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) refuses on an unsettled payment.
 
 <Note>
   **B2B services only.** A payment that is not a B2B-services payment is refused. B2B goods has no partner-API settlement path.
@@ -21,7 +21,7 @@ It is safe to call at any time — it reads, it never re-runs anything.
   "success": true,
   "message": "Settlement documents",
   "data": {
-    "state": "DRAFT",
+    "state": "FRESH",
     "is_settled": true,
     "is_multi": true,
     "required_doc_types": ["delivery_proof"],
@@ -44,14 +44,14 @@ It is safe to call at any time — it reads, it never re-runs anything.
 }
 ```
 
-An empty `documents` array means nothing has been attached yet — not that nothing is owed.
+An empty `documents` array means nothing has been filed yet — not that nothing is owed.
 
 <ParamField path="state" type="string" required>
-  `FRESH` (nothing attached yet), `DRAFT` (attached, still editable) or `SUBMITTED` (locked). Read this before attaching: once it is `SUBMITTED`, attach and delete are both refused with `ERR_B2B_SETTLEMENT_002`.
+  `FRESH` (nothing filed yet) or `SUBMITTED` (filed and locked). Two values, not three — there is no draft on this surface, because files are held as uploads until one [submit](/api-reference/v3/b2b/submit-settlement) files them all. Read this before submitting: once it is `SUBMITTED`, a second submit is refused with `ERR_B2B_SETTLEMENT_002`.
 </ParamField>
 
 <ParamField path="is_settled" type="boolean" required>
-  Whether the payment has settled. Documents can only be attached after it has; attaching earlier is refused with `ERR_B2B_SETTLEMENT_003`.
+  Whether the payment has settled. Documents can only be filed after it has; submitting earlier is refused with `ERR_B2B_SETTLEMENT_003`. This read is allowed either way.
 </ParamField>
 
 <ParamField path="is_multi" type="boolean" required>
@@ -59,19 +59,21 @@ An empty `documents` array means nothing has been attached yet — not that noth
 </ParamField>
 
 <ParamField path="required_doc_types" type="string[]" required>
-  Every type this flow accepts. Because `is_multi` is `true`, the set is complete once **one** file of **any** listed type is attached — not one of each. A single-file flow (`is_multi: false`) would need one of every type.
+  Every type this flow accepts. Because `is_multi` is `true`, the set is complete once **one** file of **any** listed type is filed — not one of each. A single-file flow (`is_multi: false`) would need one of every type.
+
+  A `ref` uploaded under a type not listed here is refused by the submit with `ERR_B2B_SETTLEMENT_005`.
 </ParamField>
 
 <ParamField path="submitted_at" type="string | null" required>
-  ISO-8601 timestamp of the submission, or `null` while the set is still `FRESH` or `DRAFT`.
+  ISO-8601 timestamp of the submission, or `null` while the set is still `FRESH`.
 </ParamField>
 
 <ParamField path="document_id" type="string" required>
-  Pass this to [Delete Settlement Document](/api-reference/v3/b2b/delete-settlement-document) while the submission is still a draft.
+  The filed document's own id. It is not the `ref` you submitted — that names the upload the document was made from, and stays valid on its own.
 </ParamField>
 
 <ParamField path="doc_type" type="string" required>
-  B2B services has exactly one type, `delivery_proof`, and accepts **many files under it**. Goods is the opposite — one file per type — which is why the two flows do not share an endpoint.
+  The type the upload was stored under, carried onto the filed document — you never send a `doc_type` yourself. B2B services has exactly one, `delivery_proof`, and accepts **many files under it**. Goods is the opposite — one file per type — which is why the two flows do not share an endpoint.
 </ParamField>
 
 <ParamField path="file_name" type="string" required>
@@ -84,7 +86,7 @@ An empty `documents` array means nothing has been attached yet — not that noth
 
 ## What is listed
 
-Only **active** documents. A document you deleted is gone from this list and stays gone; deletion is a soft delete on our side, but there is no undelete through the API — attach the file again.
+Only **active** documents, in the order they were filed. Nothing appears here until a [submit](/api-reference/v3/b2b/submit-settlement) files it: an uploaded `ref` you have not submitted yet is not part of this set, which is exactly what lets you hold it.
 
 ## Errors
 
@@ -109,16 +111,13 @@ Reading the set is refused only when the payment itself does not qualify. Both c
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Attach Settlement Document" icon="paperclip" href="/api-reference/v3/b2b/attach-settlement-document">
-    Attach an uploaded file by its `ref`.
-  </Card>
   <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
-    Lock the set once it is complete.
+    File the delivery proofs by `ref` and lock the set.
+  </Card>
+  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
+    Upload each delivery proof and keep its `ref`.
   </Card>
   <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
     The whole flow, in order.
-  </Card>
-  <Card title="Delete Settlement Document" icon="trash" href="/api-reference/v3/b2b/delete-settlement-document">
-    Remove one while the set is still a draft.
   </Card>
 </CardGroup>

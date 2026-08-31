@@ -24,8 +24,12 @@ Nothing has to clear before you can proceed, and there is no pre-payment step at
 The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook arrives naming what is outstanding, as a flat array of codes in `action_required_fields`.
 
 <Warning>
-  **Treat that first list as a nudge, not the requirement set.** The credit arrives before anything has classified the payment, so no requirement set claims it yet and the event falls back to a legacy order-field check — it can name `product_description` and `hs_code`, which this flow never asks for. Classify the payment, then read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements). A second event, `PAYMENT_DETAILS_MISSING`, follows the classifying call with the same flat list; it tells you nothing the `GET` does not, so you can ignore it.
+  **Treat that first list as a nudge, not the requirement set.** The credit arrives before anything has classified the payment, so no requirement set claims it yet and the event falls back to a legacy order-field check — it can name `product_description` and `hs_code`, which this flow never asks for. Classify the payment, then read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements).
 </Warning>
+
+<Note>
+  **A second event follows the classifying call.** `PAYMENT_DETAILS_MISSING` fires once a checklist claims the payment, and it names what that checklist still owes — real services codes, not the legacy order-field guess the first event made. It carries the list under **`details_missing`**, not `action_required_fields`, alongside `order_uid`, `payment_id` and `message`. It tells you nothing [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) does not, so you can ignore it and poll instead.
+</Note>
 
 From there it is one loop, repeated until nothing is outstanding:
 
@@ -90,13 +94,16 @@ A **rejection** does not move `settlement_status` either: the payment stays `UND
 
 Verification review is not the last compliance step. Once the money has reached you, one thing is still owed: evidence that the service was actually delivered. It does not gate your settlement — it is what backs the remittance if the transaction is ever examined.
 
-1. Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Before that, the settlement-document endpoints refuse.
-2. Upload each proof via [Upload Document](/api-reference/v3/b2b/upload-document) with `type=delivery_proof`, and keep each `ref`.
-3. Attach them with [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document), once per file. This flow takes **many** files under the single `delivery_proof` type.
-4. Lock the set with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement). At least one file is required, and after this nothing can be attached or deleted.
+1. Upload each proof via [Upload Document](/api-reference/v3/b2b/upload-document) with `type=delivery_proof`, and keep each `ref`. You can do this before the payment settles — the upload endpoint does not wait on settlement.
+2. Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Only the submit refuses before settlement; [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) reads fine either way and reports `is_settled`.
+3. File them all with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement), sending `{"refs": [...]}`. One call resolves the refs, files them and locks the set. This flow takes **many** files under the single `delivery_proof` type, and needs at least one.
+
+<Note>
+  **There is no attach step, and nothing to draft.** An upload is durable and scoped to your merchant account, so the refs you are holding *are* the draft — collect proof over days and send them when the set is ready. It is the same shape the verification step uses for its documents.
+</Note>
 
 <Warning>
-  **Submitting is final.** Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it — its `state` tells a draft from one already filed.
+  **Submitting is final**, and the whole call is one transaction: a refused ref files nothing from that call. Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it — its `state` is `FRESH` until a submit lands, `SUBMITTED` after.
 </Warning>
 
 ## What this flow never asks for
@@ -120,12 +127,9 @@ Every one of them is a `400` if you send it, the same as any unknown key.
     How a payment moves from the buyer's bank to your account abroad.
   </Card>
   <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
-    What is attached so far, and whether the set is still a draft.
-  </Card>
-  <Card title="Attach Settlement Document" icon="paperclip" href="/api-reference/v3/b2b/attach-settlement-document">
-    Attach a delivery proof by its `ref`.
+    What is filed so far, and whether the set is locked.
   </Card>
   <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
-    Lock the set once it is complete.
+    File the delivery proofs by `ref` and lock the set.
   </Card>
 </CardGroup>
