@@ -116,9 +116,13 @@ One entry, naming the invoice's checklist code and the `ref` you got from [Uploa
 | Key | |
 |---|---|
 | `code` | `invoice` — the only document this set asks for. |
-| `ref` | A `ref` returned by Upload Document. |
+| `ref` | A `ref` returned by Upload Document **for this payment**. A ref from one of your other payments reads as unknown. |
 
 Sending the same code twice in one call is a `400`. Sending it again in a **later** call is fine — the newer ref replaces the earlier row.
+
+<Note>
+  **Re-uploading an invoice does not need a re-cite.** The citation names the `code`, and this flow has exactly one document type per code, so the payment's newest invoice is what is filed when the set completes. Upload a correction and it supersedes what you cited, without a second call here.
+</Note>
 
 <Note>
   **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file. Sending one is a `400` reading `This document cannot be waived.`, keyed by the document's code.
@@ -231,7 +235,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
-| `Unknown document ref.` | The `ref` is not one of your uploads. A `ref` uploaded under a different merchant reads as unknown. |
+| `Unknown document ref.` | The `ref` is not one of this payment's active documents. A ref uploaded against another payment, or superseded by a later upload of the same type, reads as unknown. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not true. No B2B services item is waivable, so every `waiver_reason` on this flow lands here. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 

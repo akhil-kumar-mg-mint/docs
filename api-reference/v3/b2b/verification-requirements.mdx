@@ -93,7 +93,7 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
 </CodeGroup>
 
 <Note>
-  **The unclassified response is not an error.** `business_model` and `purpose_code` come back `null`, and the two facts that would resolve them are listed as ordinary outstanding fields — same shape as any other entry. [Send them back](/api-reference/v3/b2b/submit-verification-details) under those codes and the real requirement set appears on the next call.
+  **The unclassified response is not an error.** `business_model` and `purpose_code` come back `null`, and the two facts that would resolve them are listed as ordinary outstanding fields — same shape as any other entry. [Send them back](/api-reference/v3/b2b/submit-verification-details) under those codes and the real requirement set appears on the next call. Classify before you upload anything, too: [Upload Document](/api-reference/v3/b2b/upload-document) is routed by the payment's flow and refuses until the pair has landed.
 </Note>
 
 `buyer_name` reads `satisfied: true` in the second response because the credit carried it. The set accounts for what we already hold, so you only collect the rest.

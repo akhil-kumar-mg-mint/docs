@@ -35,7 +35,7 @@ From there it is one loop, repeated until nothing is outstanding:
 
 1. **Classify the payment** if nothing has yet. A VBA credit arrives with no `business_model` or `purpose_code` on its order, so there is no checklist to read — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) answers with those two facts as ordinary outstanding fields. Send them back under the same codes.
 2. **Read what it owes** from that same endpoint. Nine buyer and invoice fields, plus the commercial invoice. Some may already be satisfied — the credit usually carries `buyer_name`.
-3. **Upload the invoice** via [Upload Document](/api-reference/v3/b2b/upload-document), and keep the `ref` it returns.
+3. **Upload the invoice** via [Upload Document](/api-reference/v3/b2b/upload-document), and keep the `ref` it returns. Classify first — the upload is routed by the payment's flow, so it is refused until step 1 has landed.
 4. **Send what you have** via [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
 5. Read the response: `status` says where the payment stands, and `outstanding` names what is still owed.
 6. Once nothing is outstanding the set is filed, the payment moves to `in_review`, and it settles from there.
@@ -96,14 +96,14 @@ Verification review is not the last compliance step. Once the money has reached 
 
 1. Upload each proof via [Upload Document](/api-reference/v3/b2b/upload-document) with `type=delivery_proof`, and keep each `ref`. You can do this before the payment settles — the upload endpoint does not wait on settlement.
 2. Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Only the submit refuses before settlement; [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) reads fine either way and reports `is_settled`.
-3. File them all with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement), sending `{"refs": [...]}`. One call resolves the refs, files them and locks the set. This flow takes **many** files under the single `delivery_proof` type, and needs at least one.
+3. File them with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement), sending `{"refs": [...]}`. One call names the set, drops any upload it does not name, and locks the result. This flow takes **many** files under the single `delivery_proof` type, and needs at least one.
 
 <Note>
-  **There is no attach step, and nothing to draft.** An upload is durable and scoped to your merchant account, so the refs you are holding *are* the draft — collect proof over days and send them when the set is ready. It is the same shape the verification step uses for its documents.
+  **There is no attach step, and nothing to draft.** An upload is durable and readable back, so the proofs you have uploaded *are* the draft — collect them over days, check them with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents), and send the refs when the set is ready. Each `ref` is bound to the payment it was uploaded against.
 </Note>
 
 <Warning>
-  **Submitting is final**, and the whole call is one transaction: a refused ref files nothing from that call. Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it — its `state` is `FRESH` until a submit lands, `SUBMITTED` after.
+  **Submitting is final**, `refs` is the whole set — an uploaded proof you do not name is dropped — and the whole call is one transaction: a refused ref files nothing and drops nothing. Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it; it lists what you have uploaded, and its `state` is `FRESH` until a submit lands, `SUBMITTED` after.
 </Warning>
 
 ## What this flow never asks for

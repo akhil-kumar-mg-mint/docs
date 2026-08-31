@@ -18,8 +18,25 @@ Uploads one file for a B2B services payment and answers with a **`ref`**. What y
 ```
 
 <Note>
-  **Two calls, not one.** Uploading a file does not answer a requirement; it stores a file. The requirement is answered when a later call names the `ref`. That separation is what lets the same upload endpoint serve both the verification step and the post-settlement one — and it is why neither step needs a draft of its own. An upload is durable and scoped to your merchant account, so a `ref` you are holding is your draft.
+  **Two calls, not one.** Uploading a file does not answer a requirement; it stores a file. The requirement is answered when a later call names the `ref`. That separation is what lets the same upload endpoint serve both the verification step and the post-settlement one — and it is why neither step needs a draft of its own. An upload is durable, so a `ref` you are holding is your draft.
 </Note>
+
+## Classify the payment first
+
+The `type` you may send depends on which flow the payment is in, so the payment has to be in one. A VBA credit arrives unclassified, and until you have sent its `business_model` and `purpose_code` through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) an upload is refused:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": "Invalid LRS request. This payment has no verification checklist, so there is no set of document types to accept; send the order's business model and purpose code first."
+  }
+}
+```
+
+Send the pair once and every later upload on that payment is routed for you. [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) tells you whether a payment is still waiting on it.
 
 ## The request
 
@@ -28,26 +45,37 @@ Uploads one file for a B2B services payment and answers with a **`ref`**. What y
 | Part | |
 |---|---|
 | `file` | The document itself. |
-| `type` | What kind of document it is — one of the codes below. |
+| `type` | What kind of document it is — one of the two codes below. |
 
 The path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint: your own payments, and your sub-merchants'.
 
 <Note>
-  **PSPs send `X-Merchant-ID`**, naming the settling sub-merchant. The stored file is scoped to the merchant that uploaded it, and every endpoint that later resolves the `ref` resolves it against that same merchant — mismatch them and the `ref` reads as unknown.
+  **PSPs send `X-Merchant-ID`**, naming the settling sub-merchant, exactly as on the verification endpoints.
 </Note>
 
 ## Document types
 
-B2B services uses two:
+B2B services uses two, and takes no others:
 
 | `type` | | Where it goes |
 |---|---|---|
 | `invoice` | Commercial invoice | The verification checklist |
 | `delivery_proof` | Evidence the service was delivered — a signed acceptance note, a milestone sign-off, a delivery confirmation, a timesheet | The post-settlement document set |
 
-The `type` you upload under is the type the file is filed under later. [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) takes no `doc_type` of its own — it reads this one — so a delivery proof uploaded as `invoice` is refused there with `ERR_B2B_SETTLEMENT_005`.
+The `type` decides where the file is stored, so it also decides which call can cite the resulting `ref`: an `invoice` ref is citable on [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details), a `delivery_proof` ref in `refs` on [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement). Cite one on the other call and it reads as unknown — `ERR_B2B_SETTLEMENT_001` on the settlement submit, `Unknown document ref.` on the verification one.
 
-The endpoint itself accepts every document code any flow defines, so an unknown-to-you code is not necessarily rejected. These two are the ones a B2B services payment has any use for.
+A `type` outside these two — including document codes other flows define, such as `passport` — is refused:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid B2B services request.",
+    "details": { "type": ["Unknown document type for this payment's flow; send one of: delivery_proof, invoice."] }
+  }
+}
+```
 
 <Warning>
   **`delivery_proof` is not a checklist item.** It never appears in [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements), because it is owed *after* settlement rather than before it. Do not go looking for it there.
@@ -84,9 +112,9 @@ Validated on upload, so a bad file fails here rather than at submit time.
 ```
 
 <ParamField path="ref" type="string" required>
-  The upload's identifier. Send it as `documents[].ref` on the verification submit, or in `refs` on the settlement submit.
+  The stored document's identifier. Send it as `documents[].ref` on the verification submit, or in `refs` on the settlement submit.
 
-  The stored file is scoped to **your merchant account**, not to the payment in the path — so a `ref` stays valid across a retried attempt, and a `ref` that is not yours reads as unknown rather than as someone else's file.
+  The file is stored against **the payment in the path**, so the `ref` is only citable from that payment. A `ref` from one of your other payments reads as unknown, exactly as a made-up one does — the answer never distinguishes the two.
 </ParamField>
 
 <ParamField path="type" type="string" required>
@@ -95,9 +123,11 @@ Validated on upload, so a bad file fails here rather than at submit time.
 
 ## Replacing a document
 
-Uploads are immutable. To replace the invoice, upload the file again — you get a new `ref` — and submit that `ref` under the same `code`. The newer row supersedes the older without discarding it.
+**The invoice: upload it again.** A payment has one commercial invoice, so a second `invoice` upload supersedes the first and the older `ref` stops resolving. You do not have to re-cite it: if you had already sent the earlier `ref` on the verification submit, the newest invoice is the one filed when the set completes.
 
-A delivery proof works the same way, with more room: nothing is filed until you [submit](/api-reference/v3/b2b/submit-settlement), so a `ref` you would rather not file is simply one you leave out of `refs`. Once the set is submitted it is locked, and neither the uploads nor the filed documents can be changed.
+**Delivery proofs accumulate.** Every `delivery_proof` upload adds a row, so you can collect them as they arrive — including before the payment settles. Nothing is filed until you [submit](/api-reference/v3/b2b/submit-settlement), and `refs` on that call is the whole set: an upload you would rather not file is simply one you leave out, and it is dropped.
+
+Once the settlement set is submitted it is locked. A further `delivery_proof` upload is refused with `ERR_B2B_SETTLEMENT_002`.
 
 ## No waivers on this flow
 
