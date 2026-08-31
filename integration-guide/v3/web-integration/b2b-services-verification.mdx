@@ -1,234 +1,113 @@
 ---
 title: "B2B Services Verification"
-description: "Make a collected B2B services payment compliant: classify it, read what it owes, upload the invoice, submit, and close the post-settlement document step."
+description: "Clear a B2B services payment for settlement: classify it, read what it needs, send the fields and the invoice, then close the document step after it settles."
 ---
 
-# Introduction
-
-A rupee credit into a VBA creates a payment in **Action Required**. When the buyer is a business paying for a **service** — consultancy, software, professional fees, freight — the payment is made compliant through the same generic verification endpoint every classified payment uses, with the B2B services requirement set.
-
-This guide walks that flow end to end: classify → read requirements → upload the invoice → submit → post-settlement documents.
-
-<Note>
-  **There is no PAN or identity step.** Unlike LRS (which verifies the remitter's PAN) and unlike B2B goods (which verifies the buyer's IEC), B2B services collects **no identity document at all**. The buyer name is a plain field you send — nothing is verified against an external register, and there is nothing to verify before you can proceed.
-</Note>
-
-<Note>
-  **PSP callers must send `X-Merchant-ID`** on every call, naming the settling sub-merchant.
-</Note>
-
-## Step 1: Classify the payment
-
-A payment with no `business_model` and `purpose_code` on its order has no requirement set yet. `GET` its verification and you get the classification stage back — the two facts to send, in the same shape checklist items use:
-
-```bash
-curl 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0'
-```
-
-```json
-{
-  "success": true,
-  "message": "Verification requirements",
-  "data": {
-    "payment_id": "PR6938527534",
-    "order_id": "OD3376378679",
-    "settlement_status": "ACTION_REQUIRED",
-    "business_model": null,
-    "purpose_code": null,
-    "fields": [
-      { "code": "business_model", "message": "Business model (B2B or B2C)", "satisfied": false, "provided": false },
-      { "code": "purpose_code", "message": "FEMA/FETERS purpose code for this order", "satisfied": false, "provided": false }
-    ],
-    "documents": []
-  }
-}
-```
-
-Send them through the same path's `POST`. They can ride along with everything else in one call, but nothing else can be validated until they land — so sending them first is the simplest thing to do:
-
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
-  -H 'Content-Type: application/json' \
-  -d '{ "fields": { "business_model": "B2B", "purpose_code": "S0802" }, "finalize": false }'
-```
+Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have the funds but we do not know what the service was or who bought it. We tell you exactly what it needs, you send it, and the payment completes itself once nothing is outstanding.
 
 <Info>
-  **Which purpose codes are B2B services?** `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106` — all against `business_model: "B2B"`. They share one requirement set. The code must also be one your settling entity is enabled for.
+  This is the services flow — consultancy, software, professional fees, freight. Physical goods ask for an HS code and the buyer's IEC, which this flow does not collect.
 </Info>
 
-## Step 2: Read what the payment owes
-
-With the payment classified, the same `GET` now returns the B2B services requirement set:
-
-```json
-{
-  "success": true,
-  "message": "Verification requirements",
-  "data": {
-    "payment_id": "PR6938527534",
-    "order_id": "OD3376378679",
-    "settlement_status": "ACTION_REQUIRED",
-    "business_model": "B2B",
-    "purpose_code": "S0802",
-    "fields": [
-      { "code": "buyer_name", "message": "Buyer / remitter name", "satisfied": true, "provided": true },
-      { "code": "buyer_address_line_1", "message": "Buyer address line 1", "satisfied": false, "provided": false },
-      { "code": "buyer_city", "message": "Buyer city", "satisfied": false, "provided": false },
-      { "code": "buyer_state", "message": "Buyer state", "satisfied": false, "provided": false },
-      { "code": "buyer_postal_code", "message": "Buyer PIN code", "satisfied": false, "provided": false },
-      { "code": "buyer_email", "message": "Buyer email", "satisfied": false, "provided": false },
-      { "code": "buyer_phone", "message": "Buyer phone", "satisfied": false, "provided": false },
-      { "code": "invoice_number", "message": "Invoice number", "satisfied": false, "provided": false },
-      { "code": "invoice_date", "message": "Invoice date", "satisfied": false, "provided": false }
-    ],
-    "documents": [
-      { "code": "invoice", "message": "Commercial invoice", "satisfied": false, "provided": false }
-    ]
-  }
-}
-```
-
-Nine fields and one document. What is still owed is the `satisfied: false` entries:
-
-```js
-const outstanding = [...data.fields, ...data.documents].filter(item => !item.satisfied)
-```
-
-`buyer_name` already reads `satisfied: true` here because the credit carried it — the requirement set accounts for what we already hold, so you only collect the rest.
-
 <Note>
-  **Do not hardcode the list.** Requirements are configuration. Reading them from this endpoint means a revision reaches your integration without a release on your side.
+  **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. The purpose codes you may declare come from that sub-merchant's account, not yours.
 </Note>
 
+## There is no identity step
+
+Worth saying before anything else, because it is what makes this flow short. LRS verifies the remitter's PAN against income-tax records; B2B goods verifies the buyer's IEC against DGFT. **B2B services verifies neither.** The buyer name is a plain field you send, checked against nothing external.
+
+Nothing has to clear before you can proceed, and there is no pre-payment step at all — no PAN to verify, no amount to quote. Everything happens after the money lands.
+
+## Once the money lands
+
+The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook names exactly what is still needed.
+
+From there it is one loop, repeated until nothing is outstanding:
+
+1. **Classify the payment** if nothing has yet. A VBA credit arrives with no `business_model` or `purpose_code` on its order, so there is no checklist to read — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) answers with those two facts as ordinary outstanding fields. Send them back under the same codes.
+2. **Read what it owes** from that same endpoint. Nine buyer and invoice fields, plus the commercial invoice. Some may already be satisfied — the credit usually carries `buyer_name`.
+3. **Upload the invoice** via [Upload Document](/api-reference/v3/lrs/upload-document), and keep the `ref` it returns.
+4. **Send what you have** via [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
+5. Read the response: `status` says where the payment stands, and `outstanding` names what is still owed.
+6. Once nothing is outstanding the set is filed, the payment moves to `in_review`, and it settles from there.
+
+If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the complete set, satisfied or not. It is idempotent, call it any time.
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
+    The full request body for B2B services, and every error.
+  </Card>
+  <Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
+    The full response shape, and what the services checklist asks for.
+  </Card>
+</CardGroup>
+
+## Declare what the service was
+
+Every services payment settles under one FEMA purpose code, and you pick exactly one: `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105` or `S1106`, all against `business_model: "B2B"`. They share one checklist.
+
 <Warning>
-  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, and we take it from the payment — there is no figure to declare and no key to send. Sending one is a `400`, like any unknown key.
+  **You can only send a code your merchant account is enabled for.** That list is set during KYC, from the business categories you declared. A valid code you are not enabled for is rejected just like one that does not exist — if the code you need is missing, that is an onboarding conversation, not an API problem.
 </Warning>
 
-## Step 3: Upload the invoice
+## When it doesn't go straight through
 
-Upload the commercial invoice and keep the `ref`:
-
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/documents/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
-  -F 'type=invoice' \
-  -F 'file=@invoice.pdf'
-```
-
-```json
-{
-  "success": true,
-  "message": "Document uploaded",
-  "data": { "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "type": "invoice" }
-}
-```
-
-## Step 4: Submit the details
-
-Send the remaining fields and the document `ref` under its checklist code. Partial sends merge, so you can spread this across calls — but the set only completes when nothing is outstanding.
-
-```bash
-curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "fields": {
-      "buyer_name": "Northwind Technologies Pvt Ltd",
-      "buyer_address_line_1": "7th Floor, Prestige Tower, Residency Road",
-      "buyer_city": "Bengaluru",
-      "buyer_state": "Karnataka",
-      "buyer_postal_code": "560025",
-      "buyer_email": "ap@northwind.co.in",
-      "buyer_phone": "+919876543210",
-      "invoice_number": "INV-2026-0041",
-      "invoice_date": "2026-08-01"
-    },
-    "documents": [
-      { "code": "invoice", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
-    ],
-    "finalize": true
-  }'
-```
-
-The response says where the payment stands:
-
-```json
-{
-  "success": true,
-  "message": "Verification details received",
-  "data": {
-    "payment_id": "PR6938527534",
-    "status": "in_review",
-    "outstanding": []
-  }
-}
-```
-
-| `status` | Meaning |
+| What happened | What to do |
 | :--- | :--- |
-| `incomplete` | Something is still owed — `outstanding` lists the codes. |
-| `complete` | Everything was sent, but the set was staged rather than filed (`finalize: false`). |
-| `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
-| `action_required` | The complete set was filed and refused. Fix what is named and re-submit. |
+| The payment has no checklist yet | Send `business_model` and `purpose_code`; the real requirement set appears on the next read |
+| Something is still missing | Send just those fields or documents — what you already sent is kept |
+| A field was refused on the finalizing call | Fix only the code the response names and send that again |
+| The invoice number was already used | It is unique per merchant across filed verifications; raise a new one |
+| The set was already filed | Staging is closed. Wait for it to be sent back, then correct it |
 
-<Note>
-  There is no separate "submit" endpoint. `finalize` defaults to `true` and applies only to a **complete** set — it never forces an incomplete one through. Pass `finalize: false` to stage while you are still collecting.
-</Note>
+## Four things that will bite you
+
+**The buyer is the Indian remitter, not your customer abroad.** `buyer_postal_code` is validated as a six-digit Indian PIN, so a foreign address is refused outright. This is the single most common way a first integration fails.
+
+**There is no amount to declare.** `invoice_amount` is not on the checklist — the amount that settles is the credit itself, read from the payment. There is no `principal`, no TCS, and no declaration field. All of them are a `400`, like any unknown key.
+
+**Partial sends merge.** Three fields today and two tomorrow is five fields. Nothing you sent earlier is wiped, so send each thing as you get it rather than waiting for the full set.
+
+**Editing closes the moment the set is filed.** While the payment is in review the fields and the invoice are frozen — no corrections, no swapping the file. If you spot a mistake after filing, wait for it to be sent back and fix it then.
+
+## After it settles: proof of delivery
+
+Verification review is not the last compliance step. Once the money has reached you, one thing is still owed: evidence that the service was actually delivered. It does not gate your settlement — it is what backs the remittance if the transaction is ever examined.
+
+1. Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Before that, the settlement-document endpoints refuse.
+2. Upload each proof via [Upload Document](/api-reference/v3/lrs/upload-document) with `type=delivery_proof`, and keep each `ref`.
+3. Attach them with [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document), once per file. This flow takes **many** files under the single `delivery_proof` type.
+4. Lock the set with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement). At least one file is required, and after this nothing can be attached or deleted.
 
 <Warning>
-  **Staging closes once the verification is filed.** After the payment reaches `UNDER_REVIEW`, a further `POST` is refused rather than quietly editing the record that was filed. If Ops send the payment back, it reopens.
+  **Submitting is final.** Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it — its `state` tells a draft from one already filed.
 </Warning>
-
-## Step 5: Post-settlement documents
-
-Verification review is not the last compliance step. Once the payment **settles**, B2B services owes proof that the service was delivered.
-
-<Steps>
-  <Step title="Wait for settlement">
-    [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) fires. Before that, the settlement-document endpoints refuse.
-  </Step>
-  <Step title="Upload each proof">
-    `POST /pg/payments/{payment_id}/documents/` with `type=delivery_proof`. Keep each `ref`.
-  </Step>
-  <Step title="Attach them">
-    [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document), once per file. B2B services takes **many** files under the single `delivery_proof` type.
-  </Step>
-  <Step title="Submit">
-    [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) locks the set. At least one `delivery_proof` is required, and after this nothing can be attached or deleted.
-  </Step>
-</Steps>
 
 ## How it differs from the other flows
 
-| | B2B services | B2B goods | LRS (B2C education / travel) |
+| | B2B services | B2B goods | LRS |
 | :--- | :--- | :--- | :--- |
 | Identity step | **none** | buyer IEC, verified against DGFT | remitter PAN, verified against income-tax records |
 | Buyer name | plain field you send | locked to the verified IEC | locked to the verified PAN |
 | HS code | never | always | never |
-| Declaration field | not collected via the API | — | `buyer_declaration` |
+| Amount to declare | none | `principal` | `principal` and `collected_tcs` |
 | Documents at verification | commercial invoice | commercial invoice | varies by purpose code |
 | Post-settlement documents | `delivery_proof`, many files | not available via the API | none |
-| Completion via partner API | yes | not yet | yes |
 
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Collection Overview" icon="route" href="/integration-guide/v3/web-integration/collection-overview">
+    How a payment moves from the buyer's bank to your account abroad.
+  </Card>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    What is attached so far, and whether the set is still a draft.
+  </Card>
   <Card title="Attach Settlement Document" icon="paperclip" href="/api-reference/v3/b2b/attach-settlement-document">
     Attach a delivery proof by its `ref`.
   </Card>
-  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
-    What is attached so far.
-  </Card>
   <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
     Lock the set once it is complete.
-  </Card>
-  <Card title="VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/verification-needed">
-    The event that names what a classified payment still owes.
   </Card>
 </CardGroup>

@@ -86,7 +86,7 @@ An empty `documents` array means nothing has been attached yet — not that noth
 
 Only **active** documents. A document you deleted is gone from this list and stays gone; deletion is a soft delete on our side, but there is no undelete through the API — attach the file again.
 
-## When it is refused
+## Errors
 
 Reading the set is refused only when the payment itself does not qualify. Both cases are a `400` carrying `40360`; the `details` string says which.
 
