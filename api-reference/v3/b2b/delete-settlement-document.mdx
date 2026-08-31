@@ -32,7 +32,7 @@ curl -X DELETE 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlem
 
 `document_id` comes from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) or from the attach response. An id that is not an active document on this payment reads as not found.
 
-## When it is refused
+## Errors
 
 Every refusal is a `400` in the standard envelope:
 
@@ -51,7 +51,6 @@ Every refusal is a `400` in the standard envelope:
 |---|---|---|
 | Unknown `document_id`, or not an active document on this payment | `ERR_B2B_SETTLEMENT_001` | Re-read the list; a deleted document stays gone. |
 | The set has already been submitted | `ERR_B2B_SETTLEMENT_002` | It is locked. Check `state` before deleting, not after. |
-| The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Nothing can be attached or deleted before settlement. |
 | `document_id` is longer than 15 characters, or not alphanumeric/dash | `40359` | `details` is keyed by field: `{"document_id": "Ensure this field has no more than 15 characters."}`. |
 | The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
 | The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |

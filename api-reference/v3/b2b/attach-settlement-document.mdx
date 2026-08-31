@@ -48,10 +48,13 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlemen
   "data": {
     "document_id": "0f7c2a1e9b4d4c8e",
     "doc_type": "delivery_proof",
-    "file_name": "delivery-note.pdf"
+    "file_name": "delivery-note.pdf",
+    "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"
   }
 }
 ```
+
+`201` on success. The body is the same shape [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) returns per document, `file` included — a pre-signed, time-limited URL. Do not store it; it expires.
 
 ## Attach many
 
@@ -59,7 +62,7 @@ B2B services takes **any number of files under `delivery_proof`**. Call this onc
 
 Attaching the same `ref` under the same `doc_type` twice does not create a second row; you get the existing one back. That makes a retried call safe.
 
-## When it is refused
+## Errors
 
 Every refusal is a `400` in the standard envelope:
 
@@ -78,7 +81,7 @@ Every refusal is a `400` in the standard envelope:
 |---|---|---|
 | The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Post-settlement documents only exist after settlement. |
 | The set has already been submitted | `ERR_B2B_SETTLEMENT_002` | It is locked. Nothing further can be attached or deleted. |
-| `doc_type` is not `delivery_proof` | `40359` | That is the only type B2B services defines. `details` is keyed by field: `{"doc_type": "Unknown document type."}`. |
+| `doc_type` is not `delivery_proof` | `ERR_B2B_SETTLEMENT_005` | That is the only type B2B services defines. Judged before the payment's own state, so an unknown type is answered for even on a set that is locked or not yet settled. |
 | The `ref` is unknown | `ERR_B2B_SETTLEMENT_001` | A `ref` that is not your own reads as unknown. Upload the file under the calling merchant — PSPs must send `X-Merchant-ID` naming the settling sub-merchant. |
 | The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
 | The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
