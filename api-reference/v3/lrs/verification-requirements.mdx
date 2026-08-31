@@ -492,42 +492,8 @@ Documents, per purpose code:
 | `S0101` — goods | `product_description`, `iec`, and `hs_code` (conditional: physical goods) | `invoice` |
 | `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | none | `invoice` |
 
-<Note>
-  **Services asks for no identity.** Goods verifies the buyer's IEC and LRS verifies the remitter's PAN; services verifies neither. `buyer_name` is a plain value you send, checked against nothing external — so there is no step to clear before you can submit.
-</Note>
-
-A complete B2B-services requirement set is therefore the common nine fields and one document:
-
-```json S0802 — B2B services
-{
-  "success": true,
-  "message": "Verification requirements",
-  "data": {
-    "payment_id": "PR6938527534",
-    "order_id": "OD3376378679",
-    "settlement_status": "ACTION_REQUIRED",
-    "business_model": "B2B",
-    "purpose_code": "S0802",
-    "fields": [
-      { "code": "buyer_name", "message": "Buyer / remitter name", "satisfied": true, "provided": true },
-      { "code": "buyer_address_line_1", "message": "Buyer address line 1", "satisfied": false, "provided": false },
-      { "code": "buyer_city", "message": "Buyer city", "satisfied": false, "provided": false },
-      { "code": "buyer_state", "message": "Buyer state", "satisfied": false, "provided": false },
-      { "code": "buyer_postal_code", "message": "Buyer PIN code", "satisfied": false, "provided": false },
-      { "code": "buyer_email", "message": "Buyer email", "satisfied": false, "provided": false },
-      { "code": "buyer_phone", "message": "Buyer phone", "satisfied": false, "provided": false },
-      { "code": "invoice_number", "message": "Invoice number", "satisfied": false, "provided": false },
-      { "code": "invoice_date", "message": "Invoice date", "satisfied": false, "provided": false }
-    ],
-    "documents": [
-      { "code": "invoice", "message": "Commercial invoice", "satisfied": false, "provided": false }
-    ]
-  }
-}
-```
-
 <Info>
-  B2B services is walked end to end — including the post-settlement delivery-proof step that follows review — in [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
+  **The services row has its own page.** Its full response, the nine fields it asks for and why it collects no identity document are on [Get Verification Requirements — B2B Services](/api-reference/v3/b2b/verification-requirements).
 </Info>
 
 ## The requirement set can grow

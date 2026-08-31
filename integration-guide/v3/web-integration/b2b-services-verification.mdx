@@ -25,20 +25,20 @@ The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-
 
 From there it is one loop, repeated until nothing is outstanding:
 
-1. **Classify the payment** if nothing has yet. A VBA credit arrives with no `business_model` or `purpose_code` on its order, so there is no checklist to read — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) answers with those two facts as ordinary outstanding fields. Send them back under the same codes.
+1. **Classify the payment** if nothing has yet. A VBA credit arrives with no `business_model` or `purpose_code` on its order, so there is no checklist to read — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) answers with those two facts as ordinary outstanding fields. Send them back under the same codes.
 2. **Read what it owes** from that same endpoint. Nine buyer and invoice fields, plus the commercial invoice. Some may already be satisfied — the credit usually carries `buyer_name`.
-3. **Upload the invoice** via [Upload Document](/api-reference/v3/lrs/upload-document), and keep the `ref` it returns.
-4. **Send what you have** via [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
+3. **Upload the invoice** via [Upload Document](/api-reference/v3/b2b/upload-document), and keep the `ref` it returns.
+4. **Send what you have** via [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
 5. Read the response: `status` says where the payment stands, and `outstanding` names what is still owed.
 6. Once nothing is outstanding the set is filed, the payment moves to `in_review`, and it settles from there.
 
-If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the complete set, satisfied or not. It is idempotent, call it any time.
+If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent, call it any time.
 
 <CardGroup cols={2}>
-  <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
+  <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/b2b/submit-verification-details">
     The full request body for B2B services, and every error.
   </Card>
-  <Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/lrs/verification-requirements">
+  <Card title="Get Verification Requirements" icon="code" href="/api-reference/v3/b2b/verification-requirements">
     The full response shape, and what the services checklist asks for.
   </Card>
 </CardGroup>
@@ -76,7 +76,7 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 Verification review is not the last compliance step. Once the money has reached you, one thing is still owed: evidence that the service was actually delivered. It does not gate your settlement — it is what backs the remittance if the transaction is ever examined.
 
 1. Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). Before that, the settlement-document endpoints refuse.
-2. Upload each proof via [Upload Document](/api-reference/v3/lrs/upload-document) with `type=delivery_proof`, and keep each `ref`.
+2. Upload each proof via [Upload Document](/api-reference/v3/b2b/upload-document) with `type=delivery_proof`, and keep each `ref`.
 3. Attach them with [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document), once per file. This flow takes **many** files under the single `delivery_proof` type.
 4. Lock the set with [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement). At least one file is required, and after this nothing can be attached or deleted.
 

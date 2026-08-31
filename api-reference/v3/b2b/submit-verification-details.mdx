@@ -1,0 +1,264 @@
+---
+title: 'Submit B2B Services Verification Details'
+description: "What a B2B services payment is asked for, and how to send it — the buyer, the invoice fields, and the commercial invoice. No identity, no amount, no tax."
+openapi: 'POST /pg/payments/{payment_id}/verification/'
+---
+
+## Overview
+
+A B2B services payment answers a short list: who the buyer is, which invoice this is, and the invoice itself. **No identity document, no amount to declare, no tax.** This page is that list, and what happens once it is complete.
+
+<Note>
+  **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers.
+</Note>
+
+Send details keyed by the same codes that [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook use. There is nothing to map between them — every one of those places names an item under `code`.
+
+<Note>
+  **JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/b2b/upload-document). Files are never posted to this endpoint.
+</Note>
+
+## The loop
+
+<Steps>
+  <Step title="An event arrives">
+    [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) lists what the payment owes — each entry a code and a sentence.
+  </Step>
+  <Step title="You classify it, if nothing has">
+    A VBA credit arrives unclassified. Send `business_model` and `purpose_code` before anything else can be checked.
+  </Step>
+  <Step title="You upload the invoice">
+    [Upload Document](/api-reference/v3/b2b/upload-document) returns a `ref`.
+  </Step>
+  <Step title="You send what you have">
+    Fields as a map, the invoice as `{code, ref}`. Partial is fine — later sends merge over earlier ones.
+  </Step>
+  <Step title="You read where the payment stands">
+    The response says both: a `status`, and `outstanding` — the codes still owed after this write.
+  </Step>
+</Steps>
+
+## Classify it first
+
+A payment with no `business_model` and `purpose_code` on its order has no requirement set, so nothing else about it can be validated. Both travel together:
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{ "fields": { "business_model": "B2B", "purpose_code": "S0802" }, "finalize": false }'
+```
+
+They can ride along with everything else in one call, but sending them first is the simplest thing to do.
+
+<Warning>
+  **`business_model` and `purpose_code` must travel together, and only once.** Send one without the other and the call is refused naming the one you left out. Once set, sending either again is a `400` — `Already set on the order; it cannot be changed here.`
+</Warning>
+
+<Info>
+  **Which codes are B2B services?** `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106` — all against `business_model: "B2B"`. They share one requirement set. The code must also be one your settling entity is enabled for; a valid code you are not enabled for is rejected just like one that does not exist.
+</Info>
+
+## The complete body
+
+Nine fields and one document. This is the whole of it:
+
+```json S0802 — B2B services
+{
+  "fields": {
+    "buyer_name": "Northwind Technologies Pvt Ltd",
+    "buyer_address_line_1": "7th Floor, Prestige Tower, Residency Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560025",
+    "buyer_email": "ap@northwind.co.in",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01"
+  },
+  "documents": [
+    { "code": "invoice", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
+  ],
+  "finalize": true
+}
+```
+
+<Warning>
+  **The buyer is the Indian remitter, not your customer abroad.** `buyer_postal_code` is validated as a six-digit Indian PIN, so a foreign address is refused outright — `{"buyer_postal_code": "Enter a valid Indian PIN code."}`. This is the single most common way a first integration fails.
+</Warning>
+
+<Note>
+  **No amount and no declaration key.** There is no `principal` and no `collected_tcs`: the amount that settles is the credit itself, read from the payment, and TCS does not apply outside LRS. The declaration is recorded by the act of filing a complete set rather than sent as a field. All three are `400`s if you send them.
+</Note>
+
+## Values
+
+Field values are strings.
+
+| Kind | Send |
+|---|---|
+| `invoice_date` | `YYYY-MM-DD` |
+| `buyer_postal_code` | A six-digit Indian PIN code |
+| `business_model` | `B2B`. Case-insensitive. |
+| `purpose_code` | One of the eleven services codes your merchant account is allow-listed for. Case-insensitive. |
+
+<Warning>
+  **An unknown key is a `400`, not a silent drop.** A misspelled `invoice_number` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
+</Warning>
+
+Omit a key rather than sending `null` or an empty string — a blank value is itself a `400`, with the same reasoning.
+
+### Documents
+
+One entry, naming the invoice's checklist code and the `ref` you got from [Upload Document](/api-reference/v3/b2b/upload-document):
+
+| Key | |
+|---|---|
+| `code` | `invoice` — the only document this set asks for. |
+| `ref` | A `ref` returned by Upload Document. |
+
+Sending the same code twice in one call is a `400`. Sending it again in a **later** call is fine — the newer ref replaces the earlier row.
+
+<Note>
+  **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file.
+</Note>
+
+## Partial sends are merged
+
+Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins.
+
+<Note>
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the verification filed yet.
+</Note>
+
+<Warning>
+  **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends — the staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/b2b/verification-requirements) the same path to read `settlement_status` before you send.
+</Warning>
+
+## The response
+
+Three keys, whatever you sent:
+
+<CodeGroup>
+
+```json Still owed
+{
+  "success": true,
+  "message": "Verification details received",
+  "data": {
+    "payment_id": "PR6938527534",
+    "status": "incomplete",
+    "outstanding": ["buyer_city", "invoice"]
+  }
+}
+```
+
+```json Filed
+{
+  "success": true,
+  "message": "Verification details received",
+  "data": {
+    "payment_id": "PR6938527534",
+    "status": "in_review",
+    "outstanding": []
+  }
+}
+```
+
+</CodeGroup>
+
+| `status` | Meaning |
+|---|---|
+| `incomplete` | Something is still owed — `outstanding` lists the codes. |
+| `complete` | Everything was sent, but the set was staged rather than filed (`finalize: false`). |
+| `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
+| `action_required` | The complete set was filed and refused. Fix what is named and re-submit. |
+
+<Warning>
+  **`action_required` never means your details were discarded.** Everything that reached us is held against the payment. You re-send the one thing that failed, not the whole set.
+</Warning>
+
+## Completion
+
+A complete B2B services set hands off to its own verification gateway, and `in_review` is what says it got there. That handoff is also what writes the staged values onto the order — which is why a second group of refusals only appears on the finalizing call.
+
+## Errors
+
+Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+
+| `error.code` | When |
+|---|---|
+| `40359` | The send itself is wrong — see the messages below. Also: the payment has no requirement set, and you did not send the classifying pair. |
+| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. |
+
+A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": {
+      "buyer_citty": "Not a requirement of this payment's checklist.",
+      "invoice": "This is a document code; send it under 'documents'."
+    }
+  }
+}
+```
+
+| Message | Cause |
+|---|---|
+| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `principal`, `invoice_amount` and `remitter_pan` all land here. |
+| `This is a document code; send it under 'documents'.` | `invoice` appeared as a key in `fields`. |
+| `This is a field code; send it under 'fields'.` | The reverse. |
+| `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
+| `Sent more than once in this call.` | The same document code twice in one `documents` array. |
+| `Unknown document ref.` | The `ref` is not one of your uploads. A `ref` uploaded under a different merchant reads as unknown. |
+| `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
+
+### Raised only by the call that files
+
+A second group appears only when a complete set is filed, as the staged values are read for the gateway and written onto the order:
+
+| Message | Cause |
+|---|---|
+| `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
+| `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a six-digit Indian PIN. |
+
+A duplicate invoice number is the one refusal here whose `details` is a flat string rather than keyed by code:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": "Invoice number already exists."
+  }
+}
+```
+
+<Note>
+  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that staged it.
+
+  These all arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date — or writes anything to the order — until the set is complete. Your details are still saved; fix the named code and re-send only that.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/b2b/verification-requirements">
+    What this payment is asked for, and what is already satisfied.
+  </Card>
+  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
+    Upload the commercial invoice and keep its `ref`.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    The step that opens once the payment settles.
+  </Card>
+</CardGroup>
