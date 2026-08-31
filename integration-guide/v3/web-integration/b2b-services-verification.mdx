@@ -21,7 +21,11 @@ Nothing has to clear before you can proceed, and there is no pre-payment step at
 
 ## Once the money lands
 
-The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook names exactly what is still needed.
+The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook arrives naming what is outstanding, as a flat array of codes in `action_required_fields`.
+
+<Warning>
+  **Treat that first list as a nudge, not the requirement set.** The credit arrives before anything has classified the payment, so no requirement set claims it yet and the event falls back to a legacy order-field check — it can name `product_description` and `hs_code`, which this flow never asks for. Classify the payment, then read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements). A second event, `PAYMENT_DETAILS_MISSING`, follows the classifying call with the same flat list; it tells you nothing the `GET` does not, so you can ignore it.
+</Warning>
 
 From there it is one loop, repeated until nothing is outstanding:
 
@@ -59,7 +63,7 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 | Something is still missing | Send just those fields or documents — what you already sent is kept |
 | A field was refused on the finalizing call | Fix only the code the response names and send that again |
 | The invoice number was already used | It is unique per merchant across filed verifications; raise a new one |
-| The set was already filed | Staging is closed. Wait for it to be sent back, then correct it |
+| The set was already filed | Staging is closed. Wait for it to be sent back, then correct it — see below for how you learn that |
 
 ## Four things that will bite you
 
@@ -70,6 +74,17 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 **Partial sends merge.** Three fields today and two tomorrow is five fields. Nothing you sent earlier is wiped, so send each thing as you get it rather than waiting for the full set.
 
 **Editing closes the moment the set is filed.** While the payment is in review the fields and the invoice are frozen — no corrections, no swapping the file. If you spot a mistake after filing, wait for it to be sent back and fix it then.
+
+## While it is in review
+
+Ops either approves the verification, sends it back for changes, or rejects it. **None of the three raises a webhook** — poll [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and read `settlement_status`:
+
+| What you see | What happened | What you do |
+| :--- | :--- | :--- |
+| `UNDER_REVIEW` | Still with Ops, or approved — approval does not change this value | Nothing; wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) |
+| back to `ACTION_REQUIRED` | Sent back for changes. Staging has reopened | Re-read the set, correct what is wrong, and file again |
+
+A **rejection** does not move `settlement_status` either: the payment stays `UNDER_REVIEW` and a full refund is raised automatically. You will see it as a refund rather than as a verification state, so reconcile rejections against your refunds, not against this endpoint.
 
 ## After it settles: proof of delivery
 

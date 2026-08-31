@@ -10,7 +10,11 @@ Returns the verification requirements for one B2B services payment: every field 
 
 The requirement set is chosen by two facts on the order — its **business model** and its **purpose code**. Until both are declared no set claims the payment, and this endpoint asks for them instead.
 
-The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook lists what a payment is **missing**. This returns the **whole** set. Both describe the same items in the same shape, from the same read — an entry here is an entry there plus `satisfied` and `provided`.
+The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook lists what a payment is **missing**, as a flat array of codes in `action_required_fields`. This returns the **whole** set, each item an object carrying `message`, `satisfied` and `provided`. The codes are shared — an item the event names is an item you send back under the same key — but the shapes are not, so build your form from here rather than from the event.
+
+<Warning>
+  **Before the payment is classified, the event is not reading this set.** No requirement set claims an unclassified payment, so `VERIFICATION_NEEDED` falls back to a legacy order-field check and can name `product_description` and `hs_code` — goods fields this flow never asks for. Ignore them, [classify the payment](/api-reference/v3/b2b/submit-verification-details#classify-it-first), and read the real set from here.
+</Warning>
 
 <Note>
   **Do not hardcode the field list.** Requirements are configuration, not code, and are revised as the underlying regulatory matrix is. Reading them from here means a revision reaches your integration without a release on your side.
@@ -145,7 +149,7 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 <ParamField path="message" type="string" required>
   A human-readable description of the item, safe to render to a user.
 
-  The same key on a [submit-failure event](/api-reference/v3/webhooks/verification-needed) carries a sentence about what went wrong instead. One key, always the plainest thing there is to say about the item.
+  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code — this flow raises no submit-failure event, so there is no second place this key means something else.
 </ParamField>
 
 <ParamField path="satisfied" type="boolean" required>

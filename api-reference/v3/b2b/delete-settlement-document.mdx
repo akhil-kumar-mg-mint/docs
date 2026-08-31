@@ -9,7 +9,7 @@ openapi: 'DELETE /pg/payments/{payment_id}/settlement-documents/{document_id}/'
 Detaches one post-settlement compliance document. Use it to replace a file you attached by mistake before submitting the set.
 
 ```bash
-curl -X DELETE 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement-documents/0f7c2a1e9b4d4c8e/' \
+curl -X DELETE 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement-documents/4193006825/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0'
 ```
@@ -18,7 +18,7 @@ curl -X DELETE 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlem
 {
   "success": true,
   "message": "Document deleted",
-  "data": null
+  "data": {}
 }
 ```
 

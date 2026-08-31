@@ -12,7 +12,7 @@ A B2B services payment answers a short list: who the buyer is, which invoice thi
   **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers.
 </Note>
 
-Send details keyed by the same codes that [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook use. There is nothing to map between them — every one of those places names an item under `code`.
+Send details keyed by the same codes that [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook use. There is nothing to map between them — the `GET` names an item under `code`, the event names the same string in `action_required_fields`, and this endpoint takes it back under that key.
 
 <Note>
   **JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/b2b/upload-document). Files are never posted to this endpoint.
@@ -22,7 +22,7 @@ Send details keyed by the same codes that [Get Verification Requirements](/api-r
 
 <Steps>
   <Step title="An event arrives">
-    [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) lists what the payment owes — each entry a code and a sentence.
+    [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) lists what the payment owes, as a flat array of codes in `action_required_fields`. While the payment is still unclassified that list is a legacy order-field check and can name `product_description` and `hs_code`, which this flow never asks for — classify the payment, then read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements).
   </Step>
   <Step title="You classify it, if nothing has">
     A VBA credit arrives unclassified. Send `business_model` and `purpose_code` before anything else can be checked.
@@ -78,7 +78,7 @@ Nine fields and one document. This is the whole of it:
     "invoice_date": "2026-08-01"
   },
   "documents": [
-    { "code": "invoice", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }
+    { "code": "invoice", "ref": "8207383264" }
   ],
   "finalize": true
 }
@@ -173,10 +173,13 @@ Three keys, whatever you sent:
 | `incomplete` | Something is still owed — `outstanding` lists the codes. |
 | `complete` | Everything was sent, but the set was staged rather than filed (`finalize: false`). |
 | `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
-| `action_required` | The complete set was filed and refused. Fix what is named and re-submit. |
+
+<Note>
+  **There is no `action_required` on this flow.** A complete set either files — `in_review` — or is refused with a `400` naming what to fix. That fourth value belongs to the LRS gateway, which returns a verdict this one does not; do not write a branch for it.
+</Note>
 
 <Warning>
-  **`action_required` never means your details were discarded.** Everything that reached us is held against the payment. You re-send the one thing that failed, not the whole set.
+  **A refusal never discards your details.** Everything you sent is staged against the payment before the filing is attempted, so a `400` on the finalizing call costs you a re-send of the one thing that failed, not the whole set.
 </Warning>
 
 ## Completion
@@ -225,15 +228,16 @@ A second group appears only when a complete set is filed, as the staged values a
 | Message | Cause |
 |---|---|
 | `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
+| `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a PIN code in the India Post directory. A foreign postal code lands here — the buyer is the Indian remitter, not your customer abroad. |
 
-Filing is also what writes the staged buyer and invoice fields onto the order. `invoice_number` is unique per merchant, so a collision surfaces here — under its own code, not `40359`:
+Filing is also what writes the staged buyer and invoice fields onto the order, and the order validates them on write — which is where that PIN code is judged. `invoice_number` is unique per merchant, so a collision surfaces here too. Like every other refusal on this endpoint it answers under `40359`, with the reason in `details`:
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "ERR_IMPORT_VERIFICATION_001",
-    "message": "Invoice number already exists.",
+    "code": 40359,
+    "message": "Invalid LRS request.",
     "details": "Invoice number already exists."
   }
 }

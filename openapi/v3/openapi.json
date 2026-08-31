@@ -2735,7 +2735,7 @@
                   },
                   "type": {
                     "type": "string",
-                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised. `delivery_proof` is the one type here that no checklist asks for: it is a post-settlement compliance document, uploaded through this endpoint and then attached by `ref` to [Attach a post-settlement document](/api-reference/v3/b2b-verification/attach-settlement-document).",
+                    "description": "Document type — one of the codes the checklists ask for, so the value you upload under is the value you submit under. Read the ones this payment actually needs from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) rather than mapping this list into your code: it is the complete set any checklist can ask for, and it grows as the regulatory matrix is revised. `delivery_proof` is the one type here that no checklist asks for: it is a post-settlement compliance document, uploaded through this endpoint and then attached by `ref` to [Attach a post-settlement document](/api-reference/v3/b2b/attach-settlement-document).",
                     "enum": [
                       "offer_letter",
                       "passport",
@@ -3904,7 +3904,7 @@
                               "document_id": {
                                 "type": "string",
                                 "description": "UID of the attached document. Pass it as `document_id` to delete.",
-                                "example": "0f7c2a1e9b4d4c8e"
+                                "example": "4193006825"
                               },
                               "doc_type": {
                                 "type": "string",
@@ -4048,7 +4048,7 @@
                         "document_id": {
                           "type": "string",
                           "description": "UID of the attached document. Pass it as `document_id` to delete.",
-                          "example": "0f7c2a1e9b4d4c8e"
+                          "example": "4193006825"
                         },
                         "doc_type": {
                           "type": "string",
@@ -4191,7 +4191,7 @@
               "maxLength": 15
             },
             "description": "`document_id` from the list or attach response.",
-            "example": "0f7c2a1e9b4d4c8e"
+            "example": "4193006825"
           }
         ],
         "responses": {

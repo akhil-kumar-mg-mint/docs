@@ -29,14 +29,14 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/documents
   -F 'type=delivery_proof' \
   -F 'file=@delivery-note.pdf'
 # → { "success": true, "message": "Document uploaded",
-#     "data": { "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d", "type": "delivery_proof" } }
+#     "data": { "ref": "8207383264", "type": "delivery_proof" } }
 
 # 2. attach
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlement-documents/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
-  -d '{ "doc_type": "delivery_proof", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }'
+  -d '{ "doc_type": "delivery_proof", "ref": "8207383264" }'
 ```
 
 ## Response
@@ -46,7 +46,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlemen
   "success": true,
   "message": "Document attached",
   "data": {
-    "document_id": "0f7c2a1e9b4d4c8e",
+    "document_id": "4193006825",
     "doc_type": "delivery_proof",
     "file_name": "delivery-note.pdf",
     "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"

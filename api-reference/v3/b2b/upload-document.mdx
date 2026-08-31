@@ -14,7 +14,7 @@ Uploads one file for a B2B services payment and answers with a **`ref`**. What y
 | a delivery proof, after the payment settles | attach the `ref` to the settlement submission | [Attach Settlement Document](/api-reference/v3/b2b/attach-settlement-document) |
 
 ```json
-{ "documents": [{ "code": "invoice", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }] }
+{ "documents": [{ "code": "invoice", "ref": "8207383264" }] }
 ```
 
 <Note>
@@ -70,7 +70,7 @@ Validated on upload, so a bad file fails here rather than at submit time.
   "success": true,
   "message": "Document uploaded",
   "data": {
-    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "ref": "8207383264",
     "type": "invoice"
   }
 }
