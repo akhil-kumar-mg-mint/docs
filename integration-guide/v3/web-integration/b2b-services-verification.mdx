@@ -15,7 +15,7 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
 
 ## There is no identity step
 
-Worth saying before anything else, because it is what makes this flow short. LRS verifies the remitter's PAN against income-tax records; B2B goods verifies the buyer's IEC against DGFT. **B2B services verifies neither.** The buyer name is a plain field you send, checked against nothing external.
+Worth saying before anything else, because it is what makes this flow short. **Nothing you send is verified against an external register** — no PAN, no IEC, no registration number. The buyer name is a plain field you send, checked against nothing.
 
 Nothing has to clear before you can proceed, and there is no pre-payment step at all — no PAN to verify, no amount to quote. Everything happens after the money lands.
 
@@ -99,16 +99,19 @@ Verification review is not the last compliance step. Once the money has reached 
   **Submitting is final.** Read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you lock it — its `state` tells a draft from one already filed.
 </Warning>
 
-## How it differs from the other flows
+## What this flow never asks for
 
-| | B2B services | B2B goods | LRS |
-| :--- | :--- | :--- | :--- |
-| Identity step | **none** | buyer IEC, verified against DGFT | remitter PAN, verified against income-tax records |
-| Buyer name | plain field you send | locked to the verified IEC | locked to the verified PAN |
-| HS code | never | always | never |
-| Amount to declare | none | `principal` | `principal` and `collected_tcs` |
-| Documents at verification | commercial invoice | commercial invoice | varies by purpose code |
-| Post-settlement documents | `delivery_proof`, many files | not available via the API | none |
+Integrations go wrong here more often by sending something extra than by leaving something out. The complete list of what has no place in a B2B services payment:
+
+| | |
+| :--- | :--- |
+| Identity verification | None. No PAN, no IEC, no external register to clear. |
+| HS code | Never. HS codes describe physical goods crossing a border. |
+| Amount to declare | None. What settles is the credit itself, read from the payment. |
+| Tax | None. Nothing is collected on top of the credit. |
+| Declaration field | None. Filing a complete set is the declaration. |
+
+Every one of them is a `400` if you send it, the same as any unknown key.
 
 ## Related
 

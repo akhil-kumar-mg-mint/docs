@@ -201,11 +201,11 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 | Documents | `invoice` |
 
 <Note>
-  **No identity item at all.** LRS verifies the remitter's PAN and B2B goods verifies the buyer's IEC. This set verifies neither — `buyer_name` is a plain value you send, checked against nothing external, so there is no step to clear before you can submit.
+  **No identity item at all.** Nothing in this set is checked against an external register — no PAN, no IEC, no registration number. `buyer_name` is a plain value you send, so there is no step to clear before you can submit.
 </Note>
 
 <Warning>
-  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment. There is no figure to declare and no key to send — and no `principal` or `collected_tcs` either, which are LRS-only. Sending any of them is a `400`, like any unknown key.
+  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount`, `principal` and `collected_tcs` are all unknown keys here, and sending any of them is a `400`.
 </Warning>
 
 <Warning>

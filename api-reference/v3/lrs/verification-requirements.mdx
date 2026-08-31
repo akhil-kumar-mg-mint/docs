@@ -492,10 +492,6 @@ Documents, per purpose code:
 | `S0101` — goods | `product_description`, `iec`, and `hs_code` (conditional: physical goods) | `invoice` |
 | `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | none | `invoice` |
 
-<Info>
-  **The services row has its own page.** Its full response, the nine fields it asks for and why it collects no identity document are on [Get Verification Requirements — B2B Services](/api-reference/v3/b2b/verification-requirements).
-</Info>
-
 ## The requirement set can grow
 
 Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the three `primary_person_*` fields and the relationship self-declaration to `satisfied: false`, because they are only owed in that case.

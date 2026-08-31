@@ -89,7 +89,7 @@ Nine fields and one document. This is the whole of it:
 </Warning>
 
 <Note>
-  **No amount and no declaration key.** There is no `principal` and no `collected_tcs`: the amount that settles is the credit itself, read from the payment, and TCS does not apply outside LRS. The declaration is recorded by the act of filing a complete set rather than sent as a field. All three are `400`s if you send them.
+  **No amount and no declaration key.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top — so there is no `principal` and no `collected_tcs` to send. The declaration is recorded by the act of filing a complete set rather than sent as a field. All three are `400`s if you send them.
 </Note>
 
 ## Values
@@ -175,7 +175,7 @@ Three keys, whatever you sent:
 | `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
 
 <Note>
-  **There is no `action_required` on this flow.** A complete set either files — `in_review` — or is refused with a `400` naming what to fix. That fourth value belongs to the LRS gateway, which returns a verdict this one does not; do not write a branch for it.
+  **Three values, not four.** A complete set either files — `in_review` — or is refused with a `400` naming what to fix. There is no `action_required` here; do not write a branch for a value you will never receive.
 </Note>
 
 <Warning>

@@ -51,10 +51,6 @@ The path resolves the payment before anything is stored, under the same ownershi
   **Read the types you actually need from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)** rather than mapping this table into your code. It is the complete set any checklist can ask for, not the set *this* payment asks for, and it grows as the regulatory matrix is revised.
 </Warning>
 
-<Note>
-  **The endpoint accepts more than the LRS codes.** Every checklist's document codes go through this one route, plus the post-settlement compliance types — a B2B services `delivery_proof` is uploaded here and then attached, not sent under a checklist code. Those are covered on [Upload Document — B2B Services](/api-reference/v3/b2b/upload-document).
-</Note>
-
 ## The file
 
 Validated on upload, so a bad file fails here rather than at submit time.

@@ -178,10 +178,6 @@ Complete bodies for every LRS purpose code, built from the live checklists:
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
 </Warning>
 
-### B2B services is not on this page
-
-The same envelope carries the non-LRS checklists, but what they ask for is different enough to be its own page. A B2B services payment has **no identity item at all** — no `remitter_pan`, no `iec` — and no amount to declare. See [Submit B2B Services Verification Details](/api-reference/v3/b2b/submit-verification-details).
-
 ## Values
 
 Field values are strings, numbers or booleans.
@@ -328,7 +324,7 @@ The verdict arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lr
 When a complete set is filed it runs through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. `in_review` means all of that passed.
 
 <Note>
-  **Not every checklist has a gateway handoff.** LRS and B2B services do — both answer `in_review` once a complete set is filed. A checklist with no gateway answers `complete` and stops there.
+  **A complete LRS set is always filed.** Sending the last outstanding item triggers verification on that same call, so the response answers `in_review` or `action_required` rather than `complete`. You only see `complete` here if you held the filing back with `finalize: false`.
 </Note>
 
 ### When the handoff itself does not happen

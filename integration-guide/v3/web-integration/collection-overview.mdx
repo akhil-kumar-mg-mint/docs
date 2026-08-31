@@ -81,7 +81,7 @@ These are not the same number, and mixing them up is the most common way a payme
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
 <Note>
-  **This split is an LRS thing.** A B2B services payment has no `principal` to declare and no tax to quote — the amount that settles is the credit itself, read from the payment. There is nothing to reconcile and nothing to get wrong.
+  **Which flow this applies to.** Declaring a `principal` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares no amount at all: what settles is the credit itself, read from the payment.
 </Note>
 
 ## Payment statuses
