@@ -377,12 +377,6 @@
                   "integration-guide/v3/web-integration/lrs-compliance",
                   "integration-guide/v3/web-integration/lrs-verification"
                 ]
-              },
-              {
-                "group": "B2B Services (Business Payments for Services)",
-                "pages": [
-                  "integration-guide/v3/web-integration/b2b-services-verification"
-                ]
               }
             ]
           },
