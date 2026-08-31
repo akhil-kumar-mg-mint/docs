@@ -121,7 +121,7 @@ One entry, naming the invoice's checklist code and the `ref` you got from [Uploa
 Sending the same code twice in one call is a `400`. Sending it again in a **later** call is fine — the newer ref replaces the earlier row.
 
 <Note>
-  **Re-uploading an invoice does not need a re-cite.** The citation names the `code`, and this flow has exactly one document type per code, so the payment's newest invoice is what is filed when the set completes. Upload a correction and it supersedes what you cited, without a second call here.
+  **One citation covers every invoice on the payment.** The citation names the `code`, and this flow has exactly one document type per code, so **all** the payment's invoices are filed when the set completes — not just the one whose `ref` you sent. Upload a second invoice and it goes with them; you do not cite it, and you cannot leave it out.
 </Note>
 
 <Note>

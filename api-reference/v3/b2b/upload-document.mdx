@@ -121,11 +121,17 @@ Validated on upload, so a bad file fails here rather than at submit time.
   Echoes the `type` you sent.
 </ParamField>
 
-## Replacing a document
+## Uploading more than one
 
-**The invoice: upload it again.** A payment has one commercial invoice, so a second `invoice` upload supersedes the first and the older `ref` stops resolving. You do not have to re-cite it: if you had already sent the earlier `ref` on the verification submit, the newest invoice is the one filed when the set completes.
+**Both types accumulate.** Every upload adds its own row and returns its own `ref`; nothing supersedes anything, and an earlier `ref` stays valid.
 
-**Delivery proofs accumulate.** Every `delivery_proof` upload adds a row, so you can collect them as they arrive — including before the payment settles. Nothing is filed until you [submit](/api-reference/v3/b2b/submit-settlement), and `refs` on that call is the whole set: an upload you would rather not file is simply one you leave out, and it is dropped.
+**Invoices.** A payment may carry several — an amended invoice beside the original, or a job billed across two. You only cite the `invoice` code once on [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details); the citation names the code, so **every invoice on the payment is filed** when the set completes. A second invoice needs no citation of its own.
+
+<Warning>
+  **There is no way to remove an invoice you uploaded by mistake.** It stays on the payment and is filed with the rest. Upload only what you want ops to see.
+</Warning>
+
+**Delivery proofs.** Collect them as they arrive, including before the payment settles. Nothing is filed until you [submit](/api-reference/v3/b2b/submit-settlement), and `refs` on that call is the whole set — a proof you would rather not file is one you leave out, and it is dropped. That is the settlement step's way of undoing an upload; the verification step has no equivalent.
 
 Once the settlement set is submitted it is locked. A further `delivery_proof` upload is refused with `ERR_B2B_SETTLEMENT_002`.
 
