@@ -63,7 +63,7 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 
 ## Four things that will bite you
 
-**The buyer is the Indian remitter, not your customer abroad.** `buyer_postal_code` is validated as a six-digit Indian PIN, so a foreign address is refused outright. This is the single most common way a first integration fails.
+**The buyer is the Indian remitter, not your customer abroad.** These fields describe whoever in India paid you, not the overseas party being paid. `buyer_postal_code` is stored as an Indian PIN code, so send the remitter's Indian address — filling this block with your own address is the most common way a first integration goes wrong.
 
 **There is no amount to declare.** `invoice_amount` is not on the checklist — the amount that settles is the credit itself, read from the payment. There is no `principal`, no TCS, and no declaration field. All of them are a `400`, like any unknown key.
 

@@ -85,7 +85,7 @@ Nine fields and one document. This is the whole of it:
 ```
 
 <Warning>
-  **The buyer is the Indian remitter, not your customer abroad.** `buyer_postal_code` is validated as a six-digit Indian PIN, so a foreign address is refused outright — `{"buyer_postal_code": "Enter a valid Indian PIN code."}`. This is the single most common way a first integration fails.
+  **The buyer here is the Indian remitter, not your customer abroad.** These fields describe whoever in India paid you — the same party the credit came from. `buyer_postal_code` is stored on the order as an Indian PIN code, so send the remitter's Indian address rather than your own overseas one.
 </Warning>
 
 <Note>
@@ -225,16 +225,15 @@ A second group appears only when a complete set is filed, as the staged values a
 | Message | Cause |
 |---|---|
 | `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
-| `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a six-digit Indian PIN. |
 
-A duplicate invoice number is the one refusal here whose `details` is a flat string rather than keyed by code:
+Filing is also what writes the staged buyer and invoice fields onto the order. `invoice_number` is unique per merchant, so a collision surfaces here — under its own code, not `40359`:
 
 ```json
 {
   "success": false,
   "error": {
-    "code": 40359,
-    "message": "Invalid LRS request.",
+    "code": "ERR_IMPORT_VERIFICATION_001",
+    "message": "Invoice number already exists.",
     "details": "Invoice number already exists."
   }
 }
