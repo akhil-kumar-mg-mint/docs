@@ -207,7 +207,9 @@ Every refusal is a `400`, whatever the reason — the code inside the envelope i
 | `ERR_B2B_SERVICES_006` | A document being filed does not belong to this payment. |
 
 <Note>
-  **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a B2B services payment reads `Invalid B2B services request.` and an LRS payment reads something else. The code is the stable part.
+  **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a classified B2B services payment always reads `Invalid B2B services request.` The code is the stable part.
+
+  Before the payment is classified there is no flow to name, and the wording is `Invalid verification request.` instead — the one case on this flow where the message is not the services one.
 
   Not every refusal is `40359`. A few carry a code of their own, listed above — they are the specific ones, and they say more than the shared code does. Treat any code you do not recognise as a `400` you should not retry unchanged.
 </Note>
