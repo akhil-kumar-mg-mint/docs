@@ -3,7 +3,7 @@ title: "B2B Services Verification"
 description: "Clear a B2B services payment for settlement: classify it, send the buyer and invoice details, upload the invoice, then upload proof of delivery once the money has gone."
 ---
 
-Your Indian buyer has paid for a service. We know the amount and the date; we do not know what the service was or who bought it. You tell us, we review it, and the payment settles.
+A business in India has paid you for a service. We know the amount and the date; we do not know what the service was or who bought it. You tell us, we review it, and the payment settles.
 
 <Note>
   **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. The purpose codes you may declare come from that sub-merchant's account, not yours.
@@ -11,7 +11,11 @@ Your Indian buyer has paid for a service. We know the amount and the date; we do
 
 ## Do it in this order
 
-There is no pre-payment step here. Everything happens after the money lands.
+There are two ways to collect: through [Create Order](/api-reference/v3/order/create) — Hosted Checkout or S2S UPI Intent — or by giving the buyer a **Virtual Account** to wire money into directly.
+
+Create Order lets you declare `business_model: "B2B"` and a `purpose_code` on the order itself, whichever mode you use — that's the only pre-payment step this flow has, and doing it there means classification is already done by the time the payment lands. A Virtual Account credit has no Create Order call behind it, so classification always happens after the money arrives, through the steps below.
+
+Either way, once the payment exists, the rest is the same:
 
 <img src="/images/diagrams/b2b-services-verification-flow.svg" alt="Flowchart showing a B2B Services payment moving from webhook notification through document submission and review, ending in settlement abroad or a refund to the buyer." />
 
@@ -19,7 +23,9 @@ Submit is a loop, not a single call: send what you have, and later sends merge o
 
 ## Classify it, then declare what the service was
 
-A payment arrives with no `business_model` or `purpose_code` on its order — there is nothing to check it against until you send both. They travel together, and only once: send one without the other and the call is refused naming the one you left out, and once set, sending either again is a `400`.
+A payment can arrive already classified — if you sent `business_model` and `purpose_code` on Create Order, [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) already shows both set, and you can skip ahead to the buyer and invoice fields below.
+
+Otherwise there is nothing to check the payment against until you send both. They travel together, and only once: send one without the other and the call is refused naming the one you left out, and once set, sending either again is a `400`.
 
 <Warning>
   **The first webhook you get is not reading this checklist.** Before classification, nothing claims the payment yet, so the event falls back to a legacy check and can name fields this flow never asks for. Ignore them, classify the payment, and read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) instead.
