@@ -2801,7 +2801,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve for this caller, or the file is not an accepted type. `error.message` names the payment's flow — an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
+            "description": "The payment id does not resolve for this caller, or the file is not an accepted type. `error.message` names the payment's flow — an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3137,8 +3137,8 @@
                       "success": false,
                       "error": {
                         "code": 40359,
-                        "message": "Invalid LRS request.",
-                        "details": "Invalid LRS request. No verification checklist covers this payment's business model and purpose code."
+                        "message": "Invalid verification request.",
+                        "details": "Invalid verification request. No verification checklist covers this payment's business model and purpose code."
                       }
                     }
                   }
@@ -3387,7 +3387,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow — an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\" The code is the same either way, so branch on the code.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow — an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {

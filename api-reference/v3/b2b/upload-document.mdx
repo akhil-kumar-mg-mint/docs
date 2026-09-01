@@ -30,13 +30,17 @@ The `type` you may send depends on which flow the payment is in, so the payment 
   "success": false,
   "error": {
     "code": 40359,
-    "message": "Invalid LRS request.",
-    "details": "Invalid LRS request. This payment has no verification checklist, so there is no set of document types to accept; send the order's business model and purpose code first."
+    "message": "Invalid verification request.",
+    "details": "Invalid verification request. This payment has no verification checklist, so there is no set of document types to accept; send the order's business model and purpose code first."
   }
 }
 ```
 
 Send the pair once and every later upload on that payment is routed for you. [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) tells you whether a payment is still waiting on it.
+
+<Note>
+  **The message names no flow, because there is not one yet.** Every other refusal on a classified services payment reads `Invalid B2B services request.` This one cannot: the classification is exactly what is missing, so naming a flow would be a guess. The code is `40359` either way.
+</Note>
 
 ## The request
 

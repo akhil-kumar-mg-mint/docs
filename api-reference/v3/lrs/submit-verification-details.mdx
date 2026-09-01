@@ -326,7 +326,7 @@ The verdict arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lr
 When a complete set is filed it runs through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. `in_review` means all of that passed.
 
 <Note>
-  **Only LRS checklists have a gateway handoff.** A complete non-LRS set answers `complete` and stops there; there is no `in_review` on that path.
+  **A complete LRS set is always filed.** Sending the last outstanding item triggers verification on that same call, so the response answers `in_review` or `action_required` rather than `complete`. You only see `complete` here if you held the filing back with `finalize: false`.
 </Note>
 
 ### When the handoff itself does not happen
@@ -353,11 +353,12 @@ A complete set can fail to reach a verdict at all:
 
 Every refusal is answered in the standard error envelope.
 
-| Status | When |
+Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+
+| `error.code` | When |
 |---|---|
-| `400` | The send itself is wrong — see the codes below. Also: the payment has no checklist, and you did not send the classifying pair. |
-| `404` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else. |
-| `409` | The verification has already been filed; details can no longer be changed. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
+| `40359` | The send itself is wrong — see the codes below. Also: the payment has no checklist, and you did not send the classifying pair. |
+| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
 
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
 
@@ -396,7 +397,7 @@ A second group is raised only by the call that **files** a complete set, as the 
 | `Not a recognised relation.` | `remitter_relation` outside the six accepted values. |
 
 <Note>
-  These arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date until the set is complete. Your details are still saved — fix the named code and re-send only that.
+  These arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date — or writes anything to the order — until the set is complete. Your details are still saved — fix the named code and re-send only that.
 </Note>
 
 ## Where each value goes
