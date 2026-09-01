@@ -1,0 +1,235 @@
+---
+title: 'Get Verification Requirements'
+description: "Everything a B2B services payment is asked for — the nine buyer and invoice fields, the commercial invoice, and which are already satisfied."
+openapi: 'GET /pg/payments/{payment_id}/verification/'
+---
+
+## Overview
+
+Returns the verification requirements for one B2B services payment: every field and document it is asked for, which are already satisfied, and which are still outstanding.
+
+The requirement set is chosen by two facts on the order — its **business model** and its **purpose code**. Until both are declared no set claims the payment, and this endpoint asks for them instead.
+
+The [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook lists what a payment is **missing**, as a flat array of codes in `action_required_fields`. This returns the **whole** set, each item an object carrying `message`, `satisfied` and `provided`. The codes are shared — an item the event names is an item you send back under the same key — but the shapes are not, so build your form from here rather than from the event.
+
+<Warning>
+  **Before the payment is classified, the event is not reading this set.** No requirement set claims an unclassified payment, so `VERIFICATION_NEEDED` falls back to a legacy order-field check and can name `product_description` and `hs_code` — goods fields this flow never asks for. Ignore them, [classify the payment](/api-reference/v3/b2b/submit-verification-details#classify-it-first), and read the real set from here.
+</Warning>
+
+<Note>
+  **Do not hardcode the field list.** Requirements are configuration, not code, and are revised as the underlying regulatory matrix is. Reading them from here means a revision reaches your integration without a release on your side.
+</Note>
+
+## When to use it
+
+<Steps>
+  <Step title="You missed an event">
+    Webhooks get lost, retried, or arrive mid-deploy. This endpoint is authoritative and idempotent — call it any time. It is also the only place that reports `settlement_status`, which tells you whether sending anything is still possible.
+  </Step>
+  <Step title="You need the whole set">
+    The event lists what is outstanding. Call this when you also need what is already satisfied — reconciling your record against ours, or rendering a progress view.
+  </Step>
+  <Step title="You are resuming">
+    Someone sent the buyer address last week and the invoice today. Call this to see where the payment stands before asking for anything.
+  </Step>
+  <Step title="You are building the form">
+    `fields` and `documents` describe the whole set, satisfied or not, with a `message` per item safe to show a user. Filter on `satisfied` for what is still owed.
+  </Step>
+</Steps>
+
+## Response
+
+Two complete, unedited responses: a payment nothing has classified yet, and the same payment once it is classified as B2B services.
+
+<CodeGroup>
+
+```json Nothing has classified this payment
+{
+  "success": true,
+  "message": "Verification requirements",
+  "data": {
+    "payment_id": "PR6938527534",
+    "order_id": "OD3376378679",
+    "settlement_status": "ACTION_REQUIRED",
+    "business_model": null,
+    "purpose_code": null,
+    "fields": [
+      { "code": "business_model", "message": "Business model (B2B or B2C)", "satisfied": false, "provided": false },
+      { "code": "purpose_code", "message": "FEMA/FETERS purpose code for this order", "satisfied": false, "provided": false }
+    ],
+    "documents": []
+  }
+}
+```
+
+```json S0802 — classified as B2B services
+{
+  "success": true,
+  "message": "Verification requirements",
+  "data": {
+    "payment_id": "PR6938527534",
+    "order_id": "OD3376378679",
+    "settlement_status": "ACTION_REQUIRED",
+    "business_model": "B2B",
+    "purpose_code": "S0802",
+    "fields": [
+      { "code": "buyer_name", "message": "Buyer / remitter name", "satisfied": true, "provided": true },
+      { "code": "buyer_address_line_1", "message": "Buyer address line 1", "satisfied": false, "provided": false },
+      { "code": "buyer_city", "message": "Buyer city", "satisfied": false, "provided": false },
+      { "code": "buyer_state", "message": "Buyer state", "satisfied": false, "provided": false },
+      { "code": "buyer_postal_code", "message": "Buyer PIN code", "satisfied": false, "provided": false },
+      { "code": "buyer_email", "message": "Buyer email", "satisfied": false, "provided": false },
+      { "code": "buyer_phone", "message": "Buyer phone", "satisfied": false, "provided": false },
+      { "code": "invoice_number", "message": "Invoice number", "satisfied": false, "provided": false },
+      { "code": "invoice_date", "message": "Invoice date", "satisfied": false, "provided": false }
+    ],
+    "documents": [
+      { "code": "invoice", "message": "Commercial invoice", "satisfied": false, "provided": false }
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+<Note>
+  **The unclassified response is not an error.** `business_model` and `purpose_code` come back `null`, and the two facts that would resolve them are listed as ordinary outstanding fields — same shape as any other entry. [Send them back](/api-reference/v3/b2b/submit-verification-details) under those codes and the real requirement set appears on the next call. Classify before you upload anything, too: [Upload Document](/api-reference/v3/b2b/upload-document) is routed by the payment's flow and refuses until the pair has landed.
+</Note>
+
+`buyer_name` reads `satisfied: true` in the second response because the credit carried it. The set accounts for what we already hold, so you only collect the rest.
+
+## Reading the response
+
+### The payment
+
+<ParamField path="payment_id" type="string" required>
+  The payment. It is also the `payment_id` in this endpoint's own path.
+</ParamField>
+
+<ParamField path="order_id" type="string" required>
+  The order the payment belongs to.
+</ParamField>
+
+<ParamField path="settlement_status" type="string" required>
+  **The payment's own state — not a roll-up of the checklist.** This is the one thing an item list cannot tell you, and it is why this endpoint is worth calling when an event was missed: it says whether acting on the list is still possible at all.
+
+  | Value | What it means for you |
+  |---|---|
+  | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
+  | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
+  | `UNDER_REVIEW` | Filed and with EximPe Ops. **Sending is closed.** |
+  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/submit-settlement) opens. |
+  | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
+  | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
+  | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
+  | `NOT_APPLICABLE` | The payment carries no settlement workflow at all. |
+
+  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows; the rest are here so an unexpected value is a value you can look up rather than a surprise.
+
+  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+</ParamField>
+
+<ParamField path="business_model" type="string | null" required>
+  `B2B` for every services payment, or `null` while nothing has declared it.
+</ParamField>
+
+<ParamField path="purpose_code" type="string | null" required>
+  The FEMA/FETERS purpose code the order settles under, or `null` while none is declared.
+</ParamField>
+
+### The items
+
+There is one list per kind, holding the whole set. There is no separate "missing" array — what is still owed is a filter:
+
+```js
+const outstanding = [...data.fields, ...data.documents].filter(i => !i.satisfied)
+```
+
+Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` and `provided`.
+
+<ParamField path="code" type="string" required>
+  The identifier you send the answer back under — as a key in `fields`, or as a document's `code`. See [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details).
+</ParamField>
+
+<ParamField path="message" type="string" required>
+  A human-readable description of the item, safe to render to a user.
+
+  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code — this flow raises no submit-failure event, so there is no second place this key means something else.
+</ParamField>
+
+<ParamField path="satisfied" type="boolean" required>
+  Whether this item still blocks completion. `false` is what "missing" means.
+</ParamField>
+
+<ParamField path="provided" type="boolean" required>
+  Whether a value actually exists — you sent it, or we already held it. On this flow every item is required and none is conditional, so the two keys move together: `false`/`false` is owed, `true`/`true` is done.
+</ParamField>
+
+<Note>
+  **Keys you will not see on this flow.** `optional`, `condition`, `waivable` and `one_of` appear only when they apply, and no B2B services item is optional, conditional or waivable. Their absence is meaningful, not an omission.
+</Note>
+
+## No `status`, deliberately
+
+There is no rolled-up `complete` / `incomplete` on this response. "Every box is ticked" is not "the payment passed" — a complete set still goes to the gateway, and a gateway can refuse it. And the `POST` on this same URL already returns a `status` that means something else.
+
+Fold your own roll-up when you want one:
+
+```js
+const complete = [...data.fields, ...data.documents].every(i => i.satisfied)
+```
+
+For where the payment actually stands, read `settlement_status` or the [submit response](/api-reference/v3/b2b/submit-verification-details#the-response).
+
+<Note>
+  **Nothing is re-run when you call this.** A `GET` never moves a payment; it reports the requirement set and what has been collected against it.
+</Note>
+
+## Errors
+
+Every refusal is a `400`; the code inside the envelope is what tells them apart.
+
+| `error.code` | When |
+|---|---|
+| `40360` | No such payment for this merchant. The same answer whether it does not exist or belongs to someone else, so the endpoint never confirms another merchant's payment id. |
+| `40359` | The payment is classified, but no requirement set covers that business model and purpose code. An **unclassified** payment is not this case: it answers `200`, asking for the two classifying facts. |
+
+## What the B2B services set asks for
+
+The exact set is always what this endpoint returns — this is a summary, and a revision lands there before it lands in any table.
+
+All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106`, each against `business_model: "B2B"`.
+
+| | Codes |
+|---|---|
+| Fields | `buyer_name`, `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_postal_code`, `buyer_email`, `buyer_phone`, `invoice_number`, `invoice_date` |
+| Documents | `invoice` |
+
+<Note>
+  **No identity item at all.** Nothing in this set is checked against an external register — no PAN, no IEC, no registration number. `buyer_name` is a plain value you send, so there is no step to clear before you can submit.
+</Note>
+
+<Warning>
+  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount`, `principal` and `collected_tcs` are all unknown keys here, and sending any of them is a `400`.
+</Warning>
+
+<Warning>
+  **No `hs_code`.** HS codes describe physical goods crossing a border. Services have none, and there is no field for one.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/b2b/submit-verification-details">
+    How to send what this endpoint asks for.
+  </Card>
+  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
+    Upload the commercial invoice and keep its `ref`.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    The step that opens once the payment settles.
+  </Card>
+</CardGroup>

@@ -1,0 +1,161 @@
+---
+title: 'Upload Document'
+description: "Upload a B2B services file — the commercial invoice, or a delivery proof after settlement — and get back a ref."
+openapi: 'POST /pg/payments/{payment_id}/documents/'
+---
+
+## Overview
+
+Uploads one file for a B2B services payment and answers with a **`ref`**. What you do with that `ref` depends on which of the two document steps you are in:
+
+| You uploaded | You then | With |
+|---|---|---|
+| the commercial invoice | send the `ref` under its checklist code | [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) |
+| a delivery proof, after the payment settles | send the `ref` in the settlement submission | [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) |
+
+```json
+{ "documents": [{ "code": "invoice", "ref": "8207383264" }] }
+```
+
+<Note>
+  **Two calls, not one.** Uploading a file does not answer a requirement; it stores a file. The requirement is answered when a later call names the `ref`. That separation is what lets the same upload endpoint serve both the verification step and the post-settlement one — and it is why neither step needs a draft of its own. An upload is durable, so a `ref` you are holding is your draft.
+</Note>
+
+## Classify the payment first
+
+The `type` you may send depends on which flow the payment is in, so the payment has to be in one. A VBA credit arrives unclassified, and until you have sent its `business_model` and `purpose_code` through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) an upload is refused:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid verification request.",
+    "details": "Invalid verification request. This payment has no verification checklist, so there is no set of document types to accept; send the order's business model and purpose code first."
+  }
+}
+```
+
+Send the pair once and every later upload on that payment is routed for you. [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) tells you whether a payment is still waiting on it.
+
+<Note>
+  **The message names no flow, because there is not one yet.** Every other refusal on a classified services payment reads `Invalid B2B services request.` This one cannot: the classification is exactly what is missing, so naming a flow would be a guess. The code is `40359` either way.
+</Note>
+
+## The request
+
+`multipart/form-data`, two parts:
+
+| Part | |
+|---|---|
+| `file` | The document itself. |
+| `type` | What kind of document it is — one of the two codes below. |
+
+The path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint: your own payments, and your sub-merchants'.
+
+<Note>
+  **PSPs send `X-Merchant-ID`**, naming the settling sub-merchant, exactly as on the verification endpoints.
+</Note>
+
+## Document types
+
+B2B services uses two, and takes no others:
+
+| `type` | | Where it goes |
+|---|---|---|
+| `invoice` | Commercial invoice | The verification checklist |
+| `delivery_proof` | Evidence the service was delivered — a signed acceptance note, a milestone sign-off, a delivery confirmation, a timesheet | The post-settlement document set |
+
+The `type` decides where the file is stored, so it also decides which call can cite the resulting `ref`: an `invoice` ref is citable on [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details), a `delivery_proof` ref in `refs` on [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement). Cite one on the other call and it reads as unknown — `ERR_B2B_SETTLEMENT_001` on the settlement submit, `Unknown document ref.` on the verification one.
+
+A `type` outside these two — including document codes other flows define, such as `passport` — is refused:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid B2B services request.",
+    "details": { "type": "Unknown document type for this payment's flow; send one of: delivery_proof, invoice." }
+  }
+}
+```
+
+<Warning>
+  **`delivery_proof` is not a checklist item.** It never appears in [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements), because it is owed *after* settlement rather than before it. Do not go looking for it there.
+</Warning>
+
+## The file
+
+Validated on upload, so a bad file fails here rather than at submit time.
+
+| | |
+|---|---|
+| Extensions | `pdf` · `png` · `jpg` · `jpeg` · `docx` · `xlsx` · `csv` |
+| Maximum size | 10 MB |
+| Maximum file name | 100 characters, extension included |
+| Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
+
+<Warning>
+  **A file name over 100 characters answers `500`, not `400`.** The envelope carries `40359`, and `details` is a stringified object holding the real reason — `File name must be less than 100 characters.`, code `40296`. It is your input that is wrong, not our service, so rename the file and upload it again rather than retrying. Truncate long names before uploading and you will never see it.
+</Warning>
+
+## The response
+
+`201`, with the `ref`:
+
+```json
+{
+  "success": true,
+  "message": "Document uploaded",
+  "data": {
+    "ref": "8207383264",
+    "type": "invoice"
+  }
+}
+```
+
+<ParamField path="ref" type="string" required>
+  The stored document's identifier. Send it as `documents[].ref` on the verification submit, or in `refs` on the settlement submit.
+
+  The file is stored against **the payment in the path**, so the `ref` is only citable from that payment. A `ref` from one of your other payments reads as unknown, exactly as a made-up one does — the answer never distinguishes the two.
+</ParamField>
+
+<ParamField path="type" type="string" required>
+  Echoes the `type` you sent.
+</ParamField>
+
+## Uploading more than one
+
+**Both types accumulate.** Every upload adds its own row and returns its own `ref`; nothing supersedes anything, and an earlier `ref` stays valid.
+
+**Invoices.** A payment may carry several — an amended invoice beside the original, or a job billed across two. You only cite the `invoice` code once on [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details); the citation names the code, so **every invoice on the payment is filed** when the set completes. A second invoice needs no citation of its own.
+
+<Warning>
+  **There is no way to remove an invoice you uploaded by mistake.** It stays on the payment and is filed with the rest. Upload only what you want ops to see.
+</Warning>
+
+**Delivery proofs.** Collect them as they arrive, including before the payment settles. Nothing is filed until you [submit](/api-reference/v3/b2b/submit-settlement), and `refs` on that call is the whole set — a proof you would rather not file is one you leave out, and it is dropped. That is the settlement step's way of undoing an upload; the verification step has no equivalent.
+
+Once the settlement set is submitted it is locked. A further `delivery_proof` upload is refused with `ERR_B2B_SETTLEMENT_002`.
+
+## No waivers on this flow
+
+Some checklists let a document be discharged with a `waiver_reason` instead of a file. **The B2B services checklist has no waivable item** — the commercial invoice is required, and there is nothing to waive. A `waiver_reason` sent on this flow is a `400`.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/b2b/verification-requirements">
+    What this payment actually needs.
+  </Card>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/b2b/submit-verification-details">
+    Where the `ref` is bound to a checklist code.
+  </Card>
+  <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
+    Where `delivery_proof` refs are filed, after settlement.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+</CardGroup>

@@ -1,0 +1,125 @@
+---
+title: 'List Settlement Documents'
+description: "Every post-settlement compliance document filed against a settled B2B-services payment, and whether the set is locked."
+openapi: 'GET /pg/payments/{payment_id}/settlement-documents/'
+---
+
+## Overview
+
+Once a B2B-services payment is **settled**, one more compliance step remains: evidence that the service was actually delivered. This endpoint reads the delivery proofs you have uploaded against the payment, and whether the set is locked.
+
+It is safe to call at any time — it reads, it never re-runs anything. That includes **before** the payment settles: it answers with `is_settled: false` rather than refusing. Only [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) refuses on an unsettled payment.
+
+<Note>
+  **B2B services only.** A payment that is not a B2B-services payment is refused. B2B goods has no partner-API settlement path.
+</Note>
+
+## Response
+
+```json
+{
+  "success": true,
+  "message": "Settlement documents",
+  "data": {
+    "state": "FRESH",
+    "is_settled": true,
+    "is_multi": true,
+    "required_doc_types": ["delivery_proof"],
+    "submitted_at": null,
+    "documents": [
+      {
+        "document_id": "4193006825",
+        "doc_type": "delivery_proof",
+        "file_name": "delivery-note.pdf",
+        "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"
+      },
+      {
+        "document_id": "7250884131",
+        "doc_type": "delivery_proof",
+        "file_name": "signed-acceptance.pdf",
+        "file": "https://…s3.amazonaws.com/…?X-Amz-Signature=…"
+      }
+    ]
+  }
+}
+```
+
+An empty `documents` array means you have uploaded nothing yet — not that nothing is owed.
+
+<ParamField path="state" type="string" required>
+  `FRESH` (nothing filed yet) or `SUBMITTED` (filed and locked). Two values, not three — there is no draft on this surface, because one [submit](/api-reference/v3/b2b/submit-settlement) files the set in a single call. `documents` is listed in both states, so `FRESH` means "this is what you are holding", not "this is empty". Read this before submitting: once it is `SUBMITTED`, a second submit is refused with `ERR_B2B_SETTLEMENT_002`.
+</ParamField>
+
+<ParamField path="is_settled" type="boolean" required>
+  Whether the payment has settled. Documents can only be **filed** after it has; submitting earlier is refused with `ERR_B2B_SETTLEMENT_003`. Uploading earlier is allowed, and so is this read.
+</ParamField>
+
+<ParamField path="is_multi" type="boolean" required>
+  `true` for B2B services. Read it together with `required_doc_types` — see below.
+</ParamField>
+
+<ParamField path="required_doc_types" type="string[]" required>
+  Every type this flow accepts. Because `is_multi` is `true`, the set is complete once **one** file of **any** listed type is filed — not one of each. A single-file flow (`is_multi: false`) would need one of every type.
+
+  An upload under a type not listed here never reaches this set at all, so a `ref` from one is refused by the submit with `ERR_B2B_SETTLEMENT_001`.
+</ParamField>
+
+<ParamField path="submitted_at" type="string | null" required>
+  ISO-8601 timestamp of the submission, or `null` while the set is still `FRESH`.
+</ParamField>
+
+<ParamField path="document_id" type="string" required>
+  The document's id — **the same value as the `ref`** [Upload Document](/api-reference/v3/b2b/upload-document) handed you. The upload writes this row, so there is only one id to hold on to.
+</ParamField>
+
+<ParamField path="doc_type" type="string" required>
+  The type the file was uploaded under — you never send a `doc_type` again after the upload. B2B services has exactly one, `delivery_proof`, and accepts **many files under it**. Goods is the opposite — one file per type — which is why the two flows do not share an endpoint.
+</ParamField>
+
+<ParamField path="file_name" type="string" required>
+  The stored file's name, for display.
+</ParamField>
+
+<ParamField path="file" type="string" required>
+  A pre-signed, time-limited URL for the stored file. Fetch it if you need the document back; do not store the URL itself, as it expires.
+</ParamField>
+
+## What is listed
+
+Only **active** documents, oldest upload first. A delivery proof appears here as soon as it is uploaded, so you can check what you are holding before you file it.
+
+Two things remove a document from this list: uploading is not filing, and `refs` on the [submit](/api-reference/v3/b2b/submit-settlement) is the whole set — a document you do not name there is deactivated and stops being listed. After a submit, this list is exactly what you filed.
+
+## Errors
+
+Reading the set is refused only when the payment itself does not qualify. Both cases are a `400` carrying `40360`; the `details` string says which.
+
+| Cause | `code` | What to do |
+|---|---|---|
+| The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
+| The payment is not a B2B-services payment | `40360` | B2B goods has no partner-API settlement path. |
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40360,
+    "message": "Payment is not in a state that accepts verification details.",
+    "details": "Payment is not in a state that accepts verification details. Payment not found."
+  }
+}
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
+    File the delivery proofs by `ref` and lock the set.
+  </Card>
+  <Card title="Upload Document" icon="arrow-up-from-bracket" href="/api-reference/v3/b2b/upload-document">
+    Upload each delivery proof and keep its `ref`.
+  </Card>
+  <Card title="B2B Services Verification" icon="book" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    The whole flow, in order.
+  </Card>
+</CardGroup>
