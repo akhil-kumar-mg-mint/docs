@@ -1,13 +1,9 @@
 ---
 title: "B2B Services Verification"
-description: "Clear a B2B services payment for settlement: classify it, send the buyer and invoice details, attach the invoice, then upload proof of delivery once the money has gone."
+description: "Clear a B2B services payment for settlement: classify it, send the buyer and invoice details, upload the invoice, then upload proof of delivery once the money has gone."
 ---
 
 Your Indian buyer has paid for a service. We know the amount and the date; we do not know what the service was or who bought it. You tell us, we review it, and the payment settles.
-
-<Info>
-  This page covers services only — consulting, software, and everything else in the table below. Physical goods need an HS code and a buyer IEC, which this flow does not collect.
-</Info>
 
 <Note>
   **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. The purpose codes you may declare come from that sub-merchant's account, not yours.
@@ -19,17 +15,17 @@ There is no pre-payment step here. Everything happens after the money lands.
 
 <img src="/images/diagrams/b2b-services-verification-flow.svg" alt="Flowchart showing a B2B Services payment moving from webhook notification through document submission and review, ending in settlement abroad or a refund to the buyer." />
 
-Submit is a loop, not a single call: send what you have, and later sends merge over earlier ones — nothing you sent already is wiped. Once the full set is in, the payment files itself and moves to review.
+Submit is a loop, not a single call: send what you have, and later sends merge over earlier ones — nothing you sent already is wiped. Once the full set is in, the payment moves into review automatically.
 
 ## Classify it, then declare what the service was
 
 A payment arrives with no `business_model` or `purpose_code` on its order — there is nothing to check it against until you send both. They travel together, and only once: send one without the other and the call is refused naming the one you left out, and once set, sending either again is a `400`.
 
 <Warning>
-  **The first webhook you get is not reading this checklist.** Before classification, nothing claims the payment yet, so the event falls back to a legacy check and can name `product_description` or `hs_code` — goods fields this flow never asks for. Ignore them, classify the payment, and read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) instead.
+  **The first webhook you get is not reading this checklist.** Before classification, nothing claims the payment yet, so the event falls back to a legacy check and can name fields this flow never asks for. Ignore them, classify the payment, and read the real set from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) instead.
 </Warning>
 
-Every services payment settles under one FEMA purpose code against `business_model: "B2B"`, and you pick exactly one purpose code. There is no default and no way to leave it blank.
+Every services payment settles under one purpose code, paired with `business_model: "B2B"`, and you pick exactly one. There is no default and no way to leave it blank.
 
 | Code | What it covers |
 | :--- | :--- |
@@ -93,7 +89,7 @@ That answers with a `ref` — a short numeric string, not a UUID:
 }
 ```
 
-That is the whole set — nine fields plus the classifying pair, and one document. `buyer_email` and `buyer_phone` are both required, not optional; there is no `buyer_address_line_2`. Partial sends merge, so send what you have and fill in the rest later — an unknown key (`invoice_amount`, `principal`, `declaration`, `hs_code`) is a `400`, not a silent drop, because none of them are asked for here.
+That is the whole set — nine fields plus the classifying pair, and one document. `buyer_email` and `buyer_phone` are both required, not optional. Partial sends merge, so send what you have and fill in the rest later — a key outside this list is a `400`, not a silent drop.
 
 The response says where the payment stands:
 
@@ -101,7 +97,7 @@ The response says where the payment stands:
 { "data": { "payment_id": "PR6938527534", "status": "incomplete", "outstanding": ["buyer_city", "invoice"] } }
 ```
 
-`status` is `incomplete` while something is still owed, or `in_review` once the complete set has been filed and handed to EximPe Ops. There is no `action_required` value here — that only appears on the LRS gateway.
+`status` is `incomplete` while something is still owed, or `in_review` once the complete set has been filed and handed to our team for review. There is no `action_required` value here.
 
 <CardGroup cols={2}>
   <Card title="Submit B2B Services Verification Details" icon="code" href="/api-reference/v3/b2b/submit-verification-details">
@@ -114,15 +110,15 @@ The response says where the payment stands:
 
 ## Six things that will bite you
 
-**There is no amount to declare.** The amount that settles is the credit itself, read from the payment — no `invoice_amount`, no `principal`, no TCS. There is also no `declaration` field: filing a complete set is the declaration.
+**There is no amount to send.** The amount that settles is the credit itself, read from the payment — you don't send it or confirm it separately.
 
 **The buyer here is the Indian remitter, not your customer abroad.** These fields describe whoever in India paid you, not the overseas party being paid. `buyer_postal_code` is stored as an Indian PIN code, so send the remitter's Indian address.
 
-**There is no HS code here.** HS codes describe physical goods crossing a border. Services have none, and there is no field for one.
+**There is no HS code here.** Not part of this flow, and there is no field for one.
 
 **Rejected is terminal, and the money goes straight back.** A rejection is not a stronger send-back. It closes the payment, and we automatically initiate a full refund to the buyer — you cannot resubmit or correct it. Only a **send-back** reopens the payment for editing. Read the decision, not just the fact that something came back.
 
-**Proof of delivery comes after settlement, not before.** It's a separate submission that only opens once the payment reaches `SETTLED`. Uploading it early is not possible, and holding your settlement waiting to send it is a mistake people make once.
+**Proof of delivery comes after settlement, not before.** You can upload delivery-proof files any time, but filing the set is refused until the payment reaches `SETTLED`. Once it has, submit the full set in one call — holding your settlement waiting to file it is a mistake people make once.
 
 **Editing closes the moment the set is filed.** While a payment is in review, the fields and the invoice are frozen — no corrections, no swapping the file. If you spot a mistake after filing, wait for the send-back and fix it then.
 
@@ -130,9 +126,22 @@ The response says where the payment stands:
 
 Once the money has reached you, one thing is still owed: evidence that the service was actually delivered. It sits outside the verification flow — nobody reviews it, and it does not gate your settlement — but it is what backs the remittance if the transaction is ever examined.
 
-Upload one or more files under `delivery_proof` via the same document endpoint as the invoice — a signed acceptance note, a milestone sign-off, a delivery confirmation email, a timesheet. It only opens once the payment reaches `SETTLED`, and the set locks once you submit it, so upload everything before you do.
+Upload one or more files under `delivery_proof` via the same document endpoint as the invoice — a signed acceptance note, a milestone sign-off, a delivery confirmation email, a timesheet. You can upload these before the payment settles; only the next step is gated on `SETTLED`.
 
-{/* The exact submission mechanics for this step (how the set is locked, whether a file can be removed before locking) are still settling on the API side — check the API reference before hardcoding against them. */}
+Once you have everything, file the set in a single call: send every `ref` you want on the record to [Submit Settlement Documents](/api-reference/v3/b2b/submit-settlement) as `refs`. That call names the whole set — a proof you uploaded and leave out of `refs` is dropped, not filed — and locks it in the same step. There's no separate attach call and no draft state; read the set back with [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) first if you're unsure what you're holding.
+
+<Warning>
+  **Submitting is final.** A second submit is refused. Read `state` (`FRESH` or `SUBMITTED`) from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) before you call this.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Submit Settlement Documents" icon="lock" href="/api-reference/v3/b2b/submit-settlement">
+    File the delivery proofs by `ref` and lock the set.
+  </Card>
+  <Card title="List Settlement Documents" icon="list" href="/api-reference/v3/b2b/list-settlement-documents">
+    Read the set back before locking it.
+  </Card>
+</CardGroup>
 
 ## Payment statuses
 
