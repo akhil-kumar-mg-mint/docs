@@ -40,6 +40,12 @@ From there it is one loop, repeated until nothing is outstanding:
 5. Read the response: `status` says where the payment stands, and `outstanding` names what is still owed.
 6. Once nothing is outstanding the set is filed, the payment moves to `in_review`, and it settles from there.
 
+<Note>
+  **The finalizing call also raises an event, either way it goes.** A filed set sends [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review) with an empty `action_required_fields`. A finalizing call the checks refuse sends [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) naming the code that failed — the same code the response names.
+
+  Both matter when the party holding the webhook URL is not the party making the call: a PSP filing on behalf of a sub-merchant gets the response, and whoever configured the merchant's webhook URL gets the event.
+</Note>
+
 If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent, call it any time.
 
 <CardGroup cols={2}>
@@ -81,12 +87,16 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 
 ## While it is in review
 
-Ops either approves the verification, sends it back for changes, or rejects it. **None of the three raises a webhook** — poll [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and read `settlement_status`:
+Ops either approves the verification, sends it back for changes, or rejects it. **Only a send-back raises a webhook** — approve and reject raise none, so for those two, poll [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) and read `settlement_status`:
 
 | What you see | What happened | What you do |
 | :--- | :--- | :--- |
 | `UNDER_REVIEW` | Still with Ops, or approved — approval does not change this value | Nothing; wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) |
 | back to `ACTION_REQUIRED` | Sent back for changes. Staging has reopened | Re-read the set, correct what is wrong, and file again |
+
+<Note>
+  **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed).** `message` carries the Ops comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes, which on a send-back is often empty: Ops disagreed with what was sent rather than finding it short. Read the comment, not the list length.
+</Note>
 
 A **rejection** does not move `settlement_status` either: the payment stays `UNDER_REVIEW` and a full refund is raised automatically. You will see it as a refund rather than as a verification state, so reconcile rejections against your refunds, not against this endpoint.
 

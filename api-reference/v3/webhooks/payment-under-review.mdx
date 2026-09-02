@@ -22,9 +22,14 @@ This is the event that ends the verification conversation. Everything the paymen
 ### When the webhook is sent
 
 1. **An LRS submit passed.** A complete set was filed through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), the gateway verified the PAN, matched the sender to the account holder, reconciled TCS and confirmed the credit covers the amount. The synchronous response to that same call reads `"status": "in_review"`.
-2. **In sandbox**, when a simulated payment is moved to Under Review — either by supplying the last outstanding verification field, or by choosing that settlement status on the simulator page.
+2. **A B2B services submit passed.** A complete set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an Ops decision. The synchronous response to a partner call reads `"status": "in_review"`. It fires again on each resubmit after a send-back.
+3. **In sandbox**, when a simulated payment is moved to Under Review — either by supplying the last outstanding verification field, or by choosing that settlement status on the simulator page.
 
-The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+<Note>
+  **On B2B services this event says "with Ops", not "accepted".** An Ops approval and an Ops rejection each raise nothing of their own — read them from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements). Only a send-back is announced, as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), and it reopens a payment this event had closed.
+</Note>
+
+The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL. Without one nothing reaches you — some producers skip recording the event at all, others record it and it is simply never sent.
 
 ---
 
