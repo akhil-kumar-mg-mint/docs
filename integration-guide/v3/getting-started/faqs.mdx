@@ -51,7 +51,7 @@ Nothing comes out of the amount you are owed. The buyer pays the **amount to be 
 
 | | Who funds it | What it is |
 | :--- | :--- | :--- |
-| **Amount to be settled** | Buyer | What reaches you abroad. `principal` on submit. |
+| **Amount to be settled** | Buyer | What reaches you abroad. `amount_to_be_settled` on submit. |
 | **MDR** | Buyer, on top | Our processing fee. Your rate is agreed with your KAM. |
 | **GST on the MDR** | Buyer, on top | Indian tax on that fee. |
 | **TCS** | Buyer, on top | LRS only. We hand it to the bank, which pays it to the government against the buyer's **PAN**. The buyer reclaims it as a tax credit. |
@@ -121,7 +121,7 @@ Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLE
 
 ### The buyer paid less than the amount due. What now?
 
-The payment waits, and the `outstanding` entry on the `LRS_VERIFICATION_NEEDED` event names the shortfall in its `message`. Clear it either way: have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `principal` — the amount that actually arrived — and submit again.
+The payment waits, and the `outstanding` entry on the `LRS_VERIFICATION_NEEDED` event names the shortfall in its `message`. Clear it either way: have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `amount_to_be_settled` — the amount that actually arrived — and submit again.
 
 ### What exchange rate do I get?
 
@@ -187,7 +187,7 @@ Resident individuals only, including minors through a guardian. Not companies, p
 
 ### Can a parent pay for a student?
 
-Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Set `relation` to something other than `SELF` and include `primary_person` for the student. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
+Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Set `relation` to something other than `SELF` and name the student in the `student_*` fields. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
 
 ### Why must the money come from the remitter's own account?
 
