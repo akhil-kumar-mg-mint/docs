@@ -122,9 +122,9 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
   | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
   | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
-  | `NOT_APPLICABLE` | The payment carries no settlement workflow at all. |
+  | `NOT_APPLICABLE` | **Ops rejected the verification**, or the payment carries no settlement workflow at all. Either way it will not settle and nothing you send reopens it. After a rejection a full refund is raised — follow that, not this endpoint. |
 
-  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows; the rest are here so an unexpected value is a value you can look up rather than a surprise.
+  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows, and ends in `SETTLED` or `NOT_APPLICABLE`; the rest are here so an unexpected value is a value you can look up rather than a surprise.
 
   Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. Read this key before you send, and you will not collect a refusal you had no way to see coming.
 </ParamField>
@@ -154,11 +154,13 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 <ParamField path="message" type="string" required>
   A human-readable description of the item, safe to render to a user.
 
-  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code — this flow raises no submit-failure event, so there is no second place this key means something else.
+  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code. The same code also rides the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) event that refusal raises, so the two agree.
 </ParamField>
 
 <ParamField path="satisfied" type="boolean" required>
   Whether this item still blocks completion. `false` is what "missing" means.
+
+  **It can go back to `false` on the `invoice`.** If Ops rejects the invoice during review, the item is owed again and the payment is sent back for it. Upload a replacement and cite the new `ref` — re-sending the rejected one changes nothing.
 </ParamField>
 
 <ParamField path="provided" type="boolean" required>

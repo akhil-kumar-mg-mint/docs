@@ -126,6 +126,10 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
   **One citation covers every invoice on the payment.** The citation names the `code`, and this flow has exactly one document type per code, so **all** the payment's invoices are filed when the set completes — not just the one whose `ref` you sent. Upload a second invoice and it goes with them; you do not cite it, and you cannot leave it out.
 </Note>
 
+<Warning>
+  **A citation is not what satisfies the item — the file is.** The `invoice` item reads as satisfied because an accepted invoice exists on the payment, not because you named a `ref`. So citing a ref again after Ops rejected that invoice leaves the item outstanding: upload a replacement, then cite the new `ref`. Check [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) rather than assuming a repeat citation cleared it.
+</Warning>
+
 <Note>
   **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file. Sending one is a `400` reading `This document cannot be waived.`, keyed by the document's code.
 </Note>

@@ -149,6 +149,10 @@ A refused send answers in the standard error envelope, with `details` keyed by t
 | `Unknown document ref.` | The `ref` is not one of your uploads. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
+<Note>
+  **`message` names the flow that refused you, so it varies.** A payment we cannot yet place — one whose business model and purpose code have not been declared — reads `Invalid verification request.` rather than the wording above, because there is no flow to name. The `code` is the same either way. Branch on `code`, never on `message`.
+</Note>
+
 <Warning>
   **An unknown key is a `400`, not a silent drop.** A misspelled `invoice_number` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
 </Warning>

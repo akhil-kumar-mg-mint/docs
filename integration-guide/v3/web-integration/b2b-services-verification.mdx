@@ -95,6 +95,7 @@ Ops either approves the verification, sends it back for changes, or rejects it. 
 | :--- | :--- | :--- |
 | `UNDER_REVIEW` | Still with Ops, or approved — approval does not change this value | Nothing; wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) |
 | back to `ACTION_REQUIRED` | Sent back for changes. Staging has reopened | Re-read the set, correct what is wrong, and file again |
+| `NOT_APPLICABLE` | Rejected. The payment will not settle, and there is no resubmit path | Stop verifying it and follow the refund — see below |
 
 <Note>
   **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), with `verification_status` back at `ACTION_REQUIRED`.** `message` carries the Ops comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes; it is empty only when the checklist really is satisfied and the comment alone says what to change.
@@ -102,7 +103,18 @@ Ops either approves the verification, sends it back for changes, or rejects it. 
   **An empty list here does not mean there is nothing to do.** The payment is open again because a person asked for a change. Branch on `verification_status` — the same event carries `IN_REVIEW` with an empty list when a submit passes, and that one genuinely needs nothing from you.
 </Note>
 
-A **rejection** does not move `settlement_status` either: the payment stays `UNDER_REVIEW` and a full refund is raised automatically. You will see it as a refund rather than as a verification state, so reconcile rejections against your refunds, not against this endpoint.
+A **rejection** is terminal and moves `settlement_status` to `NOT_APPLICABLE` — the payment will not settle, and nothing you send reopens it. Ops raises no webhook for the decision itself, so this value is how you learn it.
+
+A full refund of the credit is raised in the same moment. Where the payment sits decides what happens next:
+
+| Rail | What the refund does |
+| :--- | :--- |
+| Bank transfer into a Virtual Bank Account | Recorded and paid out by our Ops team. It stays `INITIATED` until they file it with the bank — that is not a stalled refund |
+| Everything else | Submitted to the payment gateway straight away, and it walks the usual refund lifecycle with [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) events |
+
+<Warning>
+  **Reconcile a rejection against the refund, not against this endpoint.** `NOT_APPLICABLE` tells you the verification is over; only the refund tells you the money moved. If the refund could not be raised at all it is recorded as `FAILED` with the reason on it, so a rejection always leaves a refund record to find.
+</Warning>
 
 ## After it settles: proof of delivery
 

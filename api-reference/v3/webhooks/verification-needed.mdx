@@ -27,15 +27,19 @@ This webhook names what a payment still owes before it can be filed. It is the g
 
 1. **A Virtual Bank Account credit became a payment** that is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
 2. **The verification gateway reported a change** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
-3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix. On a B2B services payment this covers the finalizing call's own checks — the purpose code, the invoice amount, the declaration, and the documents cited for the invoice.
+3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix — **the single item that failed**, not everything the payment still owes. On a B2B services payment this covers the finalizing call's own checks: the purpose code, the invoice amount, the declaration, and the documents cited for the invoice.
 4. **Ops sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and staging reopens. `message` carries the Ops comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.
 5. **A B2B services submit passed.** The set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an Ops decision. `verification_status` is `"IN_REVIEW"` and the list is empty. It fires again on each resubmit after a send-back.
 
 A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
 <Note>
-  **Ops approving or rejecting a B2B services verification raises nothing.** Only the send-back does. Read those two from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements), or from the refund a rejection raises.
+  **Ops approving or rejecting a B2B services verification raises nothing.** Only the send-back does. Read those two from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) — an approval leaves `settlement_status` at `UNDER_REVIEW`, a rejection moves it to `NOT_APPLICABLE` and raises a full refund.
 </Note>
+
+<Warning>
+  **Not every refused submit raises this event.** It is raised only where the refusal maps to a checklist item. A call refused for a reason that names no item — a body we could not read, or staging already closed because the set has been filed — answers in the response and raises nothing. Treat the response as authoritative on your own calls, and this event as how you learn about changes you did not make.
+</Warning>
 
 The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL. Without one nothing reaches you — some producers skip recording the event at all, others record it and it is simply never sent, so an event you never received is not evidence of anything on our side either way.
 
@@ -210,6 +214,8 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
 
     <ParamField path="data.action_required_fields" type="array of strings" required>
       Plain field codes that need your action. It names whatever the checklist still owes, and is empty only when the checklist is genuinely satisfied.
+
+      **On a refused submit it is narrower — the single item that failed, not the full set.** Treat that one as an error pointer rather than a to-do list: fixing the item it names can still leave the payment short, so read [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) for the whole picture before you file again.
 
       **Empty means "the checklist is satisfied" — not "nothing to do".** Read it together with `verification_status`. On an `IN_REVIEW` event the two agree and there really is nothing for you: the payment is with a reviewer. On an `ACTION_REQUIRED` event — a B2B services send-back — the payment is open again *because* a person asked for a change, and `message` is the instruction. Branch on the status, not on the list length.
 
