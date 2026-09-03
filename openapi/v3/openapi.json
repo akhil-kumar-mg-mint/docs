@@ -3089,6 +3089,18 @@
                             "message": "Invoice date",
                             "satisfied": false,
                             "provided": false
+                          },
+                          {
+                            "code": "invoice_amount",
+                            "message": "Invoice total in INR, as stated on the invoice",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "declaration",
+                            "message": "The declaration the merchant affirms: the service was received and the invoice is genuine",
+                            "satisfied": false,
+                            "provided": false
                           }
                         ],
                         "documents": [

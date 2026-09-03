@@ -1,7 +1,7 @@
 ---
 title: 'Submit B2B Services Verification Details'
 description: "What a B2B services payment is asked for, and how to send it — the buyer, the invoice fields, and the commercial invoice. No identity, no amount, no tax."
-openapi: 'POST /pg/payments/{payment_id}/verification/'
+openapi: '/openapi/v3-b2b.json POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -62,7 +62,7 @@ They can ride along with everything else in one call, but sending them first is 
 
 ## The complete body
 
-Nine fields and one document. This is the whole of it:
+Eleven fields and one document. This is the whole of it:
 
 ```json S0802 — B2B services
 {
@@ -75,7 +75,9 @@ Nine fields and one document. This is the whole of it:
     "buyer_email": "ap@northwind.co.in",
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
-    "invoice_date": "2026-08-01"
+    "invoice_date": "2026-08-01",
+    "invoice_amount": "125000.00",
+    "declaration": true
   },
   "documents": [
     { "code": "invoice", "ref": "8207383264" }

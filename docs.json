@@ -3,7 +3,7 @@
   "theme": "mint",
   "name": "EximPe Docs",
   "url": "https://docs.eximpe.com",
-  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json", "openapi/v3-orders.json"],
+  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json", "openapi/v3-orders.json", "openapi/v3-b2b.json"],
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
