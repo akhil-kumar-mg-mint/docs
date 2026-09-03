@@ -210,7 +210,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 </Note>
 
 <Warning>
-  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount`, `principal` and `collected_tcs` are all unknown keys here, and sending any of them is a `400`.
+  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount` and `amount_to_be_settled` are both unknown keys here, and sending either is a `400`.
 </Warning>
 
 <Warning>
