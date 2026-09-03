@@ -89,7 +89,7 @@ Nine fields and one document. This is the whole of it:
 </Warning>
 
 <Note>
-  **No amount and no declaration key.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top — so there is no `principal` and no `collected_tcs` to send. The declaration is recorded by the act of filing a complete set rather than sent as a field. All three are `400`s if you send them.
+  **No amount and no declaration key.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top — so there is no `amount_to_be_settled` to send. The declaration is recorded by the act of filing a complete set rather than sent as a field. Both are `400`s if you send them.
 </Note>
 
 ## Values
@@ -232,7 +232,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 
 | Message | Cause |
 |---|---|
-| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `principal`, `invoice_amount` and `remitter_pan` all land here. |
+| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `amount_to_be_settled`, `invoice_amount` and `remitter_pan` all land here. |
 | `This is a document code; send it under 'documents'.` | `invoice` appeared as a key in `fields`. |
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |

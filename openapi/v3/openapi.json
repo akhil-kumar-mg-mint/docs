@@ -2943,23 +2943,17 @@
                             "provided": false
                           },
                           {
-                            "code": "primary_person_name",
-                            "message": "Name of the person the remittance is for",
-                            "satisfied": true,
-                            "provided": false,
-                            "condition": "PAYING_FOR_SOMEONE_ELSE"
-                          },
-                          {
-                            "code": "principal",
+                            "code": "amount_to_be_settled",
                             "message": "Amount to be settled for this payment, in INR",
                             "satisfied": false,
                             "provided": false
                           },
                           {
-                            "code": "collected_tcs",
-                            "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)",
-                            "satisfied": false,
-                            "provided": false
+                            "code": "student_name",
+                            "message": "Name of the student the remittance is for",
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "PAYING_FOR_SOMEONE_ELSE"
                           }
                         ],
                         "documents": [
@@ -3031,7 +3025,7 @@
                   },
                   "classified_b2b_services": {
                     "summary": "A classified payment (S0802, B2B services)",
-                    "description": "The complete B2B-services set — nine buyer and invoice fields and the commercial invoice. Nothing here is optional, conditional or waivable, and there is no identity item, no amount and no tax: `remitter_pan`, `principal` and `collected_tcs` are unknown keys on this flow. `buyer_name` came in with the credit.",
+                    "description": "The complete B2B-services set — nine buyer and invoice fields and the commercial invoice. Nothing here is optional, conditional or waivable, and there is no identity item, no amount and no tax: `remitter_pan` and `amount_to_be_settled` are unknown keys on this flow. `buyer_name` came in with the credit.",
                     "value": {
                       "success": true,
                       "message": "Verification requirements",
@@ -3193,7 +3187,7 @@
                 "properties": {
                   "fields": {
                     "type": "object",
-                    "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; amounts (`principal`, `collected_tcs`) are decimal strings in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
+                    "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; amounts (`amount_to_be_settled`) are decimal strings in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
                     "additionalProperties": true,
                     "example": {
                       "buyer_name": "Acme Imports Pvt Ltd",
@@ -3247,7 +3241,7 @@
                       "REMAINING_AMOUNT",
                       "TCS_PAYMENT"
                     ],
-                    "description": "Why the two payments are linked; an audit label on the link. `REMAINING_AMOUNT` — covering a principal shortfall. `TCS_PAYMENT` — paying the TCS separately. Only valid together with `linked_payment_id`. LRS only, like `linked_payment_id`: ignored on a B2B-services payment.",
+                    "description": "Why the two payments are linked; an audit label on the link. `REMAINING_AMOUNT` — covering an `amount_to_be_settled` shortfall. `TCS_PAYMENT` — paying the TCS separately. Only valid together with `linked_payment_id`. LRS only, like `linked_payment_id`: ignored on a B2B-services payment.",
                     "example": "REMAINING_AMOUNT"
                   }
                 }
