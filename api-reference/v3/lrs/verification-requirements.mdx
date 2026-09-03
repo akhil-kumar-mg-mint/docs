@@ -105,12 +105,6 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": false
       },
       {
-        "code": "remitter_name",
-        "message": "Remitter name (as per PAN)",
-        "satisfied": false,
-        "provided": false
-      },
-      {
         "code": "remitter_pan",
         "message": "Remitter PAN",
         "satisfied": false,
@@ -135,37 +129,31 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": false
       },
       {
-        "code": "primary_person_name",
-        "message": "Name of the person the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
-      },
-      {
-        "code": "primary_person_dob",
-        "message": "Date of birth of the person the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
-      },
-      {
-        "code": "primary_person_passport_number",
-        "message": "Passport number of the person the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
-      },
-      {
-        "code": "principal",
+        "code": "amount_to_be_settled",
         "message": "Amount to be settled for this payment, in INR",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "collected_tcs",
-        "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)",
-        "satisfied": false,
-        "provided": false
+        "code": "student_name",
+        "message": "Name of the student the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "student_dob",
+        "message": "Date of birth of the student the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
+      },
+      {
+        "code": "student_passport_number",
+        "message": "Passport number of the student the remittance is for",
+        "satisfied": true,
+        "provided": false,
+        "condition": "PAYING_FOR_SOMEONE_ELSE"
       }
     ],
     "documents": [
@@ -452,38 +440,42 @@ The one exception is the light B2C set (`S0101`, `S0802`, `S0301`), which asks f
 
 | Code | Asks for |
 |---|---|
-| `remitter_name` | Remitter name, as per PAN |
 | `remitter_pan` | Remitter PAN |
 | `remitter_dob` | Remitter date of birth, as per PAN |
 | `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
-| `principal` | The amount to settle for this payment, in INR |
-| `collected_tcs` | TCS collected from the payer for this payment, in INR — `"0.00"` if none |
-| `primary_person_name` · `primary_person_dob` · `primary_person_passport_number` | Conditional: owed once `remitter_relation` is not `SELF` |
+| `amount_to_be_settled` | The amount to settle for this payment, in INR |
+| Who the money is for | Conditional: owed once `remitter_relation` is not `SELF`. Education codes ask for `student_name` · `student_dob` (· `student_passport_number` on `S0305`); travel codes ask for `primary_person_name` · `primary_person_dob` · `primary_person_passport_number` |
 
-<Warning>
-  **`collected_tcs` is collected, not computed for you.** It is what you took from the payer on this credit. Send `"0.00"` when nothing was collected — the key is still required, and omitting it leaves the payment outstanding. Quote the figure with [Quote LRS Amount](/api-reference/v3/lrs/quote) before you collect it.
-</Warning>
+<Note>
+  **The remitter's name is not on this list, and neither is the TCS.** The name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan), which you call before you can quote or submit — it is already on file under the PAN you declare. EximPe computes the TCS against our own record of what the PAN has sent through us this financial year — read it from [Quote LRS Amount](/api-reference/v3/lrs/quote) (`tcs_inr`, `tcs_rate`, `tcs_reason`). Neither is yours to declare or report back here.
+</Note>
 
 Documents, per purpose code:
 
-| Document code | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
-|---|:---:|:---:|:---:|
-| `offer_letter` — letter of admission | required | required | — |
-| `passport` — student's passport | required | — | — |
-| `student_id_or_visa` — student visa **or** university ID card | required | — | — |
-| `student_id` — university ID card | — | required | — |
-| `fee_invoice` | optional | optional | — |
-| `passenger_list` | — | — | required |
-| `traveller_passports` | — | — | required |
-| `traveller_visas` | — | — | required, waivable |
-| `ticket` | — | — | required, waivable |
-| `invoice` — invoice for the trip | — | — | required |
-| `relationship_declaration` | conditional | conditional | conditional |
+| Document code | `S0305` | `S1107` | `S0306` | `S0304` | `S0303` |
+|---|:---:|:---:|:---:|:---:|:---:|
+| `offer_letter` — letter of admission | required | required | — | — | — |
+| `passport` — student's passport | required | — | — | — | — |
+| `student_id_or_visa` — student visa **or** university ID card | required | — | — | — | — |
+| `student_id` — university ID card | — | required | — | — | — |
+| `fee_invoice` | optional | optional | — | — | — |
+| `passenger_list` | — | — | required | required | required |
+| `traveller_passports` | — | — | required | required | required |
+| `traveller_visas` | — | — | required, waivable | required, waivable | required, waivable |
+| `ticket` | — | — | required, waivable | required, waivable | required, waivable |
+| `invoice` — invoice for the trip | — | — | required | required | required |
+| `relationship_declaration` | conditional | conditional | conditional | conditional | conditional |
+| Medical-treatment documents *(TBD)* | — | — | — | pending | — |
+| Pilgrimage documents *(TBD)* | — | — | — | — | pending |
 
 <Note>
   **`student_id_or_visa` is one code that accepts either document.** Upload a visa or a university ID card under this single code — there is no separate `student_visa` or `university_id_card` to send, and no alternative group to reconcile. `S1107` has no travel leg, so no visa exists and the university ID stands alone as `student_id`.
 </Note>
+
+<Warning>
+  **`S0304` and `S0303` are getting purpose-specific documents.** On top of the common travel set above, medical treatment (`S0304`) and pilgrimage (`S0303`) are each expected to ask for documents specific to that purpose — a hospital or treatment document for medical, a pilgrimage-specific document for the other. Not finalized: this table and the checklist endpoint will carry the real codes once they are. Read the checklist rather than hardcoding this table.
+</Warning>
 
 ### B2B checklists
 
@@ -494,7 +486,7 @@ Documents, per purpose code:
 
 ## The requirement set can grow
 
-Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the three `primary_person_*` fields and the relationship self-declaration to `satisfied: false`, because they are only owed in that case.
+Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the fields naming the person the money is for — `student_*` on the education codes, `primary_person_*` on the travel ones — and the relationship self-declaration to `satisfied: false`, because they are only owed in that case.
 
 This is expected. Re-read `fields` and `documents` after every write rather than assuming the list you started with is final.
 

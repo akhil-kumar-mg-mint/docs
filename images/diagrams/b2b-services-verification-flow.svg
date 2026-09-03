@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 848 880" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="b2b-verify-title b2b-verify-desc">
+      <title id="b2b-verify-title">B2B Services verification flow</title>
+      <desc id="b2b-verify-desc">Flowchart showing a B2B Services payment moving from webhook notification through document submission and review, ending in settlement abroad or a refund to the buyer.</desc>
+      <defs>
+        <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap');</style>
+        <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="#26a887"/></marker>
+        <marker id="arrow-dashed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><polygon points="0 0, 10 4, 0 8" fill="rgba(38,168,135,0.55)"/></marker>
+      </defs>
+
+      <rect width="100%" height="100%" fill="#ffffff"/>
+
+      <!-- ============ CONNECTORS (drawn before nodes) ============ -->
+      <line x1="424" y1="104" x2="424" y2="152" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="424" y1="216" x2="424" y2="264" stroke="rgba(38,168,135,0.55)" stroke-width="1.3" stroke-dasharray="6,5" marker-end="url(#arrow-dashed)"/>
+      <line x1="424" y1="328" x2="424" y2="376" stroke="rgba(38,168,135,0.55)" stroke-width="1.3" stroke-dasharray="6,5" marker-end="url(#arrow-dashed)"/>
+      <line x1="424" y1="440" x2="424" y2="488" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+      <!-- D exits: three vertices to the row below -->
+      <line x1="284" y1="552" x2="284" y2="664" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="424" y1="616" x2="424" y2="664" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+      <line x1="564" y1="552" x2="564" y2="664" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+      <!-- E loops back to C's left edge -->
+      <path d="M 100 664 L 100 416 Q 100 408 108 408 L 144 408" fill="none" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+      <!-- F to H -->
+      <line x1="424" y1="728" x2="424" y2="776" stroke="#26a887" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+      <!-- ============ ARROW LABELS (masked, drawn before node boxes) ============ -->
+      <rect x="204" y="600" width="72" height="12" rx="2" fill="#ffffff"/>
+      <text x="240" y="609" fill="#26a887" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">SENT BACK</text>
+
+      <rect x="432" y="636" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="464" y="645" fill="#26a887" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">APPROVED</text>
+
+      <rect x="572" y="600" width="64" height="12" rx="2" fill="#ffffff"/>
+      <text x="604" y="609" fill="#26a887" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">REJECTED</text>
+
+      <!-- ============ NODES ============ -->
+
+      <!-- A: Buyer pays (start oval) -->
+      <rect x="144" y="40" width="560" height="64" rx="32" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="424" y="68" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Buyer pays</text>
+      <text x="424" y="88" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">ACTION_REQUIRED</text>
+
+      <!-- B: Webhook fires -->
+      <rect x="144" y="152" width="560" height="64" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="424" y="180" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Webhook fires</text>
+      <text x="424" y="200" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">VERIFICATION_NEEDED · names outstanding fields</text>
+
+      <!-- U: Upload the invoice (dashed aside input) -->
+      <rect x="284" y="264" width="280" height="64" rx="6" fill="#ffffff" stroke="rgba(38,168,135,0.55)" stroke-width="1.2" stroke-dasharray="5,4"/>
+      <text x="424" y="292" fill="rgba(21,128,61,0.7)" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Upload the invoice</text>
+      <text x="424" y="312" fill="rgba(21,128,61,0.55)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">keep the ref</text>
+
+      <!-- C: Submit the details -->
+      <rect x="144" y="376" width="560" height="64" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="424" y="404" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Submit the details</text>
+      <text x="424" y="424" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">Classify · buyer fields · invoice</text>
+
+      <!-- D: We review it (decision diamond) -->
+      <polygon points="424,488 564,552 424,616 284,552" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="424" y="557" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">We review it</text>
+
+      <!-- E: ACTION_REQUIRED again (loop back to C) -->
+      <rect x="64" y="664" width="256" height="72" rx="6" fill="#ffffff" stroke="#26a887" stroke-width="1.2"/>
+      <text x="192" y="688" fill="#15803d" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">ACTION_REQUIRED again</text>
+      <text x="192" y="706" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">with a comment saying</text>
+      <text x="192" y="722" fill="rgba(21,128,61,0.65)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">what to fix</text>
+
+      <!-- F: VERIFIED (done, focal) -->
+      <rect x="344" y="664" width="160" height="64" rx="32" fill="#15803d" stroke="#15803d" stroke-width="1.2"/>
+      <text x="424" y="692" fill="#ffffff" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">VERIFIED</text>
+      <text x="424" y="712" fill="rgba(255,255,255,0.8)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">settles abroad</text>
+
+      <!-- G: Refunded to the buyer (terminal / dead end) -->
+      <rect x="528" y="664" width="260" height="64" rx="32" fill="#ffffff" stroke="#b45309" stroke-width="1.2"/>
+      <text x="658" y="692" fill="#7c2d12" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Refunded to the buyer</text>
+      <text x="658" y="712" fill="rgba(124,45,18,0.7)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">terminal</text>
+
+      <!-- H: Proof of delivery (aside follow-on) -->
+      <rect x="304" y="776" width="240" height="64" rx="6" fill="#ffffff" stroke="rgba(38,168,135,0.55)" stroke-width="1.2" stroke-dasharray="5,4"/>
+      <text x="424" y="804" fill="rgba(21,128,61,0.7)" font-size="16" font-weight="600" font-family="'Geist', sans-serif" text-anchor="middle">Proof of delivery</text>
+      <text x="424" y="824" fill="rgba(21,128,61,0.55)" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">after settlement</text>
+    </svg>

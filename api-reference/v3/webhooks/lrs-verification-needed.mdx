@@ -90,13 +90,11 @@ These are complete, unedited payloads — nothing is trimmed.
       { "code": "buyer_phone", "message": "Buyer phone" },
       { "code": "invoice_number", "message": "Invoice number" },
       { "code": "invoice_date", "message": "Invoice date" },
-      { "code": "remitter_name", "message": "Remitter name (as per PAN)" },
       { "code": "remitter_pan", "message": "Remitter PAN" },
       { "code": "remitter_dob", "message": "Remitter date of birth (as per PAN)" },
       { "code": "remitter_relation", "message": "Remitter's relation to the person the remittance is for" },
       { "code": "buyer_declaration", "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose" },
-      { "code": "principal", "message": "Amount to be settled for this payment, in INR" },
-      { "code": "collected_tcs", "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)" }
+      { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" }
     ],
     "payment_verification_expiry": null,
     "action_required_documents": [
@@ -123,7 +121,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "order_id": "OD5590284413",
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "action_required_fields": ["… the same fourteen field entries as S0305 …"],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
@@ -148,7 +146,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "order_id": "OD8451220934",
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "action_required_fields": ["… the same fourteen field entries as S0305 …"],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "passenger_list", "message": "Passenger list — name and passport number of every traveller" },
@@ -177,11 +175,10 @@ These are complete, unedited payloads — nothing is trimmed.
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      { "code": "principal", "message": "Amount to be settled for this payment, in INR" },
-      { "code": "collected_tcs", "message": "TCS collected from the payer for this payment, in INR (\"0.00\" if none)" },
-      { "code": "primary_person_name", "message": "Name of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
-      { "code": "primary_person_dob", "message": "Date of birth of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
-      { "code": "primary_person_passport_number", "message": "Passport number of the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" }
+      { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" },
+      { "code": "student_name", "message": "Name of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
+      { "code": "student_dob", "message": "Date of birth of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
+      { "code": "student_passport_number", "message": "Passport number of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" }
     ],
     "payment_verification_expiry": null,
     "action_required_documents": [
@@ -201,7 +198,7 @@ These are complete, unedited payloads — nothing is trimmed.
 <Note>
   The three travel codes carry identical checklists. They differ in what the remittance is *for*, not in what you must collect.
 
-  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice and remitter fields dropped off, because declaring them satisfied them; and four `PAYING_FOR_SOMEONE_ELSE` items **appeared**, because declaring `remitter_relation` as `PARENT` is what makes them owed.
+  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice and remitter fields dropped off, because declaring them satisfied them; and the `PAYING_FOR_SOMEONE_ELSE` items **appeared** — `student_name`, `student_dob` and `student_passport_number` here, because this is the education example — because declaring `remitter_relation` as `PARENT` is what makes them owed. A travel payment shows the same fields under `primary_person_*` instead.
 </Note>
 
 ---
@@ -391,8 +388,8 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [
       {
-        "code": "remitter_name",
-        "message": "The name on the credit received does not match the declared remitter. A third-party credit cannot settle on someone else's PAN — declare the actual account holder as the remitter."
+        "code": "remitter_pan",
+        "message": "The name on the credit received does not match the verified holder of the declared PAN. A third-party credit cannot settle on someone else's PAN — declare the actual account holder's PAN as the remitter."
       }
     ],
     "payment_verification_expiry": null,
@@ -419,21 +416,19 @@ The gateway's own vocabulary is translated into the codes you collected under, s
 
 | Code | What it means | What to do |
 |---|---|---|
-| `remitter_pan` | The PAN did not verify against the name and date of birth given. | Check all three together and re-send. |
-| `remitter_name` | The name on the credit does not match the declared remitter. | Re-declare the actual account holder as the remitter. |
+| `remitter_pan` | Either the PAN did not verify, or the name on the credit received does not match its verified holder. | Verify the PAN with [Verify PAN](/api-reference/v3/lrs/verify-pan), and declare the PAN of whoever actually holds the account the credit came from. |
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
-| `primary_person_name` | The remitter is not the person the remittance is for, so that person has to be named. | Send `primary_person_name`, `primary_person_dob` and `primary_person_passport_number`. |
+| `student_name` · `primary_person_name` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person's name, date of birth and — where the code asks for it — passport number. Education codes name them under `student_*`, travel codes under `primary_person_*`. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
-| `tcs` | The TCS reported does not match what this remittance attracts. | Re-quote with [Quote LRS Amount](/api-reference/v3/lrs/quote) and re-send `collected_tcs`. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
 <Warning>
-  **`outstanding` is a conclusion, not a code.** It is the one entry with nothing to re-send under that name: the credit is short by the amount its `message` states. Either the buyer tops up — link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up) — or a smaller `principal` is declared.
+  **`outstanding` is a conclusion, not a code.** It is the one entry with nothing to re-send under that name: the credit is short by the amount its `message` states. Either the buyer tops up — link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up) — or a smaller `amount_to_be_settled` is declared.
 </Warning>
 
 ## Conditionals can appear later
 
-An item like the relationship self-declaration only shows up once its condition holds. Declaring `remitter_relation` as anything other than `SELF` brings in four items at once — the three `primary_person_*` fields and `relationship_declaration` — so they can arrive in an event **after** you thought you had the full list. Each carries `condition`, so the arrival is explicable rather than arbitrary.
+An item like the relationship self-declaration only shows up once its condition holds. Declaring `remitter_relation` as anything other than `SELF` brings in several items at once — the fields naming the person the money is for (`student_*` on the education codes, `primary_person_*` on the travel ones) and `relationship_declaration` — so they can arrive in an event **after** you thought you had the full list. Each carries `condition`, so the arrival is explicable rather than arbitrary.
 
 The reverse also happens: answering the remitter identity fields removes them from the next event. The list is what is *outstanding*, not what the checklist asks for in total.
 

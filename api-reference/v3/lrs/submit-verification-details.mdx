@@ -6,7 +6,7 @@ openapi: 'POST /pg/payments/{payment_id}/verification/'
 
 ## Overview
 
-An LRS payment answers a longer list than an ordinary one: the remitter's verified identity, the LRS declarations, the TCS collected, and a set of documents that depends on the purpose code. This page is that list, and what happens once it is complete.
+An LRS payment answers a longer list than an ordinary one: the remitter's verified identity, the LRS declarations, and a set of documents that depends on the purpose code. This page is that list, and what happens once it is complete.
 
 <Note>
   **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers. If you do not handle LRS payments, the other page is all you need.
@@ -72,16 +72,14 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
     "remitter_relation": "PARENT",
     "buyer_declaration": true,
-    "primary_person_name": "Ananya Kumar",
-    "primary_person_dob": "2005-09-30",
-    "primary_person_passport_number": "Z1234567",
-    "principal": "150000.00",
-    "collected_tcs": "0.00"
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30",
+    "student_passport_number": "Z1234567",
+    "amount_to_be_settled": "150000.00"
   },
   "documents": [
     { "code": "offer_letter", "ref": "<ref from Upload Document>" },
@@ -105,16 +103,13 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
     "remitter_relation": "PARENT",
     "buyer_declaration": true,
-    "primary_person_name": "Ananya Kumar",
-    "primary_person_dob": "2005-09-30",
-    "primary_person_passport_number": "Z1234567",
-    "principal": "150000.00",
-    "collected_tcs": "0.00"
+    "student_name": "Ananya Kumar",
+    "student_dob": "2005-09-30",
+    "amount_to_be_settled": "150000.00"
   },
   "documents": [
     { "code": "offer_letter", "ref": "<ref from Upload Document>" },
@@ -125,7 +120,7 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 }
 ```
 
-```json S0303 / S0304 / S0306 - Travel
+```json S0306 - Travel, other (today's body for S0303 / S0304 too — see note below)
 {
   "fields": {
     "buyer_name": "Ravi Kumar",
@@ -137,13 +132,11 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
-    "remitter_name": "RAVI KUMAR",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
     "remitter_relation": "SELF",
     "buyer_declaration": true,
-    "principal": "150000.00",
-    "collected_tcs": "0.00"
+    "amount_to_be_settled": "150000.00"
   },
   "documents": [
     { "code": "passenger_list", "ref": "<ref from Upload Document>" },
@@ -159,20 +152,24 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 </CodeGroup>
 
 <Note>
-  The three travel codes take an identical body. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
+  The three travel codes take an identical body **today**. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
 
-  The education examples declare `remitter_relation` as `PARENT`, which is what makes `relationship_declaration` and the three `primary_person_*` fields owed. Declare `SELF` and all four drop out — as they have in the travel example.
+  That's expected to change for two of them: `S0304` (medical treatment) and `S0303` (pilgrimage) are getting purpose-specific documents on top of the common travel set — a hospital or treatment document for medical, a pilgrimage-specific document for the other. Not finalized yet; we'll confirm the exact codes before either goes live for you. `S0306` stays as shown.
+
+  The education examples declare `remitter_relation` as `PARENT`, which is what makes `relationship_declaration` and the `student_*` fields owed. Declare `SELF` and they all drop out — as they have in the travel example, where the same conditional fields are called `primary_person_*`.
+
+  **The remitter's name and the TCS are not fields here.** The name is whatever [Verify PAN](/api-reference/v3/lrs/verify-pan) recorded against the PAN you declare, and the TCS is the figure we quote — sending either back would only give us a second number to disagree with.
 </Note>
 
 ### What differs, and what does not
 
-| | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
-|---|:---:|:---:|:---:|
-| Buyer and invoice fields | same | same | same |
-| Remitter identity, declaration, `principal`, `collected_tcs` | same | same | same |
-| `primary_person_*` when the relation is not `SELF` | ✓ | ✓ | ✓ |
-| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | `passenger_list`, `traveller_passports`, `traveller_visas`, `ticket`, `invoice` |
-| Optional documents | `fee_invoice` | `fee_invoice` | — |
+| | `S0305` | `S1107` | `S0306` | `S0304` | `S0303` |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Buyer and invoice fields | same | same | same | same | same |
+| Remitter identity, declaration, `amount_to_be_settled` | same | same | same | same | same |
+| Who the money is for, when the relation is not `SELF` | `student_name`, `student_dob`, `student_passport_number` | `student_name`, `student_dob` | `primary_person_name`, `primary_person_dob`, `primary_person_passport_number` | same as `S0306` | same as `S0306` |
+| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | `passenger_list`, `traveller_passports`, `traveller_visas`, `ticket`, `invoice` | same as `S0306`, **+ medical documents (TBD)** | same as `S0306`, **+ pilgrimage documents (TBD)** |
+| Optional documents | `fee_invoice` | `fee_invoice` | — | — | — |
 
 <Warning>
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
@@ -184,8 +181,8 @@ Field values are strings, numbers or booleans.
 
 | Kind | Send |
 |---|---|
-| Dates (`invoice_date`, `remitter_dob`, `primary_person_dob`) | `YYYY-MM-DD` |
-| Amounts (`principal`, `collected_tcs`) | A decimal string in rupees, e.g. `"150000.00"` |
+| Dates (`invoice_date`, `remitter_dob`, `student_dob`, `primary_person_dob`) | `YYYY-MM-DD` |
+| Amounts (`amount_to_be_settled`) | A decimal string in rupees, e.g. `"150000.00"` |
 | `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | `true`, once the payer has affirmed the wording in the item's `message` |
 | `business_model` | `B2B` or `B2C`. Case-insensitive. |
@@ -224,7 +221,7 @@ When a credit is a further payment against an earlier one — the buyer was shor
 | Key | |
 |---|---|
 | `linked_payment_id` | The earlier payment this one tops up. Resolved against your own payments; a link we cannot resolve is refused. |
-| `reason` | `REMAINING_AMOUNT` — covering a principal shortfall. `TCS_PAYMENT` — paying the TCS separately. An audit label on the link. |
+| `reason` | `REMAINING_AMOUNT` — covering an `amount_to_be_settled` shortfall. `TCS_PAYMENT` — paying the TCS separately. An audit label on the link. |
 
 <Note>
   **A `reason` without a `linked_payment_id` is a `400`.** The reverse is fine: a link with no reason is just an unlabelled link.
@@ -391,7 +388,7 @@ A second group is raised only by the call that **files** a complete set, as the 
 | Message | Cause |
 |---|---|
 | `Not a date; send YYYY-MM-DD.` | A date field that will not parse. |
-| `Not an amount; send a number like "500000.00".` | `principal` or `collected_tcs` that is not a decimal. |
+| `Not an amount; send a number like "500000.00".` | `amount_to_be_settled` that is not a decimal. |
 | `Not a recognised relation.` | `remitter_relation` outside the six accepted values. |
 
 <Note>
