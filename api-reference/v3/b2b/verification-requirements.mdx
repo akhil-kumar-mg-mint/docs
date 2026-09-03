@@ -1,7 +1,7 @@
 ---
 title: 'Get Verification Requirements'
-description: "Everything a B2B services payment is asked for — the nine buyer and invoice fields, the commercial invoice, and which are already satisfied."
-openapi: 'GET /pg/payments/{payment_id}/verification/'
+description: "Everything a B2B services payment is asked for — the eleven buyer and invoice fields, the commercial invoice, and which are already satisfied."
+openapi: '/openapi/v3-b2b.json GET /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -122,9 +122,9 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
   | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
   | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
-  | `NOT_APPLICABLE` | The payment carries no settlement workflow at all. |
+  | `NOT_APPLICABLE` | **Ops rejected the verification**, or the payment carries no settlement workflow at all. Either way it will not settle and nothing you send reopens it. After a rejection a full refund is raised — follow that, not this endpoint. |
 
-  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows; the rest are here so an unexpected value is a value you can look up rather than a surprise.
+  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows, and ends in `SETTLED` or `NOT_APPLICABLE`; the rest are here so an unexpected value is a value you can look up rather than a surprise.
 
   Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. Read this key before you send, and you will not collect a refusal you had no way to see coming.
 </ParamField>
@@ -154,11 +154,13 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 <ParamField path="message" type="string" required>
   A human-readable description of the item, safe to render to a user.
 
-  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code — this flow raises no submit-failure event, so there is no second place this key means something else.
+  A refused filing is answered inline, in the `400`'s `details` keyed by the offending code. The same code also rides the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) event that refusal raises, so the two agree.
 </ParamField>
 
 <ParamField path="satisfied" type="boolean" required>
   Whether this item still blocks completion. `false` is what "missing" means.
+
+  **It can go back to `false` on the `invoice`.** If Ops rejects the invoice during review, the item is owed again and the payment is sent back for it. Upload a replacement and cite the new `ref` — re-sending the rejected one changes nothing.
 </ParamField>
 
 <ParamField path="provided" type="boolean" required>
@@ -202,7 +204,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 
 | | Codes |
 |---|---|
-| Fields | `buyer_name`, `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_postal_code`, `buyer_email`, `buyer_phone`, `invoice_number`, `invoice_date` |
+| Fields | `buyer_name`, `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_postal_code`, `buyer_email`, `buyer_phone`, `invoice_number`, `invoice_date`, `invoice_amount`, `declaration` |
 | Documents | `invoice` |
 
 <Note>
@@ -210,7 +212,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 </Note>
 
 <Warning>
-  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount` and `amount_to_be_settled` are both unknown keys here, and sending either is a `400`.
+  **`invoice_amount` is asked for, but it decides nothing.** Send it in rupees; it is cross-checked against the credit and refused if the two are more than a paisa apart. What settles is still the credit itself, and no tax is collected on top — `amount_to_be_settled` remains an unknown key here, and sending it is a `400`.
 </Warning>
 
 <Warning>

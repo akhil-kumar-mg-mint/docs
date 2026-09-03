@@ -1,7 +1,7 @@
 ---
 title: 'Submit B2B Services Verification Details'
 description: "What a B2B services payment is asked for, and how to send it — the buyer, the invoice fields, and the commercial invoice. No identity, no amount, no tax."
-openapi: 'POST /pg/payments/{payment_id}/verification/'
+openapi: '/openapi/v3-b2b.json POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -62,7 +62,7 @@ They can ride along with everything else in one call, but sending them first is 
 
 ## The complete body
 
-Nine fields and one document. This is the whole of it:
+Eleven fields and one document. This is the whole of it:
 
 ```json S0802 — B2B services
 {
@@ -75,7 +75,9 @@ Nine fields and one document. This is the whole of it:
     "buyer_email": "ap@northwind.co.in",
     "buyer_phone": "+919876543210",
     "invoice_number": "INV-2026-0041",
-    "invoice_date": "2026-08-01"
+    "invoice_date": "2026-08-01",
+    "invoice_amount": "125000.00",
+    "declaration": true
   },
   "documents": [
     { "code": "invoice", "ref": "8207383264" }
@@ -89,7 +91,7 @@ Nine fields and one document. This is the whole of it:
 </Warning>
 
 <Note>
-  **No amount and no declaration key.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top — so there is no `amount_to_be_settled` to send. The declaration is recorded by the act of filing a complete set rather than sent as a field. Both are `400`s if you send them.
+  **Send the amount and the declaration; send no tax.** `invoice_amount` is a checklist field, in rupees, cross-checked against the credit — more than a paisa apart and the finalizing call is refused naming it. `declaration` is a boolean and has to be `true`. What settles is still the credit itself, and no tax is collected on top, so `amount_to_be_settled` stays a `400`.
 </Note>
 
 ## Values
@@ -123,6 +125,10 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
 <Note>
   **One citation covers every invoice on the payment.** The citation names the `code`, and this flow has exactly one document type per code, so **all** the payment's invoices are filed when the set completes — not just the one whose `ref` you sent. Upload a second invoice and it goes with them; you do not cite it, and you cannot leave it out.
 </Note>
+
+<Warning>
+  **A citation is not what satisfies the item — the file is.** The `invoice` item reads as satisfied because an accepted invoice exists on the payment, not because you named a `ref`. So citing a ref again after Ops rejected that invoice leaves the item outstanding: upload a replacement, then cite the new `ref`. Check [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) rather than assuming a repeat citation cleared it.
+</Warning>
 
 <Note>
   **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file. Sending one is a `400` reading `This document cannot be waived.`, keyed by the document's code.
@@ -232,7 +238,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 
 | Message | Cause |
 |---|---|
-| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `amount_to_be_settled`, `invoice_amount` and `remitter_pan` all land here. |
+| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `amount_to_be_settled` and `remitter_pan` all land here. |
 | `This is a document code; send it under 'documents'.` | `invoice` appeared as a key in `fields`. |
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
