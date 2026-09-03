@@ -202,7 +202,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 
 | | Codes |
 |---|---|
-| Fields | `buyer_name`, `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_postal_code`, `buyer_email`, `buyer_phone`, `invoice_number`, `invoice_date` |
+| Fields | `buyer_name`, `buyer_address_line_1`, `buyer_city`, `buyer_state`, `buyer_postal_code`, `buyer_email`, `buyer_phone`, `invoice_number`, `invoice_date`, `invoice_amount`, `declaration` |
 | Documents | `invoice` |
 
 <Note>
@@ -210,7 +210,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 </Note>
 
 <Warning>
-  **`invoice_amount` is not asked for.** The amount that settles is the credit itself, read from the payment, and no tax is collected on top. There is no figure to declare and no key to send: `invoice_amount` and `amount_to_be_settled` are both unknown keys here, and sending either is a `400`.
+  **`invoice_amount` is asked for, but it decides nothing.** Send it in rupees; it is cross-checked against the credit and refused if the two are more than a paisa apart. What settles is still the credit itself, and no tax is collected on top — `amount_to_be_settled` remains an unknown key here, and sending it is a `400`.
 </Warning>
 
 <Warning>

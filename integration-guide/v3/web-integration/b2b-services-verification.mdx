@@ -34,14 +34,14 @@ The payment is created as `ACTION_REQUIRED`, and a [`VERIFICATION_NEEDED`](/api-
 From there it is one loop, repeated until nothing is outstanding:
 
 1. **Classify the payment** if nothing has yet. A VBA credit arrives with no `business_model` or `purpose_code` on its order, so there is no checklist to read — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) answers with those two facts as ordinary outstanding fields. Send them back under the same codes.
-2. **Read what it owes** from that same endpoint. Nine buyer and invoice fields, plus the commercial invoice. Some may already be satisfied — the credit usually carries `buyer_name`.
+2. **Read what it owes** from that same endpoint. Eleven fields — nine buyer and invoice ones, plus `invoice_amount` and `declaration` — and the commercial invoice. Some may already be satisfied — the credit usually carries `buyer_name`.
 3. **Upload the invoice** via [Upload Document](/api-reference/v3/b2b/upload-document), and keep the `ref` it returns. Classify first — the upload is routed by the payment's flow, so it is refused until step 1 has landed.
 4. **Send what you have** via [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
 5. Read the response: `status` says where the payment stands, and `outstanding` names what is still owed.
 6. Once nothing is outstanding the set is filed, the payment moves to `in_review`, and it settles from there.
 
 <Note>
-  **The finalizing call also raises an event, either way it goes.** A filed set sends [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review) with an empty `action_required_fields`. A finalizing call the checks refuse sends [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) naming the code that failed — the same code the response names.
+  **The finalizing call also raises an event, either way it goes** — [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) both times, and `verification_status` is what separates them. A filed set sends `IN_REVIEW` with an empty `action_required_fields`. A finalizing call the checks refuse sends `ACTION_REQUIRED` naming the code that failed — the same code the response names.
 
   Both matter when the party holding the webhook URL is not the party making the call: a PSP filing on behalf of a sub-merchant gets the response, and whoever configured the merchant's webhook URL gets the event.
 </Note>
@@ -75,11 +75,13 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 | The invoice number was already used | It is unique per merchant across filed verifications; raise a new one |
 | The set was already filed | Staging is closed. Wait for it to be sent back, then correct it — see below for how you learn that |
 
-## Four things that will bite you
+## Five things that will bite you
 
 **The buyer is the Indian remitter, not your customer abroad.** These fields describe whoever in India paid you, not the overseas party being paid. `buyer_postal_code` is stored as an Indian PIN code, so send the remitter's Indian address — filling this block with your own address is the most common way a first integration goes wrong.
 
-**There is no amount to declare.** `invoice_amount` is not on the checklist — the amount that settles is the credit itself, read from the payment. There is no `amount_to_be_settled`, no TCS, and no declaration field. All of them are a `400`, like any unknown key.
+**The amount you declare has to match the credit.** `invoice_amount` is on the checklist, in rupees, and it is checked against what actually landed in the VBA — more than a paisa apart and the finalizing call is refused naming `invoice_amount`. It is a cross-check, not a figure that decides anything: what settles is still the credit itself. There is no `amount_to_be_settled` and no TCS; both are a `400`, like any unknown key.
+
+**The declaration is a field, not an implication.** Send `declaration: true` — that the service was received and the invoice is genuine. Anything falsy refuses the call naming `declaration`.
 
 **Partial sends merge.** Three fields today and two tomorrow is five fields. Nothing you sent earlier is wiped, so send each thing as you get it rather than waiting for the full set.
 
@@ -95,7 +97,9 @@ Ops either approves the verification, sends it back for changes, or rejects it. 
 | back to `ACTION_REQUIRED` | Sent back for changes. Staging has reopened | Re-read the set, correct what is wrong, and file again |
 
 <Note>
-  **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed).** `message` carries the Ops comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes, which on a send-back is often empty: Ops disagreed with what was sent rather than finding it short. Read the comment, not the list length.
+  **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), with `verification_status` back at `ACTION_REQUIRED`.** `message` carries the Ops comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes; it is empty only when the checklist really is satisfied and the comment alone says what to change.
+
+  **An empty list here does not mean there is nothing to do.** The payment is open again because a person asked for a change. Branch on `verification_status` — the same event carries `IN_REVIEW` with an empty list when a submit passes, and that one genuinely needs nothing from you.
 </Note>
 
 A **rejection** does not move `settlement_status` either: the payment stays `UNDER_REVIEW` and a full refund is raised automatically. You will see it as a refund rather than as a verification state, so reconcile rejections against your refunds, not against this endpoint.
@@ -124,11 +128,14 @@ Integrations go wrong here more often by sending something extra than by leaving
 | :--- | :--- |
 | Identity verification | None. No PAN, no IEC, no external register to clear. |
 | HS code | Never. HS codes describe physical goods crossing a border. |
-| Amount to declare | None. What settles is the credit itself, read from the payment. |
 | Tax | None. Nothing is collected on top of the credit. |
-| Declaration field | None. Filing a complete set is the declaration. |
+| Settlement amount | None. `amount_to_be_settled` is an LRS key. What settles is the credit itself. |
 
 Every one of them is a `400` if you send it, the same as any unknown key.
+
+<Note>
+  **`invoice_amount` and `declaration` are asked for**, and used to be on this list. Both are checklist items now: the amount is cross-checked against the credit, and the declaration has to be `true`.
+</Note>
 
 ## Related
 
