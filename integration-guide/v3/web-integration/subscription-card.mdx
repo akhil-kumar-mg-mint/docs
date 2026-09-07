@@ -1,0 +1,157 @@
+---
+title: "Subscription Card Payment"
+description: "Create card-based subscription mandates — the buyer's card is registered once with a standing instruction, and recurring debits follow."
+---
+
+# Introduction
+
+A card subscription collects recurring payments against the buyer's card. You register the card once with a **standing instruction (SI)**, the buyer authenticates the mandate, and every debit after that is authorised by it.
+
+<CardGroup cols={2}>
+  <Card title="Create Subscription" icon="credit-card" href="#step-1-create-the-subscription">
+    Create a card subscription order with a standing instruction
+  </Card>
+  <Card title="3D Secure Auth" icon="shield" href="#step-2-complete-3d-secure-authentication">
+    Complete 3D Secure authentication for the card mandate
+  </Card>
+</CardGroup>
+
+<Info>
+  **Collection is only half the flow.** The mandate payment and every recurring debit are money collected in India — they are not yet cleared to settle abroad. Each one still needs its compliance details asserted before it can settle. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
+</Info>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **Domain Whitelist**: Your website domain whitelisted for integration
+- **Webhook URL**: A secure endpoint to receive payment and subscription status updates
+- **Card subscription enablement**: Card recurring subscriptions enabled and approved by EximPe on your account
+- **Server environment**: The ability to make HTTPS `POST` and `GET` requests from your backend
+
+<Note>
+  PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the subscription belongs to.
+</Note>
+
+<Warning>
+  **Card details reach EximPe from your server, not the browser.** This is a server-to-server call, so the card number passes through your systems — you are in PCI scope for it. If you would rather not be, take the subscription over [UPI Intent](/integration-guide/v3/web-integration/subscription-upi-intent) instead, where no card data touches you.
+</Warning>
+
+Examples on this page use the sandbox host `https://api-pacb-uat.eximpe.com`. In production, use `https://api-pacb.eximpe.com`.
+
+## Step 1: Create the subscription
+
+Call this from your **backend**. The request looks like a [Create Order](/api-reference/v3/order/create) request with two additions: a `standing_instruction` block saying how much to bill and how often, and `card_details` for the card the mandate is registered against.
+
+```bash cURL [expandable]
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/card/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": "1000.00",
+  "collection_mode": "s2s",
+  "currency": "INR",
+  "reference_id": "SUB6ACIQ7",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400001"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  },
+  "product": {
+    "name": "Monthly Subscription Plan",
+    "description": "Monthly subscription for premium services",
+    "hs_code": "98051000",
+    "hs_code_description": "Subscription services",
+    "type_of_goods": "service"
+  },
+  "invoice": {
+    "number": "INVW72Z2G",
+    "date": "2026-12-12"
+  },
+  "standing_instruction": {
+    "billing_amount": "1000.00",
+    "billing_currency": "INR",
+    "billing_cycle": "MONTHLY",
+    "billing_interval": 1,
+    "payment_start_date": "2027-01-12",
+    "payment_end_date": "2028-01-12",
+    "remarks": "Monthly subscription for premium services",
+    "auto_refund_mandate": false
+  },
+  "mop_type": "credit_card",
+  "card_details": {
+    "number": "4111111111111111",
+    "cardholder_name": "John Doe",
+    "expiry_month": 12,
+    "expiry_year": 2028,
+    "cvv": "123",
+    "network": "VISA",
+    "nickname": "My Credit Card"
+  }
+}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Card Subscription created successfully",
+  "data": {
+    "order_id": "OD2000992103",
+    "subscription_type": "CARD_RECURRING",
+    "subscription_id": "SUB7989707770",
+    "acstemplate": "PCFET0NUWVBFIGh0bWw+CiAgICAgICAgPGh0....=",
+    "subscription": {
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2027-01-12",
+      "payment_end_date": "2028-01-12"
+    }
+  }
+}
+```
+
+Keep the `subscription_id`. Every call on the [Manage Subscriptions](/integration-guide/v3/web-integration/manage-subscriptions) page is addressed by it.
+
+For the full request and response schema, see [Create Card Subscription](/api-reference/v3/subscriptions/create-card-flow).
+
+## Step 2: Complete 3D Secure authentication
+
+Card mandates usually require 3D Secure authentication. If the response carries an `acstemplate`, it is a base64-encoded HTML form: decode it and render it on the client so the buyer can authenticate with their bank. The mandate becomes active only after that completes.
+
+<Note>
+  **No `acstemplate` in the response** means no 3D Secure step was required for that card. Move straight to confirming the mandate.
+</Note>
+
+## Step 3: Confirm the mandate is active
+
+A created subscription is not yet a live mandate. Check with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status) before you rely on it, and watch the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) for the `PENDING` → `ACTIVE` transition.
+
+## Step 4: Assert compliance on each payment
+
+Every debit the mandate authorises is a payment collected in India, created in **Action Required** until you supply the compliance details its purpose code requires. Only then does it become eligible for settlement abroad.
+
+<Card title="Collection Overview" icon="shield-check" href="/integration-guide/v3/web-integration/collection-overview">
+  What a payment needs after it is collected, and how it reaches you abroad.
+</Card>
+
+---
+
+## Next Steps
+
+Once the subscription exists, go to [**Manage Subscriptions**](/integration-guide/v3/web-integration/manage-subscriptions) to check mandate status, modify or cancel the mandate, trigger adhoc charges, and view payment history.
+
+For the full request and response schema, see [Create Card Subscription](/api-reference/v3/subscriptions/create-card-flow).

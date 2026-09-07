@@ -1,0 +1,85 @@
+---
+title: 'Trigger Recurring Payment'
+description: 'Trigger a recurring payment for an ADHOC subscription.'
+api: 'POST /pg/subscriptions/{subscription_id}/recurring_payment/'
+---
+
+Trigger a charge on an active **ADHOC** subscription. The call initiates the payment — the outcome (success, failure, or cancellation) arrives asynchronously by webhook, and the order and payment records are created at that point.
+
+<Info>
+This endpoint only supports **ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered — check it with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status).
+</Info>
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+### Request Body
+
+<ParamField body="amount" type="number">
+  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="subscription_id" type="string">
+  The subscription identifier.
+</ResponseField>
+
+<ResponseField name="payment_id" type="string">
+  Auto-generated with a `REC-` prefix if not provided.
+</ResponseField>
+
+<ResponseField name="payment_amount" type="number">
+  The amount charged for this recurring payment.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status of the API call. `success` means the payment was initiated — not that it has been captured.
+</ResponseField>
+
+<ResponseExample>
+```json 200 - Payment initiated
+{
+  "success": true,
+  "message": "Recurring payment triggered successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "payment_id": "REC-SUB7989707770-a1b2c3d4",
+    "payment_amount": 500.00,
+    "status": "success",
+    "message": "ADHOC recurring payment initiated successfully"
+  }
+}
+```
+
+```json 400 - Amount exceeds billing amount
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Validation error",
+    "details": {
+      "amount": [
+        "Recurring amount must be less than or equal to the subscription billing amount"
+      ]
+    }
+  }
+}
+```
+
+```json 503 - API error
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_API_ERROR",
+    "message": "Payment gateway API error",
+    "details": {
+      "message": "Failed to trigger recurring payment"
+    }
+  }
+}
+```
+</ResponseExample>

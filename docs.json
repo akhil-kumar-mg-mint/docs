@@ -3,7 +3,7 @@
   "theme": "mint",
   "name": "EximPe Docs",
   "url": "https://docs.eximpe.com",
-  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json", "openapi/v3-orders.json", "openapi/v3-b2b.json"],
+  "openapi": ["openapi/openapi.json", "openapi/v2-subscriptions.json", "openapi/v3-orders.json", "openapi/v3-b2b.json", "openapi/v3-subscriptions.json"],
   "colors": {
     "primary": "#26a887",
     "light": "#07C983",
@@ -366,6 +366,14 @@
                 ]
               },
               {
+                "group": "Subscriptions (Recurring Payments)",
+                "pages": [
+                  "integration-guide/v3/web-integration/subscription-upi-intent",
+                  "integration-guide/v3/web-integration/subscription-card",
+                  "integration-guide/v3/web-integration/manage-subscriptions"
+                ]
+              },
+              {
                 "group": "B2B Services (Payments from Businesses)",
                 "pages": [
                   "integration-guide/v3/web-integration/b2b-services-verification"
@@ -422,6 +430,19 @@
                   "api-reference/v3/refunds/list",
                   "api-reference/v3/refunds/get",
                   "api-reference/v3/refunds/simulate-status"
+                ]
+              },
+              {
+                "group": "Subscriptions",
+                "pages": [
+                  "api-reference/v3/subscriptions/create-intent",
+                  "api-reference/v3/subscriptions/create-card-flow",
+                  "api-reference/v3/subscriptions/get",
+                  "api-reference/v3/subscriptions/modify-mandate",
+                  "api-reference/v3/subscriptions/mandate-status",
+                  "api-reference/v3/subscriptions/cancel-mandate",
+                  "api-reference/v3/subscriptions/recurring-payment",
+                  "api-reference/v3/subscriptions/payments"
                 ]
               },
               {
