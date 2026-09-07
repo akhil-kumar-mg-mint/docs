@@ -1,0 +1,275 @@
+---
+title: "Manage Subscriptions"
+description: "Check mandate status, let recurring payments run, modify or cancel a mandate, trigger adhoc charges, and read payment history."
+---
+
+Everything after the subscription exists: confirming the mandate went live, watching the debits arrive, changing or stopping the mandate, and reading back what was collected.
+
+Create the subscription first — over [UPI Intent](/integration-guide/v3/web-integration/subscription-upi-intent) or [Card](/integration-guide/v3/web-integration/subscription-card).
+
+<CardGroup cols={3}>
+  <Card title="Check Mandate Status" icon="clock" href="#check-mandate-status">
+    Verify the mandate is active before you rely on it
+  </Card>
+  <Card title="Automatic Payments" icon="rotate" href="#automatic-recurring-payments">
+    Recurring debits run on the billing cycle, with no call from you
+  </Card>
+  <Card title="Modify or Cancel" icon="pen" href="#modify-or-cancel-the-mandate">
+    Change the mandate amount, or stop future debits
+  </Card>
+  <Card title="Adhoc Payment" icon="credit-card" href="#trigger-an-adhoc-recurring-payment">
+    Trigger a charge on an ADHOC subscription
+  </Card>
+  <Card title="View Payments" icon="list" href="#view-subscription-payments">
+    Read every payment recorded against a subscription
+  </Card>
+</CardGroup>
+
+Every call carries `X-Client-ID`, `X-Client-Secret`, and `X-API-Version: 3.0.0`. PSP callers add `X-Merchant-ID`. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
+
+## Check mandate status
+
+After the buyer approves the mandate, confirm it went live with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status).
+
+```bash cURL
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/mandate_status/' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate status fetched successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "mandate_is_active": true,
+    "status": "ACTIVE",
+    "amount": 1000,
+    "mandate_start_date": "2027-01-12T00:00:00+05:30",
+    "mandate_end_date": "2028-01-12T23:59:59+05:30"
+  }
+}
+```
+
+Only act on the subscription once `mandate_is_active` is `true`.
+
+### Subscription statuses
+
+| Status | What it means |
+| :--- | :--- |
+| `PENDING` | Created, but the buyer has not approved the mandate yet |
+| `ACTIVE` | The mandate is live and recurring debits will be processed |
+| `PAUSED` | Temporarily paused — no debits are processed |
+| `CANCELLED` | The mandate is revoked. Terminal — no further debits |
+| `EXPIRED` | The subscription reached its end date |
+| `FAILED` | Mandate creation or activation failed |
+
+<Note>
+  Only `ACTIVE` subscriptions have debits processed. Track the rest through the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) rather than polling.
+</Note>
+
+## Automatic recurring payments
+
+Once the mandate is active, the debits run themselves on the billing cycle you set in `standing_instruction` — `MONTHLY`, `WEEKLY`, `DAILY`. **You do not call an API to trigger them.**
+
+1. **Mandate activation** — the buyer approves, the mandate goes `ACTIVE`
+2. **Scheduled debit** — on each billing date the amount is debited automatically
+3. **Webhook** — the outcome arrives as a webhook carrying the `subscription_id`
+
+### Watching the debits
+
+| To see | Use |
+| :--- | :--- |
+| Each payment as it happens | [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful) — it carries `subscription_id` |
+| Lifecycle changes on the subscription | [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) |
+| The full payment history | [Get Subscription Payments](/api-reference/v3/subscriptions/payments) |
+| One debit's order | [Get Order](/api-reference/v3/order/get) · [Get Order Status](/api-reference/v3/order/get-status) |
+
+<Note>
+  **A collected debit is not a settled one.** Each recurring payment is money collected in India, and it still needs its compliance details before it can settle abroad. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview#payment-statuses).
+</Note>
+
+## Modify or cancel the mandate
+
+<Warning>
+  **Production only.** Modify and cancel are not available in sandbox.
+</Warning>
+
+### Modify the mandate
+
+To change the billing amount on an active subscription, call [Modify Subscription Mandate](/api-reference/v3/subscriptions/modify-mandate).
+
+```bash cURL
+curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_mandate/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": 1500.00
+}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate modification request sent successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "mandate_modified": true,
+    "updated_amount": "1500.00",
+    "subscription_status": "INITIALIZED"
+  }
+}
+```
+
+`amount` is required.
+
+### Cancel the mandate
+
+To stop future debits and revoke the mandate, call [Cancel Subscription Mandate](/api-reference/v3/subscriptions/cancel-mandate).
+
+```bash cURL
+curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/cancel_mandate/' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+```json
+{
+  "success": true,
+  "message": "Subscription mandate cancel request sent successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "mandate_cancelled": true,
+    "subscription_status": "CANCELLED"
+  }
+}
+```
+
+The subscription is marked `CANCELLED`. Payments already collected are unaffected — they carry on through compliance and settlement as normal.
+
+## Trigger an adhoc recurring payment
+
+An **ADHOC** subscription has no billing cycle: nothing is debited until you ask for it. Each charge is a call to [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment).
+
+<Info>
+  This applies to **ADHOC** subscriptions only. On a `MONTHLY`, `WEEKLY`, or `DAILY` subscription the debits run by themselves — see [Automatic recurring payments](#automatic-recurring-payments).
+</Info>
+
+The subscription must have an active mandate first. Then:
+
+1. **Initiate** — call the API with an optional `amount`
+2. **Wait** — the debit is processed asynchronously, typically the day after the call
+3. **Webhook** — the outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) arrives by webhook, and the order and payment records are created at that point
+
+```bash cURL
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/recurring_payment/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": 500.00
+}'
+```
+
+```json
+{
+  "success": true,
+  "message": "Recurring payment triggered successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "payment_id": "REC-SUB7989707770-a1b2c3d4",
+    "payment_amount": 500.00,
+    "status": "success",
+    "message": "ADHOC recurring payment initiated successfully"
+  }
+}
+```
+
+<Warning>
+  **`success` means initiated, not captured.** The real outcome arrives later by webhook — `SUBSCRIPTION_PAYMENT_SUCCESS`, `SUBSCRIPTION_PAYMENT_FAILED`, or `SUBSCRIPTION_PAYMENT_CANCELLED`. Do not release goods on the API response.
+</Warning>
+
+If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged.
+
+## View subscription payments
+
+[Get Subscription Payments](/api-reference/v3/subscriptions/payments) returns every payment EximPe has recorded against the subscription — the mandate payment and each recurring debit. Available for **all payment methods** and **all environments**, production included.
+
+```bash cURL
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/payments/' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+```json
+{
+  "success": true,
+  "message": "Subscription payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "dpr_abc123",
+      "order_id": "OD2000992103",
+      "reference_id": "SUBPAY-SUB7989707770-1",
+      "amount": 1000.00,
+      "currency": "INR",
+      "status": "CAPTURED",
+      "payment_type": "RECURRING",
+      "mop_type": "UPI",
+      "bank_ref_num": "BANK123456",
+      "status_message": null,
+      "created_at": "2027-01-12T10:30:00Z",
+      "payment_completed_at": "2027-01-12T10:30:05Z"
+    }
+  ]
+}
+```
+
+Use it to build a payment history view, reconcile billing records, or track where an installment got to.
+
+<Note>
+  **This reports collection, not compliance.** A `CAPTURED` debit is money collected in India; whether it can settle abroad is tracked separately on the payment, under `verification_status`. See [Payment statuses](/integration-guide/v3/web-integration/collection-overview#payment-statuses).
+</Note>
+
+---
+
+## Webhooks
+
+Subscriptions produce two kinds of event, and you want both.
+
+### Payment Successful
+
+Fires for every debit the mandate authorises. It carries `subscription_id`, so you can attribute the payment to the right subscription:
+
+- `subscription_id` — which subscription this debit belongs to
+- `order_id` — the order created for this debit
+- `payment_id` — the payment transaction
+- `amount` — what was charged
+- `status` — the payment status
+
+Full payload: [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful).
+
+### Subscription Status
+
+Fires when the subscription itself changes state:
+
+| Transition | What happened |
+| :--- | :--- |
+| `PENDING` → `ACTIVE` | The buyer approved the mandate — start expecting debits |
+| `ACTIVE` → `PAUSED` | Debits are suspended |
+| `PAUSED` → `ACTIVE` | Debits resume |
+| `ACTIVE` → `CANCELLED` | The mandate was revoked. Terminal |
+| `ACTIVE` → `EXPIRED` | The subscription reached `payment_end_date` |
+| `PENDING` → `FAILED` | Mandate creation or activation failed |
+
+Full payload: [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status).
+
+<Note>
+  For webhook setup, IP whitelisting, and signature verification, see the [Webhooks guide](/integration-guide/v3/web-integration/webhooks).
+</Note>

@@ -1,0 +1,112 @@
+---
+title: 'Get Subscription Payments'
+description: 'Fetch all payments recorded against a subscription.'
+api: 'GET /pg/subscriptions/{subscription_id}/payments/'
+---
+
+Fetch every payment EximPe has recorded against the subscription — the mandate payment and each recurring debit. Available for **all payment methods** and **all environments**, production included.
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="payment_id" type="string">
+  Unique identifier of the payment request.
+</ResponseField>
+
+<ResponseField name="order_id" type="string">
+  Unique identifier of the associated order.
+</ResponseField>
+
+<ResponseField name="reference_id" type="string">
+  Merchant-facing reference ID for the order.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Payment amount in the billing currency.
+</ResponseField>
+
+<ResponseField name="currency" type="string">
+  ISO 4217 currency code (e.g., `INR`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Payment status. One of:
+  - `PENDING` — Payment is pending
+  - `CAPTURED` — Payment was successfully captured
+  - `FAILED` — Payment failed
+  - `INVALID` — Payment is invalid
+</ResponseField>
+
+<ResponseField name="payment_type" type="string">
+  Type of payment. One of:
+  - `REGULAR` — One-time payment
+  - `RECURRING` — Recurring subscription payment
+  - `MANDATE` — Mandate/authorization payment
+</ResponseField>
+
+<ResponseField name="mop_type" type="string">
+  Mode of payment. One of: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`, `EMI`, `BNPL`, `CARD`, `VBA_TRANSFER`.
+</ResponseField>
+
+<ResponseField name="bank_ref_num" type="string">
+  Bank reference number for the transaction.
+</ResponseField>
+
+<ResponseField name="status_message" type="string">
+  Additional status message or failure reason.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp when the payment record was created.
+</ResponseField>
+
+<ResponseField name="payment_completed_at" type="string">
+  ISO 8601 timestamp when the payment was completed at the gateway.
+</ResponseField>
+
+<Note>
+  **This endpoint reports collection, not compliance.** A `CAPTURED` recurring debit is money collected in India; whether it can settle abroad is tracked separately on the payment. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview#payment-statuses).
+</Note>
+
+<ResponseExample>
+```json 200 - Success
+{
+  "success": true,
+  "message": "Subscription payments fetched successfully",
+  "data": [
+    {
+      "payment_id": "dpr_abc123",
+      "order_id": "OD2000992103",
+      "reference_id": "SUBPAY-SUB7989707770-1",
+      "amount": 1000.00,
+      "currency": "INR",
+      "status": "CAPTURED",
+      "payment_type": "RECURRING",
+      "mop_type": "UPI",
+      "bank_ref_num": "BANK123456",
+      "status_message": null,
+      "created_at": "2026-03-20T10:30:00Z",
+      "payment_completed_at": "2026-03-20T10:30:05Z"
+    }
+  ]
+}
+```
+
+```json 404 - Subscription not found
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_ERROR",
+    "message": "Subscription not found",
+    "details": {
+      "error": "Subscription not found"
+    }
+  }
+}
+```
+</ResponseExample>

@@ -1,0 +1,261 @@
+---
+title: "Subscription UPI Intent"
+description: "Create UPI subscription mandates using the intent flow — the buyer approves by scanning a QR code or opening a UPI app."
+---
+
+# Introduction
+
+A subscription collects money from the same buyer again and again without asking them to pay each time. You create the subscription once, the buyer approves a **mandate**, and every debit after that is authorised by that mandate.
+
+This page covers the **UPI Intent** flow: no VPA is collected up front — the buyer approves the mandate by scanning a QR code or opening their UPI app.
+
+<CardGroup cols={3}>
+  <Card title="Create Subscription" icon="repeat" href="#step-1-create-the-subscription">
+    Create a UPI subscription order with a standing instruction
+  </Card>
+  <Card title="Display QR Code" icon="qrcode" href="#step-2-display-the-qr-code">
+    Show the QR code for mandate approval
+  </Card>
+  <Card title="Invoke UPI Intent" icon="mobile" href="#step-3-invoke-the-upi-intent">
+    Launch UPI apps on Desktop, Android, and iOS
+  </Card>
+</CardGroup>
+
+<Info>
+  **Collection is only half the flow.** The mandate payment and every recurring debit are money collected in India — they are not yet cleared to settle abroad. Each one still needs its compliance details asserted before it can settle. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview).
+</Info>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **Domain Whitelist**: Your website domain whitelisted for integration
+- **Webhook URL**: A secure endpoint to receive payment and subscription status updates
+- **UPI Subscription enablement**: UPI recurring subscriptions enabled and approved by EximPe on your account
+- **Server environment**: The ability to make HTTPS `POST` and `GET` requests from your backend
+
+<Note>
+  PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the subscription belongs to.
+</Note>
+
+Examples on this page use the sandbox host `https://api-pacb-uat.eximpe.com`. In production, use `https://api-pacb.eximpe.com`.
+
+## Step 1: Create the subscription
+
+Call this from your **backend** — never from the browser, which would expose your client secret.
+
+The request looks like a [Create Order](/api-reference/v3/order/create) request with a `standing_instruction` block added: it says how much to bill, how often, and between which dates.
+
+```bash cURL [expandable]
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/intent/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": "1000.00",
+  "collection_mode": "s2s",
+  "currency": "INR",
+  "reference_id": "SUBR8QRLW",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "line_2": "Apt 4B",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400001"
+    },
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  },
+  "product": {
+    "name": "Monthly Subscription Plan",
+    "description": "Monthly subscription for premium services",
+    "hs_code": "98051000",
+    "hs_code_description": "Subscription services",
+    "type_of_goods": "service"
+  },
+  "invoice": {
+    "number": "INVMVLSVW",
+    "date": "2026-12-15"
+  },
+  "standing_instruction": {
+    "billing_amount": "1000.00",
+    "billing_currency": "INR",
+    "billing_cycle": "MONTHLY",
+    "billing_interval": 1,
+    "payment_start_date": "2027-01-15",
+    "payment_end_date": "2028-01-15",
+    "remarks": "Monthly subscription for premium services",
+    "auto_refund_mandate": false
+  },
+  "mop_type": "UPI",
+  "upi_flow_type": "intent",
+  "upi_app_name": "others"
+}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "UPI Subscription created successfully",
+  "data": {
+    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+    "subscription_type": "UPI_RECURRING",
+    "intent_uri": "ver=01&pa=collect.sandbox@examplebank&pn=MERCHANT&tr=enroll150506157&am=1.00&validityend=25042028&mc=5817&txnType=CREATE&tn=Subscription&fam=1.00&purpose=14&block=N&rev=Y&orgid=000000",
+    "qr_code": {
+      "url": "upi://mandate?ver=01&pa=collect.sandbox@examplebank&pn=MERCHANT&tr=enroll150506157&am=1.00&validityend=25042028&mc=5817&txnType=CREATE&tn=Subscription&fam=1.00&purpose=14&block=N&rev=Y&orgid=000000",
+      "base64": "iVBORw0KGgoAAAANSUhEUgAA..."
+    },
+    "subscription": {
+      "billing_cycle": "MONTHLY",
+      "billing_interval": 1,
+      "payment_start_date": "2027-01-15",
+      "payment_end_date": "2028-01-15"
+    }
+  }
+}
+```
+
+Keep the `subscription_id`. Every call on the [Manage Subscriptions](/integration-guide/v3/web-integration/manage-subscriptions) page is addressed by it.
+
+<Note>
+  **Card flow or intent flow.**
+
+  - **Intent flow** (this page): no VPA needed. The buyer approves the mandate by scanning a QR code or opening a UPI app, and the response carries the QR code as base64.
+  - **[Card flow](/integration-guide/v3/web-integration/subscription-card)**: the buyer's card details are collected up front, and the mandate is created against the card.
+</Note>
+
+For the full request and response schema, see [Create UPI Subscription (Intent Flow)](/api-reference/v3/subscriptions/create-intent).
+
+## Step 2: Display the QR code
+
+The response includes a base64-encoded QR code you can render directly:
+
+```html
+<img src="data:image/png;base64,{data.qr_code.base64}" alt="UPI Mandate QR Code" />
+```
+
+Alternatively, generate the QR code yourself from `intent_uri`, or use `qr_code.url` for UPI app deep linking.
+
+## Step 3: Invoke the UPI intent
+
+How you invoke mandate approval depends on the buyer's device.
+
+### Desktop
+
+Show the QR code from Step 2. The buyer scans it with their mobile UPI app and approves the mandate there.
+
+### Mobile (Android & iOS)
+
+Use the `intent_uri` to launch the buyer's UPI app directly.
+
+#### 1. Specific app invocation
+
+To target a specific app, use these schemes:
+
+| UPI App      | Android Package Name (for Intent URL)    | Scheme Prefix          |
+| ------------ | ---------------------------------------- | ---------------------- |
+| Google Pay   | `com.google.android.apps.nbu.paisa.user` | `gpay://upi/mandate?`  |
+| PhonePe      | `com.phonepe.app`                        | `phonepe://mandate?`   |
+| BHIM         | `in.org.npci.upiapp`                     | `bhim://upi/mandate?`  |
+| Paytm        | `net.one97.paytm`                        | `paytmmp://mandate?`   |
+| Amazon Pay   | `in.amazon.mShop.android.shopping`       | `intent://mandate?`    |
+
+<Note>
+  **App support.** The major UPI apps (Google Pay, PhonePe, BHIM, Paytm) support mandate creation via deep links. Some apps do not support the app-specific `/mandate` scheme — fall back to the generic `upi://mandate?` scheme, or display the QR code from the response.
+</Note>
+
+**Android specific app format:**
+```
+<scheme_prefix><intent_uri>#Intent;scheme=upi;package=<package_name>;end;
+```
+
+<CodeGroup>
+```text Google Pay
+gpay://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end;
+```
+
+```text PhonePe
+phonepe://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=com.phonepe.app;end;
+```
+
+```text BHIM
+bhim://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=in.org.npci.upiapp;end;
+```
+
+```text Paytm
+paytmmp://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123#Intent;scheme=upi;package=net.one97.paytm;end;
+```
+</CodeGroup>
+
+**iOS specific app format:**
+```
+<scheme_prefix><intent_uri>
+```
+
+<CodeGroup>
+```text Google Pay
+gpay://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+```
+
+```text PhonePe
+phonepe://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+```
+
+```text BHIM
+bhim://upi/mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+```
+
+```text Paytm
+paytmmp://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+```
+</CodeGroup>
+
+#### 2. Generic intent invocation
+
+To let the buyer choose any installed UPI app, or use their default handler:
+
+| Type            | Scheme Prefix    | Description                               |
+| --------------- | ---------------- | ----------------------------------------- |
+| **General UPI** | `upi://mandate?` | Launches the system's default UPI handler |
+
+```text
+upi://mandate?pa=merchant@bank&pn=Merchant&am=1000.00&cu=INR&tr=TXN123
+```
+
+<Note>
+  - **On Android**, `upi://mandate?` opens the system app tray (the "Complete action using" dialog), letting the buyer pick from every installed UPI app.
+  - **On iOS**, `upi://mandate?` opens the default UPI app configured on the device.
+</Note>
+
+<Note>
+  **Pro tip:** detect the buyer's device. Show a QR code on desktop, and a list of UPI apps (or an "Approve Mandate" button) on mobile.
+</Note>
+
+## Step 4: Confirm the mandate is active
+
+A created subscription is not yet a live mandate — the buyer still has to approve it. Check with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status) before you rely on it, and watch the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) for the `PENDING` → `ACTIVE` transition.
+
+## Step 5: Assert compliance on each payment
+
+Every debit the mandate authorises is a payment collected in India, created in **Action Required** until you supply the compliance details its purpose code requires. Only then does it become eligible for settlement abroad.
+
+<Card title="Collection Overview" icon="shield-check" href="/integration-guide/v3/web-integration/collection-overview">
+  What a payment needs after it is collected, and how it reaches you abroad.
+</Card>
+
+---
+
+## Next Steps
+
+Once the subscription exists, go to [**Manage Subscriptions**](/integration-guide/v3/web-integration/manage-subscriptions) to check mandate status, modify or cancel the mandate, trigger adhoc charges, and view payment history.
+
+For the full request and response schema, see [Create UPI Subscription (Intent Flow)](/api-reference/v3/subscriptions/create-intent).
