@@ -223,7 +223,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     </ParamField>
 
     <ParamField path="data.payment_verification_expiry" type="string | null" required>
-      ISO 8601 datetime by which verification must be complete, or `null` where no clock is running.
+      ISO 8601 datetime by which verification must be complete, or `null` when the gateway has not provided a deadline.
 
       Past this point the payment can no longer be verified: `verification_status` becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat each event's value as authoritative — it can move, and an event is sent when it does.
 

@@ -46,7 +46,7 @@ From there it is one loop, repeated until nothing is outstanding:
   Both matter when the party holding the webhook URL is not the party making the call: a PSP filing on behalf of a sub-merchant gets the response, and whoever configured the merchant's webhook URL gets the event.
 </Note>
 
-If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent, call it any time.
+If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent; call it any time.
 
 <CardGroup cols={2}>
   <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/b2b/submit-verification-details">
