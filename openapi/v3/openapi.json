@@ -7453,6 +7453,26 @@
             "type": "string",
             "description": "A group name; items sharing one substitute for each other. No checklist uses it today — where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).",
             "example": "student_status_proof"
+          },
+          "ref": {
+            "type": "string",
+            "description": "Documents only, and only once a file has been sent under this code: the upload identifier returned by [Upload Document](/api-reference/v3/lrs/upload-document) for the file currently held in the slot. A replacement upload supersedes the older row, so this always names the current file.",
+            "example": "6757940683"
+          },
+          "doc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "description": "Documents only, and only once a file has been sent under this code: where that one document stands. `PENDING` — not reviewed individually. `VERIFIED` — accepted. `REJECTED` — refused; replace it. Not a synonym for `satisfied`, which says whether the checklist item blocks completion.",
+            "example": "REJECTED"
+          },
+          "rejection_reason": {
+            "type": "string",
+            "description": "Documents only: the reviewer's text about this document, present only when they left some. The sentence to show a payer when you ask for a replacement file.",
+            "example": "Letter is for the wrong intake term."
           }
         }
       },
