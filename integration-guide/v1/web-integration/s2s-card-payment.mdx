@@ -239,7 +239,7 @@ EximPe's card tokenization system allows you to securely save card details for f
 ### Tokenization Flows
 
 1. **Automatic Save (During Payment)**: Add `"save_card": true` in the `card_details` object when initiating a payment. The card will be tokenized automatically upon successful payment.
-2. **Manual Save (Dedicated API)**: Call the [Save Card API](/api-reference/card-tokens/save) to tokenize card details independently of a payment.
+2. **Manual Save (Dedicated API)**: Call the [Save Card API](/api-reference/v1/card-tokens/save) to tokenize card details independently of a payment.
 
 ### Flow 1: Automatic Save During Payment
 
@@ -266,7 +266,7 @@ To save a card while processing a payment, include the `save_card` parameter in 
 
 ### Flow 2: Manual Save via API
 
-Use the dedicated [Save Card API](/api-reference/card-tokens/save) to tokenize cards manually:
+Use the dedicated [Save Card API](/api-reference/v1/card-tokens/save) to tokenize cards manually:
 
 ```json
 POST /pg/tokens/
@@ -371,7 +371,7 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
 ```
 
 <Note>
-  For detailed parameters and response formats, see the [Get Order API](/api-reference/order/get)
+  For detailed parameters and response formats, see the [Get Order API](/api-reference/v1/order/get)
 </Note>
 
 ### Payment Status Values
@@ -412,8 +412,8 @@ EximPe sends real-time webhook notifications when payment status changes:
 ```
 
 For more webhook details, see:
-- [Payment Successful](/api-reference/webhooks/payment-successful)
-- [Payment Failed](/api-reference/webhooks/payment-failed)
+- [Payment Successful](/api-reference/v1/webhooks/payment-successful)
+- [Payment Failed](/api-reference/v1/webhooks/payment-failed)
 
 ## Security Best Practices
 
@@ -467,4 +467,4 @@ For more webhook details, see:
 - **Monitor Performance**: Track success rates, error patterns, and user experience metrics
 - **Optimize Flow**: Continuously improve based on user feedback and analytics
 
-For additional support, consult our [API Reference](/api-reference/v1/) or contact our integration team. 
+For additional support, consult our [API Reference](/api-reference/v1/) or contact our integration team.

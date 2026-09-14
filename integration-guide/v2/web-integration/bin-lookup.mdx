@@ -5,7 +5,7 @@ description: "Identify card details before processing payments using BIN (Bank I
 
 # Introduction
 
-BIN Lookup allows you to retrieve card information by providing the first 8 digits of a card number. This helps you identify card network, type, bank, and issuance details before processing a payment, enabling better user experience and payment flow optimization.
+BIN Lookup allows you to retrieve card information by providing the first 8 digits of a card number. This helps you identify card network, type, bank, and issuance details before processing a payment, enabling a better user experience and payment flow optimization.
 
 <CardGroup cols={3}>
   <Card title="Card Network Detection" icon="credit-card" href="#card-network-detection">
@@ -63,8 +63,8 @@ async function lookupBIN(binCode) {
       'Content-Type': 'application/json',
       'X-Client-ID': getConfigValue('CLIENT_ID'),
       'X-Client-Secret': getConfigValue('AUTH_KEY'),
-      ...(getConfigValue('IS_PSP') && getConfigValue('MERCHANT_ID') 
-        ? { 'X-Merchant-ID': getConfigValue('MERCHANT_ID') } 
+      ...(getConfigValue('IS_PSP') && getConfigValue('MERCHANT_ID')
+        ? { 'X-Merchant-ID': getConfigValue('MERCHANT_ID') }
         : {})
     },
     body: JSON.stringify({
@@ -189,19 +189,19 @@ document.getElementById('cardNumber').addEventListener('input', async function(e
       
       // Show card type
       if (binData.card_type) {
-        document.getElementById('cardType').textContent = 
+        document.getElementById('cardType').textContent =
           binData.card_type === 'credit_card' ? 'Credit Card' : 'Debit Card';
       }
       
       // Display bank name
       if (binData.bank) {
-        document.getElementById('bankName').textContent = 
+        document.getElementById('bankName').textContent =
           binData.bank.charAt(0).toUpperCase() + binData.bank.slice(1);
       }
       
       // Show domestic/international indicator
       if (binData.is_domestic !== null) {
-        document.getElementById('cardIssuance').textContent = 
+        document.getElementById('cardIssuance').textContent =
           binData.is_domestic ? 'Domestic Card' : 'International Card';
       }
       
@@ -217,7 +217,7 @@ document.getElementById('cardNumber').addEventListener('input', async function(e
 
 ## Best Practices
 
-1. **Debounce Requests**: Wait for user to stop typing before making BIN lookup requests
+1. **Debounce Requests**: Wait for the user to stop typing before making BIN lookup requests
 2. **Cache Results**: Cache BIN lookup results to reduce API calls
 3. **Handle Errors Gracefully**: Don't block payment flow if BIN lookup fails
 4. **Validate BIN Format**: Ensure BIN is 8 digits before making request
@@ -235,4 +235,4 @@ document.getElementById('cardNumber').addEventListener('input', async function(e
 
 - [API Reference: BIN Lookup](/api-reference/v2/bin-lookup/lookup)
 - [S2S Card Payment](/integration-guide/v2/web-integration/s2s-card-payment)
-- [Save Card Token](/api-reference/card-tokens/save)
+- [Save Card Token](/api-reference/v2/card-tokens/save)

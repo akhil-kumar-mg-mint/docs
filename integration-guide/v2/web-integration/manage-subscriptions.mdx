@@ -19,7 +19,7 @@ description: "Check mandate status, manage recurring payments, modify or cancel 
   <Card title="Modify or Cancel" icon="edit" href="#modify-or-cancel-mandate">
     Update mandate amount/end date or cancel
   </Card>
-  <Card title="Adhoc Payment" icon="credit-card" href="#trigger-adhoc-recurring-payment">
+  <Card title="Ad Hoc Payment" icon="credit-card" href="#trigger-adhoc-recurring-payment">
     Trigger a recurring payment for ADHOC subscriptions
   </Card>
   <Card title="View Payments" icon="list" href="#view-subscription-payments">
@@ -109,7 +109,7 @@ For webhook implementation details, see the [Webhooks](#webhooks) section below.
 ## Modify or Cancel Mandate
 
 <Note>
-  **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
+  **Production Only**: Cancel mandate and modify mandate operations are only supported in the production environment. These features are not available in test/sandbox environments.
 </Note>
 
 ### Modify Mandate
@@ -232,7 +232,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 - Only **ADHOC** billing cycle subscriptions are supported
 - If `amount` is provided, it must not exceed the subscription's `billing_amount`
 
-For full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in API Reference.
+For the full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in the API Reference.
 
 ## View Subscription Payments
 
@@ -275,7 +275,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
 
 The response returns an array of all payment records for the subscription, including details such as the payment status, amount, mode of payment, and timestamps. Use this to build payment history views, reconcile billing records, or track installment statuses.
 
-For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) endpoint in API Reference.
+For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/payments) endpoint in the API Reference.
 
 ## Sandbox Testing
 
@@ -326,7 +326,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pg_payments/" 
 
 From the response, identify payments with `PENDING` status. Use their `payment_id` in the next step to simulate a payment outcome.
 
-For full response schema, see the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) endpoint in API Reference.
+For full response schema, see the [**Fetch PG Payments**](https://docs.eximpe.com/api-reference/v2/subscriptions/pg-payments) endpoint in the API Reference.
 
 ### Simulate Payment
 
@@ -362,7 +362,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/simulate_paym
 
 The `payment_status` field accepts `SUCCESS` or `FAILED`. The `payment_id` should be a pending payment obtained from the [Fetch PG Payments](#fetch-pg-payments) response.
 
-For full request and response schema, see the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) endpoint in API Reference.
+For the full request and response schema, see the [**Simulate Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/simulate-payment) endpoint in the API Reference.
 
 ---
 

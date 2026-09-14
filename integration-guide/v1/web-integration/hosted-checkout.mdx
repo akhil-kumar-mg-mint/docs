@@ -223,7 +223,7 @@ If you attempt to use an invalid or expired session ID, you'll receive the follo
 After the customer completes or cancels the payment, EximPe will redirect them to the `return_url` you specified when creating the order. This redirection happens regardless of whether the payment was successful or failed.
 
 <Note>
-  **Post-Payment Flow**: 
+  **Post-Payment Flow**:
   - **Success**: Customer completes payment → Redirected to return_url
   - **Failure/Cancellation**: Customer cancels or payment fails → Redirected to return_url
   - **Verification Required**: Always verify payment status on your backend, regardless of the redirect
@@ -292,7 +292,7 @@ Based on the verification API response, handle different payment statuses approp
 
 #### Callback Verification
 
-When EximPe redirects to your `return_url`, it sends payment details via POST request. You must verify the authenticity of this callback using the hash value provided.
+When EximPe redirects to your `return_url`, it sends payment details via a POST request. You must verify the authenticity of this callback using the hash value provided.
 
 **Sample Callback Request:**
 
@@ -386,7 +386,7 @@ def verify_callback_hash(form_data: dict, encryption_key: str) -> bool:
     # Define the keys to include in hash generation (in order)
     hash_keys = [
         "order_id",
-        "payment_id", 
+        "payment_id",
         "status",
         "mop_type",
         "bank_ref_num",
@@ -446,7 +446,7 @@ def handle_payment_callback(request):
     After receiving a response from EximPe, you must validate the transaction by verifying the hash or signature (if applicable) against what you sent in the request. This ensures the transaction is secure and untampered.
   </Card>
   <Card title="Additional Security">
-    EximPe recommends implementing transaction details APIs and webhooks/callbacks as an extra security measure. For more information, refer to the [Verify Payment API](/api-reference/hosted-checkout) and Webhooks documentation.
+    EximPe recommends implementing transaction details APIs and webhooks/callbacks as an extra security measure. For more information, refer to the [Get Order Status API](/api-reference/v1/order/get-status) and Webhooks documentation.
   </Card>
   <Card title="Record Reconciliation">
     Always reconcile your records with EximPe's database after you receive the response. Use the verification APIs to confirm transaction details.
