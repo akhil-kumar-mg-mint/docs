@@ -71,7 +71,7 @@ This dual verification prevents:
 ```javascript
 // Delete multiple expired cards
 const deleteExpiredCards = async (customerId, expiredTokens) => {
-  const deletionPromises = expiredTokens.map(token => 
+  const deletionPromises = expiredTokens.map(token =>
     deleteCard(token, customerId)
   );
   
@@ -266,7 +266,7 @@ def remove_expired_cards(customer_id):
 4. **Authentication**: Ensure proper authentication before deletion
 
 ### 💡 **Business Logic**
-1. **Cleanup Expired Cards**: Automatically remove expired cards
+1. **Clean Up Expired Cards**: Automatically remove expired cards
 2. **User Notifications**: Notify users when cards are deleted
 3. **Backup Considerations**: Consider if you need to retain deletion logs
 4. **Transaction Checks**: Ensure no pending transactions use the token
@@ -296,9 +296,9 @@ Once a card is deleted:
 
 ## Related Endpoints
 
-- [Save Card](/api-reference/card-tokens/save) - Save new cards for customers
-- [List Saved Cards](/api-reference/card-tokens/list) - View all saved cards
-- [Create Order](/api-reference/order/create) - Use remaining saved cards for payments
+- [Save Card](/api-reference/v1/card-tokens/save) - Save new cards for customers
+- [List Saved Cards](/api-reference/v1/card-tokens/list) - View all saved cards
+- [Create Order](/api-reference/v1/order/create) - Use remaining saved cards for payments
 
 ## Migration Notes
 
@@ -307,4 +307,4 @@ If you're migrating from a different card storage system:
 1. **Map Tokens**: Ensure proper mapping between old and new tokens
 2. **Batch Operations**: Use batch deletion for bulk migrations
 3. **Customer Communication**: Inform customers about card re-saving if needed
-4. **Testing**: Thoroughly test deletion flows before production 
+4. **Testing**: Thoroughly test deletion flows before production

@@ -22,7 +22,7 @@ When you save a card, the system generates a unique `card_token` that can be use
 
 ### 🏷️ **Card Organization**
 - Optional card nickname for easy identification
-- Support for multiple card types (Credit Card, Debit Dard)
+- Support for multiple card types (Credit Card, Debit Card)
 - Network identification (VISA, MASTERCARD, AMEX, etc.)
 
 ## Required Parameters
@@ -54,7 +54,7 @@ The `authorization_reference_number` parameter is **mandatory** for specific car
 - **Value**: The authorization reference number received during the authorization call of Rupay card transactions
 - **Note**: Authentication reference number will be sent by the PG in the authorization response. Currently, this check is skipped by Rupay
 
-#### **AMEX Cards** 
+#### **AMEX Cards**
 - **Required**: Yes
 - **Value**: The AEVV (American Express Verification Value) received during authorization call of AMEX card transactions
 - **Note**: American Express Verification Value will be sent by the PG in the authorization response
@@ -251,4 +251,4 @@ After saving a card successfully:
 
 - [List Saved Cards](/api-reference/v1/card-tokens/list) - Retrieve saved cards for a customer
 - [Delete Saved Card](/api-reference/v1/card-tokens/delete) - Remove a saved card
-- [Create Order](/api-reference/v1/order/create) - Use saved cards in orders 
+- [Create Order](/api-reference/v1/order/create) - Use saved cards in orders

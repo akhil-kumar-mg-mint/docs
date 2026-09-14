@@ -23,7 +23,7 @@ The standard hosted payment flow where customers are redirected to EximPe's secu
 Server-to-server UPI intent flow that generates a UPI intent link for direct app-to-app payments.
 
 ### 3. S2S Card Payment
-Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/card-tokens/save) after successful payment.
+Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/v1/card-tokens/save) after successful payment.
 
 ## Request Parameters
 
@@ -53,10 +53,10 @@ You can provide card information in two ways:
 1. **New Card Details** (for first-time payments):
    - Include full card information: `number`, `cardholder_name`, `expiry_month`, `expiry_year`, `cvv`, `network`
    - Required for new cards not previously saved
-   - Use the [Create Token API](/api-reference/card-tokens/save) after successful payment to tokenize for future use
+   - Use the [Create Token API](/api-reference/v1/card-tokens/save) after successful payment to tokenize for future use
 
 2. **Saved Card Token** (for repeat payments):
-   - Use `token`: Previously saved card token from the [Create Token API](/api-reference/card-tokens/save)
+   - Use `token`: Previously saved card token from the [Create Token API](/api-reference/v1/card-tokens/save)
    - Include `identifier`: Customer identifier used when saving the card
    - Include `network`: Card network (visa, mastercard, etc.)
    - No sensitive card data required - token handles authentication
@@ -170,7 +170,7 @@ For S2S Card Payment mode, the response includes:
 ```json Hosted Payment
 {
   "amount": "1000.00",
-  "currency": "INR", 
+  "currency": "INR",
   "reference_id": "ORDER_123456",
   "collection_mode": "hosted_payment",
   "return_url": "https://yourdomain.com/payment/callback",
@@ -182,7 +182,7 @@ For S2S Card Payment mode, the response includes:
     "address": {
       "line_1": "221B Baker Street",
       "city": "Mumbai",
-      "state": "Maharashtra", 
+      "state": "Maharashtra",
       "postal_code": "400001"
     }
   },
@@ -197,7 +197,7 @@ For S2S Card Payment mode, the response includes:
 {
   "amount": "1000.00",
   "currency": "INR",
-  "reference_id": "ORDER_123457", 
+  "reference_id": "ORDER_123457",
   "collection_mode": "s2s",
   "mop_type": "upi",
   "upi_flow_type": "intent",
@@ -213,7 +213,7 @@ For S2S Card Payment mode, the response includes:
     }
   },
   "product": {
-    "name": "Smartphone", 
+    "name": "Smartphone",
     "type_of_goods": "physical_goods"
   }
 }
@@ -354,12 +354,12 @@ For S2S Card Payment mode, the response includes:
 
 ### Card Payments
 - **3D Secure Flow**: For new cards, the system initiates 3D Secure verification
-- **ACS Template Processing**: 
+- **ACS Template Processing**:
   1. Decode the Base64 `acs_template` from the response
   2. Render the decoded HTML in the customer's browser
   3. The form will auto-submit to complete 3D Secure authentication
   4. Customer will be redirected back to your `return_url` after authentication
-- **Card Tokenization**: Use the [Create Token API](/api-reference/card-tokens/save) after successful payment to securely tokenize cards for future use
+- **Card Tokenization**: Use the [Create Token API](/api-reference/v1/card-tokens/save) after successful payment to securely tokenize cards for future use
 - **Saved Card Usage**: Use previously saved card tokens for faster, more secure repeat payments
 - **Fraud Prevention**: `ip_address` and `user_agent` are required for fraud detection and prevention
 
@@ -371,4 +371,4 @@ For S2S Card Payment mode, the response includes:
 ### Security Considerations
 - **Card Data**: Never log or store card details in your application
 - **3D Secure**: Always implement proper 3D Secure handling for card payments
-- **Token Management**: Use the [Card Token APIs](/api-reference/card-tokens/save) for managing saved cards
+- **Token Management**: Use the [Card Token APIs](/api-reference/v1/card-tokens/save) for managing saved cards
