@@ -154,7 +154,7 @@ Four events share one body, so a single handler can read all of them:
 | Event | `action_required_fields` | Means |
 |---|---|---|
 | [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) | Plain field codes | Something is owed. |
-| [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) | Entry objects, plus `action_required_documents` and `submit` | Something is owed on an LRS payment. |
+| [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) | Entry objects, plus `action_required_documents` | Something is owed on an LRS payment. |
 | `PAYMENT_UNDER_REVIEW` | `[]` | Nothing is owed; the payment is with us. |
 
 The one difference worth knowing: on `LRS_VERIFICATION_NEEDED` the list holds **objects** (`{code, message, …}`); on the other two it holds **strings**. Check the element type, or route on `event_type`.

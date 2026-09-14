@@ -65,6 +65,18 @@ If you ever need the whole picture rather than just what changed — you missed 
 
 A payment that never completes its verification is refunded to the buyer — terminal, and nothing you send afterwards reopens it. Treat the moment the money arrived as when the clock started, surface it in your own UI, and chase against it.
 
+## Once it's filed
+
+A filed verification is reviewed by us, and the outcome reaches you as a webhook:
+
+| Outcome | Webhook | What it carries |
+| :--- | :--- | :--- |
+| Approved | [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | `APPROVED`, and the state each document ended in. Nothing further from you |
+| Rejected | [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | `REJECTED`, the reviewer's comment, and which document failed and why |
+| Sent back for changes | [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) | The payment owes something again — the reviewer's comment in `message`, and the outstanding items named as usual |
+
+Order two verdicts on one payment by the envelope's `event_time`. `sequence_number` is a random identifier, not a sequence.
+
 ## After it passes
 
 Once it clears review, the money is settled to you. Track it with the [Settlement APIs](/api-reference/v3/settlement/list) and the [Payment Settled](/api-reference/v3/webhooks/payment-settled) webhook.
