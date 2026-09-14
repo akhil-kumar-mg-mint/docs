@@ -1,0 +1,75 @@
+---
+title: 'List Payment Links'
+description: 'Page through your payment links, newest first, with where each one stands.'
+openapi: '/openapi/v3-payment-links.json GET /pg/payment-links/'
+---
+
+## Overview
+
+Returns your payment links a page at a time, newest first. Each entry carries the link's `status`, its buyer, its amount and the order behind it.
+
+<Note>
+  **PSPs get one list covering every link they can act for** — their own and all their sub-merchants'. `merchant` on each entry says whose it is. `X-Merchant-ID` does not narrow the list.
+</Note>
+
+## Query Parameters
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `page` | integer | `1` | Page number. |
+| `page_size` | integer | `250` | Links per page. Values above `1000` are capped at `1000`. |
+| `ordering` | string | `-created_at` | `created_at`, `last_updated_at` or `payment_completed_at`. Prefix with `-` for descending. |
+
+<Warning>
+  **The list takes no filters.** There is no status, date or reference filter, so page through every link and filter on your side. To follow one link, call [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) with its `payment_id`.
+</Warning>
+
+## Pagination
+
+`data` wraps the page:
+
+| Field | Description |
+|---|---|
+| `count` | Total links across all pages |
+| `page` | This page's number |
+| `page_size` | Links per page |
+| `next` | Full URL of the next page, or `null` on the last one |
+| `previous` | Full URL of the previous page, or `null` on the first one |
+| `results` | The links on this page |
+
+Follow `next` until it is `null`. A page past the last one is not returned empty — it is refused with a `500`:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": 40350,
+    "message": "Failed to retrieve domestic payment requests",
+    "details": {
+      "error": "Invalid page."
+    }
+  }
+}
+```
+
+## Link status
+
+| `status` | Meaning |
+|---|---|
+| `active` | Open for payment. |
+| `paid` | Paid. This outranks expiry: a paid link reads `paid` even after its `expiry_date` passes. |
+| `expired` | Past its `expiry_date`, or deactivated — a deactivated link reads `expired`. |
+| `failed` | Could not be created, or closed without being paid. |
+
+<Note>
+  List returns each link's status as last recorded. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) checks an active link for a payment before answering, so right after a payment it can read `paid` before List does.
+</Note>
+
+## Response Fields
+
+- `amount.amount` and `amount.total_amount` are decimal strings without trailing zeros — `"1500"`, `"2499.5"`. Parse them as decimals, never as floats. `total_amount` adds GST where GST applies; otherwise it equals `amount`.
+- `mop_type` is the method the buyer paid with, in lowercase (`upi`, `credit_card`). It is `null` until the link is paid, and can stay `null` after. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) gives the same value in uppercase.
+- `comment` says why a link failed or closed, when there is a reason to give; otherwise it is `null`.
+- `payment_link` is `null` for a link that could not be created.
+- `order_id` is the order behind the link (`OD` followed by 10 digits).
+- `created_at` is UTC with microseconds, e.g. `2026-09-14T09:30:15.123456Z`.

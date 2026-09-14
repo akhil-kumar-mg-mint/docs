@@ -1,0 +1,55 @@
+---
+title: 'Retrieve Payment Link'
+description: 'Fetch one payment link by its payment_id: where it stands, when it expires, and who it is for.'
+openapi: '/openapi/v3-payment-links.json GET /pg/payment-links/{payment_id}/'
+---
+
+## Overview
+
+Returns one payment link: its `status`, `expiry_date`, buyer, product, invoice and settlement. Use it to confirm a link's outcome — for an active link it checks for a payment before answering, so it can be ahead of [List Payment Links](/api-reference/v3/payment-link/list).
+
+## Path Parameters
+
+- `payment_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`.
+
+A link that is not yours — or, for a PSP, not one of your sub-merchants' — reads as not found:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_PAYMENT_005",
+    "message": "Payment not found",
+    "details": {
+      "payment_id": "Payment not found"
+    }
+  }
+}
+```
+
+PSPs do not need `X-Merchant-ID` here: a sub-merchant's link is found without it.
+
+## Link status
+
+| `status` | Meaning |
+|---|---|
+| `active` | Open for payment. |
+| `paid` | Paid. This outranks expiry: a paid link reads `paid` even after its `expiry_date` passes. |
+| `expired` | Past its `expiry_date`, or deactivated — a deactivated link reads `expired`. |
+| `failed` | Could not be created, or closed without being paid. |
+
+## Response Fields
+
+<Note>
+  **The response carries no amount.** Keep the `amount` from [Create Payment Link](/api-reference/v3/payment-link/create), or read `amount` from [List Payment Links](/api-reference/v3/payment-link/list).
+</Note>
+
+- `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
+- `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after.
+- `buyer`, `product`, `invoice`: As sent on create.
+  - `buyer.pan_number` and `buyer.dob` are `null` unless they were collected from the buyer.
+  - `product.hs_code` and `product.hs_code_description` are `null`: the link does not store them.
+  - `invoice.date` and `invoice.file` are `null` unless they were added to the order later.
+- `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes.
+- `status_message`: Why the link failed or closed, when there is a reason to give; otherwise `null`.
+- `created_at` and the other timestamps are UTC with microseconds, e.g. `2026-09-14T09:30:15.123456Z`.

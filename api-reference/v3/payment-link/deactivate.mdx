@@ -1,0 +1,60 @@
+---
+title: 'Deactivate Payment Link'
+description: 'Close an active payment link so it takes no further payment. A deactivated link reads expired.'
+openapi: '/openapi/v3-payment-links.json POST /pg/payment-links/{payment_id}/deactivate/'
+---
+
+## Overview
+
+Closes an active payment link so the buyer can no longer pay through it. The call takes no body, and a successful one returns an empty `data`:
+
+```json
+{
+  "success": true,
+  "message": "Payment Link deactivated successfully",
+  "data": {}
+}
+```
+
+## Path Parameters
+
+- `payment_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`.
+
+<Note>
+  **PSPs send `X-Merchant-ID`** naming the sub-merchant the link belongs to, as on [Create Payment Link](/api-reference/v3/payment-link/create).
+</Note>
+
+## What deactivation does
+
+- **The link reads `expired`.** There is no separate deactivated status: deactivating sets `expiry_date` to the moment of the call, so [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) and [List Payment Links](/api-reference/v3/payment-link/list) report it as `expired`, with that moment as its `expiry_date`.
+- **It cannot be undone.** To collect again, create a new link with a new `reference_id`.
+- **A payment already underway can still land.** If the buyer was mid-payment when you deactivated, check the link afterwards: `paid` outranks `expired`, so a link whose payment went through reads `paid`.
+
+## When it is refused
+
+Only an `active` link can be deactivated. A link that is already `paid`, `expired` (deactivated links included) or `failed` is refused with a `400`, so deactivating a link twice fails the second time:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_ORDER_002",
+    "message": "Validation error",
+    "details": {
+      "payment": "Payment Link cannot be deactivated"
+    }
+  }
+}
+```
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `400` | `ERR_ORDER_002` | The link is not `active` | `{"payment": "Payment Link cannot be deactivated"}` |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | Credentials are missing or wrong, or a PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
+| `403` | — | Payment links are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
+| `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect through payment links | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | The payment network is rate limiting requests | Retry after the `Retry-After` header, when it is sent |
+| `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached, or returned an error | Retry shortly |
+| `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
