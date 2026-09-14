@@ -91,7 +91,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_not
 ### Trigger Payment
 
 <Note>
-  **Test/Sandbox Environment**: In test/sandbox environment, the recurring payment can be called immediately after the pre-debit notification is sent. The 48-hour (or 24-hour for daily billing) waiting period requirement applies only to production environment.
+  **Test/Sandbox Environment**: In the test/sandbox environment, the recurring payment can be called immediately after the pre-debit notification is sent. The 48-hour (or 24-hour for daily billing) waiting period requirement applies only to the production environment.
 </Note>
 
 On the scheduled billing date, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v1/subscriptions/recurring-payment) API.
@@ -129,7 +129,7 @@ Use the standard [**Get Payment**](https://docs.eximpe.com/api-reference/v1/paym
 ## Modify or Cancel Mandate
 
 <Note>
-  **Production Only**: Cancel mandate and modify mandate operations are only supported in production environment. These features are not available in test/sandbox environments.
+  **Production Only**: Cancel mandate and modify mandate operations are only supported in the production environment. These features are not available in test/sandbox environments.
 </Note>
 
 ### Modify Mandate
@@ -244,7 +244,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
 
 The response returns an array of all payment records for the subscription, including details such as the payment status, amount, mode of payment, and timestamps. Use this to build payment history views, reconcile billing records, or track installment statuses.
 
-For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) endpoint in API Reference.
+For full response field descriptions, see the [**Get Subscription Payments**](https://docs.eximpe.com/api-reference/v1/subscriptions/payments) endpoint in the API Reference.
 
 ---
 
