@@ -31,7 +31,7 @@ From there it's one loop, repeated until nothing is outstanding:
 3. Read the response: `status` says where the payment stands, and `outstanding` names what's still owed.
 4. If nothing is outstanding, the set goes to our checks — PAN, sender match, tax — and the payment moves to `in_review`, then settles.
 
-If you ever need the whole picture rather than just what changed — you missed a webhook, or you're resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the complete set, satisfied or not. It's idempotent, call it any time.
+If you ever need the whole picture rather than just what changed — you missed a webhook, or you're resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the complete set, satisfied or not. It's idempotent; call it any time.
 
 <CardGroup cols={2}>
   <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
