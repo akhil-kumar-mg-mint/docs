@@ -226,8 +226,8 @@ When `same_as_registered_address` is set to `true`, communication address fields
 
 ### Validation
 All the same validations from the [Create Merchant](/api-reference/v1/merchant/create) endpoint apply:
-- `website` must include `https://` prefix
-- `phone_number` must be E.164 format
+- `website` must include the `https://` prefix
+- `phone_number` must be in E.164 format
 - `business_category`, `business_mode`, `international_org_type`, `monthly_avg_transaction_volume` must use valid enum values
 - `mcc` must be comma-separated 4-digit codes
 - `business_category_other` is required when category includes "Other"
