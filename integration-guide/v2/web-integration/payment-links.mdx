@@ -133,11 +133,12 @@ Listen for the `PAYMENT_SUCCESSFUL` webhook event to get real-time updates.
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
         "utr": null,
-        "amount": 1000,
+        "amount": 1500,
         "status": "CAPTURED",
         "message": "Payment Captured",
         "mop_type": "UPI",
         "order_id": "OD3376378679",
+        "link_id": "PR4829301756",
         "payment_id": "PR6938527534",
         "bank_ref_num": "OD3376378679-PR6938527534",
         "extended_status": "SUCCESS",
@@ -145,7 +146,7 @@ Listen for the `PAYMENT_SUCCESSFUL` webhook event to get real-time updates.
         "subscription_id": null,
         "virtual_account_id": null,
         "payment_completed_at": "2025-06-24T12:30:44.000000Z",
-        "merchant_reference_id": "S2SICR1QPJ"
+        "merchant_reference_id": "LINK_12345"
     }
 }
 ```
@@ -157,6 +158,18 @@ You can also periodically check the status of the payment link or the order asso
 <Card title="📚 API Reference" href="/api-reference/v2/payment-link/retrieve">
   **Get Payment Link API** - Check the current status of a payment link.
 </Card>
+
+## Tracking a payment link
+
+Two IDs are in play: the link's `link_id`, and the `payment_id` of each payment made through it.
+
+- **Manage the link by `link_id`.** [Retrieve Payment Link](/api-reference/v2/payment-link/retrieve), [Deactivate Link](/api-reference/v2/payment-link/deactivate) and the other payment link endpoints take it.
+- **Match payments to the link on `link_id`.** A buyer may try more than once before a payment goes through. Every payment made through the link arrives in the payment webhooks — [`PAYMENT_SUCCESSFUL`](/api-reference/v2/webhooks/payment-successful) when it goes through, [`PAYMENT_FAILED`](/api-reference/v2/webhooks/payment-failed) when it does not — with its own `payment_id` and the link's `link_id`.
+- **Refund and reconcile by that payment's `payment_id`,** not by `link_id`. [Create Refund](/api-reference/v2/refunds/create) takes it, and [Retrieve Payment Link](/api-reference/v2/payment-link/retrieve#how-the-link-was-paid) names the payment that paid the link in `paid_payment_id`.
+
+On some accounts a link and its payment share one ID, so a webhook's `payment_id` and `link_id` are the same value. Handle both cases the same way: match on `link_id`, refund by `payment_id`.
+
+A link that closes without being paid also sends a [`PAYMENT_FAILED`](/api-reference/v2/webhooks/payment-failed) for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it.
 
 ## Managing Payment Links
 

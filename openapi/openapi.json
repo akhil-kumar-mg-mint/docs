@@ -5468,6 +5468,7 @@
             "name": "paymentLinkId",
             "in": "path",
             "required": true,
+            "description": "The link's `link_id` from Create Payment Link (e.g. `PR5106085554`). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string"
             }
@@ -5510,6 +5511,7 @@
             "name": "paymentLinkId",
             "in": "path",
             "required": true,
+            "description": "The link's `link_id` from Create Payment Link (e.g. `PR5106085554`). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string"
             }
@@ -5577,6 +5579,7 @@
             "name": "paymentLinkId",
             "in": "path",
             "required": true,
+            "description": "The link's `link_id` from Create Payment Link (e.g. `PR5106085554`). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string"
             }
@@ -5624,6 +5627,7 @@
             "name": "paymentLinkId",
             "in": "path",
             "required": true,
+            "description": "The link's `link_id` from Create Payment Link (e.g. `PR5106085554`). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string"
             }
@@ -9625,7 +9629,12 @@
             "type": "object",
             "properties": {
               "payment_id": {
-                "type": "string"
+                "type": "string",
+                "description": "The same value as link_id, kept for compatibility."
+              },
+              "link_id": {
+                "type": "string",
+                "description": "The payment link's ID (PR followed by 10 digits). The other payment link endpoints take it, and every payment made through the link carries it in its payment webhooks, next to that payment's own payment_id."
               },
               "payment_link": {
                 "type": "string",
@@ -9672,7 +9681,12 @@
                   "type": "object",
                   "properties": {
                     "payment_id": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "The same value as link_id, kept for compatibility."
+                    },
+                    "link_id": {
+                      "type": "string",
+                      "description": "The payment link's ID. The other payment link endpoints take it."
                     },
                     "payment_link": {
                       "type": "string",
@@ -9737,7 +9751,12 @@
             "type": "object",
             "properties": {
               "payment_id": {
-                "type": "string"
+                "type": "string",
+                "description": "The same value as link_id, kept for compatibility."
+              },
+              "link_id": {
+                "type": "string",
+                "description": "The payment link's ID"
               },
               "reference_id": {
                 "type": "string"
@@ -9758,6 +9777,18 @@
               "status_message": {
                 "type": "string",
                 "nullable": true
+              },
+              "paid_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The payment_id of the payment that paid the link, or null until it is paid. Refund and reconcile by this ID, not by link_id. On some accounts a link and its payment share one ID, and this equals link_id."
+              },
+              "payments": {
+                "type": "array",
+                "description": "The payments made through the link, newest first; at most the 50 newest. A buyer may try more than once: where each try is a payment of its own, every try is listed, and this is empty until the buyer first tries to pay. On some accounts a link and its payment share one ID: this then holds one entry whose payment_id is link_id, from the moment the link is created.",
+                "items": {
+                  "$ref": "#/components/schemas/v1_PaymentLinkPayment"
+                }
               },
               "created_at": {
                 "type": "string",
@@ -9863,6 +9894,54 @@
                 }
               }
             }
+          }
+        }
+      },
+      "v1_PaymentLinkPayment": {
+        "type": "object",
+        "description": "A payment made through the link",
+        "required": [
+          "payment_id",
+          "status",
+          "mop_type",
+          "amount",
+          "created_at",
+          "payment_completed_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The payment's ID (PR followed by 10 digits). Refund and reconcile by it. Its payment webhooks carry it with the link's link_id."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CAPTURED",
+              "FAILED",
+              "INVALID"
+            ],
+            "description": "Where the payment stands. `PENDING`: under way. `CAPTURED`: it went through. `FAILED`, or rarely `INVALID`: it did not."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "The method the payment was made with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING), or null when none is recorded."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The payment's amount, as a decimal string with two decimals (\"1500.00\"). Parse it as a decimal, never as a float."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was made. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment completed, in the same format; null until it has, and usually null for a payment that failed."
           }
         }
       },

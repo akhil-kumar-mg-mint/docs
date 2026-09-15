@@ -5,8 +5,19 @@ openapi: 'GET /pg/payment-links/{paymentLinkId}/'
 
 ## Overview
 
-Fetch detailed information about a specific payment link using its unique ID. This includes the current status, buyer details, and associated order information.
+Fetch detailed information about a specific payment link using its unique ID. This includes the current status, the payments made through it, buyer details, and associated order information.
 
 ## Path Parameters
 
-- `paymentLinkId`: The unique identifier of the payment link (e.g., `PR5106085554`).
+- `paymentLinkId`: The link's `link_id` from [Create Payment Link](/api-reference/v2/payment-link/create) (e.g., `PR5106085554`). The `payment_id` it returns is the same value.
+
+## How the link was paid
+
+A buyer may try more than once before a payment goes through. Two fields show the payments made through the link:
+
+- `paid_payment_id`: The `payment_id` of the payment that paid the link, or `null` until it is paid. Refund and reconcile by this ID.
+- `payments`: The payments made through the link, newest first — at most the 50 newest. Each entry carries the payment's `payment_id`, its `status` (`PENDING`, `CAPTURED`, `FAILED` or, rarely, `INVALID`), its `mop_type` (e.g. `UPI`, or `null`), its `amount` as a decimal string with two decimals (`"1500.00"`), `created_at`, and `payment_completed_at` (`null` until it completes).
+
+On some accounts a link and its payment share one ID: `payments` then holds a single entry whose `payment_id` is `link_id`, from the moment the link is created. Elsewhere each try is a payment of its own, and `payments` stays empty until the buyer first tries to pay.
+
+`link_id` is the link's ID, and `payment_id` is the same value, kept for compatibility. See [Tracking a payment link](/integration-guide/v2/web-integration/payment-links#tracking-a-payment-link).

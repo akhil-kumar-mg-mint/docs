@@ -57,6 +57,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
         "message": "Cancelled by user",
         "mop_type": "UPI",
         "order_id": "OD3376378679",
+        "link_id": null,
         "payment_id": "PR6938527534",
         "bank_ref_num": null,
         "extended_status": "FAILED",
@@ -131,6 +132,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       Order ID
       
       **Example**: `"OD3376378679"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v1/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present. A buyer can try a link more than once, so several payments can carry the same `link_id`, each with its own `payment_id`. On some accounts `payment_id` and `link_id` can be the same value. Match the payment to your link on `link_id`; reconcile it by `payment_id`. A link that closes without being paid also sends this event for the link itself, with `payment_id` equal to `link_id`.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.payment_id" type="string" required>
