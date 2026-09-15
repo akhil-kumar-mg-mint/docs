@@ -117,6 +117,7 @@
                       "message": "Payment Link created successfully",
                       "data": {
                         "payment_id": "PR4829301756",
+                        "link_id": "PR4829301756",
                         "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
                         "amount": "1500",
                         "currency": "INR"
@@ -457,6 +458,7 @@
                         "results": [
                           {
                             "payment_id": "PR4829301756",
+                            "link_id": "PR4829301756",
                             "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
                             "merchant": {
                               "id": "4417290356",
@@ -482,6 +484,7 @@
                           },
                           {
                             "payment_id": "PR3390127845",
+                            "link_id": "PR3390127845",
                             "payment_link": "https://api-pacb-uat.eximpe.com/p/Hq8sVd2Lm5Rt7Yx1Nb/",
                             "merchant": {
                               "id": "4417290356",
@@ -507,6 +510,7 @@
                           },
                           {
                             "payment_id": "PR2076648391",
+                            "link_id": "PR2076648391",
                             "payment_link": "https://api-pacb-uat.eximpe.com/p/Tz4kWn9Fc3Jp6Qe2Ga/",
                             "merchant": {
                               "id": "4417290356",
@@ -617,10 +621,10 @@
         }
       }
     },
-    "/pg/payment-links/{payment_id}/": {
+    "/pg/payment-links/{link_id}/": {
       "get": {
         "summary": "Retrieve Payment Link",
-        "description": "Fetch one payment link by its payment_id: its status, expiry, buyer, product, invoice and settlement.",
+        "description": "Fetch one payment link by its link_id: its status, the payments made through it, its expiry, buyer, product, invoice and settlement.",
         "operationId": "v3_retrievePaymentLink",
         "tags": [
           "Payment Links"
@@ -634,10 +638,10 @@
         ],
         "parameters": [
           {
-            "name": "payment_id",
+            "name": "link_id",
             "in": "path",
             "required": true,
-            "description": "The link's `payment_id`, as returned by Create Payment Link (`PR` followed by 10 digits).",
+            "description": "The link's `link_id`, as returned by Create Payment Link (`PR` followed by 10 digits). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string",
               "example": "PR4829301756"
@@ -660,6 +664,7 @@
                       "message": "Payment link details fetched successfully",
                       "data": {
                         "payment_id": "PR4829301756",
+                        "link_id": "PR4829301756",
                         "reference_id": "ORD-2026-000123",
                         "currency": "INR",
                         "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
@@ -699,7 +704,80 @@
                         "air_waybills": [],
                         "status": "active",
                         "status_message": null,
-                        "created_at": "2026-09-14T09:30:15.123456Z"
+                        "created_at": "2026-09-14T09:30:15.123456Z",
+                        "paid_payment_id": null,
+                        "payments": []
+                      }
+                    }
+                  },
+                  "Paid on the second try": {
+                    "summary": "Paid on the second try",
+                    "description": "The buyer's first try failed and the second went through. Each try is a payment with its own payment_id; paid_payment_id names the one that paid the link.",
+                    "value": {
+                      "success": true,
+                      "message": "Payment link details fetched successfully",
+                      "data": {
+                        "payment_id": "PR6120458839",
+                        "link_id": "PR6120458839",
+                        "reference_id": "ORD-2026-000125",
+                        "currency": "INR",
+                        "payment_link": "https://api-pacb-uat.eximpe.com/p/Rb6yLq3Wd8Nf2Kt5Hc/",
+                        "expiry_date": "2026-10-14T18:29:59.000000Z",
+                        "mop_type": null,
+                        "settlement": {
+                          "status": "not_applicable",
+                          "message": null,
+                          "settlement_details": null
+                        },
+                        "buyer": {
+                          "name": "Kavya Iyer",
+                          "email": "kavya.iyer@example.com",
+                          "phone": "+919845012345",
+                          "address": {
+                            "line_1": "7 Cathedral Road",
+                            "line_2": null,
+                            "city": "Chennai",
+                            "state": "Tamil Nadu",
+                            "postal_code": "600086"
+                          },
+                          "pan_number": null,
+                          "dob": null
+                        },
+                        "product": {
+                          "name": "Online course",
+                          "description": "Six-week data analysis course",
+                          "hs_code": null,
+                          "hs_code_description": null,
+                          "type_of_goods": "service"
+                        },
+                        "invoice": {
+                          "number": "INV2026000125",
+                          "date": null,
+                          "file": null
+                        },
+                        "air_waybills": [],
+                        "status": "paid",
+                        "status_message": null,
+                        "created_at": "2026-09-14T09:40:02.118734Z",
+                        "paid_payment_id": "PR7730215564",
+                        "payments": [
+                          {
+                            "payment_id": "PR7730215564",
+                            "status": "CAPTURED",
+                            "mop_type": "UPI",
+                            "amount": "1500.00",
+                            "created_at": "2026-09-14T10:02:44.519302Z",
+                            "payment_completed_at": "2026-09-14T10:03:21.087716Z"
+                          },
+                          {
+                            "payment_id": "PR7730209921",
+                            "status": "FAILED",
+                            "mop_type": "CREDIT_CARD",
+                            "amount": "1500.00",
+                            "created_at": "2026-09-14T09:48:10.332907Z",
+                            "payment_completed_at": null
+                          }
+                        ]
                       }
                     }
                   }
@@ -759,7 +837,7 @@
             }
           },
           "404": {
-            "description": "No link with this payment_id belongs to you",
+            "description": "No link with this link_id belongs to you",
             "content": {
               "application/json": {
                 "schema": {
@@ -811,7 +889,7 @@
         }
       }
     },
-    "/pg/payment-links/{payment_id}/deactivate/": {
+    "/pg/payment-links/{link_id}/deactivate/": {
       "post": {
         "summary": "Deactivate Payment Link",
         "description": "Close an active payment link so it takes no further payment. A deactivated link reads expired.",
@@ -829,10 +907,10 @@
         ],
         "parameters": [
           {
-            "name": "payment_id",
+            "name": "link_id",
             "in": "path",
             "required": true,
-            "description": "The link's `payment_id`, as returned by Create Payment Link (`PR` followed by 10 digits).",
+            "description": "The link's `link_id`, as returned by Create Payment Link (`PR` followed by 10 digits). The `payment_id` Create Payment Link returns is the same value.",
             "schema": {
               "type": "string",
               "example": "PR4829301756"
@@ -1301,6 +1379,7 @@
         "type": "object",
         "required": [
           "payment_id",
+          "link_id",
           "payment_link",
           "amount",
           "currency"
@@ -1308,7 +1387,11 @@
         "properties": {
           "payment_id": {
             "type": "string",
-            "description": "The link's ID (PR followed by 10 digits). Retrieve and Deactivate take it."
+            "description": "The same value as link_id, kept for compatibility. Read link_id."
+          },
+          "link_id": {
+            "type": "string",
+            "description": "The link's ID (PR followed by 10 digits). Retrieve and Deactivate take it, and every payment made through the link carries it in its payment webhooks, next to that payment's own payment_id."
           },
           "payment_link": {
             "type": "string",
@@ -1394,7 +1477,11 @@
         "properties": {
           "payment_id": {
             "type": "string",
-            "description": "The link's ID"
+            "description": "The same value as link_id, kept for compatibility"
+          },
+          "link_id": {
+            "type": "string",
+            "description": "The link's ID. Retrieve and Deactivate take it."
           },
           "payment_link": {
             "type": "string",
@@ -1513,9 +1600,13 @@
       },
       "v3_PaymentLinkDetails": {
         "type": "object",
-        "description": "The link. It carries no amount: keep the one from the create response, or read it from List Payment Links.",
+        "description": "The link, and the payments made through it. The link's amount is not included: keep the one from the create response, or read it from List Payment Links.",
         "properties": {
           "payment_id": {
+            "type": "string",
+            "description": "The same value as link_id, kept for compatibility"
+          },
+          "link_id": {
             "type": "string",
             "description": "The link's ID"
           },
@@ -1693,12 +1784,72 @@
             "type": "string",
             "format": "date-time",
             "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "paid_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment_id of the payment that paid the link, or null until it is paid. Refund and reconcile by this ID, not by link_id. On some accounts a link and its payment share one ID, and this equals link_id."
+          },
+          "payments": {
+            "type": "array",
+            "description": "The payments made through the link, newest first; at most the 50 newest. A buyer may try more than once: where each try is a payment of its own, every try is listed, and this is empty until the buyer first tries to pay. On some accounts a link and its payment share one ID: this then holds one entry whose payment_id is link_id, from the moment the link is created.",
+            "items": {
+              "$ref": "#/components/schemas/v3_PaymentLinkPayment"
+            }
+          }
+        }
+      },
+      "v3_PaymentLinkPayment": {
+        "type": "object",
+        "description": "A payment made through the link",
+        "required": [
+          "payment_id",
+          "status",
+          "mop_type",
+          "amount",
+          "created_at",
+          "payment_completed_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The payment's ID (PR followed by 10 digits). Refund and reconcile by it. Its payment webhooks carry it with the link's link_id."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CAPTURED",
+              "FAILED",
+              "INVALID"
+            ],
+            "description": "Where the payment stands. `PENDING`: under way. `CAPTURED`: it went through. `FAILED`, or rarely `INVALID`: it did not."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "The method the payment was made with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING), or null when none is recorded."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The payment's amount, as a decimal string with two decimals (\"1500.00\"). Parse it as a decimal, never as a float."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was made. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment completed, in the same format; null until it has, and usually null for a payment that failed."
           }
         }
       },
       "v3_PaymentLinkSettlement": {
         "type": "object",
-        "description": "Settlement state recorded against the link",
+        "description": "Settlement state recorded against the link. When paid_payment_id differs from link_id, the money moved on that payment rather than on the link, and this does not follow it: reconcile by paid_payment_id.",
         "properties": {
           "status": {
             "type": "string",

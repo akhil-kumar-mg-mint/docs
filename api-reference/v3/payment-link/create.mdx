@@ -6,7 +6,7 @@ openapi: '/openapi/v3-payment-links.json POST /pg/payment-links/'
 
 ## Overview
 
-A payment link is a URL you send to a buyer — over chat, email or SMS — to collect one payment without building a checkout of your own. You create it from your backend with the buyer, product and invoice details. The response carries the `payment_link` to send and a `payment_id` to track it by.
+A payment link is a URL you send to a buyer — over chat, email or SMS — to collect one payment without building a checkout of your own. You create it from your backend with the buyer, product and invoice details. The response carries the `payment_link` to send and a `link_id` to track it by.
 
 A link stays open until it is paid, its `expiry_date` passes, or you [deactivate](/api-reference/v3/payment-link/deactivate) it. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) tells you which.
 
@@ -128,10 +128,23 @@ A value that is not a payment method at all is refused with `Invalid preferred p
 ## Response
 
 A successful create returns `201` with:
-- `payment_id`: The link's ID — `PR` followed by 10 digits. [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take it
+- `link_id`: The link's ID — `PR` followed by 10 digits. [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take it, and every payment made through the link carries it. See [Tracking a payment link](#tracking-a-payment-link)
+- `payment_id`: The same value as `link_id`, kept for compatibility. Read `link_id`
 - `payment_link`: The URL to send to the buyer. Treat it as opaque
 - `amount`: The amount as a decimal string. A whole amount comes back without decimals (`"1500"`), any other with two (`"1500.50"`)
 - `currency`: Always `INR`
+
+## Tracking a payment link
+
+Two IDs are in play: the link's `link_id`, and the `payment_id` of each payment made through it.
+
+- **Manage the link by `link_id`.** [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) and [Deactivate Payment Link](/api-reference/v3/payment-link/deactivate) take it.
+- **Match payments to the link on `link_id`.** A buyer may try more than once before a payment goes through. Every payment made through the link arrives in the payment webhooks — [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) when it goes through, [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) when it does not — with its own `payment_id` and the link's `link_id`.
+- **Refund and reconcile by that payment's `payment_id`,** not by `link_id`. [Create Refund](/api-reference/v3/refunds/create) takes it, and [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve#how-the-link-was-paid) names the payment that paid the link in `paid_payment_id`.
+
+On some accounts a link and its payment share one ID, so a webhook's `payment_id` and `link_id` are the same value. Handle both cases the same way: match on `link_id`, refund by `payment_id`.
+
+A link that closes without being paid also sends a [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it.
 
 ## Errors
 
@@ -229,6 +242,7 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
   "message": "Payment Link created successfully",
   "data": {
     "payment_id": "PR4829301756",
+    "link_id": "PR4829301756",
     "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
     "amount": "1500",
     "currency": "INR"
@@ -261,4 +275,4 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
 - **Create links from your backend.** The call carries your client secret, so never make it from a browser or a mobile app.
 - **A `reference_id` is spent once the request passes validation.** It must be unique across all your orders, not only payment links. A create refused after validation — over the payment method, say, or by the payment network — still records a failed order that holds the `reference_id`, and the link may appear in [List Payment Links](/api-reference/v3/payment-link/list) as `failed`. Retry with a fresh `reference_id`; the invoice number is free to reuse.
 - **PSPs send `X-Merchant-ID`** naming the sub-merchant the link is for. Without it the call is refused with a `401`.
-- **Keep `payment_id` and `amount`.** `payment_id` is what [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take, and Retrieve does not return the amount.
+- **Keep `link_id` and `amount`.** `link_id` is what [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take, and Retrieve does not return the link's amount.

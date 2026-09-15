@@ -1,7 +1,7 @@
 ---
 title: 'Deactivate Payment Link'
 description: 'Close an active payment link so it takes no further payment. A deactivated link reads expired.'
-openapi: '/openapi/v3-payment-links.json POST /pg/payment-links/{payment_id}/deactivate/'
+openapi: '/openapi/v3-payment-links.json POST /pg/payment-links/{link_id}/deactivate/'
 ---
 
 ## Overview
@@ -18,7 +18,7 @@ Closes an active payment link so the buyer can no longer pay through it. The cal
 
 ## Path Parameters
 
-- `payment_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`.
+- `link_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`. The `payment_id` it returned is the same value.
 
 <Note>
   **PSPs send `X-Merchant-ID`** naming the sub-merchant the link belongs to, as on [Create Payment Link](/api-reference/v3/payment-link/create).

@@ -21,7 +21,7 @@ Returns your payment links a page at a time, newest first. Each entry carries th
 | `ordering` | string | `-created_at` | `created_at`, `last_updated_at` or `payment_completed_at`. Prefix with `-` for descending. |
 
 <Warning>
-  **The list takes no filters.** There is no status, date or reference filter, so page through every link and filter on your side. To follow one link, call [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) with its `payment_id`.
+  **The list takes no filters.** There is no status, date or reference filter, so page through every link and filter on your side. To follow one link, call [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) with its `link_id`.
 </Warning>
 
 ## Pagination
@@ -67,6 +67,7 @@ Follow `next` until it is `null`. A page past the last one is not returned empty
 
 ## Response Fields
 
+- `link_id` is the link's ID — what [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take. `payment_id` is the same value, kept for compatibility.
 - `amount.amount` and `amount.total_amount` are decimal strings without trailing zeros — `"1500"`, `"2499.5"`. Parse them as decimals, never as floats. `total_amount` adds GST where GST applies; otherwise it equals `amount`.
 - `mop_type` is the method the buyer paid with, in lowercase (`upi`, `credit_card`). It is `null` until the link is paid, and can stay `null` after. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) gives the same value in uppercase.
 - `comment` says why a link failed or closed, when there is a reason to give; otherwise it is `null`.

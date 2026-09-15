@@ -1,16 +1,18 @@
 ---
 title: 'Retrieve Payment Link'
-description: 'Fetch one payment link by its payment_id: where it stands, when it expires, and who it is for.'
-openapi: '/openapi/v3-payment-links.json GET /pg/payment-links/{payment_id}/'
+description: 'Fetch one payment link by its link_id: where it stands, how it was paid, when it expires, and who it is for.'
+openapi: '/openapi/v3-payment-links.json GET /pg/payment-links/{link_id}/'
 ---
 
 ## Overview
 
-Returns one payment link: its `status`, `expiry_date`, buyer, product, invoice and settlement. Use it to confirm a link's outcome — for an active link it checks for a payment before answering, so it can be ahead of [List Payment Links](/api-reference/v3/payment-link/list).
+Returns one payment link: its `status`, the payments made through it, its `expiry_date`, buyer, product, invoice and settlement. Use it to confirm a link's outcome — for an active link it checks for a payment before answering, so it can be ahead of [List Payment Links](/api-reference/v3/payment-link/list).
 
 ## Path Parameters
 
-- `payment_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`.
+- `link_id`: The link's ID from [Create Payment Link](/api-reference/v3/payment-link/create), e.g. `PR4829301756`. The `payment_id` it returned is the same value.
+
+From a payment webhook, pass its `link_id`: the webhook's `payment_id` names the payment, not the link.
 
 A link that is not yours — or, for a PSP, not one of your sub-merchants' — reads as not found:
 
@@ -38,18 +40,65 @@ PSPs do not need `X-Merchant-ID` here: a sub-merchant's link is found without it
 | `expired` | Past its `expiry_date`, or deactivated — a deactivated link reads `expired`. |
 | `failed` | Could not be created, or closed without being paid. |
 
+## How the link was paid
+
+A buyer may try more than once before a payment goes through. Two fields show the payments made through the link:
+
+- `paid_payment_id`: The `payment_id` of the payment that paid the link, or `null` until it is paid. Refund and reconcile by this ID — see [Tracking a payment link](/api-reference/v3/payment-link/create#tracking-a-payment-link).
+- `payments`: The payments made through the link, newest first — at most the 50 newest. Each entry carries:
+
+| Field | Description |
+|---|---|
+| `payment_id` | The payment's ID. Its payment webhooks carry it, next to the link's `link_id` |
+| `status` | `PENDING` while it is under way, `CAPTURED` once it went through, `FAILED` — or, rarely, `INVALID` — if it did not |
+| `mop_type` | The method it was made with, in uppercase (`UPI`, `CREDIT_CARD`), or `null` when none is recorded |
+| `amount` | Its amount, as a decimal string with two decimals (`"1500.00"`) |
+| `created_at` | When it was made |
+| `payment_completed_at` | When it completed, or `null` until it has — usually `null` for a payment that failed |
+
+On some accounts a link and its payment share one ID. There `payments` holds a single entry whose `payment_id` is `link_id`, from the moment the link is created, and `paid_payment_id` becomes that same ID once the buyer pays. Elsewhere each try is a payment of its own, and `payments` stays empty until the buyer first tries to pay.
+
+A link the buyer paid on their second try, with the rest of the response left out:
+
+```json
+{
+  "link_id": "PR6120458839",
+  "status": "paid",
+  "paid_payment_id": "PR7730215564",
+  "payments": [
+    {
+      "payment_id": "PR7730215564",
+      "status": "CAPTURED",
+      "mop_type": "UPI",
+      "amount": "1500.00",
+      "created_at": "2026-09-14T10:02:44.519302Z",
+      "payment_completed_at": "2026-09-14T10:03:21.087716Z"
+    },
+    {
+      "payment_id": "PR7730209921",
+      "status": "FAILED",
+      "mop_type": "CREDIT_CARD",
+      "amount": "1500.00",
+      "created_at": "2026-09-14T09:48:10.332907Z",
+      "payment_completed_at": null
+    }
+  ]
+}
+```
+
 ## Response Fields
 
 <Note>
-  **The response carries no amount.** Keep the `amount` from [Create Payment Link](/api-reference/v3/payment-link/create), or read `amount` from [List Payment Links](/api-reference/v3/payment-link/list).
+  **The response carries no amount for the link.** Keep the `amount` from [Create Payment Link](/api-reference/v3/payment-link/create), or read `amount` from [List Payment Links](/api-reference/v3/payment-link/list).
 </Note>
 
+- `link_id`: The link's ID. `payment_id` is the same value, kept for compatibility.
 - `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
-- `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after.
+- `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after. `payments` gives the method of each payment.
 - `buyer`, `product`, `invoice`: As sent on create.
   - `buyer.pan_number` and `buyer.dob` are `null` unless they were collected from the buyer.
   - `product.hs_code` and `product.hs_code_description` are `null`: the link does not store them.
   - `invoice.date` and `invoice.file` are `null` unless they were added to the order later.
-- `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes.
+- `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes. When `paid_payment_id` differs from `link_id`, the money moved on that payment rather than on the link, and `settlement` does not follow it: reconcile by `paid_payment_id`.
 - `status_message`: Why the link failed or closed, when there is a reason to give; otherwise `null`.
 - `created_at` and the other timestamps are UTC with microseconds, e.g. `2026-09-14T09:30:15.123456Z`.

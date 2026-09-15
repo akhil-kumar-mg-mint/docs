@@ -64,6 +64,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
   "data": {
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
+    "link_id": null,
     "verification_status": "UNDER_REVIEW",
     "message": "Payment is under review",
     "action_required_fields": [],
@@ -108,6 +109,10 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 
     <ParamField path="data.order_id" type="string" required>
       UID of the order the payment belongs to
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string | null" required>
+      ID of the payment link the payment was made through — the `link_id` that [Create Payment Link](/api-reference/v3/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present.
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>

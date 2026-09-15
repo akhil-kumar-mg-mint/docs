@@ -14,7 +14,7 @@ description: "Technical reference for the VERIFICATION_NEEDED webhook event, inc
 This webhook names what a payment still owes before it can be filed. It is the general verification ask — every rail raises it, and it carries one body wherever it comes from.
 
 <Note>
-  **One event, one body.** `VERIFICATION_NEEDED` used to mean two different payloads depending on which rail the money arrived through: one shape from the card and collect flows, another from Virtual Bank Account credits that also carried the credit's amount and account details. A partner needed two handlers for one event type. Every producer now builds the same six keys, and the credit's own facts ride [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful), which is the event that exists to describe the money.
+  **One event, one body.** `VERIFICATION_NEEDED` used to mean two different payloads depending on which rail the money arrived through: one shape from the card and collect flows, another from Virtual Bank Account credits that also carried the credit's amount and account details. A partner needed two handlers for one event type. Every producer now builds the same seven keys, and the credit's own facts ride [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful), which is the event that exists to describe the money.
 </Note>
 
 <Note>
@@ -86,6 +86,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
   "data": {
     "payment_id": "PR7712349900",
     "order_id": "OD1122334455",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
     "action_required_fields": ["buyer_name", "hs_code", "purpose_code"],
@@ -103,6 +104,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
   "data": {
     "payment_id": "PR7712349900",
     "order_id": "OD1122334455",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
     "action_required_fields": [
@@ -127,6 +129,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
   "data": {
     "payment_id": "PR7712349900",
     "order_id": "OD1122334455",
+    "link_id": null,
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
     "action_required_fields": [],
@@ -144,6 +147,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
   "data": {
     "payment_id": "PR7712349900",
     "order_id": "OD1122334455",
+    "link_id": null,
     "verification_status": "EXPIRED",
     "message": "Payment verification action required",
     "action_required_fields": ["invoice_file", "hs_code"],
@@ -185,7 +189,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Six keys, always the same six: `payment_id`, `order_id`, `verification_status`, `message`, `action_required_fields`, `payment_verification_expiry`
+      Seven keys, always the same seven: `payment_id`, `order_id`, `link_id`, `verification_status`, `message`, `action_required_fields`, `payment_verification_expiry`
     </ParamField>
   </Tab>
 
@@ -200,6 +204,12 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
       UID of the order for this payment
 
       **Example**: `"OD1122334455"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string | null" required>
+      ID of the payment link the payment was made through — the `link_id` that [Create Payment Link](/api-reference/v3/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
