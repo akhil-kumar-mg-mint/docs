@@ -85,15 +85,18 @@ curl -X POST https://api-pacb.eximpe.com/pg/payment-links/ \
 ```json
 {
   "success": true,
-  "message": "Payment link created successfully",
+  "message": "Payment Link created successfully",
   "data": {
-    "link_id": "pl_1234567890",
-    "payment_link": "https://checkout.eximpe.com/pay/pl_1234567890",
-    "status": "ACTIVE",
-    "expiry_date": "2024-12-31T23:59:59Z"
+    "payment_id": "PR4829301756",
+    "link_id": "PR4829301756",
+    "payment_link": "https://checkout.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+    "amount": "1500",
+    "currency": "INR"
   }
 }
 ```
+
+`link_id` is the payment link's ID. It has the same value as `payment_id`, which is kept for compatibility.
 
 <Note>
   **Expiry Date**: You can set an optional `expiry_date` for the link. If not provided, it defaults to 1 year.
