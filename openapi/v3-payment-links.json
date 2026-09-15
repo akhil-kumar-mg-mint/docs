@@ -1,0 +1,2093 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "EximPe Payment Gateway API \u2014 v3 Payment Links",
+    "description": "Create, list, retrieve and deactivate payment links on the v3 API. v1 and v2 use the same paths; this spec carries the v3 contract.",
+    "version": "3.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api-pacb-uat.eximpe.com",
+      "description": "Payment Gateway Sandbox URL"
+    }
+  ],
+  "paths": {
+    "/pg/payment-links/": {
+      "post": {
+        "summary": "Create Payment Link",
+        "description": "Create a payment link: a URL you send to a buyer to collect one INR payment. It stays open until it is paid, expires, or is deactivated.",
+        "operationId": "v3_createPaymentLink",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "description": "Payment link creation request",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_CreatePaymentLinkRequest"
+              },
+              "examples": {
+                "UPI link sent to the buyer": {
+                  "summary": "UPI link sent to the buyer",
+                  "description": "Restricts the link to UPI, sets an expiry, and sends the link to the buyer by SMS and email.",
+                  "value": {
+                    "amount": "1500.00",
+                    "reference_id": "ORD-2026-000123",
+                    "expiry_date": "2026-12-31T18:29:59Z",
+                    "preferred_payment_method": "UPI",
+                    "buyer": {
+                      "name": "Rahul Sharma",
+                      "email": "rahul.sharma@example.com",
+                      "phone": "+919876543210",
+                      "send_sms": true,
+                      "send_email": true,
+                      "address": {
+                        "line_1": "221B MG Road",
+                        "line_2": "Indiranagar",
+                        "city": "Bengaluru",
+                        "state": "Karnataka",
+                        "postal_code": "560038"
+                      }
+                    },
+                    "product": {
+                      "name": "Annual subscription",
+                      "description": "12-month premium plan",
+                      "type_of_goods": "service"
+                    },
+                    "invoice": {
+                      "number": "INV2026000123"
+                    }
+                  }
+                },
+                "Physical goods, default expiry": {
+                  "summary": "Physical goods, default expiry",
+                  "description": "No expiry_date, so the link expires one year from today. Physical goods need an hs_code.",
+                  "value": {
+                    "amount": "2499.50",
+                    "reference_id": "ORD-2026-000124",
+                    "buyer": {
+                      "name": "Priya Nair",
+                      "email": "priya.nair@example.com",
+                      "phone": "+919812345678",
+                      "address": {
+                        "line_1": "14 Marine Drive",
+                        "city": "Mumbai",
+                        "state": "Maharashtra",
+                        "postal_code": "400001"
+                      }
+                    },
+                    "product": {
+                      "name": "Wireless Headphones",
+                      "description": "Noise-cancelling wireless headphones",
+                      "type_of_goods": "physical_goods",
+                      "hs_code": "85183000"
+                    },
+                    "invoice": {
+                      "number": "INV2026000124"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment link created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_CreatePaymentLinkResponse"
+                },
+                "examples": {
+                  "Created": {
+                    "summary": "Created",
+                    "value": {
+                      "success": true,
+                      "message": "Payment Link created successfully",
+                      "data": {
+                        "payment_id": "PR4829301756",
+                        "link_id": "PR4829301756",
+                        "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+                        "amount": "1500",
+                        "currency": "INR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request was refused. error.code is ERR_ORDER_002; details says what failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid fields": {
+                    "summary": "Invalid fields",
+                    "description": "Field errors are keyed by field and nested the way the request is.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "invoice": {
+                            "number": "Invoice number must contain only alphanumeric characters."
+                          },
+                          "buyer": {
+                            "phone": "Enter a valid phone number."
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Expiry too far out": {
+                    "summary": "Expiry too far out",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "expiry_date": "Expiry date cannot be beyond 1 year from now."
+                        }
+                      }
+                    }
+                  },
+                  "reference_id already used": {
+                    "summary": "reference_id already used",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "reference_id": "Reference ID already exists"
+                        }
+                      }
+                    }
+                  },
+                  "Payment method not supported": {
+                    "summary": "Payment method not supported",
+                    "description": "preferred_payment_method names a method this account's payment links cannot collect.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "preferred_payment_method": "Credit card is not supported for payment links on this account"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials, or a PSP call without X-Merchant-ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid credentials": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid credentials."
+                        }
+                      }
+                    }
+                  },
+                  "X-Merchant-ID missing": {
+                    "summary": "X-Merchant-ID missing (PSP)",
+                    "description": "A PSP must name the sub-merchant the link belongs to.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The account cannot create payment links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/v3_PermissionDeniedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/v3_ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Payment links not enabled": {
+                    "summary": "Payment links not enabled",
+                    "description": "Payment links are not enabled on the account. This body does not use the standard error envelope.",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Payment links not permitted": {
+                    "summary": "Payment links not permitted",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_005",
+                        "message": "This account's lane does not permit this collection",
+                        "details": {
+                          "collection_mode": "PAYMENT_LINKS is not enabled for this account."
+                        }
+                      }
+                    }
+                  },
+                  "Account not set up": {
+                    "summary": "Account not set up for payment links",
+                    "description": "The account is not configured to collect through payment links. Contact your EximPe integration manager.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "payment_gateway": "Payment gateway not configured"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The payment network is rate limiting requests",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying. Not always present.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Rate limited": {
+                    "summary": "Rate limited",
+                    "description": "Wait for the number of seconds in the Retry-After header, when it is present, then retry.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_RATE_LIMIT_EXCEEDED",
+                        "message": "Too many requests. Please try again later.",
+                        "details": {
+                          "message": "Too many requests have been made in a short period, so the request was rate limited. Please wait a moment and try again.",
+                          "path": "/pg/payment-links/"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Unexpected error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The payment network is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Temporarily unavailable": {
+                    "summary": "Temporarily unavailable",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_GATEWAY_UNAVAILABLE",
+                        "message": "Payment gateway temporarily unavailable",
+                        "details": {
+                          "message": "We couldn't reach the payment provider. Please try again shortly."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List Payment Links",
+        "description": "Return a paginated list of your payment links, newest first.",
+        "operationId": "v3_listPaymentLinks",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number, starting at 1. Stop when `next` is null: a page past the last one is refused with a 500.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Links per page. Values above 1000 are capped at 1000.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 250
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "required": false,
+            "description": "Sort order. Prefix with `-` for descending.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "-created_at",
+                "created_at",
+                "-last_updated_at",
+                "last_updated_at",
+                "-payment_completed_at",
+                "payment_completed_at"
+              ],
+              "default": "-created_at"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of payment links",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ListPaymentLinksResponse"
+                },
+                "examples": {
+                  "One page": {
+                    "summary": "One page",
+                    "value": {
+                      "success": true,
+                      "message": "Domestic payment link requests retrieved successfully",
+                      "data": {
+                        "count": 3,
+                        "page": 1,
+                        "page_size": 250,
+                        "next": null,
+                        "previous": null,
+                        "results": [
+                          {
+                            "payment_id": "PR4829301756",
+                            "link_id": "PR4829301756",
+                            "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+                            "merchant": {
+                              "id": "4417290356",
+                              "name": "Acme Exports"
+                            },
+                            "reference_id": "ORD-2026-000123",
+                            "buyer": {
+                              "name": "Rahul Sharma",
+                              "email": "rahul.sharma@example.com",
+                              "phone": "+919876543210"
+                            },
+                            "order_id": "OD7712409386",
+                            "invoice_number": "INV2026000123",
+                            "amount": {
+                              "amount": "1500",
+                              "total_amount": "1500",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-09-14T09:30:15.123456Z",
+                            "comment": null,
+                            "mop_type": null,
+                            "status": "active"
+                          },
+                          {
+                            "payment_id": "PR3390127845",
+                            "link_id": "PR3390127845",
+                            "payment_link": "https://api-pacb-uat.eximpe.com/p/Hq8sVd2Lm5Rt7Yx1Nb/",
+                            "merchant": {
+                              "id": "4417290356",
+                              "name": "Acme Exports"
+                            },
+                            "reference_id": "ORD-2026-000118",
+                            "buyer": {
+                              "name": "Priya Nair",
+                              "email": "priya.nair@example.com",
+                              "phone": "+919812345678"
+                            },
+                            "order_id": "OD5503918274",
+                            "invoice_number": "INV2026000118",
+                            "amount": {
+                              "amount": "2499.5",
+                              "total_amount": "2499.5",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-09-12T14:05:41.906112Z",
+                            "comment": null,
+                            "mop_type": "upi",
+                            "status": "paid"
+                          },
+                          {
+                            "payment_id": "PR2076648391",
+                            "link_id": "PR2076648391",
+                            "payment_link": "https://api-pacb-uat.eximpe.com/p/Tz4kWn9Fc3Jp6Qe2Ga/",
+                            "merchant": {
+                              "id": "4417290356",
+                              "name": "Acme Exports"
+                            },
+                            "reference_id": "ORD-2026-000097",
+                            "buyer": {
+                              "name": "Arjun Mehta",
+                              "email": "arjun.mehta@example.com",
+                              "phone": "+919900112233"
+                            },
+                            "order_id": "OD8841207735",
+                            "invoice_number": "INV2026000097",
+                            "amount": {
+                              "amount": "800",
+                              "total_amount": "800",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-08-30T06:18:09.250487Z",
+                            "comment": null,
+                            "mop_type": null,
+                            "status": "expired"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid credentials": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Payment links are not enabled on the account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/v3_PermissionDeniedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/v3_ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Payment links not enabled": {
+                    "summary": "Payment links not enabled",
+                    "description": "Payment links are not enabled on the account. This body does not use the standard error envelope.",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error, including a page past the last one",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Page past the end": {
+                    "summary": "Page past the end",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40350,
+                        "message": "Failed to retrieve domestic payment requests",
+                        "details": {
+                          "error": "Invalid page."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{link_id}/": {
+      "get": {
+        "summary": "Retrieve Payment Link",
+        "description": "Fetch one payment link by its link_id: its status, the payments made through it, its expiry, buyer, product, invoice and settlement.",
+        "operationId": "v3_retrievePaymentLink",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "description": "The link's `link_id`, as returned by Create Payment Link (`PR` followed by 10 digits). The `payment_id` Create Payment Link returns is the same value.",
+            "schema": {
+              "type": "string",
+              "example": "PR4829301756"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The payment link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_PaymentLinkDetailsResponse"
+                },
+                "examples": {
+                  "Active link": {
+                    "summary": "Active link",
+                    "value": {
+                      "success": true,
+                      "message": "Payment link details fetched successfully",
+                      "data": {
+                        "payment_id": "PR4829301756",
+                        "link_id": "PR4829301756",
+                        "reference_id": "ORD-2026-000123",
+                        "currency": "INR",
+                        "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+                        "expiry_date": "2026-12-31T18:29:59.000000Z",
+                        "mop_type": null,
+                        "settlement": {
+                          "status": "not_applicable",
+                          "message": null,
+                          "settlement_details": null
+                        },
+                        "buyer": {
+                          "name": "Rahul Sharma",
+                          "email": "rahul.sharma@example.com",
+                          "phone": "+919876543210",
+                          "address": {
+                            "line_1": "221B MG Road",
+                            "line_2": "Indiranagar",
+                            "city": "Bengaluru",
+                            "state": "Karnataka",
+                            "postal_code": "560038"
+                          },
+                          "pan_number": null,
+                          "dob": null
+                        },
+                        "product": {
+                          "name": "Annual subscription",
+                          "description": "12-month premium plan",
+                          "hs_code": null,
+                          "hs_code_description": null,
+                          "type_of_goods": "service"
+                        },
+                        "invoice": {
+                          "number": "INV2026000123",
+                          "date": null,
+                          "file": null
+                        },
+                        "air_waybills": [],
+                        "status": "active",
+                        "status_message": null,
+                        "created_at": "2026-09-14T09:30:15.123456Z",
+                        "paid_payment_id": null,
+                        "payments": []
+                      }
+                    }
+                  },
+                  "Paid on the second try": {
+                    "summary": "Paid on the second try",
+                    "description": "The buyer's first try failed and the second went through. Each try is a payment with its own payment_id; paid_payment_id names the one that paid the link.",
+                    "value": {
+                      "success": true,
+                      "message": "Payment link details fetched successfully",
+                      "data": {
+                        "payment_id": "PR6120458839",
+                        "link_id": "PR6120458839",
+                        "reference_id": "ORD-2026-000125",
+                        "currency": "INR",
+                        "payment_link": "https://api-pacb-uat.eximpe.com/p/Rb6yLq3Wd8Nf2Kt5Hc/",
+                        "expiry_date": "2026-10-14T18:29:59.000000Z",
+                        "mop_type": null,
+                        "settlement": {
+                          "status": "not_applicable",
+                          "message": null,
+                          "settlement_details": null
+                        },
+                        "buyer": {
+                          "name": "Kavya Iyer",
+                          "email": "kavya.iyer@example.com",
+                          "phone": "+919845012345",
+                          "address": {
+                            "line_1": "7 Cathedral Road",
+                            "line_2": null,
+                            "city": "Chennai",
+                            "state": "Tamil Nadu",
+                            "postal_code": "600086"
+                          },
+                          "pan_number": null,
+                          "dob": null
+                        },
+                        "product": {
+                          "name": "Online course",
+                          "description": "Six-week data analysis course",
+                          "hs_code": null,
+                          "hs_code_description": null,
+                          "type_of_goods": "service"
+                        },
+                        "invoice": {
+                          "number": "INV2026000125",
+                          "date": null,
+                          "file": null
+                        },
+                        "air_waybills": [],
+                        "status": "paid",
+                        "status_message": null,
+                        "created_at": "2026-09-14T09:40:02.118734Z",
+                        "paid_payment_id": "PR7730215564",
+                        "payments": [
+                          {
+                            "payment_id": "PR7730215564",
+                            "status": "captured",
+                            "mop_type": "upi",
+                            "amount": "1500",
+                            "created_at": "2026-09-14T10:02:44.519302Z",
+                            "payment_completed_at": "2026-09-14T10:03:21.087716Z"
+                          },
+                          {
+                            "payment_id": "PR7730209921",
+                            "status": "failed",
+                            "mop_type": "credit_card",
+                            "amount": "1500",
+                            "created_at": "2026-09-14T09:48:10.332907Z",
+                            "payment_completed_at": null
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid credentials": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Payment links are not enabled on the account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/v3_PermissionDeniedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/v3_ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Payment links not enabled": {
+                    "summary": "Payment links not enabled",
+                    "description": "Payment links are not enabled on the account. This body does not use the standard error envelope.",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No link with this link_id belongs to you",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Not found": {
+                    "summary": "Not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_005",
+                        "message": "Payment not found",
+                        "details": {
+                          "payment_id": "Payment not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Unexpected error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payment-links/{link_id}/deactivate/": {
+      "post": {
+        "summary": "Deactivate Payment Link",
+        "description": "Close an active payment link so it takes no further payment. A deactivated link reads expired.",
+        "operationId": "v3_deactivatePaymentLink",
+        "tags": [
+          "Payment Links"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "link_id",
+            "in": "path",
+            "required": true,
+            "description": "The link's `link_id`, as returned by Create Payment Link (`PR` followed by 10 digits). The `payment_id` Create Payment Link returns is the same value.",
+            "schema": {
+              "type": "string",
+              "example": "PR4829301756"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment link deactivated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_DeactivatePaymentLinkResponse"
+                },
+                "examples": {
+                  "Deactivated": {
+                    "summary": "Deactivated",
+                    "value": {
+                      "success": true,
+                      "message": "Payment Link deactivated successfully",
+                      "data": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The link is already paid, expired, deactivated or failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Link cannot be deactivated": {
+                    "summary": "Link cannot be deactivated",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "payment": "Payment Link cannot be deactivated"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials, or a PSP call without X-Merchant-ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid credentials": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid credentials."
+                        }
+                      }
+                    }
+                  },
+                  "X-Merchant-ID missing": {
+                    "summary": "X-Merchant-ID missing (PSP)",
+                    "description": "A PSP must name the sub-merchant the link belongs to.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Payment links are not enabled on the account, or it is not set up for them",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/v3_PermissionDeniedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/v3_ErrorResponse"
+                    }
+                  ]
+                },
+                "examples": {
+                  "Payment links not enabled": {
+                    "summary": "Payment links not enabled",
+                    "description": "Payment links are not enabled on the account. This body does not use the standard error envelope.",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Account not set up": {
+                    "summary": "Account not set up for payment links",
+                    "description": "The account is not configured to collect through payment links. Contact your EximPe integration manager.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "payment_gateway": "Payment gateway not configured"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "The payment network is rate limiting requests",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying. Not always present.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Rate limited": {
+                    "summary": "Rate limited",
+                    "description": "Wait for the number of seconds in the Retry-After header, when it is present, then retry.",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_RATE_LIMIT_EXCEEDED",
+                        "message": "Too many requests. Please try again later.",
+                        "details": {
+                          "message": "Too many requests have been made in a short period, so the request was rate limited. Please wait a moment and try again.",
+                          "path": "/pg/payment-links/"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Unexpected error": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The payment network is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Temporarily unavailable": {
+                    "summary": "Temporarily unavailable",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_GATEWAY_UNAVAILABLE",
+                        "message": "Payment gateway temporarily unavailable",
+                        "details": {
+                          "message": "We couldn't reach the payment provider. Please try again shortly."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "clientAuth": {
+        "type": "apiKey",
+        "name": "X-Client-ID",
+        "in": "header",
+        "description": "**Client Application ID** - Your unique application identifier used to authenticate API requests. You can find your Client ID in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client ID",
+        "x-example": "your-client-id"
+      },
+      "clientSecretAuth": {
+        "type": "apiKey",
+        "name": "X-Client-Secret",
+        "in": "header",
+        "description": "**Client Secret Key** - Your secret key used alongside the Client ID for secure authentication. Keep this confidential and never expose it in client-side code. Available in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client Secret",
+        "x-example": "your-client-secret"
+      },
+      "merchantAuth": {
+        "type": "apiKey",
+        "name": "X-Merchant-ID",
+        "in": "header",
+        "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
+        "x-displayName": "Merchant ID",
+        "x-example": "your-merchant-id"
+      },
+      "apiVersionHeader": {
+        "type": "apiKey",
+        "name": "X-API-Version",
+        "in": "header",
+        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "x-displayName": "API Version",
+        "x-example": "3.0.0"
+      }
+    },
+    "schemas": {
+      "v3_CreatePaymentLinkRequest": {
+        "type": "object",
+        "required": [
+          "amount",
+          "reference_id",
+          "buyer",
+          "product",
+          "invoice"
+        ],
+        "properties": {
+          "amount": {
+            "type": "string",
+            "description": "Amount to collect, in rupees, as a decimal string (e.g. \"1500.00\"). Up to two decimal places; greater than 0 and at most 10,000,000.00. Payment links are always INR, so there is no currency field.",
+            "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
+          },
+          "reference_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "description": "Your reference for this payment. Letters, numbers and hyphens. Unique across all your orders, including one whose link failed to create."
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the link stops accepting payment (ISO 8601). A value without an offset is read as UTC. Must be in the future and at most one year (365 days) away. Omit it, or send null, and the link expires 365 days from today."
+          },
+          "preferred_payment_method": {
+            "type": "string",
+            "enum": [
+              "UPI",
+              "CARD",
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "NET_BANKING"
+            ],
+            "description": "The payment method the buyer should pay with. Case-insensitive. Omit it to let the buyer choose. Which methods a payment link can collect depends on your account; one it cannot is refused with a 400."
+          },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "description": "Whether the buyer is a business (B2B) or a consumer (B2C). Optional \u2014 derived from the merchant's KYC when omitted."
+          },
+          "purpose_code": {
+            "type": "string",
+            "description": "FEMA/FETERS purpose code this payment settles under (e.g. S0802). Optional \u2014 derived from the merchant's allowed purpose codes when omitted and exactly one is allowed.",
+            "example": "S0802"
+          },
+          "buyer": {
+            "$ref": "#/components/schemas/v3_PaymentLinkBuyer"
+          },
+          "product": {
+            "$ref": "#/components/schemas/v3_PaymentLinkProduct"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/v3_PaymentLinkInvoice"
+          }
+        }
+      },
+      "v3_PaymentLinkBuyer": {
+        "type": "object",
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Buyer's full name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Buyer's email address"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Buyer's phone number with country code (e.g. +919876543210). A number without the + and country code is refused.",
+            "pattern": "^\\+[1-9]\\d{1,14}$"
+          },
+          "send_sms": {
+            "type": "boolean",
+            "default": false,
+            "description": "Send the payment link to the buyer's phone by SMS once it is created."
+          },
+          "send_email": {
+            "type": "boolean",
+            "default": false,
+            "description": "Send the payment link to the buyer's email once it is created."
+          },
+          "address": {
+            "$ref": "#/components/schemas/v3_PaymentLinkAddress"
+          }
+        }
+      },
+      "v3_PaymentLinkAddress": {
+        "type": "object",
+        "required": [
+          "line_1",
+          "city",
+          "state",
+          "postal_code"
+        ],
+        "properties": {
+          "line_1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "line_2": {
+            "type": "string",
+            "nullable": true,
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "City name"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "State name"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "A valid 6-digit Indian PIN code"
+          }
+        }
+      },
+      "v3_PaymentLinkProduct": {
+        "type": "object",
+        "required": [
+          "name",
+          "type_of_goods"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product or service name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1024,
+            "nullable": true,
+            "description": "Product or service description"
+          },
+          "type_of_goods": {
+            "type": "string",
+            "enum": [
+              "physical_goods",
+              "digital_goods",
+              "service"
+            ],
+            "description": "Type of goods"
+          },
+          "hs_code": {
+            "type": "string",
+            "description": "8-digit Harmonized System code. Required for physical_goods and checked against the HS code list, but not stored on the link."
+          },
+          "hs_code_description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Description of the HS code. Accepted, but not stored on the link."
+          }
+        }
+      },
+      "v3_PaymentLinkInvoice": {
+        "type": "object",
+        "required": [
+          "number"
+        ],
+        "properties": {
+          "number": {
+            "type": "string",
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9]+$",
+            "description": "Invoice number. Letters and numbers only \u2014 no hyphens, slashes or spaces. Unique across your orders that have not failed."
+          }
+        }
+      },
+      "v3_CreatePaymentLinkResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_CreatedPaymentLink"
+          }
+        }
+      },
+      "v3_CreatedPaymentLink": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "link_id",
+          "payment_link",
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The same value as link_id, kept for compatibility. Read link_id."
+          },
+          "link_id": {
+            "type": "string",
+            "description": "The link's ID (PR followed by 10 digits). Retrieve and Deactivate take it, and every payment made through the link carries it in its payment webhooks, next to that payment's own payment_id."
+          },
+          "payment_link": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to send to the buyer. Treat it as opaque."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The amount, as a decimal string. A whole amount comes back without decimals (\"1500\"); any other with two (\"1500.50\")."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "INR"
+            ],
+            "description": "Always INR"
+          }
+        }
+      },
+      "v3_ListPaymentLinksResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "count",
+              "page",
+              "page_size",
+              "next",
+              "previous",
+              "results"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total number of links across all pages"
+              },
+              "page": {
+                "type": "integer",
+                "description": "This page's number"
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "Links per page"
+              },
+              "next": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "Full URL of the next page, or null on the last page"
+              },
+              "previous": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "Full URL of the previous page, or null on the first page"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_PaymentLinkListItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentLinkListItem": {
+        "type": "object",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The same value as link_id, kept for compatibility"
+          },
+          "link_id": {
+            "type": "string",
+            "description": "The link's ID. Retrieve and Deactivate take it."
+          },
+          "payment_link": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "The URL sent to the buyer. Null when the link could not be created."
+          },
+          "merchant": {
+            "type": "object",
+            "description": "The merchant the link belongs to. For a PSP: its own account or one of its sub-merchants.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Merchant ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant's trade name, or legal name when it has none"
+              }
+            }
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your reference_id from Create Payment Link"
+          },
+          "buyer": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's phone number, E.164 (e.g. +919876543210)"
+              }
+            }
+          },
+          "order_id": {
+            "type": "string",
+            "description": "The order behind the link (OD followed by 10 digits)"
+          },
+          "invoice_number": {
+            "type": "string",
+            "description": "The invoice number sent on create"
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Amount to collect, as a decimal string without trailing zeros (\"1500\", \"2499.5\")"
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "The amount including GST where GST applies; otherwise equal to amount"
+              },
+              "currency": {
+                "type": "string",
+                "description": "Always INR"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the link failed or closed, when there is a reason to give; otherwise null"
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "The method the buyer paid with, in lowercase (e.g. upi, credit_card, net_banking). Can be null even after the link is paid."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paid",
+              "expired",
+              "failed"
+            ],
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+          }
+        }
+      },
+      "v3_PaymentLinkDetailsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_PaymentLinkDetails"
+          }
+        }
+      },
+      "v3_PaymentLinkDetails": {
+        "type": "object",
+        "description": "The link, and the payments made through it. The link's amount is not included: keep the one from the create response, or read it from List Payment Links.",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The same value as link_id, kept for compatibility"
+          },
+          "link_id": {
+            "type": "string",
+            "description": "The link's ID"
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your reference_id from Create Payment Link"
+          },
+          "currency": {
+            "type": "string",
+            "description": "Always INR"
+          },
+          "payment_link": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "The URL sent to the buyer. Null when the link could not be created."
+          },
+          "expiry_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the link stops accepting payment; the moment of deactivation for a deactivated link. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "The method the buyer paid with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING). Can be null even after the link is paid."
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/v3_PaymentLinkSettlement"
+          },
+          "buyer": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's phone number, E.164 (e.g. +919876543210)"
+              },
+              "address": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "line_1": {
+                    "type": "string",
+                    "description": "Address line 1"
+                  },
+                  "line_2": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Address line 2"
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "City name"
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "State name"
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "description": "PIN code"
+                  }
+                }
+              },
+              "pan_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's PAN, when one has been collected"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Buyer's date of birth (YYYY-MM-DD), when one has been collected"
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Product or service name"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "description": "Product or service description"
+              },
+              "hs_code": {
+                "type": "string",
+                "nullable": true,
+                "description": "HS code, when one is stored on the order"
+              },
+              "hs_code_description": {
+                "type": "string",
+                "nullable": true,
+                "description": "HS code description, when one is stored on the order"
+              },
+              "type_of_goods": {
+                "type": "string",
+                "description": "Type of goods: physical_goods, digital_goods or service"
+              }
+            }
+          },
+          "invoice": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Invoice date (YYYY-MM-DD), when one is recorded"
+              },
+              "file": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true,
+                "description": "Time-limited download URL for the invoice file, when one has been uploaded"
+              }
+            }
+          },
+          "air_waybills": {
+            "type": "array",
+            "description": "Air waybills recorded against the link's order; usually empty",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "string",
+                  "description": "Air waybill number"
+                },
+                "file": {
+                  "type": "string",
+                  "format": "uri",
+                  "nullable": true,
+                  "description": "Time-limited download URL for the air waybill file"
+                }
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paid",
+              "expired",
+              "failed"
+            ],
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the link failed or closed, when there is a reason to give; otherwise null"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "paid_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment_id of the payment that paid the link, or null until it is paid. Refund and reconcile by this ID, not by link_id. On some accounts a link and its payment share one ID, and this equals link_id."
+          },
+          "payments": {
+            "type": "array",
+            "description": "The payments made through the link, newest first; at most the 50 newest. A buyer may try more than once: where each try is a payment of its own, every try is listed, and this is empty until the buyer first tries to pay. On some accounts a link and its payment share one ID: this then holds one entry whose payment_id is link_id, from the moment the link is created.",
+            "items": {
+              "$ref": "#/components/schemas/v3_PaymentLinkPayment"
+            }
+          }
+        }
+      },
+      "v3_PaymentLinkPayment": {
+        "type": "object",
+        "description": "A payment made through the link",
+        "required": [
+          "payment_id",
+          "status",
+          "mop_type",
+          "amount",
+          "created_at",
+          "payment_completed_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "The payment's ID (PR followed by 10 digits). Refund and reconcile by it. Its payment webhooks carry it with the link's link_id."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "captured",
+              "failed",
+              "invalid"
+            ],
+            "description": "Where the payment stands. `pending`: under way. `captured`: it went through. `failed`, or rarely `invalid`: it did not."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "The method the payment was made with, in lowercase (e.g. upi, credit_card, net_banking), or null when none is recorded."
+          },
+          "amount": {
+            "type": "string",
+            "description": "The payment's amount, in the format Create Payment Link returns: a decimal string, \"1500\" for whole rupees and \"1500.50\" when there are paise. Parse it as a decimal, never as a float."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was made. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the payment completed, in the same format; null until it has, and usually null for a payment that failed."
+          }
+        }
+      },
+      "v3_PaymentLinkSettlement": {
+        "type": "object",
+        "description": "Settlement state recorded against the link. When paid_payment_id differs from link_id, the money moved on that payment rather than on the link, and this does not follow it: reconcile by paid_payment_id.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Settlement status",
+            "enum": [
+              "not_applicable",
+              "payment_pending",
+              "payment_failed",
+              "info_pending",
+              "ready_for_settlement",
+              "settled",
+              "settlement_error",
+              "under_review",
+              "action_required",
+              "verified",
+              "on_hold",
+              "expired",
+              "rejected"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Detail on the settlement status, when there is any"
+          },
+          "settlement_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/v3_PaymentLinkSettlementDetails"
+              }
+            ],
+            "nullable": true,
+            "description": "Null until the payment is part of a settlement"
+          }
+        }
+      },
+      "v3_PaymentLinkSettlementDetails": {
+        "type": "object",
+        "description": "Amounts are decimal strings with two decimals, or null.",
+        "properties": {
+          "settlement_id": {
+            "type": "string",
+            "description": "Settlement ID (ST\u2026). Pass it to Get Settlement."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the settlement completed. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency the payment settled in"
+          },
+          "transaction_amount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Transaction amount"
+          },
+          "merchant_service_fee": {
+            "type": "string",
+            "nullable": true,
+            "description": "Service fee charged"
+          },
+          "merchant_service_tax": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax on the service fee"
+          },
+          "merchant_net_amount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Net amount settled to you"
+          },
+          "sgst": {
+            "type": "string",
+            "nullable": true,
+            "description": "SGST component"
+          },
+          "cgst": {
+            "type": "string",
+            "nullable": true,
+            "description": "CGST component"
+          },
+          "igst": {
+            "type": "string",
+            "nullable": true,
+            "description": "IGST component"
+          },
+          "merchant_transaction_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment network's reference for the transaction"
+          },
+          "card_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Card type, for a card payment"
+          },
+          "offer_service_fee": {
+            "type": "string",
+            "nullable": true,
+            "description": "Service fee on an offer"
+          },
+          "offer_service_tax": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax on the offer service fee"
+          },
+          "forex_rate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Forex rate applied"
+          },
+          "discount": {
+            "type": "string",
+            "nullable": true,
+            "description": "Discount applied"
+          },
+          "additional_tdr_fee": {
+            "type": "string",
+            "nullable": true,
+            "description": "Additional TDR fee"
+          },
+          "additional_tdr_tax": {
+            "type": "string",
+            "nullable": true,
+            "description": "Tax on the additional TDR fee"
+          },
+          "total_processing_fee": {
+            "type": "string",
+            "nullable": true,
+            "description": "Total processing fee"
+          },
+          "total_service_tax": {
+            "type": "string",
+            "nullable": true,
+            "description": "Total service tax"
+          },
+          "transaction_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency of the transaction"
+          }
+        }
+      },
+      "v3_DeactivatePaymentLinkResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "description": "Always empty",
+            "properties": {}
+          }
+        }
+      },
+      "v3_ErrorDetails": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Error code (e.g., ERR_ORDER_002). The list endpoint's own failure sends a number (40350).",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "description": "What failed. Usually an object keyed by the offending field and nested the way the request is (e.g. buyer.address.postal_code), with one message per field. A purpose_code refusal sends a single string instead.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "v3_ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Indicates if the request was successful. Always false for error responses."
+          },
+          "error": {
+            "$ref": "#/components/schemas/v3_ErrorDetails"
+          }
+        }
+      },
+      "v3_PermissionDeniedResponse": {
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "description": "Returned when payment links are not enabled on the account. It does not use the standard error envelope.",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Why the request was refused"
+          }
+        }
+      }
+    }
+  }
+}

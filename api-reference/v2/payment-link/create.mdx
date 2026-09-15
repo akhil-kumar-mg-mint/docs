@@ -28,3 +28,7 @@ The request body follows the same structure as the [Create Order](/api-reference
 
 ### Optional Fields
 - `expiry_date`: When the link should expire (ISO 8601 format). Defaults to 1 year if not provided.
+
+## Response
+
+The response carries the `payment_link` to share and the link's `link_id`, which the other payment link endpoints take. `payment_id` is the same value: the link and the payment made through it share one ID, and the payment webhooks for it carry that ID as both `payment_id` and `link_id`.

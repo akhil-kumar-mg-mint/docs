@@ -57,6 +57,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
         "message": "Cancelled by user",
         "mop_type": "UPI",
         "order_id": "OD3376378679",
+        "link_id": null,
         "payment_id": "PR6938527534",
         "bank_ref_num": null,
         "extended_status": "FAILED",
@@ -131,6 +132,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       Order ID
       
       **Example**: `"OD3376378679"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v1/payment-link/create) returned, which is the same value as `payment_id`. `null` when the payment was not made through a payment link; the key is always present.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.payment_id" type="string" required>

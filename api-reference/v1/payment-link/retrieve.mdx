@@ -5,8 +5,15 @@ openapi: 'GET /pg/payment-links/{paymentLinkId}/'
 
 ## Overview
 
-Fetch detailed information about a specific payment link using its unique ID. This includes the current status, buyer details, and associated order information.
+Fetch detailed information about a specific payment link using its unique ID. This includes the current status, the payments made through it, buyer details, and associated order information.
 
 ## Path Parameters
 
-- `paymentLinkId`: The unique identifier of the payment link (e.g., `PR5106085554`).
+- `paymentLinkId`: The link's `link_id` from [Create Payment Link](/api-reference/v1/payment-link/create) (e.g., `PR5106085554`). The `payment_id` it returns is the same value.
+
+## How the link was paid
+
+- `paid_payment_id`: The link's `payment_id` once it is paid, or `null` until then.
+- `payments`: The link's payment, as a single entry from the moment the link is created: its `payment_id` (the same as `link_id`), `status` (`pending`, `captured`, `failed` or, rarely, `invalid`), `mop_type` (e.g. `upi`, or `null`), `amount` in the format Create Payment Link returns (`"1500"`, or `"1500.50"` when there are paise), `created_at`, and `payment_completed_at` (`null` until it completes).
+
+`link_id` is the link's ID; `payment_id` is the same value, kept for compatibility.

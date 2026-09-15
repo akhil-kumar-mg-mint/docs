@@ -63,6 +63,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "data": {
     "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "Payment verification action required",
     "action_required_fields": ["buyer_name", "hs_code"]
@@ -79,6 +80,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "data": {
     "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "link_id": null,
     "verification_status": "VERIFIED",
     "message": "Payment verified",
     "action_required_fields": []
@@ -95,6 +97,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "data": {
     "payment_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "order_id": "98765432-10ab-cdef-9876-543210fedcba",
+    "link_id": null,
     "verification_status": "IN_REVIEW",
     "message": "Payment verification action required",
     "action_required_fields": []
@@ -131,7 +134,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Verification status details (payment_id, order_id, verification_status, message, action_required_fields)
+      Verification status details (payment_id, order_id, link_id, verification_status, message, action_required_fields)
     </ParamField>
   </Tab>
 
@@ -146,6 +149,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       UID of the order for this payment
       
       **Example**: `"98765432-10ab-cdef-9876-543210fedcba"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link the payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>

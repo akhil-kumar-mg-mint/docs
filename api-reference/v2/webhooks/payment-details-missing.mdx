@@ -59,6 +59,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
   "data": {
     "order_uid": "660e8400-e29b-41d4-a716-446655440001",
+    "link_id": null,
     "payment_id": "770e8400-e29b-41d4-a716-446655440002",
     "message": "Payment recorded but verification details missing for Upload Payment Verification Details API. Supply the missing fields via the upload-verification-details API or dashboard.",
     "details_missing": [
@@ -102,7 +103,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Event payload: order_uid, payment_id, message, details_missing
+      Event payload: order_uid, link_id, payment_id, message, details_missing
     </ParamField>
   </Tab>
 
@@ -111,6 +112,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       UID of the order for this payment
       
       **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link the payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.payment_id" type="string" required>

@@ -58,6 +58,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "data": {
     "payment_id": "770e8400-e29b-41d4-a716-446655440003",
     "order_id": "660e8400-e29b-41d4-a716-446655440001",
+    "link_id": null,
     "status": "FAILED",
     "message": "Payment declined by bank",
     "mop_type": "CARD",
@@ -103,7 +104,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Payment request details (payment_id, order_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
+      Payment request details (payment_id, order_id, link_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
     </ParamField>
   </Tab>
 
@@ -118,6 +119,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       UID of the order for this payment
       
       **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned, which is the same value as `payment_id`. `null` when the payment was not made through a payment link; the key is always present.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.status" type="string" required>

@@ -78,6 +78,7 @@ These are complete, unedited payloads — nothing is trimmed.
   "data": {
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
@@ -119,6 +120,7 @@ These are complete, unedited payloads — nothing is trimmed.
   "data": {
     "payment_id": "PR8125440971",
     "order_id": "OD5590284413",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": ["… the same sixteen field entries as S0305 …"],
@@ -144,6 +146,7 @@ These are complete, unedited payloads — nothing is trimmed.
   "data": {
     "payment_id": "PR7042318866",
     "order_id": "OD8451220934",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": ["… the same sixteen field entries as S0305 …"],
@@ -172,6 +175,7 @@ These are complete, unedited payloads — nothing is trimmed.
   "data": {
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
@@ -239,6 +243,10 @@ These are complete, unedited payloads — nothing is trimmed.
 
     <ParamField path="data.order_id" type="string" required>
       UID of the order the payment belongs to.
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string | null" required>
+      ID of the payment link the payment was made through — the `link_id` that [Create Payment Link](/api-reference/v3/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present.
     </ParamField>
 
     <ParamField path="data.verification_status" type="string" required>
@@ -317,7 +325,7 @@ These are complete, unedited payloads — nothing is trimmed.
 
 Sending everything the list named is not the same as passing. Once a set is complete it goes to the verification gateway, which verifies the remitter's PAN against the name and date of birth, matches the credit's sender to the account holder, recomputes TCS and checks that the money received covers what is being settled. Any of those can refuse.
 
-A refusal arrives as **this same event** — same type, same envelope, the same eight keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
+A refusal arrives as **this same event** — same type, same envelope, the same nine keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
 
 <CodeGroup>
 
@@ -330,6 +338,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
   "data": {
     "payment_id": "PR4497584646",
     "order_id": "OD4646580935",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [
@@ -357,6 +366,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
   "data": {
     "payment_id": "PR4497584646",
     "order_id": "OD4646580935",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [
@@ -384,6 +394,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
   "data": {
     "payment_id": "PR4497584646",
     "order_id": "OD4646580935",
+    "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification did not pass. The payment stays in Action Required until what is listed below is resolved.",
     "action_required_fields": [

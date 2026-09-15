@@ -59,6 +59,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
   "data": {
     "payment_id": "770e8400-e29b-41d4-a716-446655440002",
     "order_id": "660e8400-e29b-41d4-a716-446655440001",
+    "link_id": null,
     "status": "CAPTURED",
     "message": "Payment Captured",
     "mop_type": "VBA_TRANSFER",
@@ -104,7 +105,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      Payment request details (payment_id, order_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
+      Payment request details (payment_id, order_id, link_id, status, message, mop_type, amount, bank_ref_num, extended_status, payment_message, payment_completed_at, utr, virtual_account_id, subscription_id, merchant_reference_id)
     </ParamField>
   </Tab>
 
@@ -119,6 +120,12 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
       UID of the order for this payment
       
       **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+    </ParamField>
+
+    <ParamField path="data.link_id" type="string">
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v3/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present. A buyer can try a link more than once, so several payments can carry the same `link_id`, each with its own `payment_id`. On some accounts `payment_id` and `link_id` can be the same value. Match the payment to your link on `link_id`; refund and reconcile it by `payment_id`.
+
+      **Example**: `"PR4829301756"`
     </ParamField>
 
     <ParamField path="data.status" type="string" required>
@@ -198,4 +205,5 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
 2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
 3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
-4. **Note:** You may subsequently receive a **VERIFICATION_NEEDED** webhook if verification details are missing on the order (see [Verification Needed](/api-reference/v3/webhooks/verification-needed)). LRS payments receive [**LRS_VERIFICATION_NEEDED**](/api-reference/v3/webhooks/lrs-verification-needed) instead.
+4. **If `data.link_id` is not `null`**, the payment was made through that payment link — refund and reconcile it by `data.payment_id`. See [Tracking a payment link](/api-reference/v3/payment-link/create#tracking-a-payment-link).
+5. **Note:** You may subsequently receive a **VERIFICATION_NEEDED** webhook if verification details are missing on the order (see [Verification Needed](/api-reference/v3/webhooks/verification-needed)). LRS payments receive [**LRS_VERIFICATION_NEEDED**](/api-reference/v3/webhooks/lrs-verification-needed) instead.

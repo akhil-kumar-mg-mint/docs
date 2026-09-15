@@ -1,0 +1,278 @@
+---
+title: 'Create Payment Link'
+description: 'Create a URL you send to a buyer to collect one INR payment. It stays open until it is paid, it expires, or you deactivate it.'
+openapi: '/openapi/v3-payment-links.json POST /pg/payment-links/'
+---
+
+## Overview
+
+A payment link is a URL you send to a buyer — over chat, email or SMS — to collect one payment without building a checkout of your own. You create it from your backend with the buyer, product and invoice details. The response carries the `payment_link` to send and a `link_id` to track it by.
+
+A link stays open until it is paid, its `expiry_date` passes, or you [deactivate](/api-reference/v3/payment-link/deactivate) it. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) tells you which.
+
+## Request Parameters
+
+### Required Parameters
+- `amount`: The amount to collect, in rupees
+- `reference_id`: Your unique reference for this payment
+- `buyer`: Buyer details — name, email, phone and address
+- `product`: What the payment is for
+- `invoice`: The invoice number
+
+### Optional Parameters
+- `expiry_date`: When the link stops accepting payment. Defaults to one year from today
+- `preferred_payment_method`: The payment method the buyer should pay with
+- `buyer.send_sms` / `buyer.send_email`: Send the link to the buyer as soon as it is created
+- `business_model`: Whether the buyer is a business (`B2B`) or a consumer (`B2C`)
+- `purpose_code`: The FEMA/FETERS purpose code the payment settles under (e.g. `S0802`)
+
+<Note>
+  **Payment links are INR only.** There is no `currency` field: `amount` is read as rupees, and a `currency` key in the request is ignored.
+</Note>
+
+### Parameter Definitions
+
+The following tables define the request parameters, including nested objects, types, requirements, and constraints.
+
+#### Top-level
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| amount | string | Yes | Amount to collect, in rupees. | Decimal string, up to two decimal places; greater than 0 and at most 10,000,000.00 |
+| reference_id | string | Yes | Your reference for this payment. | 1–50 chars; letters, numbers and hyphens only; unique across all your orders |
+| expiry_date | string | No | When the link stops accepting payment. | ISO 8601 date-time; in the future and at most 365 days away; defaults to 365 days from today |
+| preferred_payment_method | string | No | The payment method the buyer should pay with. | One of `UPI`, `CARD`, `CREDIT_CARD`, `DEBIT_CARD`, `NET_BANKING`, in any case; must be one your account's payment links can collect |
+| business_model | string | No | Whether the buyer is a business or a consumer. | Enum: `B2B`, `B2C`; derived from your KYC when omitted |
+| purpose_code | string | No | FEMA/FETERS purpose code this payment settles under. | Must be active and enabled on your account (e.g. `S0101`, `S0802`); derived from your KYC when omitted |
+| buyer | object | Yes | The buyer. | See Buyer object |
+| product | object | Yes | Product or service being paid for. | See Product object |
+| invoice | object | Yes | Invoice metadata. | See Invoice object |
+
+#### Buyer
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Full name of the buyer. | Max 255 chars |
+| email | string | Yes | Email of the buyer. | Valid email address |
+| phone | string | Yes | Phone number with country code. | Starts with `+` and the country code, e.g. `+919876543210`; `9876543210` is refused |
+| send_sms | boolean | No | Send the link to `phone` by SMS once it is created. | Default `false` |
+| send_email | boolean | No | Send the link to `email` once it is created. | Default `false` |
+| address | object | Yes | Buyer address. | See Address object |
+
+#### Address (Buyer.address)
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| line_1 | string | Yes | Address line 1. | |
+| line_2 | string | No | Address line 2. | |
+| city | string | Yes | City. | Max 255 chars |
+| state | string | Yes | State/Province. | Max 255 chars |
+| postal_code | string | Yes | PIN code. | A valid 6-digit Indian PIN code |
+
+<Note>
+  A payment link needs the whole address — `line_1`, `city`, `state` and `postal_code`. [Create Order](/api-reference/v3/order/create) asks only for `postal_code`.
+</Note>
+
+#### Product
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| name | string | Yes | Product or service name. | |
+| description | string | No | Description of the product or service. | Max 1024 chars |
+| type_of_goods | string | Yes | Nature of goods/services. | Enum: `physical_goods`, `digital_goods`, `service` |
+| hs_code | string | Conditional | 8-digit HS code. | Required for `physical_goods`; must be a known HS code |
+| hs_code_description | string | No | HS code description. | |
+
+<Note>
+  `hs_code` is checked, but neither it nor `hs_code_description` is stored on the link, so [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) returns both as `null`.
+</Note>
+
+#### Invoice
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| number | string | Yes | Invoice number. | Max 50 chars; letters and numbers only; unique across your orders that have not failed |
+
+<Warning>
+  **Letters and numbers only.** `INV-2026-0123` is refused with `Invoice number must contain only alphanumeric characters.` — send `INV20260123`. This is stricter than Create Order's invoice number. A payment link's invoice takes no `date`.
+</Warning>
+
+## Expiry
+
+- Send `expiry_date` in ISO 8601. An offset is honoured — `2026-12-31T23:59:59+05:30` reads back as `2026-12-31T18:29:59.000000Z` — and a value without one is read as UTC.
+- It must be in the future and no more than 365 days away. Otherwise the create is refused with `Expiry date cannot be older than the current UTC time.` or `Expiry date cannot be beyond 1 year from now.`
+- Omit it, or send `null`, and the link expires 365 days from today.
+- The create response does not echo the expiry. Read it back with [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve).
+
+## Preferred payment method
+
+`preferred_payment_method` names the method you want the buyer to pay with: `UPI`, `CARD`, `CREDIT_CARD`, `DEBIT_CARD` or `NET_BANKING`, in any case. Leave it out and the buyer chooses from what your account offers.
+
+Which of these a payment link can collect depends on your account. Name one yours cannot and the create is refused before anything is sent to the buyer:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_ORDER_002",
+    "message": "Validation error",
+    "details": {
+      "preferred_payment_method": "Credit card is not supported for payment links on this account"
+    }
+  }
+}
+```
+
+A value that is not a payment method at all is refused with `Invalid preferred payment method`. The preference is not echoed back: `mop_type` on [List Payment Links](/api-reference/v3/payment-link/list) and [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) is the method the buyer actually paid with.
+
+## Response
+
+A successful create returns `201` with:
+- `link_id`: The link's ID — `PR` followed by 10 digits. [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take it, and every payment made through the link carries it. See [Tracking a payment link](#tracking-a-payment-link)
+- `payment_id`: The same value as `link_id`, kept for compatibility. Read `link_id`
+- `payment_link`: The URL to send to the buyer. Treat it as opaque
+- `amount`: The amount as a decimal string. A whole amount comes back without decimals (`"1500"`), any other with two (`"1500.50"`)
+- `currency`: Always `INR`
+
+## Tracking a payment link
+
+Two IDs are in play: the link's `link_id`, and the `payment_id` of each payment made through it.
+
+- **Manage the link by `link_id`.** [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) and [Deactivate Payment Link](/api-reference/v3/payment-link/deactivate) take it.
+- **Match payments to the link on `link_id`.** A buyer may try more than once before a payment goes through. The payment webhooks — [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) when a payment goes through — carry that payment's own `payment_id` and the link's `link_id`.
+- **Refund and reconcile by that payment's `payment_id`,** not by `link_id`. [Create Refund](/api-reference/v3/refunds/create) takes it, and [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve#how-the-link-was-paid) names the payment that paid the link in `paid_payment_id`.
+
+On some accounts a link and its payment share one ID, so a webhook's `payment_id` and `link_id` are the same value. Handle both cases the same way: match on `link_id`, refund by `payment_id`.
+
+Where each try is a payment of its own, a try that fails sends no webhook: the link stays open and the buyer can pay again through it. If the link closes without being paid — it expires, you deactivate it, or 20 tries have failed — one [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) arrives for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it, and it is not a payment the payments API returns: look the link up by `link_id` with [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve).
+
+## Errors
+
+Every refusal uses the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` always carries `ERR_ORDER_002` — read `details` to see what failed.
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `400` | `ERR_ORDER_002` | A field is missing or invalid | Keyed by field and nested like the request, e.g. `{"buyer": {"phone": "Enter a valid phone number."}}` |
+| `400` | `ERR_ORDER_002` | `reference_id` is already used by one of your orders | `{"reference_id": "Reference ID already exists"}` |
+| `400` | `ERR_ORDER_002` | `invoice.number` is already used by one of your orders that has not failed | `{"invoice": {"number": "Invoice Number already exists"}}` |
+| `400` | `ERR_ORDER_002` | `expiry_date` is in the past, or more than 365 days away | `{"expiry_date": "Expiry date cannot be beyond 1 year from now."}` |
+| `400` | `ERR_ORDER_002` | `preferred_payment_method` is not a payment method | `{"preferred_payment_method": "Invalid preferred payment method"}` |
+| `400` | `ERR_ORDER_002` | Your account's payment links cannot collect `preferred_payment_method` | `{"preferred_payment_method": "Credit card is not supported for payment links on this account"}` |
+| `400` | `ERR_ORDER_002` | The payment method is not enabled on your account | `{"mop_type": "CREDIT_CARD is not enabled for this account."}` |
+| `400` | `ERR_ORDER_002` | `purpose_code` is unknown or inactive, or not enabled on your account | A string, not an object: `"Invalid Purpose code given."` or `"Purpose code is not enabled for this merchant."` |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | Credentials are missing or wrong, or a PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
+| `403` | — | Payment links are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
+| `403` | `ERR_AUTH_005` | Your account's setup does not permit payment links | `{"collection_mode": "PAYMENT_LINKS is not enabled for this account."}` |
+| `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect through payment links | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | The payment network is rate limiting requests | Retry after the `Retry-After` header, when it is sent |
+| `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached, or returned an error | Retry shortly |
+| `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
+
+## Examples
+
+<CodeGroup>
+
+```json UPI link sent to the buyer
+{
+  "amount": "1500.00",
+  "reference_id": "ORD-2026-000123",
+  "expiry_date": "2026-12-31T18:29:59Z",
+  "preferred_payment_method": "UPI",
+  "buyer": {
+    "name": "Rahul Sharma",
+    "email": "rahul.sharma@example.com",
+    "phone": "+919876543210",
+    "send_sms": true,
+    "send_email": true,
+    "address": {
+      "line_1": "221B MG Road",
+      "line_2": "Indiranagar",
+      "city": "Bengaluru",
+      "state": "Karnataka",
+      "postal_code": "560038"
+    }
+  },
+  "product": {
+    "name": "Annual subscription",
+    "description": "12-month premium plan",
+    "type_of_goods": "service"
+  },
+  "invoice": {
+    "number": "INV2026000123"
+  }
+}
+```
+
+```json Physical goods, default expiry
+{
+  "amount": "2499.50",
+  "reference_id": "ORD-2026-000124",
+  "buyer": {
+    "name": "Priya Nair",
+    "email": "priya.nair@example.com",
+    "phone": "+919812345678",
+    "address": {
+      "line_1": "14 Marine Drive",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "postal_code": "400001"
+    }
+  },
+  "product": {
+    "name": "Wireless Headphones",
+    "description": "Noise-cancelling wireless headphones",
+    "type_of_goods": "physical_goods",
+    "hs_code": "85183000"
+  },
+  "invoice": {
+    "number": "INV2026000124"
+  }
+}
+```
+
+</CodeGroup>
+
+## Response Examples
+
+<CodeGroup>
+
+```json Created
+{
+  "success": true,
+  "message": "Payment Link created successfully",
+  "data": {
+    "payment_id": "PR4829301756",
+    "link_id": "PR4829301756",
+    "payment_link": "https://api-pacb-uat.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+    "amount": "1500",
+    "currency": "INR"
+  }
+}
+```
+
+```json Invalid fields
+{
+  "success": false,
+  "error": {
+    "code": "ERR_ORDER_002",
+    "message": "Validation error",
+    "details": {
+      "invoice": {
+        "number": "Invoice number must contain only alphanumeric characters."
+      },
+      "buyer": {
+        "phone": "Enter a valid phone number."
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+## Implementation Notes
+
+- **Create links from your backend.** The call carries your client secret, so never make it from a browser or a mobile app.
+- **A `reference_id` is spent once the request passes validation.** It must be unique across all your orders, not only payment links. A create refused after validation — over the payment method, say, or by the payment network — still records a failed order that holds the `reference_id`, and the link may appear in [List Payment Links](/api-reference/v3/payment-link/list) as `failed`. Retry with a fresh `reference_id`; the invoice number is free to reuse.
+- **PSPs send `X-Merchant-ID`** naming the sub-merchant the link is for. Without it the call is refused with a `401`.
+- **Keep `link_id` and `amount`.** `link_id` is what [Retrieve](/api-reference/v3/payment-link/retrieve) and [Deactivate](/api-reference/v3/payment-link/deactivate) take, and Retrieve does not return the link's amount.

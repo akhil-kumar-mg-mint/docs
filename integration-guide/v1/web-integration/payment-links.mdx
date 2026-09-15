@@ -85,15 +85,18 @@ curl -X POST https://api-pacb.eximpe.com/pg/payment-links/ \
 ```json
 {
   "success": true,
-  "message": "Payment link created successfully",
+  "message": "Payment Link created successfully",
   "data": {
-    "link_id": "pl_1234567890",
-    "payment_link": "https://checkout.eximpe.com/pay/pl_1234567890",
-    "status": "ACTIVE",
-    "expiry_date": "2024-12-31T23:59:59Z"
+    "payment_id": "PR4829301756",
+    "link_id": "PR4829301756",
+    "payment_link": "https://checkout.eximpe.com/p/Xk3nQ7bT2mWp9vLc4R/",
+    "amount": "1500",
+    "currency": "INR"
   }
 }
 ```
+
+`link_id` is the payment link's ID. It has the same value as `payment_id`, which is kept for compatibility.
 
 <Note>
   **Expiry Date**: You can set an optional `expiry_date` for the link. If not provided, it defaults to 1 year.
@@ -130,19 +133,20 @@ Listen for the `PAYMENT_SUCCESSFUL` webhook event to get real-time updates.
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
         "utr": null,
-        "amount": 1000,
+        "amount": 1500,
         "status": "CAPTURED",
         "message": "Payment Captured",
         "mop_type": "UPI",
         "order_id": "OD3376378679",
-        "payment_id": "PR6938527534",
-        "bank_ref_num": "OD3376378679-PR6938527534",
+        "link_id": "PR4829301756",
+        "payment_id": "PR4829301756",
+        "bank_ref_num": "OD3376378679-PR4829301756",
         "extended_status": "SUCCESS",
         "payment_message": null,
         "subscription_id": null,
         "virtual_account_id": null,
         "payment_completed_at": "2025-06-24T12:30:44.000000Z",
-        "merchant_reference_id": "S2SICR1QPJ"
+        "merchant_reference_id": "LINK_12345"
     }
 }
 ```
@@ -154,6 +158,10 @@ You can also periodically check the status of the payment link or the order asso
 <Card title="📚 API Reference" href="/api-reference/v1/payment-link/retrieve">
   **Get Payment Link API** - Check the current status of a payment link.
 </Card>
+
+## Tracking a payment link
+
+A payment link and the payment made through it share one ID. Create Payment Link returns it as `link_id`, and as `payment_id` with the same value; the payment webhooks for the link's payment carry it as both. Use it to manage the link ([Retrieve Payment Link](/api-reference/v1/payment-link/retrieve), [Deactivate Link](/api-reference/v1/payment-link/deactivate)) and to refund and reconcile the payment ([Create Refund](/api-reference/v1/refunds/create)).
 
 ## Managing Payment Links
 
