@@ -50,8 +50,8 @@ A buyer may try more than once before a payment goes through. Two fields show th
 | Field | Description |
 |---|---|
 | `payment_id` | The payment's ID. Its payment webhooks carry it, next to the link's `link_id` |
-| `status` | `PENDING` while it is under way, `CAPTURED` once it went through, `FAILED` — or, rarely, `INVALID` — if it did not |
-| `mop_type` | The method it was made with, in uppercase (`UPI`, `CREDIT_CARD`), or `null` when none is recorded |
+| `status` | `pending` while it is under way, `captured` once it went through, `failed` — or, rarely, `invalid` — if it did not |
+| `mop_type` | The method it was made with, in lowercase (`upi`, `credit_card`), or `null` when none is recorded |
 | `amount` | Its amount, in the format [Create Payment Link](/api-reference/v3/payment-link/create) returns: a decimal string, `"1500"` for whole rupees and `"1500.50"` when there are paise |
 | `created_at` | When it was made |
 | `payment_completed_at` | When it completed, or `null` until it has — usually `null` for a payment that failed |
@@ -68,16 +68,16 @@ A link the buyer paid on their second try, with the rest of the response left ou
   "payments": [
     {
       "payment_id": "PR7730215564",
-      "status": "CAPTURED",
-      "mop_type": "UPI",
+      "status": "captured",
+      "mop_type": "upi",
       "amount": "1500",
       "created_at": "2026-09-14T10:02:44.519302Z",
       "payment_completed_at": "2026-09-14T10:03:21.087716Z"
     },
     {
       "payment_id": "PR7730209921",
-      "status": "FAILED",
-      "mop_type": "CREDIT_CARD",
+      "status": "failed",
+      "mop_type": "credit_card",
       "amount": "1500",
       "created_at": "2026-09-14T09:48:10.332907Z",
       "payment_completed_at": null

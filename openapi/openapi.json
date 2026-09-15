@@ -9916,17 +9916,17 @@
           "status": {
             "type": "string",
             "enum": [
-              "PENDING",
-              "CAPTURED",
-              "FAILED",
-              "INVALID"
+              "pending",
+              "captured",
+              "failed",
+              "invalid"
             ],
-            "description": "Where the payment stands. `PENDING`: under way. `CAPTURED`: it went through. `FAILED`, or rarely `INVALID`: it did not."
+            "description": "Where the payment stands. `pending`: under way. `captured`: it went through. `failed`, or rarely `invalid`: it did not."
           },
           "mop_type": {
             "type": "string",
             "nullable": true,
-            "description": "The method the payment was made with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING), or null when none is recorded."
+            "description": "The method the payment was made with, in lowercase (e.g. upi, credit_card, net_banking), or null when none is recorded."
           },
           "amount": {
             "type": "string",
