@@ -31,6 +31,4 @@ The request body follows the same structure as the [Create Order](/api-reference
 
 ## Response
 
-The response carries the `payment_link` to share and the link's `link_id`, which the other payment link endpoints take. `payment_id` is the same value, kept for compatibility.
-
-Every payment made through the link arrives in payment webhooks with its own `payment_id` and the link's `link_id`. See [Tracking a payment link](/integration-guide/v2/web-integration/payment-links#tracking-a-payment-link).
+The response carries the `payment_link` to share and the link's `link_id`, which the other payment link endpoints take. `payment_id` is the same value: the link and the payment made through it share one ID, and the payment webhooks for it carry that ID as both `payment_id` and `link_id`.

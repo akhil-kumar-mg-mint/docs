@@ -13,11 +13,7 @@ Fetch detailed information about a specific payment link using its unique ID. Th
 
 ## How the link was paid
 
-A buyer may try more than once before a payment goes through. Two fields show the payments made through the link:
+- `paid_payment_id`: The link's `payment_id` once it is paid, or `null` until then.
+- `payments`: The link's payment, as a single entry from the moment the link is created: its `payment_id` (the same as `link_id`), `status` (`pending`, `captured`, `failed` or, rarely, `invalid`), `mop_type` (e.g. `upi`, or `null`), `amount` in the format Create Payment Link returns (`"1500"`, or `"1500.50"` when there are paise), `created_at`, and `payment_completed_at` (`null` until it completes).
 
-- `paid_payment_id`: The `payment_id` of the payment that paid the link, or `null` until it is paid. Refund and reconcile by this ID.
-- `payments`: The payments made through the link, newest first — at most the 50 newest. Each entry carries the payment's `payment_id`, its `status` (`pending`, `captured`, `failed` or, rarely, `invalid`), its `mop_type` (e.g. `upi`, or `null`), its `amount` in the format Create Payment Link returns (`"1500"`, or `"1500.50"` when there are paise), `created_at`, and `payment_completed_at` (`null` until it completes).
-
-On some accounts a link and its payment share one ID: `payments` then holds a single entry whose `payment_id` is `link_id`, from the moment the link is created. Elsewhere each try is a payment of its own, and `payments` stays empty until the buyer first tries to pay.
-
-`link_id` is the link's ID, and `payment_id` is the same value, kept for compatibility. See [Tracking a payment link](/integration-guide/v2/web-integration/payment-links#tracking-a-payment-link).
+`link_id` is the link's ID; `payment_id` is the same value, kept for compatibility.

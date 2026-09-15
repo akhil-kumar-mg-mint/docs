@@ -7,10 +7,6 @@ openapi: 'GET /pg/payments/'
 ## Overview
 The List Payments endpoint allows you to search and retrieve payment records based on a variety of criteria. You can filter by payment status, date ranges, currency, and more. The response is paginated to handle large datasets efficiently.
 
-<Note>
-  **Payment links.** Where each try at a payment link is a payment of its own, the list holds those payments but not the link itself. Use [List Payment Links](/api-reference/v1/payment-link/list) for the links.
-</Note>
-
 ## Filtering
 You can combine multiple filters to create a precise query. All filter parameters are optional.
 

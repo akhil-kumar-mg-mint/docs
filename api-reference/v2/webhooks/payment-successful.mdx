@@ -123,7 +123,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.link_id" type="string">
-      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present. A buyer can try a link more than once, so several payments can carry the same `link_id`, each with its own `payment_id`. On some accounts `payment_id` and `link_id` can be the same value. Match the payment to your link on `link_id`; refund and reconcile it by `payment_id`.
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned, which is the same value as `payment_id`. `null` when the payment was not made through a payment link; the key is always present.
 
       **Example**: `"PR4829301756"`
     </ParamField>
@@ -205,5 +205,5 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
 2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
 3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
-4. **If `data.link_id` is not `null`**, the payment was made through that payment link — refund and reconcile it by `data.payment_id`. See [Tracking a payment link](/integration-guide/v2/web-integration/payment-links#tracking-a-payment-link).
+4. **If `data.link_id` is not `null`**, the payment was made through that payment link; `data.link_id` and `data.payment_id` are the same value.
 5. **Note:** You may subsequently receive a **PAYMENT_DETAILS_MISSING** webhook if verification details are missing on the order (see [Payment Details Missing](/api-reference/v2/webhooks/payment-details-missing)).

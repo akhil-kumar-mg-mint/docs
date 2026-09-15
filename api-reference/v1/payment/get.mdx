@@ -8,7 +8,3 @@ openapi: 'GET /pg/payments/{payment_id}/'
 
 The Get Payment endpoint allows you to retrieve complete payment information including order details, payment status, and transaction data. This is useful for payment tracking and status updates.
 
-<Note>
-  **Payment links.** Where each try at a payment link is a payment of its own, the link itself is not a payment: its `link_id` answers `404` here. Fetch the link with [Retrieve Payment Link](/api-reference/v1/payment-link/retrieve); each payment made through it has its own `payment_id`, which this endpoint takes.
-</Note>
-

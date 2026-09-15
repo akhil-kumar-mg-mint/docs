@@ -9634,7 +9634,7 @@
               },
               "link_id": {
                 "type": "string",
-                "description": "The payment link's ID (PR followed by 10 digits). The other payment link endpoints take it, and every payment made through the link carries it in its payment webhooks, next to that payment's own payment_id."
+                "description": "The payment link's ID (PR followed by 10 digits). The other payment link endpoints take it. It is the same value as payment_id: the payment webhooks for the link's payment carry it as both."
               },
               "payment_link": {
                 "type": "string",
@@ -9781,11 +9781,11 @@
               "paid_payment_id": {
                 "type": "string",
                 "nullable": true,
-                "description": "The payment_id of the payment that paid the link, or null until it is paid. Refund and reconcile by this ID, not by link_id. On some accounts a link and its payment share one ID, and this equals link_id."
+                "description": "The link's payment_id once it is paid (the same value as link_id), or null until then."
               },
               "payments": {
                 "type": "array",
-                "description": "The payments made through the link, newest first; at most the 50 newest. A buyer may try more than once: where each try is a payment of its own, every try is listed, and this is empty until the buyer first tries to pay. On some accounts a link and its payment share one ID: this then holds one entry whose payment_id is link_id, from the moment the link is created.",
+                "description": "The link's payment, as a single entry whose payment_id is link_id, from the moment the link is created.",
                 "items": {
                   "$ref": "#/components/schemas/v1_PaymentLinkPayment"
                 }
