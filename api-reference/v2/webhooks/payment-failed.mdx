@@ -122,7 +122,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.link_id" type="string">
-      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present. A buyer can try a link more than once, so several payments can carry the same `link_id`, each with its own `payment_id`. On some accounts `payment_id` and `link_id` can be the same value. Match the payment to your link on `link_id`; reconcile it by `payment_id`. A link that closes without being paid also sends this event for the link itself, with `payment_id` equal to `link_id`.
+      ID of the payment link this payment was made through — the `link_id` that [Create Payment Link](/api-reference/v2/payment-link/create) returned. `null` when the payment was not made through a payment link; the key is always present. A buyer can try a link more than once, so several payments can carry the same `link_id`, each with its own `payment_id`. On some accounts `payment_id` and `link_id` can be the same value. Match the payment to your link on `link_id`; reconcile it by `payment_id`. Where each try is a payment of its own, a try that fails does not send this event; it arrives once, for the link itself, when the link closes without being paid, with `payment_id` equal to `link_id`.
 
       **Example**: `"PR4829301756"`
     </ParamField>
