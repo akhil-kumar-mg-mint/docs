@@ -9930,7 +9930,7 @@
           },
           "amount": {
             "type": "string",
-            "description": "The payment's amount, as a decimal string with two decimals (\"1500.00\"). Parse it as a decimal, never as a float."
+            "description": "The payment's amount, in the format Create Payment Link returns: a decimal string, \"1500\" for whole rupees and \"1500.50\" when there are paise. Parse it as a decimal, never as a float."
           },
           "created_at": {
             "type": "string",

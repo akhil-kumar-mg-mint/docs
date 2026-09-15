@@ -169,7 +169,7 @@ Two IDs are in play: the link's `link_id`, and the `payment_id` of each payment 
 
 On some accounts a link and its payment share one ID, so a webhook's `payment_id` and `link_id` are the same value. Handle both cases the same way: match on `link_id`, refund by `payment_id`.
 
-Where each try is a payment of its own, a try that fails sends no webhook: the link stays open and the buyer can pay again through it. If the link closes without being paid — it expires, you deactivate it, or 20 tries have failed — one [`PAYMENT_FAILED`](/api-reference/v2/webhooks/payment-failed) arrives for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it.
+Where each try is a payment of its own, a try that fails sends no webhook: the link stays open and the buyer can pay again through it. If the link closes without being paid — it expires, you deactivate it, or 20 tries have failed — one [`PAYMENT_FAILED`](/api-reference/v2/webhooks/payment-failed) arrives for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it, and it is not a payment the payments API returns: look the link up by `link_id` with [Retrieve Payment Link](/api-reference/v2/payment-link/retrieve).
 
 ## Managing Payment Links
 
