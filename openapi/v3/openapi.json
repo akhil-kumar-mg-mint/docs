@@ -3134,7 +3134,7 @@
                         "ref": {
                           "type": "string",
                           "description": "A `ref` returned by Upload Document. Send this or `waiver_reason`, never both.",
-                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                          "example": "8207383264"
                         },
                         "waiver_reason": {
                           "type": "string",
@@ -3177,7 +3177,7 @@
                 "documents": [
                   {
                     "code": "invoice",
-                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                    "ref": "8207383264"
                   }
                 ],
                 "finalize": true

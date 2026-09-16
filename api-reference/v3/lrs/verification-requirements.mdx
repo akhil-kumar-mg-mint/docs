@@ -411,7 +411,7 @@ An entry in `documents` carries three more keys once a row exists for that code.
 ```
 
 <ParamField path="ref" type="string">
-  The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot — the same `ref` you submitted. Present only once a file has been sent under this code: the slot resolves to the newest active row for that code, except that a row already marked `VERIFIED` is never displaced by a later one.
+  The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot — the same `ref` you submitted. Present only once a file has been sent under this code: a replacement upload supersedes the older row, so this always names the current file.
 </ParamField>
 
 <ParamField path="doc_status" type="string">
