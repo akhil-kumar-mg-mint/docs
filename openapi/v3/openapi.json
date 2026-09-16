@@ -7466,7 +7466,7 @@
               "VERIFIED",
               "REJECTED"
             ],
-            "description": "Documents only, and only once a file has been sent under this code: where that one document stands. `PENDING` — not reviewed individually. `VERIFIED` — accepted. `REJECTED` — refused; replace it. Not a synonym for `satisfied`, which says whether the checklist item blocks completion.",
+            "description": "Documents only, and only once a row exists for the slot — including one discharged by a waiver, which has no file and so reads `PENDING` with no `ref`: where that one document stands. `PENDING` — not reviewed individually. `VERIFIED` — accepted. `REJECTED` — refused; replace it. Not a synonym for `satisfied`, which says whether the checklist item blocks completion.",
             "example": "REJECTED"
           },
           "rejection_reason": {

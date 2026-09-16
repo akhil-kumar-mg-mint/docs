@@ -210,6 +210,8 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
   <Tab title="Document Entries">
     `code` and `message` are always present. The rest appear **only when they apply**, so their absence is meaningful: no `rejection_reason` means the reviewer left no text on that document.
 
+    These five are the only keys an entry on a verdict carries. The checklist flags — `waivable`, `condition`, `optional`, `one_of` — belong to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which describes what is owed; a verdict describes what was decided, and never carries them.
+
     <ParamField path="code" type="string" required>
       The checklist document code — the same value you uploaded the file under as `type`, and the same value you submitted it under as a document's `code`.
     </ParamField>
@@ -220,6 +222,8 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 
     <ParamField path="ref" type="string">
       The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot. It is the same `ref` you submitted, so it maps straight onto your own record of what you sent.
+
+      Absent on a slot discharged by a waiver — there is no file to identify.
     </ParamField>
 
     <ParamField path="doc_status" type="string">
@@ -249,7 +253,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 **`documents` lists every active document slot on the verification, not only the ones that failed.**
 
 - On a **rejection**, it shows what failed alongside what passed — so a payer is asked to replace one file, not all of them.
-- On an **approval**, it is the record of what was accepted, the state each document ended in, and under which `ref`.
+- On an **approval**, it is the record of what was accepted and the state each document ended in.
 
 Two things never appear:
 

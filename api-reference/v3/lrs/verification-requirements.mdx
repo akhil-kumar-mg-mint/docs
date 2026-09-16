@@ -396,7 +396,7 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 
 ### What was sent under a document code
 
-An entry in `documents` carries three more keys once a file has actually been sent under that code. They are absent while the slot is empty, so their presence is itself the signal that something is held:
+An entry in `documents` carries three more keys once a row exists for that code. They are absent while the slot is untouched, so their presence is itself the signal that something is held. `ref` needs a file; `doc_status` does not — a slot discharged by a waiver is a stored row with no file, and reads `PENDING` with no `ref`:
 
 ```json
 {
@@ -411,11 +411,11 @@ An entry in `documents` carries three more keys once a file has actually been se
 ```
 
 <ParamField path="ref" type="string">
-  The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file currently held in this slot — the same `ref` you submitted. A replacement upload supersedes the older row, so this always names the current file.
+  The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot — the same `ref` you submitted. Present only once a file has been sent under this code: the slot resolves to the newest active row for that code, except that a row already marked `VERIFIED` is never displaced by a later one.
 </ParamField>
 
 <ParamField path="doc_status" type="string">
-  Where this one document stands: `PENDING` (not reviewed individually), `VERIFIED` (accepted) or `REJECTED` (refused — replace it).
+  Where this one document stands: `PENDING` (not reviewed individually), `VERIFIED` (accepted) or `REJECTED` (refused — replace it). Present once a row exists for the slot, including one discharged by a waiver — that row has no file, so it reads `PENDING` and carries no `ref`.
 
   It is not a synonym for `satisfied`. `satisfied` says whether the checklist item blocks completion; `doc_status` says what a reviewer made of the file.
 </ParamField>

@@ -304,7 +304,7 @@ These are complete, unedited payloads — nothing is trimmed.
       A group name — items sharing one substitute for each other. No checklist uses it today; where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).
     </ParamField>
 
-    **Three more keys appear on documents that already have a file against them** — so an entry can name both what is owed and what was last sent under that code. They are absent when no document row exists for the slot, which is the ordinary case the first time a payment is asked for something.
+    **Three more keys appear on documents that already have a file against them** — so an entry can name both what is owed and what was last sent under that code. They are absent when no document row exists for the slot, which is the ordinary case the first time a payment is asked for something. They are also absent on a [refusal](#after-a-submit-that-did-not-pass), whatever is held: that payload is built without the stored document, so its entries carry only `code` and `message` alongside the item's own flags.
 
     <ParamField path="ref" type="string">
       The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file currently held in this slot — the same `ref` you submitted, so it maps onto your own record of what you sent.
@@ -434,10 +434,11 @@ The gateway's own vocabulary is translated into the codes you collected under, s
 
 A filed verification is reviewed by us, and a review has three outcomes. Two of them are verdicts and arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). The third is a **send-back**: the reviewer returns the verification for changes rather than deciding it, the payment owes something again, and that arrives here — same event, same shape.
 
-Two things are particular to this trigger:
+One thing is particular to this trigger:
 
 - **`message` carries the reviewer's comment verbatim**, in place of the fixed sentence the other two triggers use.
-- **Document entries carry `ref`, `doc_status` and `rejection_reason`** where a file has already been sent under that code, so an entry names both the requirement and the fate of what you last sent against it.
+
+Document entries carry `ref`, `doc_status` and `rejection_reason` wherever a row is already stored for an outstanding slot, so an entry names both the requirement and the fate of what you last sent against it. That is true here and on the requirement list alike — the re-ask after a document was rejected reads the same way. Only a [refusal](#after-a-submit-that-did-not-pass) never carries the three.
 
 ```json A review sends the verification back
 {
