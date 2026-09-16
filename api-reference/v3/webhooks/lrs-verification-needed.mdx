@@ -11,7 +11,7 @@ description: "Technical reference for the LRS_VERIFICATION_NEEDED webhook event,
 **Category**: Payment Verification
 **Description**: An LRS payment needs verification details before it can settle
 
-This webhook fires when a payment settling under an LRS purpose code is missing details its checklist calls for. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding, and carries a pointer to where you send them.
+This webhook fires when a payment settling under an LRS purpose code is missing details its checklist calls for. Unlike the generic verification events, it names **exactly** which fields and documents are outstanding.
 
 <Note>
   **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
@@ -26,6 +26,7 @@ This webhook fires when a payment settling under an LRS purpose code is missing 
 1. **On a successful payment**, once the payment is recognised as LRS — its purpose code decides this.
 2. **After you declare a purpose code**, if it was not known earlier. A code is often chosen at submission time, so a payment can only be recognised as LRS then; until it is, the generic events apply.
 3. **When a complete set does not pass verification.** Supplying everything the list named is not the end of it: the PAN still has to verify, the sender still has to match the account holder, and the credit still has to cover the amount. A payment that fails one of those comes back in this same event, same shape, the problem folded into the relevant entry's `message` — see [After a submit that did not pass](#after-a-submit-that-did-not-pass).
+4. **When a filed verification is sent back for changes.** A review can return a verification rather than decide it — a document is the wrong one, a field needs correcting. The payment owes something again, so it is this event that carries the ask, with the reviewer's comment in the top-level `message` — see [When a review sends it back](#when-a-review-sends-it-back). A review that **decides** the verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) instead.
 
 The webhook is created **only if**:
 - Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
@@ -63,7 +64,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
 
 ## Payload Schema
 
-The payment, its state, every item it still owes and why, and where to send them.
+The payment, its state, and every item it still owes and why.
 
 These are complete, unedited payloads — nothing is trimmed.
 
@@ -102,11 +103,7 @@ These are complete, unedited payloads — nothing is trimmed.
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
       { "code": "passport", "message": "Student's passport" },
       { "code": "student_id_or_visa", "message": "Student visa or university ID card (either)" }
-    ],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR6938527534/verification/"
-    }
+    ]
   }
 }
 ```
@@ -128,11 +125,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
       { "code": "student_id", "message": "University ID card" }
-    ],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR8125440971/verification/"
-    }
+    ]
   }
 }
 ```
@@ -157,11 +150,7 @@ These are complete, unedited payloads — nothing is trimmed.
       { "code": "traveller_visas", "message": "Visas of all travellers", "waivable": true },
       { "code": "ticket", "message": "Travel tickets", "waivable": true },
       { "code": "invoice", "message": "Invoice for the trip" }
-    ],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR7042318866/verification/"
-    }
+    ]
   }
 }
 ```
@@ -188,11 +177,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "action_required_documents": [
       { "code": "relationship_declaration", "message": "Self-declaration of the remitter's relationship to the person the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
       { "code": "offer_letter", "message": "Letter of admission from the institution" }
-    ],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR6938527534/verification/"
-    }
+    ]
   }
 }
 ```
@@ -232,7 +217,7 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="data" type="object" required>
-      The payment, its state, what it owes, and where to send it
+      The payment, its state, and what it owes
     </ParamField>
   </Tab>
 
@@ -256,7 +241,17 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
-      Human-readable summary. Two values today — one for the requirement list, one for a refusal. Safe to log; not a value to branch on.
+      Human-readable summary. Safe to log and safe to show; not a value to branch on.
+
+      **It is a fixed sentence on two of the triggers, and a reviewer's words on the third:**
+
+      | Trigger | What `message` holds |
+      |---|---|
+      | The requirement list | A fixed sentence: *"LRS payment: verification details are required before settlement."* |
+      | A submit that did not pass | A fixed sentence: *"LRS payment: verification did not pass…"* |
+      | A [review sending the verification back](#when-a-review-sends-it-back) | **The reviewer's comment, verbatim.** |
+
+      Only the send-back carries a person's words here. Render it to a payer if you like; parsing it is not something to build on.
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array" required>
@@ -272,12 +267,6 @@ These are complete, unedited payloads — nothing is trimmed.
 
       The key is sent regardless so the payload shape does not change under you depending on which rail a payment arrived through — [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) carries a real date here.
     </ParamField>
-
-    <ParamField path="data.submit" type="object" required>
-      Where to send the answer: `{ "method": "POST", "path": "/pg/payments/{payment_id}/verification/" }`.
-
-      Follow it rather than building the path yourself, and a route change costs you nothing.
-    </ParamField>
   </Tab>
 
   <Tab title="Entries">
@@ -291,6 +280,8 @@ These are complete, unedited payloads — nothing is trimmed.
       A sentence about the item, safe to render to a payer.
 
       On the requirement list it describes what the item **is**. On a [refusal](#after-a-submit-that-did-not-pass) the same key says what **went wrong** instead — one key, always the plainest thing there is to say about the item in that context.
+
+      On a [send-back](#when-a-review-sends-it-back) it stays the item's label; what went wrong with a particular document is in that entry's `rejection_reason`.
     </ParamField>
 
     <ParamField path="waivable" type="boolean">
@@ -312,6 +303,20 @@ These are complete, unedited payloads — nothing is trimmed.
     <ParamField path="one_of" type="string">
       A group name — items sharing one substitute for each other. No checklist uses it today; where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).
     </ParamField>
+
+    **Three more keys appear on documents that already have a file against them** — so an entry can name both what is owed and what was last sent under that code. They are absent when no document row exists for the slot, which is the ordinary case the first time a payment is asked for something. They are also absent on a [refusal](#after-a-submit-that-did-not-pass), whatever is held: that payload is built without the stored document, so its entries carry only `code` and `message` alongside the item's own flags.
+
+    <ParamField path="ref" type="string">
+      The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file currently held in this slot — the same `ref` you submitted, so it maps onto your own record of what you sent.
+    </ParamField>
+
+    <ParamField path="doc_status" type="string">
+      Where this one document stands: `PENDING` (not reviewed individually), `VERIFIED` (accepted) or `REJECTED` (refused — replace it).
+    </ParamField>
+
+    <ParamField path="rejection_reason" type="string">
+      The reviewer's text about **this document**, present only when they left some. It is the sentence to show a payer when you ask for a replacement file; the top-level `message` is about the verification as a whole.
+    </ParamField>
   </Tab>
 </Tabs>
 
@@ -325,7 +330,7 @@ These are complete, unedited payloads — nothing is trimmed.
 
 Sending everything the list named is not the same as passing. Once a set is complete it goes to the verification gateway, which verifies the remitter's PAN against the name and date of birth, matches the credit's sender to the account holder, recomputes TCS and checks that the money received covers what is being settled. Any of those can refuse.
 
-A refusal arrives as **this same event** — same type, same envelope, the same nine keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
+A refusal arrives as **this same event** — same type, same envelope, the same eight keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
 
 <CodeGroup>
 
@@ -348,11 +353,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
       }
     ],
     "payment_verification_expiry": null,
-    "action_required_documents": [],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR4497584646/verification/"
-    }
+    "action_required_documents": []
   }
 }
 ```
@@ -376,11 +377,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
       }
     ],
     "payment_verification_expiry": null,
-    "action_required_documents": [],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR4497584646/verification/"
-    }
+    "action_required_documents": []
   }
 }
 ```
@@ -404,11 +401,7 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
       }
     ],
     "payment_verification_expiry": null,
-    "action_required_documents": [],
-    "submit": {
-      "method": "POST",
-      "path": "/pg/payments/PR4497584646/verification/"
-    }
+    "action_required_documents": []
   }
 }
 ```
@@ -437,6 +430,72 @@ The gateway's own vocabulary is translated into the codes you collected under, s
   **`outstanding` is a conclusion, not a code.** It is the one entry with nothing to re-send under that name: the credit is short by the amount its `message` states. Either the buyer tops up — link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up) — or a smaller `amount_to_be_settled` is declared.
 </Warning>
 
+## When a review sends it back
+
+A filed verification is reviewed by us, and a review has three outcomes. Two of them are verdicts and arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). The third is a **send-back**: the reviewer returns the verification for changes rather than deciding it, the payment owes something again, and that arrives here — same event, same shape.
+
+One thing is particular to this trigger:
+
+- **`message` carries the reviewer's comment verbatim**, in place of the fixed sentence the other two triggers use.
+
+Document entries carry `ref`, `doc_status` and `rejection_reason` wherever a row is already stored for an outstanding slot, so an entry names both the requirement and the fate of what you last sent against it. That is true here and on the requirement list alike — the re-ask after a document was rejected reads the same way. Only a [refusal](#after-a-submit-that-did-not-pass) never carries the three.
+
+```json A review sends the verification back
+{
+  "event_type": "LRS_VERIFICATION_NEEDED",
+  "event_time": "2026-09-09T12:18:35.204118",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440020",
+  "data": {
+    "payment_id": "PR3910984669",
+    "order_id": "OD2615044268",
+    "link_id": null,
+    "verification_status": "ACTION_REQUIRED",
+    "message": "Please replace the admission letter and resubmit.",
+    "action_required_fields": [],
+    "payment_verification_expiry": null,
+    "action_required_documents": [
+      {
+        "code": "offer_letter",
+        "message": "Letter of admission from the institution",
+        "ref": "6757940683",
+        "doc_status": "REJECTED",
+        "rejection_reason": "Letter is for the wrong intake term."
+      }
+    ]
+  }
+}
+```
+
+The requirement flags are unchanged and sit alongside the new keys — an entry that is both conditional and rejected carries both:
+
+```json
+{
+  "code": "relationship_declaration",
+  "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+  "condition": "PAYING_FOR_SOMEONE_ELSE",
+  "ref": "4480912337",
+  "doc_status": "REJECTED",
+  "rejection_reason": "The declaration is unsigned."
+}
+```
+
+<Note>
+  **`message` on an entry is still the document's label.** The new `rejection_reason` is what went wrong with that file; `message` goes on describing what the item is. Show the label to say what you are asking for, and the rejection reason to say why you are asking again.
+</Note>
+
+<Warning>
+  **A send-back is sent on every send-back, including one that lists nothing.** A reviewer can return a verification with the whole instruction in their comment and no item marked outstanding. Both lists then arrive as `[]` and `message` carries everything there is to act on:
+
+  ```json
+  "message": "The invoice date and the admission letter disagree. Please check with the payer and resubmit.",
+  "action_required_fields": [],
+  "action_required_documents": []
+  ```
+
+  Empty lists on this event do **not** mean nothing is owed — that signal is [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review), a different `event_type`. Route on `event_type` before you read the lists.
+</Warning>
+
 ## Conditionals can appear later
 
 An item like the relationship self-declaration only shows up once its condition holds. Declaring `remitter_relation` as anything other than `SELF` brings in several items at once — the fields naming the person the money is for (`student_*` on the education codes, `primary_person_*` on the travel ones) and `relationship_declaration` — so they can arrive in an event **after** you thought you had the full list. Each carries `condition`, so the arrival is explicable rather than arbitrary.
@@ -454,7 +513,7 @@ The reverse also happens: answering the remitter identity fields removes them fr
   <Step title="Upload the files">
     [Upload Document](/api-reference/v3/lrs/upload-document) returns a `ref` per file, under the same `code` the entry names.
   </Step>
-  <Step title="POST to the path in `submit`">
+  <Step title="Send the fields and the refs">
     [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) takes fields and document refs in one call. Partial sends are merged, so you can send as things arrive.
   </Step>
   <Step title="Read what is left">
@@ -486,5 +545,8 @@ Drive your form from [Get Verification Requirements](/api-reference/v3/lrs/verif
   </Card>
   <Card title="PAYMENT_UNDER_REVIEW" icon="webhook" href="/api-reference/v3/webhooks/payment-under-review">
     The event that says nothing is owed any more.
+  </Card>
+  <Card title="VERIFICATION_STATUS" icon="webhook" href="/api-reference/v3/webhooks/verification-status">
+    The verdict once a filed verification is reviewed.
   </Card>
 </CardGroup>

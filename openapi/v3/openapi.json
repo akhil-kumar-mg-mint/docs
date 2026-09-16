@@ -3134,7 +3134,7 @@
                         "ref": {
                           "type": "string",
                           "description": "A `ref` returned by Upload Document. Send this or `waiver_reason`, never both.",
-                          "example": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                          "example": "8207383264"
                         },
                         "waiver_reason": {
                           "type": "string",
@@ -3177,7 +3177,7 @@
                 "documents": [
                   {
                     "code": "invoice",
-                    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+                    "ref": "8207383264"
                   }
                 ],
                 "finalize": true
@@ -7453,6 +7453,26 @@
             "type": "string",
             "description": "A group name; items sharing one substitute for each other. No checklist uses it today — where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`).",
             "example": "student_status_proof"
+          },
+          "ref": {
+            "type": "string",
+            "description": "Documents only, and only once a file has been sent under this code: the upload identifier returned by [Upload Document](/api-reference/v3/lrs/upload-document) for the file currently held in the slot. A replacement upload supersedes the older row, so this always names the current file.",
+            "example": "6757940683"
+          },
+          "doc_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "VERIFIED",
+              "REJECTED"
+            ],
+            "description": "Documents only, and only once a row exists for the slot — including one discharged by a waiver, which has no file and so reads `PENDING` with no `ref`: where that one document stands. `PENDING` — not reviewed individually. `VERIFIED` — accepted. `REJECTED` — refused; replace it. Not a synonym for `satisfied`, which says whether the checklist item blocks completion.",
+            "example": "REJECTED"
+          },
+          "rejection_reason": {
+            "type": "string",
+            "description": "Documents only: the reviewer's text about this document, present only when they left some. The sentence to show a payer when you ask for a replacement file.",
+            "example": "Letter is for the wrong intake term."
           }
         }
       },

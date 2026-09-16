@@ -394,6 +394,40 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
   No checklist uses this today — where two documents are interchangeable the checklist gives them a single code instead (`student_id_or_visa`). The key is part of the contract because a future revision may split such a pair, and an integration that reads it will absorb that without a release.
 </ParamField>
 
+### What was sent under a document code
+
+An entry in `documents` carries three more keys once a row exists for that code. They are absent while the slot is untouched, so their presence is itself the signal that something is held. `ref` needs a file; `doc_status` does not — a slot discharged by a waiver is a stored row with no file, and reads `PENDING` with no `ref`:
+
+```json
+{
+  "code": "offer_letter",
+  "message": "Letter of admission from the institution",
+  "satisfied": false,
+  "provided": true,
+  "ref": "6757940683",
+  "doc_status": "REJECTED",
+  "rejection_reason": "Letter is for the wrong intake term."
+}
+```
+
+<ParamField path="ref" type="string">
+  The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot — the same `ref` you submitted. Present only once a file has been sent under this code: a replacement upload supersedes the older row, so this always names the current file.
+</ParamField>
+
+<ParamField path="doc_status" type="string">
+  Where this one document stands: `PENDING` (not reviewed individually), `VERIFIED` (accepted) or `REJECTED` (refused — replace it). Present once a row exists for the slot, including one discharged by a waiver — that row has no file, so it reads `PENDING` and carries no `ref`.
+
+  It is not a synonym for `satisfied`. `satisfied` says whether the checklist item blocks completion; `doc_status` says what a reviewer made of the file.
+</ParamField>
+
+<ParamField path="rejection_reason" type="string">
+  The reviewer's text about **this document**, present only when they left some. The sentence to show a payer when you ask for a replacement file.
+</ParamField>
+
+<Note>
+  **These three are LRS-only, and documents-only.** Entries in `fields` never carry them — a field has no file and no reviewer mark — and the B2B goods and B2B services responses are unchanged. The same three keys appear on document entries in [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), with the same meanings.
+</Note>
+
 ## No `status`, deliberately
 
 Earlier versions returned a rolled-up `status` of `complete` / `incomplete` / `not_applicable`. It is gone, for two reasons:

@@ -9,7 +9,7 @@ openapi: 'POST /pg/payments/{payment_id}/documents/'
 Uploads one supporting file for a payment's verification and answers with a **`ref`**. You then send that `ref` under the document's checklist code when you [submit verification details](/api-reference/v3/lrs/submit-verification-details):
 
 ```json
-{ "documents": [{ "code": "offer_letter", "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d" }] }
+{ "documents": [{ "code": "offer_letter", "ref": "8207383264" }] }
 ```
 
 Upload each file as it arrives. Nothing has to be held back until the set is complete — the `ref` is what binds a file to a checklist item, and it does that later, on the submit.
@@ -70,7 +70,7 @@ Validated on upload, so a bad file fails here rather than at submit time.
   "success": true,
   "message": "Document uploaded",
   "data": {
-    "ref": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "ref": "8207383264",
     "type": "offer_letter"
   }
 }

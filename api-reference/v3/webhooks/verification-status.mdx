@@ -1,0 +1,320 @@
+---
+title: "VERIFICATION STATUS"
+description: "Technical reference for the VERIFICATION_STATUS webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `VERIFICATION_STATUS`
+**Category**: Payment Verification
+**Description**: The verdict on a filed LRS verification — approved or rejected
+
+A filed verification is reviewed by us. This webhook carries the conclusion of that review: the verdict, the reviewer's comment, and the state of every document slot on the verification at that moment.
+
+It is the event that closes the loop [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) opened. That event says what a payment owes; this one says what came of sending it.
+
+<Note>
+  **Two verdicts, one event.** `VERIFICATION_STATUS` fires on an approval and on a rejection, in the same shape. `verification_status` is the only key that tells them apart.
+</Note>
+
+<Warning>
+  **A send-back is not a verdict, and does not arrive here.** When a review sends a verification back for changes, the payment goes on owing something — so it is [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) that is raised, carrying the reviewer's comment and the outstanding list. `VERIFICATION_STATUS` is only ever `APPROVED` or `REJECTED`.
+</Warning>
+
+### When the webhook is sent
+
+1. **A review approves the verification.** `verification_status` is `APPROVED` and `message` is an empty string — an approval has nothing to say beyond itself.
+2. **A review rejects the verification.** `verification_status` is `REJECTED` and `message` carries the reviewer's comment verbatim.
+
+The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+
+<Note>
+  **There is no sandbox trigger for this event.** It is raised by a review of a verification you filed, and a review is not something a simulator performs. Integrate the handler against the payloads on this page; you will see your first real delivery when a filed verification is reviewed.
+</Note>
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+| **Pacing** | **Delivered immediately**, not on the per-merchant rate-capped queue the verification asks ride. A verdict is the answer to something a payer is waiting on, so it is not held behind a burst of requirement events. |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `VERIFICATION_STATUS` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
+
+---
+
+## Payload Schema
+
+The payment, the verdict, the reviewer's comment, and every document slot on the verification.
+
+`data` holds **exactly five keys** on both verdicts. These are complete, unedited payloads — nothing is trimmed.
+
+<CodeGroup>
+
+```json Approved
+{
+  "event_type": "VERIFICATION_STATUS",
+  "event_time": "2026-09-09T11:42:06.318204",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440030",
+  "data": {
+    "payment_id": "PR8937616799",
+    "order_id": "OD6184252650",
+    "verification_status": "APPROVED",
+    "message": "",
+    "documents": [
+      {
+        "code": "offer_letter",
+        "message": "Letter of admission from the institution",
+        "ref": "5282347894",
+        "doc_status": "VERIFIED"
+      },
+      {
+        "code": "student_id",
+        "message": "University ID card",
+        "ref": "5121049200",
+        "doc_status": "VERIFIED"
+      },
+      {
+        "code": "fee_invoice",
+        "message": "Fee invoice",
+        "ref": "3261835736",
+        "doc_status": "PENDING"
+      }
+    ]
+  }
+}
+```
+
+```json Rejected
+{
+  "event_type": "VERIFICATION_STATUS",
+  "event_time": "2026-09-09T14:07:51.662940",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440031",
+  "data": {
+    "payment_id": "PR2740518863",
+    "order_id": "OD9315704228",
+    "verification_status": "REJECTED",
+    "message": "The admission letter is for a different intake term. We cannot file this remittance.",
+    "documents": [
+      {
+        "code": "offer_letter",
+        "message": "Letter of admission from the institution",
+        "ref": "6757940683",
+        "doc_status": "REJECTED",
+        "rejection_reason": "Letter is for the wrong intake term."
+      },
+      {
+        "code": "student_id",
+        "message": "University ID card",
+        "ref": "4480912337",
+        "doc_status": "VERIFIED"
+      }
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+<Note>
+  **An approval's `message` is an empty string, not a sentence and not `null`.** The key is always present; on an approval there is nothing for a reviewer to say that the verdict does not already say.
+</Note>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"VERIFICATION_STATUS"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
+
+      **Example**: `"2026-09-09T11:42:06.318204"`
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      Envelope version (e.g. "3.0.0")
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique identifier for this webhook event (UUID), useful for idempotency.
+
+      **It is an identifier, not a sequence.** The value is random and carries no order — see [Ordering two verdicts](#ordering-two-verdicts).
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      The payment, the verdict, and the documents it was reached on
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    Exactly five keys, on both verdicts. There is no action pointer on this event — nothing is being asked of you, so there is nowhere to send it.
+
+    <ParamField path="data.payment_id" type="string" required>
+      UID of the payment the verdict is on.
+    </ParamField>
+
+    <ParamField path="data.order_id" type="string" required>
+      UID of the order the payment belongs to.
+    </ParamField>
+
+    <ParamField path="data.verification_status" type="string" required>
+      The verdict. **Two values, and only two:**
+
+      | Value | Means |
+      |---|---|
+      | `APPROVED` | The verification was accepted. |
+      | `REJECTED` | The verification was refused. |
+
+      This is the one event in the family where the key carries a **verdict** rather than the payment's own settlement state. On [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review) the same key reads `ACTION_REQUIRED` or `UNDER_REVIEW`. Branch on `event_type` first and you will not confuse the two vocabularies.
+    </ParamField>
+
+    <ParamField path="data.message" type="string" required>
+      The reviewer's comment, verbatim. Safe to log, and safe to render to a payer.
+
+      **Empty string on an approval.** On a rejection it is the reason the verification as a whole was refused — which is not always the same as any one document's `rejection_reason`.
+    </ParamField>
+
+    <ParamField path="data.documents" type="array" required>
+      **Every active document slot on the verification**, whatever the verdict. See **Document Entries**.
+    </ParamField>
+  </Tab>
+
+  <Tab title="Document Entries">
+    `code` and `message` are always present. The rest appear **only when they apply**, so their absence is meaningful: no `rejection_reason` means the reviewer left no text on that document.
+
+    These five are the only keys an entry on a verdict carries. The checklist flags — `waivable`, `condition`, `optional`, `one_of` — belong to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which describes what is owed; a verdict describes what was decided, and never carries them.
+
+    <ParamField path="code" type="string" required>
+      The checklist document code — the same value you uploaded the file under as `type`, and the same value you submitted it under as a document's `code`.
+    </ParamField>
+
+    <ParamField path="message" type="string" required>
+      The document's **label** — what the item is, as the checklist describes it. It is not a comment on this document and it does not change with the verdict.
+    </ParamField>
+
+    <ParamField path="ref" type="string">
+      The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot. It is the same `ref` you submitted, so it maps straight onto your own record of what you sent.
+
+      Absent on a slot discharged by a waiver — there is no file to identify.
+    </ParamField>
+
+    <ParamField path="doc_status" type="string">
+      Where this one document stands.
+
+      | Value | Means |
+      |---|---|
+      | `PENDING` | Not reviewed individually. |
+      | `VERIFIED` | Accepted. |
+      | `REJECTED` | Refused — replace it. |
+
+      A slot can read `PENDING` on an approved verification: a verdict is reached on the set, and not every document needs an individual mark for that.
+    </ParamField>
+
+    <ParamField path="rejection_reason" type="string">
+      The reviewer's text about **this document**. Present only when they left some, which in practice means a `REJECTED` one.
+
+      This is the sentence to show a payer when you ask for a replacement file — `data.message` is about the verification, this is about the document.
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---
+
+## `documents` is the whole slate
+
+**`documents` lists every active document slot on the verification, not only the ones that failed.**
+
+- On a **rejection**, it shows what failed alongside what passed — so a payer is asked to replace one file, not all of them.
+- On an **approval**, it is the record of what was accepted and the state each document ended in.
+
+Two things never appear:
+
+- **Superseded documents.** Re-uploading a document gives you a new `ref` and the newer row supersedes the older; only the current row for each slot is listed.
+- **The files themselves.** No document file, URL or download link is ever included in a webhook payload. `ref` identifies the upload; it is not a link to it.
+
+<Note>
+  A slot listed here is a slot on **this** verification. For the whole checklist — including fields, optional items, and what is still outstanding — call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which reports the same three document keys alongside `satisfied` and `provided`.
+</Note>
+
+## Ordering two verdicts
+
+A payment can be reviewed more than once, so two `VERIFICATION_STATUS` deliveries can name the same `payment_id`.
+
+**Order them by `event_time` on the envelope.** It is the moment the event was created, and it is the only key on the payload that orders anything.
+
+<Warning>
+  **`sequence_number` does not order events.** Despite the name it is a random unique identifier — a UUID — minted per event. Use it for idempotency, to recognise a redelivery of an event you already processed. Comparing two of them tells you nothing about which verdict came first.
+</Warning>
+
+Deliveries can also arrive out of order after a retry. Keep the verdict with the latest `event_time` and discard an older one that lands after it, rather than letting whatever arrived last win.
+
+---
+
+## What to do when you receive it
+
+<Steps>
+  <Step title="Respond 2xx, then verify the signature">
+    Acknowledge as soon as you have accepted the payload, so the delivery is not retried, and verify the signature against the raw body before acting on it.
+  </Step>
+  <Step title="Route on `verification_status`">
+    `APPROVED` and `REJECTED` are the only two values. Treat anything else as unknown and log it rather than guessing.
+  </Step>
+  <Step title="On `APPROVED`, record it and stop chasing the payer">
+    Nothing further is needed from either of you. [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) is the next event in this payment's life.
+  </Step>
+  <Step title="On `REJECTED`, show what failed">
+    `data.message` is the verdict on the verification; each entry with `doc_status: "REJECTED"` carries the reason for that document in `rejection_reason`. Entries that read `VERIFIED` need nothing — asking a payer to re-send those is asking for work already done.
+  </Step>
+  <Step title="Confirm where the payment stands">
+    [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) reports `settlement_status`, which says whether sending anything further is still possible.
+  </Step>
+</Steps>
+
+<Note>
+  **A rejection here is not the same as a send-back.** A send-back keeps the payment in `ACTION_REQUIRED` and re-raises [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) with the outstanding list — that is the event to act on when you are being asked for a replacement. Read `settlement_status` before you send anything after a `REJECTED` verdict.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
+    What a payment owes — including after a send-back.
+  </Card>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    The whole set, on demand, with `settlement_status`.
+  </Card>
+  <Card title="Upload Document" icon="file-arrow-up" href="/api-reference/v3/lrs/upload-document">
+    Where a `ref` comes from, and how to replace a file.
+  </Card>
+  <Card title="PAYMENT_SETTLED" icon="circle-check" href="/api-reference/v3/webhooks/payment-settled">
+    The next event after an approval.
+  </Card>
+</CardGroup>
