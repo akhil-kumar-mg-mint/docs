@@ -1,0 +1,102 @@
+---
+title: 'Create Payment Form'
+description: 'Create a reusable hosted page at /pay/<slug>/ that collects the payer details you choose and takes payment from anyone who opens it.'
+openapi: 'POST /pg/forms/'
+---
+
+## Overview
+
+A payment form is a page EximPe hosts for you at `/pay/<url_slug>/`. You create it once, share the URL, and every payer who opens it fills in their own details, gets their own order, and pays. There is no per-payer API call.
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/forms/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "url_slug": "spring-workshop",
+    "payment_for": "Spring Workshop Ticket",
+    "type_of_goods": "service",
+    "currency": "INR",
+    "is_fixed_amount": true,
+    "amount_cents": 250000,
+    "collect_name": true,
+    "collect_email": true,
+    "collect_phone": true
+  }'
+```
+
+The response carries `form_url` — the link to share — and `form_id`, which every other Payment Forms endpoint takes in its path.
+
+## The three decisions
+
+<ParamField body="url_slug" type="string" required>
+  The public path. `spring-workshop` is served at `/pay/spring-workshop/`.
+
+  Letters, digits and hyphens only. It is lower-cased before it is stored, and it is unique across **every merchant on EximPe** — not just yours. It cannot be changed after the form exists, and deactivating a form does not release it.
+</ParamField>
+
+<Warning>
+  **Every segment of the slug is checked against a reserved list**, and one reserved segment refuses the whole slug — so `my-payment-form` is rejected twice over, for `payment` and for `form`. The list: `admin`, `api`, `login`, `logout`, `static`, `media`, `health`, `config`, `internal`, `dashboard`, `merchant`, `root`, `support`, `pay`, `form`, `forms`, `public`, `import`, `payment`, `checkout`, `callback`, `csp-report`. A profanity filter runs over the slug and its segments as well. Both refusals read `This URL slug is not allowed. Please choose a different one.`
+
+  Name the thing being paid for, not the mechanism: `spring-workshop`, `acme-membership-2026`.
+</Warning>
+
+<ParamField body="is_fixed_amount" type="boolean" default="true">
+  `true` charges everyone `amount_cents`, which is then required. `false` lets the payer type an amount, up to ten million rupees, and `amount_cents` is ignored.
+
+  `amount_cents` is in the minor unit — paise for INR, so `250000` is ₹2,500. You may send `amount` in rupees instead.
+</ParamField>
+
+<Warning>
+  **Send `amount` or `amount_cents`, never both.** `amount_cents` is honoured only when `amount` is absent from the body; if both are present it is silently discarded — including when `amount` is `null`, which then refuses the call with `Amount is required for fixed amount forms`. `amount`, in rupees, is the key to prefer: it is what the response gives back.
+</Warning>
+
+<ParamField body="collect_name / collect_email / collect_phone / collect_address / collect_pan / collect_dob" type="boolean">
+  Which fields the form shows. A flag set to `true` makes that field **required** for the payer — the submission is refused without it. Name, email and phone default to `true`; address, PAN and date of birth to `false`. Of an address, only the postal code is kept.
+</ParamField>
+
+## Goods and HS codes
+
+`type_of_goods` is required, matched case-insensitively, and stored lower-case: `goods`, `physical_goods`, `digital_goods` or `service`.
+
+<Warning>
+  **`physical_goods` needs an `hs_code`.** And whenever you send an HS code — for any `type_of_goods` — it is checked against EximPe's HS master here, at create time. That is deliberate: a bad code saved now would otherwise fail every payer's submission later.
+</Warning>
+
+## Branding
+
+`logo` is a file, so a request that carries one must be `multipart/form-data`; everything else is happy as JSON. Read the logo back as `logo_url` — a pre-signed, time-limited URL, so fetch it when you need it rather than storing it.
+
+`primary_color` is a six-digit hex code (`#1E40AF`). `template_style` picks the summary-pane layout, `template1` or `template2`. `business_name_type` chooses which of your two registered names payers see — `trade_name` or `legal_name` — and the name itself is read live from your KYC record, so a correction there reaches forms you already created.
+
+<Note>
+  **`gst_percentage` and `service_charge_percentage` are whole percentages, 0–100**, added on top of the amount. They are not decimals: send `18`, not `0.18`.
+</Note>
+
+## What comes back
+
+The `201` body is the standard `{success, message, data}` envelope. `data` is deliberately narrower than what you sent: `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `thank_you_message`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are all stored, but not echoed back. `amount` comes back in rupees, not `amount_cents`.
+
+<Note>
+  **`form_id` is the form's own ID (`PF` + ten digits)** — not the optional `form_id` tracking column on the model, which the Partner API does not let you set.
+</Note>
+
+<Note>
+  **PSP callers must send `X-Merchant-ID`** naming the sub-merchant that collects, and the form then belongs to that sub-merchant, not to the PSP. Direct merchants leave it out. A missing or unknown header here is a `401` — `ERR_AUTH_000` or `ERR_AUTH_001` — even though your own credentials were fine.
+</Note>
+
+<Note>
+  **The lane check guards creation only.** Creating a form on an account that is not set up for payment forms is a `403 ERR_AUTH_005`; if the entitlement is withdrawn later, forms already created keep listing, updating and collecting. Deactivate them yourself if they should stop.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Payment Forms guide" icon="book" href="/integration-guide/v3/web-integration/payment-forms">
+    The whole flow, in order, with cURL.
+  </Card>
+  <Card title="Retrieve Payment Form" icon="magnifying-glass" href="/api-reference/v3/payment-form/retrieve">
+    The form plus every payment taken through it.
+  </Card>
+</CardGroup>

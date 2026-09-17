@@ -1,0 +1,43 @@
+---
+title: 'List Payment Forms'
+description: 'Every active payment form you own, newest change first, each with a live count of the payments it has taken.'
+openapi: 'GET /pg/forms/'
+---
+
+## Overview
+
+```bash
+curl 'https://api-pacb-uat.eximpe.com/pg/forms/?page_size=50&search=workshop' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+Each row carries the form's `form_url`, whether it is currently accepting payment (`is_valid`), and `payment_count` — `total`, `success`, `pending` and `failed`, counted live in one query.
+
+<Warning>
+  **The page sits inside `data`.** `count`, `page`, `page_size`, `next`, `previous` and `results` are keys of `data`, not of the top-level body:
+
+  ```json
+  { "success": true, "message": "Forms fetched successfully",
+    "data": { "count": 37, "page": 1, "page_size": 250, "next": null, "previous": null, "results": [ ... ] } }
+  ```
+</Warning>
+
+## Paging and filtering
+
+| Query param | Default | Notes |
+|---|---|---|
+| `page` | `1` | Which page to return. |
+| `page_size` | `250` | Capped at `1000`. |
+| `search` | — | Free-text match against `form_id`, `url_slug` and `payment_for`. |
+| `ordering` | `-last_updated_at` | `created_at` or `last_updated_at`, `-` for descending. |
+
+## What is listed
+
+<Note>
+  **Only active forms.** A [deactivated](/api-reference/v3/payment-form/deactivate) form is not listed, and there is no filter that brings it back. Treat this list as "the forms that still exist for payers".
+</Note>
+
+A PSP that sends no `X-Merchant-ID` sees its own forms and those of all its sub-merchants. Naming a sub-merchant in the header narrows the list to that one. The header is optional here, unlike on [create](/api-reference/v3/payment-form/create).
+
+`amount` is returned in rupees, and is `null` on a variable-amount form. To see the payments behind `payment_count`, [retrieve](/api-reference/v3/payment-form/retrieve) the form.

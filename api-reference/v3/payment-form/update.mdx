@@ -1,0 +1,38 @@
+---
+title: 'Update Payment Form'
+description: 'Change a live payment form in place — price, validity, branding, the fields it collects — without moving its public URL.'
+openapi: 'PATCH /pg/forms/{uid}/'
+---
+
+## Overview
+
+```bash
+curl -X PATCH 'https://api-pacb-uat.eximpe.com/pg/forms/PF4829301756/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0' -H 'Content-Type: application/json' \
+  -d '{ "amount_cents": 300000, "valid_until": "2027-03-31T23:59:59Z" }'
+```
+
+Send only what changes. Anything you leave out keeps its current value.
+
+<Warning>
+  **`PATCH` only.** `PUT` on this path answers `405 Method Not Allowed`.
+</Warning>
+
+<Warning>
+  **`url_slug` cannot be changed, and saying so is not an error.** It is not part of the update body: send it anyway and the call answers `200` with the form untouched and nothing to tell you it was ignored. The public URL a form is born with is the URL it dies with — if you need a different one, create a second form and [deactivate](/api-reference/v3/payment-form/deactivate) this one. The old slug stays taken.
+</Warning>
+
+## What you can change
+
+Every create field except `url_slug`: the amount and whether it is fixed, `payment_for`, `description`, the percentages, `type_of_goods` and `hs_code`, the redirect URLs and thank-you message, the validity window, the six `collect_*` flags, `auto_generate_invoice`, contact and social links, `allowed_payment_methods`, `preferred_mop_type`, and the branding — including a new `logo`, which again needs `multipart/form-data`.
+
+The same validation runs as on create: an HS code is checked against the master whenever you change it, `physical_goods` still needs one, `preferred_mop_type` is still upper-case, and a form that is fixed-amount still needs an amount.
+
+<Note>
+  **Changes are live immediately.** Payers already holding the link see the new settings on their next visit — including a new price. Time-box a price instead with `valid_from` / `valid_until` on a second form if that matters to you.
+</Note>
+
+## `is_active` is a one-way door
+
+The body accepts `is_active`, but only active forms resolve here in the first place. Setting it to `false` deactivates the form — the same outcome as [Deactivate](/api-reference/v3/payment-form/deactivate) — and from that moment every call against the form, including the `is_active: true` that would undo it, answers `404 ERR_FORM_001`. Use `valid_until` for a pause you intend to lift.

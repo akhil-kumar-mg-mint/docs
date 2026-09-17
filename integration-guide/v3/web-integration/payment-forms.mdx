@@ -1,0 +1,276 @@
+---
+title: "Payment Forms"
+description: "Host a reusable payment page at /pay/<slug>/ that any number of payers can fill in and pay — no per-payer API call."
+---
+
+A payment form is a page EximPe hosts for you. You create it once with the API, share the URL, and anyone who opens it types their own details and pays. You never call the API again per payer.
+
+<CardGroup cols={3}>
+  <Card title="One link, many payers" icon="users" href="#step-2-share-the-link">
+    The same URL takes payment from everyone who opens it.
+  </Card>
+  <Card title="You choose the fields" icon="list-check" href="#step-1-create-the-form">
+    Name, email, phone, address, PAN, date of birth — each one optional or required.
+  </Card>
+  <Card title="Fixed or payer-chosen amount" icon="indian-rupee-sign" href="#step-1-create-the-form">
+    Charge everyone the same, or let the payer type what they owe.
+  </Card>
+</CardGroup>
+
+## When to use a form
+
+<Note>
+  EximPe has three ways to take money without a checkout of your own. They are not interchangeable.
+
+  | | One payer, one amount | Many payers, self-service | You control the page |
+  |---|---|---|---|
+  | [Payment link](/integration-guide/v2/web-integration/payment-links) | ✅ | ❌ | ❌ |
+  | **Payment form** | ❌ | ✅ | ❌ |
+  | [Hosted checkout](/integration-guide/v3/web-integration/hosted-checkout) | ✅ | ✅ | ✅ |
+</Note>
+
+Use a **payment link** when you know who owes what: you send it to one named buyer, with their details and the amount already filled in, and it closes when it is paid.
+
+Use a **payment form** when you do not: a ticket page, a donation page, a fee page, an order page you print a QR code of. You do not know the payers in advance, and the same URL serves all of them.
+
+Use **hosted checkout** when you have a site or app that already knows the amount and the buyer — you create the order yourself and send the buyer to the payment page.
+
+## Prerequisites
+
+- **Merchant account**: an active EximPe merchant account with payment forms enabled on your lane. Without it, create answers `403 ERR_AUTH_005` and only EximPe ops can change that.
+- **Credentials**: your Client ID and Client Secret.
+- **Sub-merchant ID** (PSPs only): the account the form collects for, sent as `X-Merchant-ID` when you create the form.
+- **Webhook URL**: an endpoint to receive payment status updates — see [Webhooks](/integration-guide/v3/web-integration/webhooks).
+
+## Integration steps
+
+1. **Create the form** and keep its `form_id` and `form_url`.
+2. **Share the link** — the payer does the rest.
+3. **Track the payments** through the form, or through webhooks.
+4. **Deactivate** the form when it has done its job.
+
+## Step 1: Create the form
+
+```bash cURL
+curl -X POST https://api-pacb-uat.eximpe.com/pg/forms/ \
+  -H "Content-Type: application/json" \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-Merchant-ID: YOUR_SUB_MERCHANT_ID" \
+  -H "X-API-Version: 3.0.0" \
+  -d '{
+  "url_slug": "spring-workshop",
+  "payment_for": "Spring Workshop Ticket",
+  "description": "Full-day workshop including lunch.",
+  "type_of_goods": "service",
+  "currency": "INR",
+  "is_fixed_amount": true,
+  "amount_cents": 250000,
+  "amount_title": "Ticket Price",
+  "gst_percentage": 18,
+  "collect_name": true,
+  "collect_email": true,
+  "collect_phone": true,
+  "valid_until": "2026-12-31T23:59:59Z",
+  "success_url": "https://example.com/thanks",
+  "fail_url": "https://example.com/payment-failed",
+  "thank_you_message": "Thanks — your seat is booked.",
+  "primary_color": "#1E40AF",
+  "business_name_type": "trade_name"
+}'
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Payment form created successfully",
+  "data": {
+    "form_id": "PF4829301756",
+    "url_slug": "spring-workshop",
+    "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+    "merchant_account": { "company_display_name": "Example Exports Pvt Ltd" },
+    "payment_for": "Spring Workshop Ticket",
+    "is_fixed_amount": true,
+    "amount": 2500.0,
+    "currency": "INR",
+    "amount_title": "Ticket Price",
+    "gst_percentage": 18,
+    "service_charge_percentage": 0,
+    "valid_until": "2026-12-31T23:59:59.000000Z",
+    "primary_color": "#1E40AF",
+    "template_style": "template1",
+    "business_name_type": "trade_name",
+    "is_valid": true
+  }
+}
+```
+
+Keep `form_id` — every other call takes it — and `form_url`, which is what you share. `amount` comes back in rupees; `amount_cents` is not echoed. Every response also carries an `X-API-Version: 3.0.0` header.
+
+A PSP's form belongs to the sub-merchant named in `X-Merchant-ID`, not to the PSP. Omit that header on a create and the call is refused with `401 ERR_AUTH_000`, even though your own credentials were valid.
+
+<Note>
+  **`amount_cents` is in paise**, so `250000` is ₹2,500. It is required when `is_fixed_amount` is `true`. Set `is_fixed_amount` to `false` for a donation-style form and the payer types the amount instead.
+</Note>
+
+<Warning>
+  **Send `amount` or `amount_cents` — never both.** `amount_cents` is honoured only when `amount` is absent from the body. Send both and `amount_cents` is silently discarded; send `amount: null` alongside it and the call is refused with `Amount is required for fixed amount forms`. `amount`, in rupees, is the one to prefer — it is also what the response gives back.
+</Warning>
+
+<Warning>
+  **The slug is global and permanent.** `url_slug` is unique across every merchant on EximPe — not just yours — it is lower-cased, and it takes only letters, digits and hyphens. It cannot be changed later, and deactivating the form does not release it, so pick something specific: `acme-spring-workshop-2026`.
+</Warning>
+
+<Warning>
+  **`my-payment-form` will be refused.** Each hyphen-separated segment of the slug is checked against a reserved list, and one reserved segment kills the whole slug — that example trips on both `payment` and `form`. The reserved words are `admin`, `api`, `login`, `logout`, `static`, `media`, `health`, `config`, `internal`, `dashboard`, `merchant`, `root`, `support`, `pay`, `form`, `forms`, `public`, `import`, `payment`, `checkout`, `callback` and `csp-report`, and a profanity filter runs over the slug too. Both answer `400` with `This URL slug is not allowed. Please choose a different one.`
+
+  Name what is being paid for, not the mechanism.
+</Warning>
+
+<Warning>
+  **Selling physical goods? Send `hs_code`.** It is required when `type_of_goods` is `physical_goods`, and any code you send — for any type of goods — is validated against EximPe's HS master at this call. A wrong code is refused now rather than at your first payer's attempt.
+</Warning>
+
+<Card title="📚 API Reference" href="/api-reference/v3/payment-form/create">
+  **Create Payment Form API** — every field, with defaults and limits.
+</Card>
+
+## Step 2: Share the link
+
+`form_url` is the page. It is the API host plus `/pay/<url_slug>/`:
+
+```
+https://api-pacb-uat.eximpe.com/pay/spring-workshop/
+```
+
+Share it however you reach people — an email, a WhatsApp message, a button on your site, a QR code on a poster. There is no per-payer setup: everyone who opens it gets their own order.
+
+On the page the payer sees your logo, business name, price and terms, fills in the fields you asked for, and pays by card, UPI, net banking or QR. When they are done EximPe redirects them to your `success_url`, or to `fail_url` if the payment failed.
+
+<Note>
+  **The redirect is EximPe's, not the browser's.** The payer returns through a signed EximPe page that looks the payment up server-side and then sends them to the URL stored on the form. A tampered return URL cannot redirect your payer anywhere.
+</Note>
+
+<Note>
+  **Upload a logo with `multipart/form-data`.** Every other field is happy as JSON; `logo` is a file, so a request that carries one cannot be a JSON body. Read it back as `logo_url`.
+</Note>
+
+## Step 3: Track the payments
+
+Retrieve the form to see every attempt made through it — successful, pending and failed:
+
+```bash cURL
+curl https://api-pacb-uat.eximpe.com/pg/forms/PF4829301756/ \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 3.0.0"
+```
+
+```json
+{
+  "success": true,
+  "message": "Form fetched successfully",
+  "data": {
+    "form_id": "PF4829301756",
+    "url_slug": "spring-workshop",
+    "is_valid": true,
+    "payments": [
+      {
+        "payment_id": "PR6938527534",
+        "order_id": "OR1122334455",
+        "reference_id": "PF4829301756-6f1c6a0a2b8c4f2da0f1c2d3e4f5a6b7",
+        "buyer": { "name": "Alice Sharma", "email": "alice@example.com", "phone": "+919876543210" },
+        "amount": { "amount": "2500", "total_amount": "2950", "currency": "INR" },
+        "created_at": "2026-09-17T10:30:00.000000Z",
+        "comment": "Transaction successful",
+        "mop_type": "upi",
+        "status": "CAPTURED"
+      }
+    ]
+  }
+}
+```
+
+For a running total instead of the detail, list your forms — each row carries `payment_count` with `total`, `success`, `pending` and `failed`:
+
+```bash cURL
+curl "https://api-pacb-uat.eximpe.com/pg/forms/?page_size=50" \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 3.0.0"
+```
+
+<Warning>
+  **The paginated page is inside `data`.** The list body is `{"success", "message", "data"}`, and `count`, `page`, `page_size`, `next`, `previous` and `results` all live under `data`. Default `page_size` is 250, capped at 1000.
+</Warning>
+
+<Note>
+  **Do not poll for the money.** Retrieve tells you what a form has collected; the authoritative per-payment lifecycle — successful, failed, settled, refunded — arrives on your [webhooks](/integration-guide/v3/web-integration/webhooks), keyed by the `payment_id` you see here. A form payment behaves like any other from that point on: same statuses, same compliance step, same settlement.
+</Note>
+
+## Step 4: Deactivate the form
+
+When the event is over or the campaign has ended:
+
+```bash cURL
+curl -X POST https://api-pacb-uat.eximpe.com/pg/forms/PF4829301756/inactivate/ \
+  -H "X-Client-ID: YOUR_CLIENT_ID" \
+  -H "X-Client-Secret: YOUR_CLIENT_SECRET" \
+  -H "X-API-Version: 3.0.0"
+```
+
+The public page stops accepting payment and the form drops out of your list. Payments already taken keep their orders, settlements and refund path. `DELETE /pg/forms/PF4829301756/` does the same soft deactivation and answers `{"success": true, "message": "Payment form deleted successfully", "data": {}}`; prefer this endpoint, which hands back the resulting form.
+
+<Warning>
+  **Deactivation is one-way over the API.** Every Payment Forms endpoint resolves only active forms, so a deactivated form answers `404 ERR_FORM_001` to retrieve, to update, and to the `is_active: true` that would reopen it. To close a form temporarily, set `valid_until` with [Update Payment Form](/api-reference/v3/payment-form/update) — the form stays reachable and you can move the date again.
+</Warning>
+
+## Errors worth knowing
+
+| What happened | Status | `code` |
+|---|---|---|
+| The slug is taken, or reads as profane | `400` | `ERR_FORM_002` |
+| Fixed-amount form sent without an amount | `400` | `ERR_FORM_002` |
+| `physical_goods` without an `hs_code`, or an HS code that is not in the master | `400` | `ERR_FORM_002` |
+| `preferred_mop_type` in lower case — it must be `UPI`, `CREDIT_CARD`, … | `400` | `ERR_FORM_002` |
+| A PSP created a form without `X-Merchant-ID` | `401` | `ERR_AUTH_000` |
+| Payment forms are not enabled on your lane | `403` | `ERR_AUTH_005` |
+| Your merchant account is inactive | `403` | `ERR_MERCHANT_ACCOUNT_002` |
+| The form is unknown, deactivated, or another merchant's | `404` | `ERR_FORM_001` |
+| `PUT` instead of `PATCH` | `405` | — |
+
+A form that belongs to another merchant answers byte-for-byte the same `404` as one that never existed, so the API never confirms someone else's form ID.
+
+Note also that **the lane check runs on create only**: if payment forms are switched off for an account later, the forms it already has keep listing, updating and collecting until you deactivate them.
+
+Every refusal uses the standard envelope, and `details` is a flat `{field: message}` map — one string per field, never an array:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_FORM_002",
+    "message": "Validation error",
+    "details": { "url_slug": "This URL slug is already in use. Please choose a different one." }
+  }
+}
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Create Payment Form" icon="file-circle-plus" href="/api-reference/v3/payment-form/create">
+    Every field, with defaults and limits.
+  </Card>
+  <Card title="Retrieve Payment Form" icon="magnifying-glass" href="/api-reference/v3/payment-form/retrieve">
+    The form and every payment through it.
+  </Card>
+  <Card title="Collection Overview" icon="map" href="/integration-guide/v3/web-integration/collection-overview">
+    Where a form sits in the end-to-end flow.
+  </Card>
+  <Card title="Webhooks" icon="bell" href="/integration-guide/v3/web-integration/webhooks">
+    The authoritative payment lifecycle.
+  </Card>
+</CardGroup>

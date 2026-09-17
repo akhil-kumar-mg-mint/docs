@@ -1,0 +1,29 @@
+---
+title: 'Deactivate Payment Form'
+description: 'Close a payment form so its public page stops accepting payment, while everything collected through it stays on the record.'
+openapi: 'POST /pg/forms/{uid}/inactivate/'
+---
+
+## Overview
+
+```bash
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/forms/PF4829301756/inactivate/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+The page at `/pay/<url_slug>/` stops accepting payment, the form leaves the [list](/api-reference/v3/payment-form/list), and the response is the form as it now stands with `is_valid: false`.
+
+Nothing is deleted. Payments already taken keep their orders, their settlements and their refund path, and the form stays on the record for reporting.
+
+<Warning>
+  **This is one-way over the API.** Every Payment Forms endpoint resolves only active forms, so once deactivated the form answers `404 ERR_FORM_001` to retrieve, to update, and to the `is_active: true` that would bring it back. To pause a form you intend to reopen, set `valid_until` with [Update](/api-reference/v3/payment-form/update) instead.
+</Warning>
+
+<Note>
+  **The slug is not released.** Creating a new form on the same `url_slug` is refused with `ERR_FORM_002`. Pick a fresh slug for the replacement.
+</Note>
+
+<Note>
+  **`DELETE /pg/forms/{uid}/` does the same thing.** It is a soft delete — it sets the form inactive and returns `{"success": true, "message": "Payment form deleted successfully", "data": {}}`. Prefer this endpoint: it says what it does and hands back the resulting form.
+</Note>

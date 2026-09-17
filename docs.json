@@ -361,6 +361,7 @@
                   "integration-guide/v3/web-integration/collection-overview",
                   "integration-guide/v3/web-integration/hosted-checkout",
                   "integration-guide/v3/web-integration/s2s-upi-intent",
+                  "integration-guide/v3/web-integration/payment-forms",
                   "integration-guide/v3/web-integration/virtual-accounts",
                   "integration-guide/v3/web-integration/webhooks"
                 ]
@@ -452,6 +453,16 @@
                   "api-reference/v3/payment-link/list",
                   "api-reference/v3/payment-link/retrieve",
                   "api-reference/v3/payment-link/deactivate"
+                ]
+              },
+              {
+                "group": "Payment Forms",
+                "pages": [
+                  "api-reference/v3/payment-form/create",
+                  "api-reference/v3/payment-form/list",
+                  "api-reference/v3/payment-form/retrieve",
+                  "api-reference/v3/payment-form/update",
+                  "api-reference/v3/payment-form/deactivate"
                 ]
               },
               {

@@ -4133,6 +4133,1407 @@
           }
         }
       }
+    },
+    "/pg/forms/": {
+      "post": {
+        "summary": "Create a payment form",
+        "description": "Creates a hosted payment form and returns the public URL to share with payers.\n\nA payment form is a reusable page at `/pay/<url_slug>/`. Unlike a payment link, it is not tied to one payer or one amount: everyone who opens it fills in their own details, the form creates the order and the checkout session for them, and it keeps collecting until you deactivate it or its validity window closes.\n\nDecide three things when you create one:\n\n- **What it charges.** `is_fixed_amount: true` with `amount_cents` charges everyone the same. `is_fixed_amount: false` lets the payer type an amount, up to ten million rupees.\n- **What it asks for.** The six `collect_*` flags decide which fields the form shows, and a flag set to `true` makes that field required for the payer.\n- **Where it lives.** `url_slug` is the public path, unique across every merchant on EximPe, so pick a specific one. It cannot be changed afterwards.\n\n**Send `hs_code` when `type_of_goods` is `physical_goods`** — it is required there, and any code you send, for any type, is checked against EximPe's HS master at create time rather than at the payer's first attempt.\n\n**Upload a `logo` with `multipart/form-data`.** Every other field is happy as JSON.\n\n**PSP callers must send `X-Merchant-ID`** naming the sub-merchant the form collects for. Everyone else can leave it out.\n\nThe response is narrower than the request: the settings that only matter to the hosted page — `description`, `type_of_goods`, `hs_code`, the redirect URLs, `valid_from`, the `collect_*` flags, `allowed_payment_methods`, `preferred_mop_type` — are stored but not echoed back.\n\n**A PSP's form belongs to the sub-merchant named in `X-Merchant-ID`, not to the PSP.** That is also the account the lane check runs against.\n\n**The lane check guards creation only.** If payment forms are later switched off for an account, its existing forms stay listable, retrievable, updatable and payable — deactivate them yourself if they should stop collecting.",
+        "tags": [
+          "Payment Forms"
+        ],
+        "operationId": "v3_post_pg_forms_",
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_CreatePaymentFormRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_CreatePaymentFormRequest"
+              },
+              "encoding": {
+                "logo": {
+                  "contentType": "image/png, image/jpeg"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The form was created and is live at `form_url`.",
+            "headers": {
+              "X-API-Version": {
+                "description": "The API version that served the request. Every Partner API response carries it.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "3.0.0"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_PaymentFormResponse"
+                },
+                "examples": {
+                  "created": {
+                    "summary": "A fixed-amount form",
+                    "value": {
+                      "success": true,
+                      "message": "Payment form created successfully",
+                      "data": {
+                        "form_id": "PF4829301756",
+                        "url_slug": "spring-workshop",
+                        "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+                        "merchant_account": {
+                          "company_display_name": "Example Exports Pvt Ltd"
+                        },
+                        "payment_for": "Spring Workshop Ticket",
+                        "is_fixed_amount": true,
+                        "amount": 2500.0,
+                        "currency": "INR",
+                        "amount_title": "Ticket Price",
+                        "gst_percentage": 18,
+                        "service_charge_percentage": 0,
+                        "valid_until": "2026-12-31T23:59:59.000000Z",
+                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
+                        "contact_email": "support@example.com",
+                        "contact_phone": "+919876543210",
+                        "contact_whatsapp": null,
+                        "website_url": "https://example.com",
+                        "support_url": null,
+                        "twitter_url": null,
+                        "instagram_url": null,
+                        "facebook_url": null,
+                        "linkedin_url": null,
+                        "logo_url": null,
+                        "primary_color": "#1E40AF",
+                        "template_style": "template1",
+                        "business_name_type": "trade_name",
+                        "is_valid": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body was refused. `details` names the field; every message is a single string, not a list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "slug_taken": {
+                    "summary": "The slug is already in use",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "url_slug": "This URL slug is already in use. Please choose a different one."
+                        }
+                      }
+                    }
+                  },
+                  "slug_not_allowed": {
+                    "summary": "The slug uses a reserved segment (e.g. payment, form, pay) or fails the profanity filter",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "url_slug": "This URL slug is not allowed. Please choose a different one."
+                        }
+                      }
+                    }
+                  },
+                  "amount_required": {
+                    "summary": "A fixed-amount form was sent without an amount",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "amount": "Amount is required for fixed amount forms"
+                        }
+                      }
+                    }
+                  },
+                  "hs_code_required": {
+                    "summary": "physical_goods without an HS code",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "hs_code": "HS code is required for physical goods forms"
+                        }
+                      }
+                    }
+                  },
+                  "hs_code_unknown": {
+                    "summary": "The HS code is not in the master",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "hs_code": "Please enter a valid HS Code"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_type_of_goods": {
+                    "summary": "type_of_goods is not one of the accepted values",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "type_of_goods": "Type of goods must be one of: physical_goods, digital_goods, service"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_currency": {
+                    "summary": "The currency code is unknown",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "currency": "Invalid currency: XYZ"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_preferred_mop_type": {
+                    "summary": "preferred_mop_type was sent in the wrong case, or is not a payment method",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "preferred_mop_type": "\"upi\" is not a valid choice."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_primary_color": {
+                    "summary": "primary_color is not a six-digit hex code",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "primary_color": "Primary color must be a 6-digit hex code like #FF5733."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "missing_credentials": {
+                    "summary": "X-Client-ID or X-Client-Secret is absent",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "missing_merchant_id": {
+                    "summary": "A PSP created a form without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_merchant_id": {
+                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid X-Merchant-ID provided."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not set up to collect through payment forms. Only EximPe ops can change this.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "channel_not_enabled": {
+                    "summary": "Payment forms are not enabled on your lane",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_005",
+                        "message": "This account's lane does not permit this collection",
+                        "details": {
+                          "collection_mode": "PAYMENT_FORMS is not enabled for this account."
+                        }
+                      }
+                    }
+                  },
+                  "collection_not_enabled": {
+                    "summary": "The account cannot collect at all",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_005",
+                        "message": "This account's lane does not permit this collection",
+                        "details": {
+                          "collection_mode": "Payment collection is not enabled for this account."
+                        }
+                      }
+                    }
+                  },
+                  "inactive_merchant": {
+                    "summary": "The merchant account is inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "server_error": {
+                    "summary": "Unexpected failure",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List payment forms",
+        "description": "Every **active** payment form you own, newest change first, with a live count of the payments each has taken.\n\nDeactivated forms are not listed and cannot be filtered back in — the list is the set of forms that still exist for payers.\n\nA PSP that sends no `X-Merchant-ID` sees its own forms and those of all its sub-merchants; naming a sub-merchant narrows the list to that one.\n\n**The page sits inside `data`.** `count`, `page`, `page_size`, `next`, `previous` and `results` are keys of `data`, not of the top-level body.",
+        "tags": [
+          "Payment Forms"
+        ],
+        "operationId": "v3_get_pg_forms_",
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "description": "Which page to return.",
+            "example": 1
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 250
+            },
+            "description": "How many forms per page. Defaults to 250, capped at 1000.",
+            "example": 50
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Free-text match against `form_id`, `url_slug` and `payment_for`.",
+            "example": "workshop"
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "-created_at",
+                "last_updated_at",
+                "-last_updated_at"
+              ]
+            },
+            "description": "Sort order. Defaults to `-last_updated_at`.",
+            "example": "-created_at"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of active forms.",
+            "headers": {
+              "X-API-Version": {
+                "description": "The API version that served the request. Every Partner API response carries it.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "3.0.0"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ListPaymentFormsResponse"
+                },
+                "examples": {
+                  "first_page": {
+                    "summary": "The first page of a merchant's forms",
+                    "value": {
+                      "success": true,
+                      "message": "Forms fetched successfully",
+                      "data": {
+                        "count": 2,
+                        "page": 1,
+                        "page_size": 250,
+                        "next": null,
+                        "previous": null,
+                        "results": [
+                          {
+                            "form_id": "PF4829301756",
+                            "url_slug": "spring-workshop",
+                            "payment_for": "Spring Workshop Ticket",
+                            "is_fixed_amount": true,
+                            "amount": 2500.0,
+                            "currency": "INR",
+                            "is_active": true,
+                            "is_valid": true,
+                            "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+                            "payment_count": {
+                              "total": 12,
+                              "success": 9,
+                              "pending": 1,
+                              "failed": 2
+                            },
+                            "created_at": "2026-09-01T09:15:00.000000Z",
+                            "last_updated_at": "2026-09-16T12:00:00.000000Z"
+                          },
+                          {
+                            "form_id": "PF1937284650",
+                            "url_slug": "donate",
+                            "payment_for": "Donation",
+                            "is_fixed_amount": false,
+                            "amount": null,
+                            "currency": "INR",
+                            "is_active": true,
+                            "is_valid": true,
+                            "form_url": "https://api-pacb-uat.eximpe.com/pay/donate/",
+                            "payment_count": {
+                              "total": 0,
+                              "success": 0,
+                              "pending": 0,
+                              "failed": 0
+                            },
+                            "created_at": "2026-08-20T07:00:00.000000Z",
+                            "last_updated_at": "2026-08-20T07:00:00.000000Z"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "missing_credentials": {
+                    "summary": "X-Client-ID or X-Client-Secret is absent",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "missing_merchant_id": {
+                    "summary": "A PSP created a form without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_merchant_id": {
+                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid X-Merchant-ID provided."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is not active, so it cannot be used at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "inactive_merchant": {
+                    "summary": "The merchant account is inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "server_error": {
+                    "summary": "Unexpected failure",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/forms/{uid}/": {
+      "get": {
+        "summary": "Retrieve a payment form",
+        "description": "One payment form, plus **every payment attempt made through it** — successful, pending and failed alike, newest first.\n\nThis is the endpoint to poll while a form is live: the `payments` array carries each attempt's `payment_id`, `status`, `mop_type`, the buyer as they typed it, and the amount charged. For payment-by-payment detail, take a `payment_id` from here into the Payments API.\n\nOnly active forms resolve. A form you deactivated answers `404`, the same as one that never existed or belongs to another merchant.",
+        "tags": [
+          "Payment Forms"
+        ],
+        "operationId": "v3_get_pg_forms_uid_",
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The form's `form_id`, as the create and list responses return it.",
+            "example": "PF4829301756"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The form and its payments.",
+            "headers": {
+              "X-API-Version": {
+                "description": "The API version that served the request. Every Partner API response carries it.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "3.0.0"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_PaymentFormDetailsResponse"
+                },
+                "examples": {
+                  "with_payments": {
+                    "summary": "A form with one captured payment",
+                    "value": {
+                      "success": true,
+                      "message": "Form fetched successfully",
+                      "data": {
+                        "form_id": "PF4829301756",
+                        "url_slug": "spring-workshop",
+                        "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+                        "merchant_account": {
+                          "company_display_name": "Example Exports Pvt Ltd"
+                        },
+                        "payment_for": "Spring Workshop Ticket",
+                        "is_fixed_amount": true,
+                        "amount": 2500.0,
+                        "currency": "INR",
+                        "amount_title": "Ticket Price",
+                        "gst_percentage": 18,
+                        "service_charge_percentage": 0,
+                        "valid_until": "2026-12-31T23:59:59.000000Z",
+                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
+                        "contact_email": "support@example.com",
+                        "contact_phone": "+919876543210",
+                        "contact_whatsapp": null,
+                        "website_url": "https://example.com",
+                        "support_url": null,
+                        "twitter_url": null,
+                        "instagram_url": null,
+                        "facebook_url": null,
+                        "linkedin_url": null,
+                        "logo_url": null,
+                        "primary_color": "#1E40AF",
+                        "template_style": "template1",
+                        "business_name_type": "trade_name",
+                        "is_valid": true,
+                        "payments": [
+                          {
+                            "payment_id": "PR6938527534",
+                            "merchant": {
+                              "id": "MA1234567890",
+                              "name": "Example Exports Pvt Ltd"
+                            },
+                            "reference_id": "PF4829301756-6f1c6a0a2b8c4f2da0f1c2d3e4f5a6b7",
+                            "buyer": {
+                              "name": "Alice Sharma",
+                              "email": "alice@example.com",
+                              "phone": "+919876543210"
+                            },
+                            "order_id": "OR1122334455",
+                            "invoice_number": null,
+                            "amount": {
+                              "amount": "2500",
+                              "total_amount": "2950",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-09-17T10:30:00.000000Z",
+                            "comment": "Transaction successful",
+                            "mop_type": "upi",
+                            "status": "CAPTURED"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "missing_credentials": {
+                    "summary": "X-Client-ID or X-Client-Secret is absent",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "missing_merchant_id": {
+                    "summary": "A PSP created a form without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_merchant_id": {
+                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid X-Merchant-ID provided."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is not active, so it cannot be used at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "inactive_merchant": {
+                    "summary": "The merchant account is inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active form with this `uid` belongs to you. A deactivated form answers the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "form_not_found": {
+                    "summary": "Unknown, deactivated, or another merchant's form",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_001",
+                        "message": "Form not found",
+                        "details": {
+                          "form": "Payment form not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a payment form",
+        "description": "Changes a live payment form in place. The public URL does not move, so anyone holding the link sees the new settings on their next visit.\n\nThis is a `PATCH`: send only the fields that change. `PUT` is not accepted.\n\nEvery create field can be updated **except `url_slug`**, which is fixed for the life of the form. The same validation runs: an HS code is still checked against the master, `preferred_mop_type` is still upper-case, and a fixed-amount form still needs an amount.\n\nOnly active forms can be updated — a deactivated one answers `404`, which is also why `is_active: true` cannot bring a form back.\n\n**`url_slug` is not part of this body, and sending it changes nothing** — the call answers `200` with the form untouched, no error. The public URL a form is born with is permanent.\n\n`PUT` on this path answers `405`.",
+        "tags": [
+          "Payment Forms"
+        ],
+        "operationId": "v3_patch_pg_forms_uid_",
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The form's `form_id`, as the create and list responses return it.",
+            "example": "PF4829301756"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_UpdatePaymentFormRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_UpdatePaymentFormRequest"
+              },
+              "encoding": {
+                "logo": {
+                  "contentType": "image/png, image/jpeg"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated form.",
+            "headers": {
+              "X-API-Version": {
+                "description": "The API version that served the request. Every Partner API response carries it.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "3.0.0"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_PaymentFormResponse"
+                },
+                "examples": {
+                  "updated": {
+                    "summary": "The amount and the expiry were changed",
+                    "value": {
+                      "success": true,
+                      "message": "Payment form updated successfully",
+                      "data": {
+                        "form_id": "PF4829301756",
+                        "url_slug": "spring-workshop",
+                        "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+                        "merchant_account": {
+                          "company_display_name": "Example Exports Pvt Ltd"
+                        },
+                        "payment_for": "Spring Workshop Ticket",
+                        "is_fixed_amount": true,
+                        "amount": 3000.0,
+                        "currency": "INR",
+                        "amount_title": "Ticket Price",
+                        "gst_percentage": 18,
+                        "service_charge_percentage": 0,
+                        "valid_until": "2027-03-31T23:59:59.000000Z",
+                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
+                        "contact_email": "support@example.com",
+                        "contact_phone": "+919876543210",
+                        "contact_whatsapp": null,
+                        "website_url": "https://example.com",
+                        "support_url": null,
+                        "twitter_url": null,
+                        "instagram_url": null,
+                        "facebook_url": null,
+                        "linkedin_url": null,
+                        "logo_url": null,
+                        "primary_color": "#1E40AF",
+                        "template_style": "template1",
+                        "business_name_type": "trade_name",
+                        "is_valid": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body was refused. `details` names the field; every message is a single string, not a list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "slug_taken": {
+                    "summary": "The slug is already in use",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "url_slug": "This URL slug is already in use. Please choose a different one."
+                        }
+                      }
+                    }
+                  },
+                  "slug_not_allowed": {
+                    "summary": "The slug uses a reserved segment (e.g. payment, form, pay) or fails the profanity filter",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "url_slug": "This URL slug is not allowed. Please choose a different one."
+                        }
+                      }
+                    }
+                  },
+                  "amount_required": {
+                    "summary": "A fixed-amount form was sent without an amount",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "amount": "Amount is required for fixed amount forms"
+                        }
+                      }
+                    }
+                  },
+                  "hs_code_required": {
+                    "summary": "physical_goods without an HS code",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "hs_code": "HS code is required for physical goods forms"
+                        }
+                      }
+                    }
+                  },
+                  "hs_code_unknown": {
+                    "summary": "The HS code is not in the master",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "hs_code": "Please enter a valid HS Code"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_type_of_goods": {
+                    "summary": "type_of_goods is not one of the accepted values",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "type_of_goods": "Type of goods must be one of: physical_goods, digital_goods, service"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_currency": {
+                    "summary": "The currency code is unknown",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "currency": "Invalid currency: XYZ"
+                        }
+                      }
+                    }
+                  },
+                  "invalid_preferred_mop_type": {
+                    "summary": "preferred_mop_type was sent in the wrong case, or is not a payment method",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "preferred_mop_type": "\"upi\" is not a valid choice."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_primary_color": {
+                    "summary": "primary_color is not a six-digit hex code",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_002",
+                        "message": "Validation error",
+                        "details": {
+                          "primary_color": "Primary color must be a 6-digit hex code like #FF5733."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "missing_credentials": {
+                    "summary": "X-Client-ID or X-Client-Secret is absent",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "missing_merchant_id": {
+                    "summary": "A PSP created a form without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_merchant_id": {
+                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid X-Merchant-ID provided."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is not active, so it cannot be used at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "inactive_merchant": {
+                    "summary": "The merchant account is inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active form with this `uid` belongs to you. A deactivated form answers the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "form_not_found": {
+                    "summary": "Unknown, deactivated, or another merchant's form",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_001",
+                        "message": "Form not found",
+                        "details": {
+                          "form": "Payment form not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "server_error": {
+                    "summary": "Unexpected failure",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/forms/{uid}/inactivate/": {
+      "post": {
+        "summary": "Deactivate a payment form",
+        "description": "Closes a payment form. The page at `/pay/<url_slug>/` stops accepting payment, the form disappears from the list, and it can no longer be retrieved or updated.\n\nNothing is deleted: payments already taken through the form keep their orders, their settlements and their refund path, and the form itself stays on the record for reporting.\n\n**This is one-way over the API.** Reaching a form requires it to be active, so a deactivated form answers `404` to every later call — including the update that would set `is_active` back to `true`. Deactivate only when the form is finished; to pause one temporarily, set `valid_until` instead.\n\nThe slug stays taken. Creating a new form with the same `url_slug` is refused.\n\nThe response body is the form as it now stands, with `is_valid: false`.",
+        "tags": [
+          "Payment Forms"
+        ],
+        "operationId": "v3_post_pg_forms_uid_inactivate_",
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The form's `form_id`, as the create and list responses return it.",
+            "example": "PF4829301756"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The form is deactivated.",
+            "headers": {
+              "X-API-Version": {
+                "description": "The API version that served the request. Every Partner API response carries it.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "3.0.0"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_PaymentFormResponse"
+                },
+                "examples": {
+                  "inactivated": {
+                    "summary": "The form no longer accepts payment",
+                    "value": {
+                      "success": true,
+                      "message": "Payment form inactivated successfully",
+                      "data": {
+                        "form_id": "PF4829301756",
+                        "url_slug": "spring-workshop",
+                        "form_url": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/",
+                        "merchant_account": {
+                          "company_display_name": "Example Exports Pvt Ltd"
+                        },
+                        "payment_for": "Spring Workshop Ticket",
+                        "is_fixed_amount": true,
+                        "amount": 2500.0,
+                        "currency": "INR",
+                        "amount_title": "Ticket Price",
+                        "gst_percentage": 18,
+                        "service_charge_percentage": 0,
+                        "valid_until": "2026-12-31T23:59:59.000000Z",
+                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
+                        "contact_email": "support@example.com",
+                        "contact_phone": "+919876543210",
+                        "contact_whatsapp": null,
+                        "website_url": "https://example.com",
+                        "support_url": null,
+                        "twitter_url": null,
+                        "instagram_url": null,
+                        "facebook_url": null,
+                        "linkedin_url": null,
+                        "logo_url": null,
+                        "primary_color": "#1E40AF",
+                        "template_style": "template1",
+                        "business_name_type": "trade_name",
+                        "is_valid": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "missing_credentials": {
+                    "summary": "X-Client-ID or X-Client-Secret is absent",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "missing_merchant_id": {
+                    "summary": "A PSP created a form without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  },
+                  "invalid_merchant_id": {
+                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid X-Merchant-ID provided."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is not active, so it cannot be used at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "inactive_merchant": {
+                    "summary": "The merchant account is inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active form with this `uid` belongs to you. A deactivated form answers the same way.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "form_not_found": {
+                    "summary": "Unknown, deactivated, or another merchant's form",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_FORM_001",
+                        "message": "Form not found",
+                        "details": {
+                          "form": "Payment form not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "server_error": {
+                    "summary": "Unexpected failure",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7549,6 +8950,1084 @@
             }
           }
         }
+      },
+      "v3_CreatePaymentFormRequest": {
+        "type": "object",
+        "required": [
+          "url_slug",
+          "payment_for",
+          "currency",
+          "type_of_goods"
+        ],
+        "properties": {
+          "url_slug": {
+            "type": "string",
+            "maxLength": 255,
+            "pattern": "^[a-zA-Z0-9-]+$",
+            "description": "The path segment of the form's public URL, so `spring-workshop` is served at `/pay/spring-workshop/`. Letters, digits and hyphens only, at most 255 characters, lower-cased before it is stored.\n\n**Unique across every merchant on EximPe**, not just yours, and permanent: it cannot be changed later, and deactivating the form does not release it.\n\n**Every hyphen-separated segment is checked against a reserved list** — `admin`, `api`, `login`, `logout`, `static`, `media`, `health`, `config`, `internal`, `dashboard`, `merchant`, `root`, `support`, `pay`, `form`, `forms`, `public`, `import`, `payment`, `checkout`, `callback`, `csp-report` — and against a profanity filter. One reserved segment refuses the whole slug, so `my-payment-form` is rejected for both `payment` and `form`. Name the thing being paid for instead: `spring-workshop`, `acme-membership-2026`.",
+            "example": "spring-workshop"
+          },
+          "payment_for": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "What the payer is paying for. Shown on the form and carried into the order as the product name.",
+            "example": "Spring Workshop Ticket"
+          },
+          "is_fixed_amount": {
+            "type": "boolean",
+            "default": true,
+            "description": "`true` (the default) charges everyone the same `amount_cents`. `false` lets the payer type the amount, and `amount_cents` is then ignored.",
+            "example": true
+          },
+          "amount_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000,
+            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true, and intended to be between 0 and 1,000,000,000 — ten million rupees.\n\n**Honoured only when `amount` is absent from the body.** If both keys are present, `amount_cents` is silently discarded in favour of `amount` — including when `amount` is `null`, which then refuses the call with \"Amount is required for fixed amount forms\". Send one key, not both.",
+            "example": 250000
+          },
+          "amount": {
+            "type": "number",
+            "description": "The amount in major units (rupees), converted to `amount_cents` for you. **The key to prefer**: it is what the response returns, and it takes precedence whenever both keys are sent.",
+            "example": 2500
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code of the currency to charge in. An unknown code is refused.",
+            "example": "INR"
+          },
+          "amount_title": {
+            "type": "string",
+            "default": "Amount",
+            "maxLength": 255,
+            "description": "The label shown above the amount on the form.",
+            "example": "Ticket Price"
+          },
+          "gst_percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "GST added on top of the amount, as a whole percentage.",
+            "example": 18
+          },
+          "service_charge_percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "Service charge added on top of the amount, as a whole percentage.",
+            "example": 5
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Longer description of the product or service. Carried into the order.",
+            "example": "Full-day workshop including lunch."
+          },
+          "type_of_goods": {
+            "type": "string",
+            "enum": [
+              "goods",
+              "physical_goods",
+              "digital_goods",
+              "service"
+            ],
+            "description": "What is being sold. Matched case-insensitively; stored lower-case.",
+            "example": "service"
+          },
+          "hs_code": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "HS code for the product. **Required when `type_of_goods` is `physical_goods`**, and — whenever you send one, for any type — checked against EximPe's HS code master, so a wrong code is refused here rather than at the payer's first attempt.",
+            "example": "998311"
+          },
+          "success_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Where the payer is sent after a successful payment. EximPe redirects through its own signed return page first, so this URL is never taken from the browser.",
+            "example": "https://example.com/thanks"
+          },
+          "fail_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Where the payer is sent after a failed payment. Falls back to `success_url` when it is not set.",
+            "example": "https://example.com/payment-failed"
+          },
+          "thank_you_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Message shown on the form once the payment succeeds.",
+            "example": "Thanks — your seat is booked. A receipt is on its way."
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The form refuses payment before this instant. Open immediately when it is not set.",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The form refuses payment after this instant. Never expires when it is not set.",
+            "example": "2026-12-31T23:59:59Z"
+          },
+          "collect_name": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their name, and require it.",
+            "example": true
+          },
+          "collect_email": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their email, and require it.",
+            "example": true
+          },
+          "collect_phone": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their phone number, and require it. Validated as an international number, so it carries the country code.",
+            "example": true
+          },
+          "collect_address": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their address. Only the postal code is kept.",
+            "example": true
+          },
+          "collect_pan": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their PAN.",
+            "example": false
+          },
+          "collect_dob": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their date of birth.",
+            "example": false
+          },
+          "auto_generate_invoice": {
+            "type": "boolean",
+            "default": false,
+            "description": "Generate an invoice automatically once a payment through this form succeeds.",
+            "example": false
+          },
+          "terms_and_conditions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms the payer must accept before paying. Shown on the form.",
+            "example": "Tickets are non-refundable within 7 days of the event."
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "Support email shown on the form.",
+            "example": "support@example.com"
+          },
+          "contact_phone": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "Support phone number shown on the form.",
+            "example": "+919876543210"
+          },
+          "contact_whatsapp": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "WhatsApp number shown on the form.",
+            "example": "+919876543210"
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Your website, linked from the form.",
+            "example": "https://example.com"
+          },
+          "support_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Your support or help-centre page, linked from the form.",
+            "example": "https://example.com/support"
+          },
+          "twitter_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "X/Twitter profile linked from the form.",
+            "example": "https://x.com/example"
+          },
+          "instagram_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Instagram profile linked from the form.",
+            "example": "https://instagram.com/example"
+          },
+          "facebook_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Facebook page linked from the form.",
+            "example": "https://facebook.com/example"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "LinkedIn page linked from the form.",
+            "example": "https://linkedin.com/company/example"
+          },
+          "allowed_payment_methods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Payment methods this form may be paid with. An empty list — the default — allows everything your account can collect.",
+            "example": []
+          },
+          "preferred_mop_type": {
+            "type": "string",
+            "enum": [
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "UPI",
+              "NET_BANKING",
+              "WALLET",
+              "QR",
+              "EFTNET",
+              "EMI",
+              "BNPL",
+              "LR",
+              "CARD",
+              "VBA_TRANSFER"
+            ],
+            "nullable": true,
+            "description": "The payment method the form opens on. **Upper case**, exactly as listed — a lower-case value is refused.",
+            "example": "UPI"
+          },
+          "logo": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "description": "Your logo, shown on the form. A file upload, so it can only be sent with `multipart/form-data`. Read back as `logo_url`."
+          },
+          "primary_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "maxLength": 7,
+            "nullable": true,
+            "description": "The form's brand colour, as a six-digit hex code.",
+            "example": "#1E40AF"
+          },
+          "template_style": {
+            "type": "string",
+            "enum": [
+              "template1",
+              "template2"
+            ],
+            "default": "template1",
+            "description": "Which summary-pane layout the form uses.",
+            "example": "template1"
+          },
+          "business_name_type": {
+            "type": "string",
+            "enum": [
+              "trade_name",
+              "legal_name"
+            ],
+            "default": "trade_name",
+            "description": "Which of your two registered names the form shows the payer. The name itself is always read live from your KYC record, so a later correction there reaches forms already created. Matched case-insensitively.",
+            "example": "trade_name"
+          }
+        }
+      },
+      "v3_UpdatePaymentFormRequest": {
+        "type": "object",
+        "description": "Every field of the create body except `url_slug`, which is fixed once the form exists. Send only what changes — anything you leave out keeps its current value.",
+        "properties": {
+          "payment_for": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "What the payer is paying for. Shown on the form and carried into the order as the product name.",
+            "example": "Spring Workshop Ticket"
+          },
+          "is_fixed_amount": {
+            "type": "boolean",
+            "default": true,
+            "description": "`true` (the default) charges everyone the same `amount_cents`. `false` lets the payer type the amount, and `amount_cents` is then ignored.",
+            "example": true
+          },
+          "amount_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000,
+            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true. Between 0 and 1,000,000,000 — ten million rupees.",
+            "example": 250000
+          },
+          "amount": {
+            "type": "number",
+            "description": "The same amount in major units (rupees), converted to `amount_cents` for you. Send one or the other; when both are present `amount` wins.",
+            "example": 2500
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code of the currency to charge in. An unknown code is refused.",
+            "example": "INR"
+          },
+          "amount_title": {
+            "type": "string",
+            "default": "Amount",
+            "maxLength": 255,
+            "description": "The label shown above the amount on the form.",
+            "example": "Ticket Price"
+          },
+          "gst_percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "GST added on top of the amount, as a whole percentage.",
+            "example": 18
+          },
+          "service_charge_percentage": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0,
+            "description": "Service charge added on top of the amount, as a whole percentage.",
+            "example": 5
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Longer description of the product or service. Carried into the order.",
+            "example": "Full-day workshop including lunch."
+          },
+          "type_of_goods": {
+            "type": "string",
+            "enum": [
+              "goods",
+              "physical_goods",
+              "digital_goods",
+              "service"
+            ],
+            "description": "What is being sold. Matched case-insensitively; stored lower-case.",
+            "example": "service"
+          },
+          "hs_code": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "HS code for the product. **Required when `type_of_goods` is `physical_goods`**, and — whenever you send one, for any type — checked against EximPe's HS code master, so a wrong code is refused here rather than at the payer's first attempt.",
+            "example": "998311"
+          },
+          "success_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Where the payer is sent after a successful payment. EximPe redirects through its own signed return page first, so this URL is never taken from the browser.",
+            "example": "https://example.com/thanks"
+          },
+          "fail_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Where the payer is sent after a failed payment. Falls back to `success_url` when it is not set.",
+            "example": "https://example.com/payment-failed"
+          },
+          "thank_you_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Message shown on the form once the payment succeeds.",
+            "example": "Thanks — your seat is booked. A receipt is on its way."
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The form refuses payment before this instant. Open immediately when it is not set.",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The form refuses payment after this instant. Never expires when it is not set.",
+            "example": "2026-12-31T23:59:59Z"
+          },
+          "collect_name": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their name, and require it.",
+            "example": true
+          },
+          "collect_email": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their email, and require it.",
+            "example": true
+          },
+          "collect_phone": {
+            "type": "boolean",
+            "default": true,
+            "description": "Ask the payer for their phone number, and require it. Validated as an international number, so it carries the country code.",
+            "example": true
+          },
+          "collect_address": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their address. Only the postal code is kept.",
+            "example": true
+          },
+          "collect_pan": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their PAN.",
+            "example": false
+          },
+          "collect_dob": {
+            "type": "boolean",
+            "default": false,
+            "description": "Ask the payer for their date of birth.",
+            "example": false
+          },
+          "auto_generate_invoice": {
+            "type": "boolean",
+            "default": false,
+            "description": "Generate an invoice automatically once a payment through this form succeeds.",
+            "example": false
+          },
+          "terms_and_conditions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms the payer must accept before paying. Shown on the form.",
+            "example": "Tickets are non-refundable within 7 days of the event."
+          },
+          "contact_email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "description": "Support email shown on the form.",
+            "example": "support@example.com"
+          },
+          "contact_phone": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "Support phone number shown on the form.",
+            "example": "+919876543210"
+          },
+          "contact_whatsapp": {
+            "type": "string",
+            "maxLength": 20,
+            "nullable": true,
+            "description": "WhatsApp number shown on the form.",
+            "example": "+919876543210"
+          },
+          "website_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Your website, linked from the form.",
+            "example": "https://example.com"
+          },
+          "support_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Your support or help-centre page, linked from the form.",
+            "example": "https://example.com/support"
+          },
+          "twitter_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "X/Twitter profile linked from the form.",
+            "example": "https://x.com/example"
+          },
+          "instagram_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Instagram profile linked from the form.",
+            "example": "https://instagram.com/example"
+          },
+          "facebook_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "Facebook page linked from the form.",
+            "example": "https://facebook.com/example"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "LinkedIn page linked from the form.",
+            "example": "https://linkedin.com/company/example"
+          },
+          "allowed_payment_methods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Payment methods this form may be paid with. An empty list — the default — allows everything your account can collect.",
+            "example": []
+          },
+          "preferred_mop_type": {
+            "type": "string",
+            "enum": [
+              "CREDIT_CARD",
+              "DEBIT_CARD",
+              "UPI",
+              "NET_BANKING",
+              "WALLET",
+              "QR",
+              "EFTNET",
+              "EMI",
+              "BNPL",
+              "LR",
+              "CARD",
+              "VBA_TRANSFER"
+            ],
+            "nullable": true,
+            "description": "The payment method the form opens on. **Upper case**, exactly as listed — a lower-case value is refused.",
+            "example": "UPI"
+          },
+          "logo": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "description": "Your logo, shown on the form. A file upload, so it can only be sent with `multipart/form-data`. Read back as `logo_url`."
+          },
+          "primary_color": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "maxLength": 7,
+            "nullable": true,
+            "description": "The form's brand colour, as a six-digit hex code.",
+            "example": "#1E40AF"
+          },
+          "template_style": {
+            "type": "string",
+            "enum": [
+              "template1",
+              "template2"
+            ],
+            "default": "template1",
+            "description": "Which summary-pane layout the form uses.",
+            "example": "template1"
+          },
+          "business_name_type": {
+            "type": "string",
+            "enum": [
+              "trade_name",
+              "legal_name"
+            ],
+            "default": "trade_name",
+            "description": "Which of your two registered names the form shows the payer. The name itself is always read live from your KYC record, so a later correction there reaches forms already created. Matched case-insensitively.",
+            "example": "trade_name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Kept for symmetry with the model. Setting it to `false` deactivates the form; setting it to `true` cannot reach a deactivated form, because this endpoint only resolves active ones.",
+            "example": true
+          }
+        }
+      },
+      "v3_PaymentForm": {
+        "type": "object",
+        "description": "A payment form as the create, update and deactivate endpoints return it. Note that the response is deliberately narrower than the request: settings such as `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `thank_you_message`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are stored but not echoed back.",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "description": "The form's EximPe identifier, and the `uid` every other Payment Forms endpoint takes in its path. `PF` followed by ten digits.",
+            "example": "PF4829301756"
+          },
+          "url_slug": {
+            "type": "string",
+            "description": "The slug the form is served under.",
+            "example": "spring-workshop"
+          },
+          "form_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The public URL to share with payers. Absolute, built from the host the request arrived on.",
+            "example": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/"
+          },
+          "merchant_account": {
+            "type": "object",
+            "nullable": true,
+            "description": "The bare minimum about the collecting merchant, for display on the form.",
+            "properties": {
+              "company_display_name": {
+                "type": "string",
+                "description": "The name payers see, chosen by `business_name_type` and read live from the merchant's KYC record. Falls back to the other registered name when the chosen one is blank.",
+                "example": "Example Exports Pvt Ltd"
+              }
+            }
+          },
+          "payment_for": {
+            "type": "string",
+            "description": "What the payment is for.",
+            "example": "Spring Workshop Ticket"
+          },
+          "is_fixed_amount": {
+            "type": "boolean",
+            "description": "Whether the amount is fixed or typed by the payer.",
+            "example": true
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "The amount to charge, in major units (rupees). **`amount_cents` is not returned** — the response converts it. `null` on a variable-amount form.",
+            "example": 2500
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code the form charges in.",
+            "example": "INR"
+          },
+          "amount_title": {
+            "type": "string",
+            "description": "Label shown above the amount.",
+            "example": "Ticket Price"
+          },
+          "gst_percentage": {
+            "type": "integer",
+            "description": "GST percentage added on top.",
+            "example": 18
+          },
+          "service_charge_percentage": {
+            "type": "integer",
+            "description": "Service charge percentage added on top.",
+            "example": 5
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the form stops accepting payment, or `null`. `valid_from` is stored but not returned.",
+            "example": "2026-12-31T23:59:59.000000Z"
+          },
+          "terms_and_conditions": {
+            "type": "string",
+            "nullable": true,
+            "description": "Terms shown on the form.",
+            "example": "Tickets are non-refundable within 7 days of the event."
+          },
+          "contact_email": {
+            "type": "string",
+            "nullable": true,
+            "description": "Support email shown on the form.",
+            "example": "support@example.com"
+          },
+          "contact_phone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Support phone shown on the form.",
+            "example": "+919876543210"
+          },
+          "contact_whatsapp": {
+            "type": "string",
+            "nullable": true,
+            "description": "WhatsApp number shown on the form.",
+            "example": "+919876543210"
+          },
+          "website_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your website.",
+            "example": "https://example.com"
+          },
+          "support_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your support page.",
+            "example": "https://example.com/support"
+          },
+          "twitter_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "X/Twitter profile."
+          },
+          "instagram_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Instagram profile."
+          },
+          "facebook_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Facebook page."
+          },
+          "linkedin_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "LinkedIn page."
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL of the uploaded logo, pre-signed and time-limited when it is stored on S3. `null` when no logo was uploaded. Do not store it — fetch it again when you need it.",
+            "example": "https://bucket.s3.amazonaws.com/pg_form_logos/logo.png?X-Amz-Signature=..."
+          },
+          "primary_color": {
+            "type": "string",
+            "nullable": true,
+            "description": "The form's brand colour.",
+            "example": "#1E40AF"
+          },
+          "template_style": {
+            "type": "string",
+            "enum": [
+              "template1",
+              "template2"
+            ],
+            "description": "Summary-pane layout.",
+            "example": "template1"
+          },
+          "business_name_type": {
+            "type": "string",
+            "enum": [
+              "trade_name",
+              "legal_name"
+            ],
+            "nullable": true,
+            "description": "Which registered name the form shows.",
+            "example": "trade_name"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "description": "Whether the form accepts payment right now: active, and inside its validity window.",
+            "example": true
+          }
+        }
+      },
+      "v3_PaymentInForm": {
+        "type": "object",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "EximPe's identifier for the payment attempt.",
+            "example": "PR6938527534"
+          },
+          "merchant": {
+            "type": "object",
+            "nullable": true,
+            "description": "The merchant the payment settles to.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Merchant account UID.",
+                "example": "MA1234567890"
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name.",
+                "example": "Example Exports Pvt Ltd"
+              }
+            }
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "The order's reference, generated by the form as `<form_id>-<random hex>`.",
+            "example": "PF4829301756-6f1c6a0a2b8c4f2da0f1c2d3e4f5a6b7"
+          },
+          "buyer": {
+            "type": "object",
+            "nullable": true,
+            "description": "What the payer typed into the form. A field the form does not collect comes back `null`.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Payer's name.",
+                "example": "Alice Sharma"
+              },
+              "email": {
+                "type": "string",
+                "nullable": true,
+                "description": "Payer's email.",
+                "example": "alice@example.com"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true,
+                "description": "Payer's phone, with country code.",
+                "example": "+919876543210"
+              }
+            }
+          },
+          "order_id": {
+            "type": "string",
+            "description": "UID of the order the form created for this payment.",
+            "example": "OR1122334455"
+          },
+          "invoice_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Invoice number on the order, when there is one.",
+            "example": "INV-2026-001"
+          },
+          "amount": {
+            "type": "object",
+            "nullable": true,
+            "description": "Amounts in major units. Sent as JSON strings, not numbers.",
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Amount the payer was charged.",
+                "example": "2500"
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "Amount including GST, service charge and fees.",
+                "example": "2950"
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true,
+                "description": "ISO 4217 code.",
+                "example": "INR"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment attempt was made.",
+            "example": "2026-09-17T10:30:00.000000Z"
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true,
+            "description": "The gateway's status message for this attempt.",
+            "example": "Transaction successful"
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment method used, lower-case.",
+            "example": "upi"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status of the payment attempt.",
+            "example": "CAPTURED"
+          }
+        }
+      },
+      "v3_PaymentFormListItem": {
+        "type": "object",
+        "properties": {
+          "form_id": {
+            "type": "string",
+            "description": "The form's EximPe identifier, and the `uid` every other Payment Forms endpoint takes in its path. `PF` followed by ten digits.",
+            "example": "PF4829301756"
+          },
+          "url_slug": {
+            "type": "string",
+            "description": "The slug the form is served under.",
+            "example": "spring-workshop"
+          },
+          "payment_for": {
+            "type": "string",
+            "description": "What the payment is for.",
+            "example": "Spring Workshop Ticket"
+          },
+          "is_fixed_amount": {
+            "type": "boolean",
+            "description": "Whether the amount is fixed or typed by the payer.",
+            "example": true
+          },
+          "amount": {
+            "type": "number",
+            "nullable": true,
+            "description": "The amount to charge, in major units (rupees). **`amount_cents` is not returned** — the response converts it. `null` on a variable-amount form.",
+            "example": 2500
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 code the form charges in.",
+            "example": "INR"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the form is active. Always `true` here — the list only returns active forms.",
+            "example": true
+          },
+          "is_valid": {
+            "type": "boolean",
+            "description": "Whether the form accepts payment right now: active, and inside its validity window.",
+            "example": true
+          },
+          "form_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The public URL to share with payers. Absolute, built from the host the request arrived on.",
+            "example": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/"
+          },
+          "payment_count": {
+            "type": "object",
+            "description": "How many payment attempts this form has taken, counted live.",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "description": "All attempts.",
+                "example": 12
+              },
+              "success": {
+                "type": "integer",
+                "description": "Attempts that were captured.",
+                "example": 9
+              },
+              "pending": {
+                "type": "integer",
+                "description": "Attempts still pending.",
+                "example": 1
+              },
+              "failed": {
+                "type": "integer",
+                "description": "Attempts that failed or were invalid.",
+                "example": 2
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the form was created.",
+            "example": "2026-09-01T09:15:00.000000Z"
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the form was last changed. The list is ordered by this, newest first, unless you pass `ordering`.",
+            "example": "2026-09-16T12:00:00.000000Z"
+          }
+        }
+      },
+      "v3_PaymentFormResponse": {
+        "type": "object",
+        "description": "The standard envelope around one payment form.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always `true` on a 2xx.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable outcome.",
+            "example": "Payment form created successfully"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_PaymentForm"
+          }
+        }
+      },
+      "v3_ListPaymentFormsResponse": {
+        "type": "object",
+        "description": "The standard envelope around a page of payment forms.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always `true` on a 2xx.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable outcome.",
+            "example": "Forms fetched successfully"
+          },
+          "data": {
+            "type": "object",
+            "description": "The paginated page, wrapped inside `data`.",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total active forms matching the query, across all pages.",
+                "example": 37
+              },
+              "page": {
+                "type": "integer",
+                "description": "The page returned.",
+                "example": 1
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "How many forms this page holds at most.",
+                "example": 250
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL of the next page, or `null` on the last one.",
+                "example": "https://api-pacb-uat.eximpe.com/pg/forms/?page=2"
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL of the previous page, or `null` on the first one."
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_PaymentFormListItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentFormDetailsResponse": {
+        "type": "object",
+        "description": "One payment form with the payments taken through it.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always `true` on a 2xx.",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable outcome.",
+            "example": "Form fetched successfully"
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/v3_PaymentForm"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "payments": {
+                    "type": "array",
+                    "description": "Every active payment attempt made through this form, newest first. Present only on retrieve.",
+                    "items": {
+                      "$ref": "#/components/schemas/v3_PaymentInForm"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -7618,6 +10097,10 @@
     {
       "name": "B2B Verification",
       "description": "Verification and post-settlement compliance for B2B payments."
+    },
+    {
+      "name": "Payment Forms",
+      "description": "Create and manage hosted payment forms — reusable pages payers fill in themselves."
     }
   ]
 }
