@@ -1,6 +1,6 @@
 ---
 title: 'Create Payment Form'
-description: 'Create a reusable hosted page at /pay/<slug>/ that collects the payer details you choose and takes payment from anyone who opens it.'
+description: 'Create a reusable hosted page at /pay/<slug>/ that collects the payer details and takes payment from anyone who opens it.'
 openapi: 'POST /pg/forms/'
 ---
 
@@ -52,9 +52,15 @@ The response carries `form_url` — the link to share — and `form_id`, which e
   **Send `amount` or `amount_cents`, never both.** `amount_cents` is honoured only when `amount` is absent from the body; if both are present it is silently discarded — including when `amount` is `null`, which then refuses the call with `Amount is required for fixed amount forms`. `amount`, in rupees, is the key to prefer: it is what the response gives back.
 </Warning>
 
-<ParamField body="collect_name / collect_email / collect_phone / collect_address / collect_pan / collect_dob" type="boolean">
-  Which fields the form shows. A flag set to `true` makes that field **required** for the payer — the submission is refused without it. Name, email and phone default to `true`; address, PAN and date of birth to `false`. Of an address, only the postal code is kept.
+<ParamField body="collect_name / collect_email / collect_phone" type="boolean" default="true">
+  Which payer details a submission is **refused without**. All three default to `true`.
+
+  They do not control the layout. The hosted page always shows name, email, phone and postal code, whatever these flags say; the flags are the server-side check applied when the payer submits. There is no way to add a field to the page or take one off it.
 </ParamField>
+
+<Note>
+  **The page collects name, email, phone and postal code — nothing else.** It has no PAN field and no date-of-birth field, and of an address it keeps only the postal code.
+</Note>
 
 ## Goods and HS codes
 
@@ -70,13 +76,19 @@ The response carries `form_url` — the link to share — and `form_id`, which e
 
 `primary_color` is a six-digit hex code (`#1E40AF`). `template_style` picks the summary-pane layout, `template1` or `template2`. `business_name_type` chooses which of your two registered names payers see — `trade_name` or `legal_name` — and the name itself is read live from your KYC record, so a correction there reaches forms you already created.
 
-<Note>
-  **`gst_percentage` and `service_charge_percentage` are whole percentages, 0–100**, added on top of the amount. They are not decimals: send `18`, not `0.18`.
-</Note>
+## Pre-selecting a payment method
+
+`preferred_mop_type` pre-selects a method on the hosted page. Send it upper-case.
+
+<Warning>
+  **Only six values can actually be paid**: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET` and `QR`.
+
+  Create accepts a wider set of method names than the payment step does. A form saved with anything outside those six is created without complaint and then refuses **every** payer submission — the form looks healthy over the API and collects nothing. Send one of the six, or leave `preferred_mop_type` out.
+</Warning>
 
 ## What comes back
 
-The `201` body is the standard `{success, message, data}` envelope. `data` is deliberately narrower than what you sent: `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `thank_you_message`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are all stored, but not echoed back. `amount` comes back in rupees, not `amount_cents`.
+The `201` body is the standard `{success, message, data}` envelope. `data` is deliberately narrower than what you sent: `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are all stored, but not echoed back. `amount` comes back in rupees, not `amount_cents`.
 
 <Note>
   **`form_id` is the form's own ID (`PF` + ten digits)** — not the optional `form_id` tracking column on the model, which the Partner API does not let you set.
@@ -88,6 +100,28 @@ The `201` body is the standard `{success, message, data}` envelope. `data` is de
 
 <Note>
   **The lane check guards creation only.** Creating a form on an account that is not set up for payment forms is a `403 ERR_AUTH_005`; if the entitlement is withdrawn later, forms already created keep listing, updating and collecting. Deactivate them yourself if they should stop.
+</Note>
+
+## Validity, and what the payer sees
+
+`valid_from` and `valid_until` bound the window in which the form takes money. Together with `is_active` they decide `is_valid`.
+
+<Note>
+  **An out-of-window form `404`s the payer.** `/pay/<url_slug>/` answers `404` before `valid_from` and after `valid_until`, while the form itself stays listable, retrievable and updatable over the API with `is_valid: false`. That asymmetry is what makes `valid_until` the way to pause a form: move the date and the page comes back. [Deactivating](/api-reference/v3/payment-form/deactivate) cannot be undone.
+</Note>
+
+<Note>
+  **A deactivated merchant account `404`s the page too.** The public page is gated on the collecting account being active as well as the form, so if the account is closed or suspended every one of its forms stops serving at once — with no change to the forms themselves.
+</Note>
+
+## Limits
+
+<Note>
+  **The ten-million-rupee ceiling binds the payer, not you.** An amount a payer types into a variable-amount form is capped at ₹10,000,000 and refused above it. The same ceiling is *not* checked on `amount_cents` when the form is created or updated, so a fixed-amount form can be saved well above it. Keep your own bound on `amount_cents` rather than relying on a `400`.
+</Note>
+
+<Note>
+  **There is no rate limit on the Payment Forms endpoints.** This viewset opts out of the Partner API's throttles, so nothing here answers `429`. Treat that as a current property of the implementation, not a commitment — it is not a reason to poll hard.
 </Note>
 
 ## Related

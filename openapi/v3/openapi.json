@@ -4137,7 +4137,7 @@
     "/pg/forms/": {
       "post": {
         "summary": "Create a payment form",
-        "description": "Creates a hosted payment form and returns the public URL to share with payers.\n\nA payment form is a reusable page at `/pay/<url_slug>/`. Unlike a payment link, it is not tied to one payer or one amount: everyone who opens it fills in their own details, the form creates the order and the checkout session for them, and it keeps collecting until you deactivate it or its validity window closes.\n\nDecide three things when you create one:\n\n- **What it charges.** `is_fixed_amount: true` with `amount_cents` charges everyone the same. `is_fixed_amount: false` lets the payer type an amount, up to ten million rupees.\n- **What it asks for.** The six `collect_*` flags decide which fields the form shows, and a flag set to `true` makes that field required for the payer.\n- **Where it lives.** `url_slug` is the public path, unique across every merchant on EximPe, so pick a specific one. It cannot be changed afterwards.\n\n**Send `hs_code` when `type_of_goods` is `physical_goods`** — it is required there, and any code you send, for any type, is checked against EximPe's HS master at create time rather than at the payer's first attempt.\n\n**Upload a `logo` with `multipart/form-data`.** Every other field is happy as JSON.\n\n**PSP callers must send `X-Merchant-ID`** naming the sub-merchant the form collects for. Everyone else can leave it out.\n\nThe response is narrower than the request: the settings that only matter to the hosted page — `description`, `type_of_goods`, `hs_code`, the redirect URLs, `valid_from`, the `collect_*` flags, `allowed_payment_methods`, `preferred_mop_type` — are stored but not echoed back.\n\n**A PSP's form belongs to the sub-merchant named in `X-Merchant-ID`, not to the PSP.** That is also the account the lane check runs against.\n\n**The lane check guards creation only.** If payment forms are later switched off for an account, its existing forms stay listable, retrievable, updatable and payable — deactivate them yourself if they should stop collecting.",
+        "description": "Creates a hosted payment form and returns the public URL to share with payers.\n\nA payment form is a reusable page at `/pay/<url_slug>/`. Unlike a payment link, it is not tied to one payer or one amount: everyone who opens it fills in their own details, the form creates the order and the checkout session for them, and it keeps collecting until you deactivate it or its validity window closes.\n\nDecide three things when you create one:\n\n- **What it charges.** `is_fixed_amount: true` with `amount_cents` charges everyone the same. `is_fixed_amount: false` lets the payer type an amount.\n- **What it requires.** `collect_name`, `collect_email` and `collect_phone` decide which payer details a submission is refused without. The page itself always shows name, email, phone and postal code; these flags govern the server-side check, not the layout.\n- **Where it lives.** `url_slug` is the public path, unique across every merchant on EximPe, so pick a specific one. It cannot be changed afterwards.\n\n**Send `hs_code` when `type_of_goods` is `physical_goods`** — it is required there, and any code you send, for any type, is checked against EximPe's HS master at create time rather than at the payer's first attempt.\n\n**Upload a `logo` with `multipart/form-data`.** Every other field is happy as JSON.\n\n**PSP callers must send `X-Merchant-ID`** naming the sub-merchant the form collects for. Everyone else can leave it out. This is the only Payment Forms endpoint where the header is required; on the list it is an optional filter, and on retrieve, update and deactivate it is not read at all.\n\nThe response is narrower than the request: the settings that only matter to the hosted page — `description`, `type_of_goods`, `hs_code`, the redirect URLs, `valid_from`, the `collect_*` flags, `allowed_payment_methods`, `preferred_mop_type` — are stored but not echoed back.\n\n**A PSP's form belongs to the sub-merchant named in `X-Merchant-ID`, not to the PSP.** That is also the account the lane check runs against.\n\n**The lane check guards creation only.** If payment forms are later switched off for an account, its existing forms stay listable, retrievable, updatable and payable — deactivate them yourself if they should stop collecting.\n\n**There is no rate limit on the Payment Forms endpoints.** The viewset opts out of the Partner API's throttles entirely, so nothing here answers `429`. Do not read that as a licence to poll hard: it is a current property of the implementation, not a commitment.",
         "tags": [
           "Payment Forms"
         ],
@@ -4160,7 +4160,7 @@
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/v3_CreatePaymentFormRequest"
+                "$ref": "#/components/schemas/v3_CreatePaymentFormRequestMultipart"
               },
               "encoding": {
                 "logo": {
@@ -4175,7 +4175,7 @@
             "description": "The form was created and is live at `form_url`.",
             "headers": {
               "X-API-Version": {
-                "description": "The API version that served the request. Every Partner API response carries it.",
+                "description": "The API version the request was served as. The Partner API echoes the `X-API-Version` you sent; when you send none it falls back to the version configured on your merchant account's API channel.",
                 "schema": {
                   "type": "string"
                 },
@@ -4204,11 +4204,7 @@
                         "is_fixed_amount": true,
                         "amount": 2500.0,
                         "currency": "INR",
-                        "amount_title": "Ticket Price",
-                        "gst_percentage": 18,
-                        "service_charge_percentage": 0,
                         "valid_until": "2026-12-31T23:59:59.000000Z",
-                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
                         "contact_email": "support@example.com",
                         "contact_phone": "+919876543210",
                         "contact_whatsapp": null,
@@ -4239,14 +4235,14 @@
                 },
                 "examples": {
                   "slug_taken": {
-                    "summary": "The slug is already in use",
+                    "summary": "The slug is already taken, on any merchant",
                     "value": {
                       "success": false,
                       "error": {
                         "code": "ERR_FORM_002",
                         "message": "Validation error",
                         "details": {
-                          "url_slug": "This URL slug is already in use. Please choose a different one."
+                          "url_slug": "PG Form with this url slug already exists."
                         }
                       }
                     }
@@ -4462,7 +4458,7 @@
             }
           },
           "500": {
-            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "description": "Something failed on our side. Safe to retry: a request that never reached us created no form, and a slug that did get created answers the retry with the duplicate-slug `400`, so you cannot end up with two forms on one slug.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4490,7 +4486,7 @@
       },
       "get": {
         "summary": "List payment forms",
-        "description": "Every **active** payment form you own, newest change first, with a live count of the payments each has taken.\n\nDeactivated forms are not listed and cannot be filtered back in — the list is the set of forms that still exist for payers.\n\nA PSP that sends no `X-Merchant-ID` sees its own forms and those of all its sub-merchants; naming a sub-merchant narrows the list to that one.\n\n**The page sits inside `data`.** `count`, `page`, `page_size`, `next`, `previous` and `results` are keys of `data`, not of the top-level body.",
+        "description": "Every **active** payment form you own, newest change first, with a live count of the payments each has taken.\n\nDeactivated forms are not listed and cannot be filtered back in — the list is the set of forms that still exist for payers. A form that is outside its validity window **is** listed, with `is_valid: false`.\n\nA PSP that sends no `X-Merchant-ID` sees its own forms and those of all its sub-merchants; naming a sub-merchant narrows the list to that one. The header is optional here.\n\n**The page sits inside `data`.** `count`, `page`, `page_size`, `next`, `previous` and `results` are keys of `data`, not of the top-level body.",
         "tags": [
           "Payment Forms"
         ],
@@ -4561,7 +4557,7 @@
             "description": "A page of active forms.",
             "headers": {
               "X-API-Version": {
-                "description": "The API version that served the request. Every Partner API response carries it.",
+                "description": "The API version the request was served as. The Partner API echoes the `X-API-Version` you sent; when you send none it falls back to the version configured on your merchant account's API channel.",
                 "schema": {
                   "type": "string"
                 },
@@ -4633,7 +4629,7 @@
             }
           },
           "401": {
-            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "description": "Credentials are missing or wrong. `X-Merchant-ID` is optional here — send it to narrow the list to one sub-merchant — but a value that is not one of your sub-merchants is still refused.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4649,19 +4645,6 @@
                         "message": "Missing credentials",
                         "details": {
                           "authentication": "Missing credentials."
-                        }
-                      }
-                    }
-                  },
-                  "missing_merchant_id": {
-                    "summary": "A PSP created a form without X-Merchant-ID",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_000",
-                        "message": "Missing credentials",
-                        "details": {
-                          "authentication": "X-Merchant-ID header is required for this endpoint."
                         }
                       }
                     }
@@ -4709,7 +4692,7 @@
             }
           },
           "500": {
-            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "description": "Something failed on our side. Reading the list changes nothing, so retry it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4739,7 +4722,7 @@
     "/pg/forms/{uid}/": {
       "get": {
         "summary": "Retrieve a payment form",
-        "description": "One payment form, plus **every payment attempt made through it** — successful, pending and failed alike, newest first.\n\nThis is the endpoint to poll while a form is live: the `payments` array carries each attempt's `payment_id`, `status`, `mop_type`, the buyer as they typed it, and the amount charged. For payment-by-payment detail, take a `payment_id` from here into the Payments API.\n\nOnly active forms resolve. A form you deactivated answers `404`, the same as one that never existed or belongs to another merchant.",
+        "description": "One payment form, plus **every payment attempt made through it** — successful, pending and failed alike, newest first.\n\nThis is the endpoint to poll while a form is live: the `payments` array carries each attempt's `payment_id`, `status`, `mop_type`, the buyer as they typed it, and the amount charged. `status` is one of `pending`, `captured`, `failed` or `invalid` — lower-case — and only `captured` means the money was taken. For payment-by-payment detail, take a `payment_id` from here into the Payments API.\n\nOnly active forms resolve. A form you deactivated answers `404`, the same as one that never existed or belongs to another merchant — and because deactivation cannot be undone over the API, that `404` is permanent.\n\nA form that is merely outside its `valid_from`/`valid_until` window is different: it is still returned here, with `is_valid: false`, even though `/pay/<url_slug>/` is answering `404` to payers.",
         "tags": [
           "Payment Forms"
         ],
@@ -4769,7 +4752,7 @@
             "description": "The form and its payments.",
             "headers": {
               "X-API-Version": {
-                "description": "The API version that served the request. Every Partner API response carries it.",
+                "description": "The API version the request was served as. The Partner API echoes the `X-API-Version` you sent; when you send none it falls back to the version configured on your merchant account's API channel.",
                 "schema": {
                   "type": "string"
                 },
@@ -4798,11 +4781,7 @@
                         "is_fixed_amount": true,
                         "amount": 2500.0,
                         "currency": "INR",
-                        "amount_title": "Ticket Price",
-                        "gst_percentage": 18,
-                        "service_charge_percentage": 0,
                         "valid_until": "2026-12-31T23:59:59.000000Z",
-                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
                         "contact_email": "support@example.com",
                         "contact_phone": "+919876543210",
                         "contact_whatsapp": null,
@@ -4834,13 +4813,13 @@
                             "invoice_number": null,
                             "amount": {
                               "amount": "2500",
-                              "total_amount": "2950",
+                              "total_amount": "2500",
                               "currency": "INR"
                             },
                             "created_at": "2026-09-17T10:30:00.000000Z",
                             "comment": "Transaction successful",
                             "mop_type": "upi",
-                            "status": "CAPTURED"
+                            "status": "captured"
                           }
                         ]
                       }
@@ -4851,7 +4830,7 @@
             }
           },
           "401": {
-            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "description": "Credentials are missing or wrong. **`X-Merchant-ID` is not consulted on this endpoint** — the form is reached by its `form_id`, scoped to the account your credentials identify — so sending it, or leaving it out, changes nothing here.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4867,32 +4846,6 @@
                         "message": "Missing credentials",
                         "details": {
                           "authentication": "Missing credentials."
-                        }
-                      }
-                    }
-                  },
-                  "missing_merchant_id": {
-                    "summary": "A PSP created a form without X-Merchant-ID",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_000",
-                        "message": "Missing credentials",
-                        "details": {
-                          "authentication": "X-Merchant-ID header is required for this endpoint."
-                        }
-                      }
-                    }
-                  },
-                  "invalid_merchant_id": {
-                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_001",
-                        "message": "Invalid credentials",
-                        "details": {
-                          "authentication": "Invalid X-Merchant-ID provided."
                         }
                       }
                     }
@@ -4955,7 +4908,7 @@
       },
       "patch": {
         "summary": "Update a payment form",
-        "description": "Changes a live payment form in place. The public URL does not move, so anyone holding the link sees the new settings on their next visit.\n\nThis is a `PATCH`: send only the fields that change. `PUT` is not accepted.\n\nEvery create field can be updated **except `url_slug`**, which is fixed for the life of the form. The same validation runs: an HS code is still checked against the master, `preferred_mop_type` is still upper-case, and a fixed-amount form still needs an amount.\n\nOnly active forms can be updated — a deactivated one answers `404`, which is also why `is_active: true` cannot bring a form back.\n\n**`url_slug` is not part of this body, and sending it changes nothing** — the call answers `200` with the form untouched, no error. The public URL a form is born with is permanent.\n\n`PUT` on this path answers `405`.",
+        "description": "Changes a live payment form in place. The public URL does not move, so anyone holding the link sees the new settings on their next visit.\n\nThis is a `PATCH`: send only the fields that change, and **a field you leave out keeps its current value** — it is not reset to the create-time default. `PUT` is not accepted and answers `405` with `error.code` `METHOD_NOT_ALLOWED`.\n\nEvery create field can be updated **except `url_slug`**, which is fixed for the life of the form. The same validation runs: an HS code is still checked against the master, `preferred_mop_type` is still upper-case, and a fixed-amount form still needs an amount.\n\nOnly active forms can be updated — a deactivated one answers `404`, which is also why `is_active: true` cannot bring a form back.\n\n**`url_slug` is not part of this body, and sending it changes nothing** — the call answers `200` with the slug untouched, no error. The public URL a form is born with is permanent.\n\n**To pause a form, move `valid_until` into the past.** The form then reports `is_valid: false` and `/pay/<url_slug>/` answers `404` to payers, while the form stays reachable here so you can move the date again later. Deactivation is the one change you cannot reverse.",
         "tags": [
           "Payment Forms"
         ],
@@ -4990,7 +4943,7 @@
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/v3_UpdatePaymentFormRequest"
+                "$ref": "#/components/schemas/v3_UpdatePaymentFormRequestMultipart"
               },
               "encoding": {
                 "logo": {
@@ -5005,7 +4958,7 @@
             "description": "The updated form.",
             "headers": {
               "X-API-Version": {
-                "description": "The API version that served the request. Every Partner API response carries it.",
+                "description": "The API version the request was served as. The Partner API echoes the `X-API-Version` you sent; when you send none it falls back to the version configured on your merchant account's API channel.",
                 "schema": {
                   "type": "string"
                 },
@@ -5034,11 +4987,7 @@
                         "is_fixed_amount": true,
                         "amount": 3000.0,
                         "currency": "INR",
-                        "amount_title": "Ticket Price",
-                        "gst_percentage": 18,
-                        "service_charge_percentage": 0,
                         "valid_until": "2027-03-31T23:59:59.000000Z",
-                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
                         "contact_email": "support@example.com",
                         "contact_phone": "+919876543210",
                         "contact_whatsapp": null,
@@ -5068,19 +5017,6 @@
                   "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
-                  "slug_taken": {
-                    "summary": "The slug is already in use",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_FORM_002",
-                        "message": "Validation error",
-                        "details": {
-                          "url_slug": "This URL slug is already in use. Please choose a different one."
-                        }
-                      }
-                    }
-                  },
                   "slug_not_allowed": {
                     "summary": "The slug uses a reserved segment (e.g. payment, form, pay) or fails the profanity filter",
                     "value": {
@@ -5190,7 +5126,7 @@
             }
           },
           "401": {
-            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "description": "Credentials are missing or wrong. **`X-Merchant-ID` is not consulted on this endpoint** — the form is reached by its `form_id`, scoped to the account your credentials identify — so sending it, or leaving it out, changes nothing here.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5206,32 +5142,6 @@
                         "message": "Missing credentials",
                         "details": {
                           "authentication": "Missing credentials."
-                        }
-                      }
-                    }
-                  },
-                  "missing_merchant_id": {
-                    "summary": "A PSP created a form without X-Merchant-ID",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_000",
-                        "message": "Missing credentials",
-                        "details": {
-                          "authentication": "X-Merchant-ID header is required for this endpoint."
-                        }
-                      }
-                    }
-                  },
-                  "invalid_merchant_id": {
-                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_001",
-                        "message": "Invalid credentials",
-                        "details": {
-                          "authentication": "Invalid X-Merchant-ID provided."
                         }
                       }
                     }
@@ -5291,7 +5201,7 @@
             }
           },
           "500": {
-            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "description": "Something failed on our side. A retry is safe: `PATCH` sets the fields you send to the values you send, so applying the same body twice leaves the same form.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5321,7 +5231,7 @@
     "/pg/forms/{uid}/inactivate/": {
       "post": {
         "summary": "Deactivate a payment form",
-        "description": "Closes a payment form. The page at `/pay/<url_slug>/` stops accepting payment, the form disappears from the list, and it can no longer be retrieved or updated.\n\nNothing is deleted: payments already taken through the form keep their orders, their settlements and their refund path, and the form itself stays on the record for reporting.\n\n**This is one-way over the API.** Reaching a form requires it to be active, so a deactivated form answers `404` to every later call — including the update that would set `is_active` back to `true`. Deactivate only when the form is finished; to pause one temporarily, set `valid_until` instead.\n\nThe slug stays taken. Creating a new form with the same `url_slug` is refused.\n\nThe response body is the form as it now stands, with `is_valid: false`.",
+        "description": "Closes a payment form. The page at `/pay/<url_slug>/` stops accepting payment, the form disappears from the list, and it can no longer be retrieved or updated.\n\nNothing is deleted: payments already taken through the form keep their orders, their settlements and their refund path, and the form itself stays on the record for reporting.\n\n**This is one-way over the API.** Every Payment Forms action resolves the form through a queryset filtered to active forms, so a deactivated form answers `404` to every later call — retrieve, update, and the `is_active: true` that would undo it alike. Nothing short of EximPe ops can bring it back. Deactivate only when the form is finished; to pause one you mean to reopen, set `valid_until` instead — an out-of-window form still answers the API, it just `404`s the payer.\n\nThe slug stays taken. Creating a new form with the same `url_slug` is refused.\n\nThe response body is the form as it now stands, with `is_valid: false`.",
         "tags": [
           "Payment Forms"
         ],
@@ -5351,7 +5261,7 @@
             "description": "The form is deactivated.",
             "headers": {
               "X-API-Version": {
-                "description": "The API version that served the request. Every Partner API response carries it.",
+                "description": "The API version the request was served as. The Partner API echoes the `X-API-Version` you sent; when you send none it falls back to the version configured on your merchant account's API channel.",
                 "schema": {
                   "type": "string"
                 },
@@ -5380,11 +5290,7 @@
                         "is_fixed_amount": true,
                         "amount": 2500.0,
                         "currency": "INR",
-                        "amount_title": "Ticket Price",
-                        "gst_percentage": 18,
-                        "service_charge_percentage": 0,
                         "valid_until": "2026-12-31T23:59:59.000000Z",
-                        "terms_and_conditions": "Tickets are non-refundable within 7 days of the event.",
                         "contact_email": "support@example.com",
                         "contact_phone": "+919876543210",
                         "contact_whatsapp": null,
@@ -5407,7 +5313,7 @@
             }
           },
           "401": {
-            "description": "Credentials are missing or wrong, or a PSP call did not name the sub-merchant.",
+            "description": "Credentials are missing or wrong. **`X-Merchant-ID` is not consulted on this endpoint** — the form is reached by its `form_id`, scoped to the account your credentials identify — so sending it, or leaving it out, changes nothing here.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5423,32 +5329,6 @@
                         "message": "Missing credentials",
                         "details": {
                           "authentication": "Missing credentials."
-                        }
-                      }
-                    }
-                  },
-                  "missing_merchant_id": {
-                    "summary": "A PSP created a form without X-Merchant-ID",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_000",
-                        "message": "Missing credentials",
-                        "details": {
-                          "authentication": "X-Merchant-ID header is required for this endpoint."
-                        }
-                      }
-                    }
-                  },
-                  "invalid_merchant_id": {
-                    "summary": "The X-Merchant-ID is not one of your sub-merchants",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_AUTH_001",
-                        "message": "Invalid credentials",
-                        "details": {
-                          "authentication": "Invalid X-Merchant-ID provided."
                         }
                       }
                     }
@@ -5508,7 +5388,7 @@
             }
           },
           "500": {
-            "description": "Something failed on our side. Retry; the form is not created twice by a retry that never reached us.",
+            "description": "Something failed on our side. A retry is safe: deactivation is idempotent in effect — but note that if the first call did land, the retry answers `404`, because a deactivated form can no longer be reached.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8982,8 +8862,7 @@
           "amount_cents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 1000000000,
-            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true, and intended to be between 0 and 1,000,000,000 — ten million rupees.\n\n**Honoured only when `amount` is absent from the body.** If both keys are present, `amount_cents` is silently discarded in favour of `amount` — including when `amount` is `null`, which then refuses the call with \"Amount is required for fixed amount forms\". Send one key, not both.",
+            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true.\n\n**Honoured only when `amount` is absent from the body.** If both keys are present, `amount_cents` is silently discarded in favour of `amount` — including when `amount` is `null`, which then refuses the call with \"Amount is required for fixed amount forms\". Send one key, not both.\n\nPayment forms are intended for amounts up to ten million rupees (1,000,000,000 paise). That ceiling is not checked when the form is created, so treat it as the supported range rather than as a limit the API will enforce for you.",
             "example": 250000
           },
           "amount": {
@@ -8995,29 +8874,6 @@
             "type": "string",
             "description": "ISO 4217 code of the currency to charge in. An unknown code is refused.",
             "example": "INR"
-          },
-          "amount_title": {
-            "type": "string",
-            "default": "Amount",
-            "maxLength": 255,
-            "description": "The label shown above the amount on the form.",
-            "example": "Ticket Price"
-          },
-          "gst_percentage": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "default": 0,
-            "description": "GST added on top of the amount, as a whole percentage.",
-            "example": 18
-          },
-          "service_charge_percentage": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "default": 0,
-            "description": "Service charge added on top of the amount, as a whole percentage.",
-            "example": 5
           },
           "description": {
             "type": "string",
@@ -9057,73 +8913,43 @@
             "description": "Where the payer is sent after a failed payment. Falls back to `success_url` when it is not set.",
             "example": "https://example.com/payment-failed"
           },
-          "thank_you_message": {
-            "type": "string",
-            "nullable": true,
-            "description": "Message shown on the form once the payment succeeds.",
-            "example": "Thanks — your seat is booked. A receipt is on its way."
-          },
           "valid_from": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "The form refuses payment before this instant. Open immediately when it is not set.",
+            "description": "The form refuses payment before this instant; open immediately when it is not set. Outside its window a form has `is_valid: false` and `/pay/<url_slug>/` answers **404** to the payer, while the form itself stays listable, retrievable and updatable over the API.",
             "example": "2026-10-01T00:00:00Z"
           },
           "valid_until": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "The form refuses payment after this instant. Never expires when it is not set.",
+            "description": "The form refuses payment after this instant; never expires when it is not set. Outside its window a form has `is_valid: false` and `/pay/<url_slug>/` answers **404** to the payer, while the form itself stays listable, retrievable and updatable over the API. This is the way to pause a form you mean to reopen — deactivation cannot be undone.",
             "example": "2026-12-31T23:59:59Z"
           },
           "collect_name": {
             "type": "boolean",
             "default": true,
-            "description": "Ask the payer for their name, and require it.",
+            "description": "Make the payer's name **required**. The hosted page always shows the name field; this flag decides whether a submission without a name is refused.",
             "example": true
           },
           "collect_email": {
             "type": "boolean",
             "default": true,
-            "description": "Ask the payer for their email, and require it.",
+            "description": "Make the payer's email **required**. The hosted page always shows the email field; this flag decides whether a submission without an email is refused.",
             "example": true
           },
           "collect_phone": {
             "type": "boolean",
             "default": true,
-            "description": "Ask the payer for their phone number, and require it. Validated as an international number, so it carries the country code.",
+            "description": "Make the payer's phone number **required**. The hosted page always shows the phone field; this flag decides whether a submission without a phone number is refused. Validated as an international number, so it carries the country code.",
             "example": true
-          },
-          "collect_address": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their address. Only the postal code is kept.",
-            "example": true
-          },
-          "collect_pan": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their PAN.",
-            "example": false
-          },
-          "collect_dob": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their date of birth.",
-            "example": false
           },
           "auto_generate_invoice": {
             "type": "boolean",
             "default": false,
             "description": "Generate an invoice automatically once a payment through this form succeeds.",
             "example": false
-          },
-          "terms_and_conditions": {
-            "type": "string",
-            "nullable": true,
-            "description": "Terms the payer must accept before paying. Shown on the form.",
-            "example": "Tickets are non-refundable within 7 days of the event."
           },
           "contact_email": {
             "type": "string",
@@ -9205,23 +9031,11 @@
               "UPI",
               "NET_BANKING",
               "WALLET",
-              "QR",
-              "EFTNET",
-              "EMI",
-              "BNPL",
-              "LR",
-              "CARD",
-              "VBA_TRANSFER"
+              "QR"
             ],
             "nullable": true,
-            "description": "The payment method the form opens on. **Upper case**, exactly as listed — a lower-case value is refused.",
+            "description": "Pre-select a payment method on the hosted page. Send it upper-case.\n\n**Only these six can actually be paid**: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`.\n\nThe create and update calls accept a wider set of method names than the payment step does. A form saved with anything outside the six above is created without complaint and then refuses **every** payer submission, so do not send one.",
             "example": "UPI"
-          },
-          "logo": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true,
-            "description": "Your logo, shown on the form. A file upload, so it can only be sent with `multipart/form-data`. Read back as `logo_url`."
           },
           "primary_color": {
             "type": "string",
@@ -9255,7 +9069,7 @@
       },
       "v3_UpdatePaymentFormRequest": {
         "type": "object",
-        "description": "Every field of the create body except `url_slug`, which is fixed once the form exists. Send only what changes — anything you leave out keeps its current value.",
+        "description": "Fields to change on an existing payment form. Every key is optional: **a field you leave out keeps the form's current value**, not the field's create-time default. `url_slug` is not part of this body — sending it changes nothing and is not an error.",
         "properties": {
           "payment_for": {
             "type": "string",
@@ -9265,15 +9079,13 @@
           },
           "is_fixed_amount": {
             "type": "boolean",
-            "default": true,
-            "description": "`true` (the default) charges everyone the same `amount_cents`. `false` lets the payer type the amount, and `amount_cents` is then ignored.",
+            "description": "`true` charges everyone the same `amount_cents`. `false` lets the payer type the amount, and `amount_cents` is then ignored.",
             "example": true
           },
           "amount_cents": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 1000000000,
-            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true. Between 0 and 1,000,000,000 — ten million rupees.",
+            "description": "The amount to charge, in the currency's minor unit (paise for INR). Required when `is_fixed_amount` is true.\n\n**Honoured only when `amount` is absent from the body.** If both keys are present, `amount_cents` is silently discarded in favour of `amount` — including when `amount` is `null`, which then refuses the call with \"Amount is required for fixed amount forms\". Send one key, not both.\n\nPayment forms are intended for amounts up to ten million rupees (1,000,000,000 paise). That ceiling is not checked when the form is created, so treat it as the supported range rather than as a limit the API will enforce for you.",
             "example": 250000
           },
           "amount": {
@@ -9285,29 +9097,6 @@
             "type": "string",
             "description": "ISO 4217 code of the currency to charge in. An unknown code is refused.",
             "example": "INR"
-          },
-          "amount_title": {
-            "type": "string",
-            "default": "Amount",
-            "maxLength": 255,
-            "description": "The label shown above the amount on the form.",
-            "example": "Ticket Price"
-          },
-          "gst_percentage": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "default": 0,
-            "description": "GST added on top of the amount, as a whole percentage.",
-            "example": 18
-          },
-          "service_charge_percentage": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 100,
-            "default": 0,
-            "description": "Service charge added on top of the amount, as a whole percentage.",
-            "example": 5
           },
           "description": {
             "type": "string",
@@ -9347,73 +9136,39 @@
             "description": "Where the payer is sent after a failed payment. Falls back to `success_url` when it is not set.",
             "example": "https://example.com/payment-failed"
           },
-          "thank_you_message": {
-            "type": "string",
-            "nullable": true,
-            "description": "Message shown on the form once the payment succeeds.",
-            "example": "Thanks — your seat is booked. A receipt is on its way."
-          },
           "valid_from": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "The form refuses payment before this instant. Open immediately when it is not set.",
+            "description": "The form refuses payment before this instant; open immediately when it is not set. Outside its window a form has `is_valid: false` and `/pay/<url_slug>/` answers **404** to the payer, while the form itself stays listable, retrievable and updatable over the API.",
             "example": "2026-10-01T00:00:00Z"
           },
           "valid_until": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "The form refuses payment after this instant. Never expires when it is not set.",
+            "description": "The form refuses payment after this instant; never expires when it is not set. Outside its window a form has `is_valid: false` and `/pay/<url_slug>/` answers **404** to the payer, while the form itself stays listable, retrievable and updatable over the API. This is the way to pause a form you mean to reopen — deactivation cannot be undone.",
             "example": "2026-12-31T23:59:59Z"
           },
           "collect_name": {
             "type": "boolean",
-            "default": true,
-            "description": "Ask the payer for their name, and require it.",
+            "description": "Make the payer's name **required**. The hosted page always shows the name field; this flag decides whether a submission without a name is refused.",
             "example": true
           },
           "collect_email": {
             "type": "boolean",
-            "default": true,
-            "description": "Ask the payer for their email, and require it.",
+            "description": "Make the payer's email **required**. The hosted page always shows the email field; this flag decides whether a submission without an email is refused.",
             "example": true
           },
           "collect_phone": {
             "type": "boolean",
-            "default": true,
-            "description": "Ask the payer for their phone number, and require it. Validated as an international number, so it carries the country code.",
+            "description": "Make the payer's phone number **required**. The hosted page always shows the phone field; this flag decides whether a submission without a phone number is refused. Validated as an international number, so it carries the country code.",
             "example": true
-          },
-          "collect_address": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their address. Only the postal code is kept.",
-            "example": true
-          },
-          "collect_pan": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their PAN.",
-            "example": false
-          },
-          "collect_dob": {
-            "type": "boolean",
-            "default": false,
-            "description": "Ask the payer for their date of birth.",
-            "example": false
           },
           "auto_generate_invoice": {
             "type": "boolean",
-            "default": false,
             "description": "Generate an invoice automatically once a payment through this form succeeds.",
             "example": false
-          },
-          "terms_and_conditions": {
-            "type": "string",
-            "nullable": true,
-            "description": "Terms the payer must accept before paying. Shown on the form.",
-            "example": "Tickets are non-refundable within 7 days of the event."
           },
           "contact_email": {
             "type": "string",
@@ -9483,7 +9238,6 @@
             "items": {
               "type": "string"
             },
-            "default": [],
             "description": "Payment methods this form may be paid with. An empty list — the default — allows everything your account can collect.",
             "example": []
           },
@@ -9495,23 +9249,11 @@
               "UPI",
               "NET_BANKING",
               "WALLET",
-              "QR",
-              "EFTNET",
-              "EMI",
-              "BNPL",
-              "LR",
-              "CARD",
-              "VBA_TRANSFER"
+              "QR"
             ],
             "nullable": true,
-            "description": "The payment method the form opens on. **Upper case**, exactly as listed — a lower-case value is refused.",
+            "description": "Pre-select a payment method on the hosted page. Send it upper-case.\n\n**Only these six can actually be paid**: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`.\n\nThe create and update calls accept a wider set of method names than the payment step does. A form saved with anything outside the six above is created without complaint and then refuses **every** payer submission, so do not send one.",
             "example": "UPI"
-          },
-          "logo": {
-            "type": "string",
-            "format": "binary",
-            "nullable": true,
-            "description": "Your logo, shown on the form. A file upload, so it can only be sent with `multipart/form-data`. Read back as `logo_url`."
           },
           "primary_color": {
             "type": "string",
@@ -9527,7 +9269,6 @@
               "template1",
               "template2"
             ],
-            "default": "template1",
             "description": "Which summary-pane layout the form uses.",
             "example": "template1"
           },
@@ -9537,7 +9278,6 @@
               "trade_name",
               "legal_name"
             ],
-            "default": "trade_name",
             "description": "Which of your two registered names the form shows the payer. The name itself is always read live from your KYC record, so a later correction there reaches forms already created. Matched case-insensitively.",
             "example": "trade_name"
           },
@@ -9550,7 +9290,7 @@
       },
       "v3_PaymentForm": {
         "type": "object",
-        "description": "A payment form as the create, update and deactivate endpoints return it. Note that the response is deliberately narrower than the request: settings such as `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `thank_you_message`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are stored but not echoed back.",
+        "description": "A payment form as the create, update and deactivate endpoints return it. Note that the response is deliberately narrower than the request: settings such as `description`, `type_of_goods`, `hs_code`, `success_url`, `fail_url`, `valid_from`, the `collect_*` flags, `auto_generate_invoice`, `allowed_payment_methods` and `preferred_mop_type` are stored but not echoed back.",
         "properties": {
           "form_id": {
             "type": "string",
@@ -9601,33 +9341,12 @@
             "description": "ISO 4217 code the form charges in.",
             "example": "INR"
           },
-          "amount_title": {
-            "type": "string",
-            "description": "Label shown above the amount.",
-            "example": "Ticket Price"
-          },
-          "gst_percentage": {
-            "type": "integer",
-            "description": "GST percentage added on top.",
-            "example": 18
-          },
-          "service_charge_percentage": {
-            "type": "integer",
-            "description": "Service charge percentage added on top.",
-            "example": 5
-          },
           "valid_until": {
             "type": "string",
             "format": "date-time",
             "nullable": true,
             "description": "When the form stops accepting payment, or `null`. `valid_from` is stored but not returned.",
             "example": "2026-12-31T23:59:59.000000Z"
-          },
-          "terms_and_conditions": {
-            "type": "string",
-            "nullable": true,
-            "description": "Terms shown on the form.",
-            "example": "Tickets are non-refundable within 7 days of the event."
           },
           "contact_email": {
             "type": "string",
@@ -9795,8 +9514,8 @@
               },
               "total_amount": {
                 "type": "string",
-                "description": "Amount including GST, service charge and fees.",
-                "example": "2950"
+                "description": "Total charged for the order. **On a form payment this is always equal to `amount`** — a payment form adds nothing on top of the amount the payer was shown.",
+                "example": "2500"
               },
               "currency": {
                 "type": "string",
@@ -9826,8 +9545,14 @@
           },
           "status": {
             "type": "string",
-            "description": "Status of the payment attempt.",
-            "example": "CAPTURED"
+            "enum": [
+              "pending",
+              "captured",
+              "failed",
+              "invalid"
+            ],
+            "description": "Status of the payment attempt, **lower-case**, and the only four values to expect when polling this endpoint:\n\n- `pending` — started, not yet resolved.\n- `captured` — the money was taken. This is the only success.\n- `failed` — declined, abandoned, or past its expiry.\n- `invalid` — the attempt could not be processed at all.\n\nThis is an *effective* status: a `pending` attempt whose expiry has passed is reported as `failed` here, even though the stored status has not changed. The `payment_count` buckets on the list endpoint are computed from the stored status instead, so such an attempt is counted under `pending` there while it reads `failed` here. Trust this field for an individual attempt and the counts for a rough total.",
+            "example": "captured"
           }
         }
       },
@@ -10026,6 +9751,46 @@
                 }
               }
             ]
+          }
+        }
+      },
+      "v3_CreatePaymentFormRequestMultipart": {
+        "type": "object",
+        "description": "The same body as `v3_CreatePaymentFormRequest`, sent as `multipart/form-data` so that a `logo` file can be uploaded alongside it. **`logo` cannot be sent in a JSON body.**",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/v3_CreatePaymentFormRequest"
+          }
+        ],
+        "properties": {
+          "logo": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "description": "Logo image shown on the hosted page. A file upload, so a request that carries one must be `multipart/form-data`. Read it back as `logo_url`."
+          }
+        },
+        "required": [
+          "url_slug",
+          "payment_for",
+          "currency",
+          "type_of_goods"
+        ]
+      },
+      "v3_UpdatePaymentFormRequestMultipart": {
+        "type": "object",
+        "description": "The same body as `v3_UpdatePaymentFormRequest`, sent as `multipart/form-data` so that a `logo` file can be uploaded alongside it. **`logo` cannot be sent in a JSON body.**",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/v3_UpdatePaymentFormRequest"
+          }
+        ],
+        "properties": {
+          "logo": {
+            "type": "string",
+            "format": "binary",
+            "nullable": true,
+            "description": "Logo image shown on the hosted page. A file upload, so a request that carries one must be `multipart/form-data`. Read it back as `logo_url`."
           }
         }
       }

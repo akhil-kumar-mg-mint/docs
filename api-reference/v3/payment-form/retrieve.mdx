@@ -20,9 +20,28 @@ This is what makes retrieve worth polling. Every active payment attempt against 
 
 - `payment_id` and `order_id` — take the payment ID into the Payments API for the full record
 - `status` and `comment` — the attempt's outcome and the gateway's message for it
-- `buyer` — name, email and phone exactly as the payer typed them, `null` for anything the form does not collect
+- `buyer` — name, email and phone exactly as the payer typed them, `null` for anything the payer left blank
 - `amount` — `amount`, `total_amount` and `currency`, sent as **JSON strings**, in rupees
 - `mop_type` — the method used, lower-case (`upi`, `credit_card`, …)
+
+### `status`
+
+Four values, **lower-case**:
+
+| `status` | Meaning |
+|---|---|
+| `pending` | Started, not yet resolved. |
+| `captured` | The money was taken. **The only success.** |
+| `failed` | Declined, abandoned, or past its expiry. |
+| `invalid` | The attempt could not be processed at all. |
+
+<Note>
+  **This is an *effective* status.** A `pending` attempt whose expiry has passed is reported here as `failed`, without its stored status changing. `payment_count` on [list](/api-reference/v3/payment-form/list) is computed from the stored status instead — `success` is `captured`, `pending` is `pending`, `failed` is `failed` and `invalid` together — so that one attempt is counted under `pending` there while it reads `failed` here. Trust this field for an individual attempt; treat the counts as a rough total.
+</Note>
+
+<Note>
+  **`total_amount` always equals `amount` here.** A payment form adds nothing on top of the amount the payer was shown, so the two are the same number on every form payment. Compare them on payments taken through other products, not this one.
+</Note>
 
 <Note>
   **Failed and pending attempts are here too.** The counts on [list](/api-reference/v3/payment-form/list) are a summary of this same set, so a form whose `payment_count.failed` is climbing can be diagnosed attempt by attempt here.
@@ -35,3 +54,17 @@ This is what makes retrieve worth polling. Every active payment attempt against 
 ## Only active forms resolve
 
 A form you deactivated answers `404 ERR_FORM_001`, and so does a form that never existed or that belongs to another merchant. The endpoint never distinguishes the three, so it cannot be used to probe another merchant's form IDs.
+
+Every Payment Forms action resolves the form through a queryset filtered to active forms, so that `404` is permanent: there is no call — not even [update](/api-reference/v3/payment-form/update) with `is_active: true` — that brings a deactivated form back.
+
+<Note>
+  **An expired form still answers here.** A form outside its `valid_from` / `valid_until` window is returned normally, with `is_valid: false`, even while `/pay/<url_slug>/` is answering `404` to payers. Deactivation removes a form from the API; expiry only closes the page.
+</Note>
+
+<Note>
+  **`X-Merchant-ID` is not read on this endpoint.** The form is reached by its `form_id`, scoped to the account your credentials identify. Sending the header, or leaving it out, makes no difference — it is required only on [create](/api-reference/v3/payment-form/create) and optional on [list](/api-reference/v3/payment-form/list).
+</Note>
+
+<Note>
+  **No rate limit.** The Payment Forms endpoints opt out of the Partner API's throttles, so polling this one never answers `429`. That is how it behaves today, not a guarantee — poll at a sensible interval, and take the authoritative lifecycle from [webhooks](/integration-guide/v3/web-integration/webhooks).
+</Note>

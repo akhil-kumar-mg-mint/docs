@@ -38,6 +38,14 @@ Each row carries the form's `form_url`, whether it is currently accepting paymen
   **Only active forms.** A [deactivated](/api-reference/v3/payment-form/deactivate) form is not listed, and there is no filter that brings it back. Treat this list as "the forms that still exist for payers".
 </Note>
 
+<Note>
+  **An expired form is still listed**, with `is_valid: false`. Outside its `valid_from` / `valid_until` window a form stops serving `/pay/<url_slug>/` — payers get a `404` — but it stays here and stays editable, which is what makes `valid_until` a reversible pause and deactivation a one-way door.
+</Note>
+
 A PSP that sends no `X-Merchant-ID` sees its own forms and those of all its sub-merchants. Naming a sub-merchant in the header narrows the list to that one. The header is optional here, unlike on [create](/api-reference/v3/payment-form/create).
 
-`amount` is returned in rupees, and is `null` on a variable-amount form. To see the payments behind `payment_count`, [retrieve](/api-reference/v3/payment-form/retrieve) the form.
+`amount` is returned in rupees, and is `null` on a variable-amount form. To see the payments behind `payment_count`, [retrieve](/api-reference/v3/payment-form/retrieve) the form. The counts group the four payment statuses by their *stored* value: `success` is `captured`, `pending` is `pending`, and `failed` is `failed` and `invalid` together. Retrieve reports an *effective* status instead, so a pending attempt that has since expired reads `failed` there while it is still counted under `pending` here.
+
+<Note>
+  **No rate limit.** The Payment Forms endpoints opt out of the Partner API's throttles, so this list never answers `429`. That describes the implementation as it stands rather than a commitment.
+</Note>
