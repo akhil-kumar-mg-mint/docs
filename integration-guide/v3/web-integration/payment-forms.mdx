@@ -141,11 +141,16 @@ A PSP's form belongs to the sub-merchant named in `X-Merchant-ID`, not to the PS
 
 ## Step 2: Share the link
 
-`form_url` is the page. It is the API host plus `/pay/<url_slug>/`:
+`form_url` is the page. Read it off the response rather than building it yourself — forms
+have their own production origin, and it is not the API host:
 
-```
-https://api-pacb-uat.eximpe.com/pay/spring-workshop/
-```
+| Environment | `form_url` |
+|---|---|
+| Production | `https://forms.eximpe.com/pay/spring-workshop/` |
+| UAT | `https://api-pacb-uat.eximpe.com/pay/spring-workshop/` |
+
+The URL is derived from the slug on every read rather than stored, so a form is served from
+whichever origin its environment uses at the time you read it.
 
 Share it however you reach people — an email, a WhatsApp message, a button on your site, a QR code on a poster. There is no per-payer setup: everyone who opens it gets their own order.
 

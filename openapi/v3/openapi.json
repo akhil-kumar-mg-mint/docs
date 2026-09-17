@@ -9305,7 +9305,7 @@
           "form_url": {
             "type": "string",
             "format": "uri",
-            "description": "The public URL to share with payers. Absolute, built from the host the request arrived on.",
+            "description": "The public URL to share with payers. Absolute. Read it from the response rather than building it: in production forms are served from their own origin, https://forms.eximpe.com, not the API host.",
             "example": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/"
           },
           "merchant_account": {
@@ -9603,7 +9603,7 @@
           "form_url": {
             "type": "string",
             "format": "uri",
-            "description": "The public URL to share with payers. Absolute, built from the host the request arrived on.",
+            "description": "The public URL to share with payers. Absolute. Read it from the response rather than building it: in production forms are served from their own origin, https://forms.eximpe.com, not the API host.",
             "example": "https://api-pacb-uat.eximpe.com/pay/spring-workshop/"
           },
           "payment_count": {
