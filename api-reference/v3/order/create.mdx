@@ -287,8 +287,6 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 
 ## Duplicate requests
 
-Create Order does not support an idempotency key, and it does not replay an earlier response.
-
 - **`reference_id` is single-use.** It must be unique across all your orders, whatever their status — a failed order still holds its `reference_id`. Sending one that is already used is refused with `Reference ID already exists`; the original order is not returned.
 - **`invoice.number` is unique across your orders that have not failed.** Once an order fails, its invoice number can be used again.
 - For a PSP, both rules apply per sub-merchant.
