@@ -227,9 +227,9 @@ Depending on how your account collects UPI, `intent_uri` comes either as a compl
   "success": true,
   "message": "S2S UPI Request created successfully",
   "data": {
-    "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "intent_uri": "upi://pay?pa=merchant.sandbox@examplebank&pn=Example%20Merchant&am=1000.00&cu=INR&tn=OD2000992103&tr=403993715534292371",
     "order_id": "OD2000992103",
-    "expires_at": "2026-09-21T10:35:00Z"
+    "expires_at": "2026-09-21T10:35:00.156967Z"
   }
 }
 ```
@@ -239,9 +239,9 @@ Depending on how your account collects UPI, `intent_uri` comes either as a compl
   "success": true,
   "message": "S2S UPI Request created successfully",
   "data": {
-    "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
+    "intent_uri": "upi://pay?pa=merchant.sandbox@examplebank&pn=Example%20Merchant&am=1000.00&cu=INR&tn=OD2000992103&tr=403993715534292371",
     "order_id": "OD2000992103",
-    "expires_at": "2026-09-21T10:35:00Z",
+    "expires_at": "2026-09-21T10:35:00.156967Z",
     "test_simulator_url": "<simulator URL returned by the sandbox API>"
   }
 }
