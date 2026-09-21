@@ -22,9 +22,12 @@
         "security": [
           {
             "clientAuth": [],
+            "clientSecretAuth": []
+          },
+          {
+            "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -42,12 +45,11 @@
                   "value": {
                     "amount": "1000.00",
                     "currency": "INR",
-                    "reference_id": "ORDER_123456",
+                    "reference_id": "ORDER-123456",
                     "collection_mode": "hosted_payment",
                     "mop_type": "upi",
                     "return_url": "https://yourdomain.com/payment/callback/",
                     "business_model": "B2C",
-                    "purpose_code": "S0101",
                     "buyer": {
                       "name": "Alice Smith",
                       "email": "alice.smith@example.com",
@@ -67,8 +69,8 @@
                       "type_of_goods": "physical_goods"
                     },
                     "invoice": {
-                      "number": "INV_0HOZ0C",
-                      "date": "2025-09-04"
+                      "number": "INV-2026-0001",
+                      "date": "2026-09-21"
                     }
                   }
                 },
@@ -78,7 +80,7 @@
                   "value": {
                     "amount": "1000.00",
                     "currency": "INR",
-                    "reference_id": "ORDER_123457",
+                    "reference_id": "ORDER-123457",
                     "collection_mode": "s2s",
                     "mop_type": "upi",
                     "upi_flow_type": "intent",
@@ -99,13 +101,13 @@
                     "product": {
                       "name": "Smartphone",
                       "description": "This is a sample product description",
-                      "hs_code": "98051000",
-                      "hs_code_description": "Portable automatic data processing machines",
+                      "hs_code": "85171290",
+                      "hs_code_description": "Telephones for cellular networks, other than smartphones",
                       "type_of_goods": "physical_goods"
                     },
                     "invoice": {
-                      "number": "INV_0HOZ0C",
-                      "date": "2025-09-04"
+                      "number": "INV-2026-0002",
+                      "date": "2026-09-21"
                     }
                   }
                 }
@@ -114,8 +116,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Order created successfully",
+          "201": {
+            "description": "Order created",
             "content": {
               "application/json": {
                 "schema": {
@@ -139,8 +141,9 @@
                       "success": true,
                       "message": "S2S UPI Request created successfully",
                       "data": {
-                        "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
-                        "order_id": "OD2000992103"
+                        "intent_uri": "upi://pay?pa=merchant.sandbox@examplebank&pn=Example%20Merchant&am=1000.00&cu=INR&tn=OD2000992103&tr=403993715534292371",
+                        "order_id": "OD2000992103",
+                        "expires_at": "2026-09-21T10:35:00.156967Z"
                       }
                     }
                   }
@@ -149,20 +152,75 @@
             }
           },
           "400": {
-            "description": "Invalid request parameters",
+            "description": "The request was refused. Always `ERR_ORDER_002`; read `details`.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
+                  "Invalid fields": {
+                    "summary": "Invalid fields",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "buyer": {
+                            "email": "Enter a valid email address.",
+                            "phone": "Enter a valid phone number."
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Duplicate reference_id": {
+                    "summary": "reference_id already used",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "reference_id": "Reference ID already exists"
+                        }
+                      }
+                    }
+                  },
+                  "Duplicate invoice number": {
+                    "summary": "Invoice number already used",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "invoice": {
+                            "number": "Invoice Number already exists"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Purpose code": {
+                    "summary": "purpose_code not enabled",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": "Purpose code is not enabled for this merchant."
+                      }
+                    }
+                  },
                   "Invalid collection mode": {
                     "summary": "collection_mode missing or unrecognised",
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_VALIDATION_000",
-                        "message": "Validation failed",
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
                         "details": {
                           "collection_mode": "Invalid collection mode"
                         }
@@ -174,11 +232,80 @@
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid credentials",
+            "description": "Missing or wrong credentials, or a PSP left out X-Merchant-ID",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  },
+                  "Invalid credentials": {
+                    "summary": "Invalid credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_001",
+                        "message": "Invalid credentials",
+                        "details": {
+                          "authentication": "Invalid credentials."
+                        }
+                      }
+                    }
+                  },
+                  "Missing X-Merchant-ID": {
+                    "summary": "PSP without X-Merchant-ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "X-Merchant-ID header is required for this endpoint."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account cannot create this order \u2014 for example, S2S payments are not enabled on it",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "S2S not enabled": {
+                    "summary": "S2S not enabled",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  },
+                  "Merchant inactive": {
+                    "summary": "Merchant account inactive",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_002",
+                        "message": "Merchant account is not active",
+                        "details": {
+                          "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -189,11 +316,31 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Unexpected": {
+                    "summary": "Unexpected error",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "error": "An unexpected error occurred. Please try again later"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     }
   },
@@ -219,17 +366,9 @@
         "type": "apiKey",
         "name": "X-Merchant-ID",
         "in": "header",
-        "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
-        "x-displayName": "Merchant ID",
+        "description": "**Sub-merchant ID** - Send this only when you authenticate as a PSP and create the order for one of your sub-merchants: it names that sub-merchant. A PSP that leaves it out is refused with a `401`. Merchants that authenticate with their own Client ID and Client Secret do not send it.",
+        "x-displayName": "Merchant ID (PSPs only)",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
-        "name": "X-API-Version",
-        "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
       }
     },
     "schemas": {
@@ -249,15 +388,19 @@
           },
           "city": {
             "type": "string",
-            "description": "City name"
+            "maxLength": 255,
+            "description": "City"
           },
           "state": {
             "type": "string",
-            "description": "State name"
+            "maxLength": 255,
+            "description": "State"
           },
           "postal_code": {
             "type": "string",
-            "description": "Postal/ZIP code"
+            "pattern": "^[0-9]{6}$",
+            "description": "A valid 6-digit Indian PIN code",
+            "example": "400001"
           }
         }
       },
@@ -272,7 +415,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "Buyer's full name"
+            "description": "Buyer's full name",
+            "maxLength": 255
           },
           "email": {
             "type": "string",
@@ -281,7 +425,7 @@
           },
           "phone": {
             "type": "string",
-            "description": "Buyer's phone number with country code",
+            "description": "Phone number in E.164 format: `+`, the country code, then the number (e.g. `+919812345678`)",
             "pattern": "^\\+[1-9]\\d{1,14}$"
           },
           "address": {
@@ -289,11 +433,11 @@
           },
           "ip_address": {
             "type": "string",
-            "description": "Buyer's IP address (required for card payments)"
+            "description": "The customer's IP address. Required for S2S UPI Intent; ignored for Hosted Checkout"
           },
           "user_agent": {
             "type": "string",
-            "description": "Buyer's browser user agent (required for card payments)"
+            "description": "The customer's browser user agent. Required for S2S UPI Intent; ignored for Hosted Checkout"
           }
         }
       },
@@ -304,7 +448,6 @@
           "currency",
           "reference_id",
           "collection_mode",
-          "return_url",
           "buyer",
           "product",
           "invoice"
@@ -312,22 +455,29 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
-            "pattern": "^\\d+\\.\\d{2}$"
+            "example": "1000.00",
+            "description": "Amount in rupees, as a decimal string such as `\"1000.00\"`. A JSON number is also accepted. More than two decimal places are rounded to two, so `1000.456` is charged as `1000.46`. Must be greater than 0 and at most 10,000,000.00."
           },
           "currency": {
             "type": "string",
-            "description": "3-letter ISO currency code (e.g., INR, USD)",
-            "pattern": "^[A-Z]{3}$"
+            "enum": [
+              "INR"
+            ],
+            "description": "ISO 4217 currency code. Hosted Checkout and S2S UPI Intent collect in INR only."
           },
           "reference_id": {
             "type": "string",
-            "description": "Unique identifier for the order"
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "example": "ORDER-123456",
+            "description": "Your reference for the order: letters, numbers and hyphens only. Must be unique across your orders, including failed ones."
           },
           "return_url": {
             "type": "string",
             "format": "uri",
-            "description": "URL to redirect after payment"
+            "maxLength": 500,
+            "description": "Optional. Where Hosted Checkout sends the customer when the payment finishes. Without it the customer sees EximPe's own result page. S2S UPI Intent does not redirect the customer."
           },
           "collection_mode": {
             "type": "string",
@@ -339,7 +489,7 @@
           },
           "mop_type": {
             "type": "string",
-            "description": "Method of payment type (e.g., UPI)",
+            "description": "Hosted Checkout: optional, pre-selects a payment method on the payment page. S2S UPI Intent: must be `upi`.",
             "enum": [
               "credit_card",
               "debit_card",
@@ -350,7 +500,7 @@
           },
           "upi_flow_type": {
             "type": "string",
-            "description": "UPI flow type (required when collection_mode is s2s and mop_type is UPI)",
+            "description": "Required for S2S UPI Intent, where it must be `intent`. Not used by Hosted Checkout.",
             "enum": [
               "intent"
             ]
@@ -416,12 +566,16 @@
             "description": "Error message"
           },
           "details": {
-            "type": "object",
-            "description": "Detailed validation error information with field-specific errors",
-            "additionalProperties": {
-              "type": "string",
-              "description": "Error message for the specific field"
-            }
+            "description": "What failed. Usually an object keyed by field and nested like the request, one message per field. A purpose-code refusal is a plain string.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       },
@@ -446,20 +600,22 @@
       },
       "v3_Invoice": {
         "type": "object",
+        "required": [
+          "number"
+        ],
         "properties": {
           "number": {
             "type": "string",
-            "description": "Invoice number"
+            "maxLength": 255,
+            "example": "INV-2026-0001",
+            "description": "Invoice number. Letters, numbers, spaces and `. , ' - / & _ ( ) : ; ! @ # $ % * + = < > [ ] { } | ~`. Must be unique across your orders that have not failed."
           },
           "date": {
             "type": "string",
             "format": "date",
-            "description": "Invoice date in YYYY-MM-DD format"
+            "description": "Invoice date, `YYYY-MM-DD`"
           }
-        },
-        "required": [
-          "number"
-        ]
+        }
       },
       "v3_OrderData": {
         "type": "object",
@@ -469,7 +625,7 @@
         "properties": {
           "session_id": {
             "type": "string",
-            "description": "Unique session identifier for payment processing (for hosted payment mode)"
+            "description": "Hosted Checkout only. 64-character hex string you pass to the EximPe JS SDK. Valid for 15 minutes."
           },
           "order_id": {
             "type": "string",
@@ -477,11 +633,16 @@
           },
           "intent_uri": {
             "type": "string",
-            "description": "UPI intent URI for direct app opening (for S2S UPI Intent mode)"
+            "description": "S2S UPI Intent only. The UPI payment request. It may or may not start with `upi://pay?` \u2014 see the Create Order page for how to invoke it."
           },
           "test_simulator_url": {
             "type": "string",
             "description": "Sandbox only. Open in a browser to complete an S2S UPI Intent payment without a real UPI app. Not returned in production."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "S2S UPI Intent only. When the intent stops accepting payment, in UTC \u2014 5 minutes after creation."
           }
         }
       },
@@ -498,11 +659,12 @@
           },
           "description": {
             "type": "string",
-            "description": "Product description"
+            "description": "Product description",
+            "maxLength": 1024
           },
           "hs_code": {
             "type": "string",
-            "description": "Harmonized System code, required for physical goods"
+            "description": "8-digit HS code. Required when `type_of_goods` is `physical_goods`"
           },
           "hs_code_description": {
             "type": "string",
@@ -510,7 +672,7 @@
           },
           "type_of_goods": {
             "type": "string",
-            "description": "Type of goods (e.g., physical_goods)",
+            "description": "Nature of what is sold",
             "enum": [
               "physical_goods",
               "digital_goods",
@@ -518,6 +680,22 @@
             ]
           }
         }
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": false,
+        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }
