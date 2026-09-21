@@ -1,167 +1,112 @@
 ---
 title: 'Create Order'
+description: 'Create an order and get either a Hosted Checkout session or a UPI intent to collect an INR payment.'
 openapi: "/openapi/v3-orders.json POST /pg/orders/"
 ---
 
 ## Overview
 
-The Create Order endpoint is the first step in the payment flow. It creates a new order with buyer details, product information, and your payment collection settings.
+Create Order is the first step in the payment flow. You send the buyer, product and invoice details from your backend, and choose how the payment is collected with `collection_mode`:
 
-The response depends on the collection mode you pick:
+- **Hosted Checkout** (`hosted_payment`) returns a `session_id`. You hand it to the EximPe JS SDK, which opens EximPe's payment page.
+- **S2S UPI Intent** (`s2s`) returns an `intent_uri` that you use to open the customer's UPI app.
 
-- **Hosted Checkout** — returns a `session_id` and `order_id`. You hand the `session_id` to the EximPe JS SDK, which opens EximPe's secure payment page.
-- **S2S UPI Intent** — returns an `order_id` and an `intent_uri` that you use to launch the customer's UPI app.
+Both return an `order_id`. A successful create returns `201 Created`.
 
-## Payment Collection Modes
+| Environment | Base URL |
+|---|---|
+| Sandbox | `https://api-pacb-uat.eximpe.com` |
+| Production | `https://api-pacb.eximpe.com` |
 
-### 1. Hosted Checkout
+### Headers
 
-Set `collection_mode` to `hosted_payment`. The customer is taken to EximPe's pre-built payment page, so no card or UPI credentials ever touch your servers.
+| Header | Required | Value |
+|---|---|---|
+| `X-Client-ID` | Yes | Your Client ID, from Developer Settings in the merchant dashboard. |
+| `X-Client-Secret` | Yes | Your Client Secret. Keep it on your server. |
+| `X-API-Version` | Recommended | `3.0.0`. It selects the API version; it is not a credential. |
+| `X-Merchant-ID` | PSPs only | The sub-merchant the order is for. Required when you authenticate as a PSP; merchants using their own credentials leave it out. |
+| `Content-Type` | Yes | `application/json` |
 
-### 2. S2S UPI Intent
+<Warning>
+  Create orders from your backend only. The request carries your Client Secret, so never send it from a browser or a mobile app.
+</Warning>
 
-Set `collection_mode` to `s2s`, `mop_type` to `upi`, and `upi_flow_type` to `intent`. EximPe returns a UPI intent URI that you invoke directly on the customer's device.
+## Hosted Checkout and S2S UPI Intent
 
-<Note>
-  See the [S2S UPI Intent integration guide](/integration-guide/v3/web-integration/s2s-upi-intent) for the end-to-end flow, including how to invoke the intent URI on Android, iOS, and desktop.
-</Note>
+| | Hosted Checkout | S2S UPI Intent |
+|---|---|---|
+| `collection_mode` | `hosted_payment` | `s2s` |
+| `mop_type` | Optional. Pre-selects a payment method on the payment page | Must be `upi` |
+| `upi_flow_type` | Not used | Must be `intent` |
+| `buyer.ip_address`, `buyer.user_agent` | Not used; EximPe captures them on the payment page | Required |
+| `return_url` | Optional. Where the customer lands after paying | Not used; the customer is not redirected |
+| Returns | `order_id`, `session_id` | `order_id`, `intent_uri`, `expires_at` |
+
+`collection_mode` has no default. Leave it out, or send another value, and the request is refused with `{"collection_mode": "Invalid collection mode"}`.
+
+S2S UPI Intent must be enabled on your account. See the [S2S UPI Intent integration guide](/integration-guide/v3/web-integration/s2s-upi-intent) for the end-to-end flow.
 
 ## Request Parameters
 
-### Required Parameters
-- `collection_mode`: The payment collection mode — `hosted_payment` or `s2s`
-- `reference_id`: Unique identifier for the order
-- `amount`: Payment amount in decimal format
-- `currency`: 3-letter ISO currency code (e.g., INR)
-- `return_url`: URL to redirect after payment completion
-- `buyer`: Buyer details object — required, unless your Hosted Checkout collects buyer details on the payment page
-- `product`: Product details object
-- `invoice`: Invoice details object
-
-### Hosted Checkout Parameters
-- `collection_mode`: Must be `hosted_payment`
-- `mop_type`: Optional. Pre-selects a payment method on the checkout page
-
-### S2S UPI Intent Parameters
-- `collection_mode`: Must be `s2s`
-- `mop_type`: Must be `upi`
-- `upi_flow_type`: Must be `intent`
-- `buyer.ip_address`: Customer's IP address
-- `buyer.user_agent`: Customer's browser user agent
-
-### Optional Parameters
-
-Both apply to either collection mode and resolve independently of each other:
-
-- `business_model`: Whether the buyer is a business (`B2B`) or a consumer (`B2C`)
-- `purpose_code`: The FEMA/FETERS purpose code this order settles under (e.g. `S0802`)
-
-<Note>
-  Omit either one and EximPe derives it from your KYC. A `purpose_code` is auto-filled only when your account has exactly one allowed code; where the KYC is ambiguous the field is left unset for later classification.
-</Note>
-
-<Note>
-  `collection_mode` is not defaulted — send it explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
-</Note>
-
-<Note>
-  `buyer.ip_address` and `buyer.user_agent` are required for the S2S UPI Intent flow in addition to the standard checkout fields. They are not part of the Hosted Checkout request — EximPe captures them itself when the customer lands on the payment page.
-</Note>
-
-### Parameter Definitions
-
-The following tables define the request parameters, including nested objects, types, requirements, and constraints.
+Fields not listed as required are optional. "Conditional" means the field is required only in the stated case.
 
 #### Top-level
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| amount | string | Yes | Amount to charge, decimal string. | Format: `^[0-9]+(\.[0-9]{1,2})?$`; amount must be > 0 and ≤ 10,000,000.00 |
-| currency | string | Yes | 3-letter ISO currency code. | Supported: `INR` |
-| reference_id | string | Yes | Merchant-side unique reference for the order. | 1–50 chars; use letters, numbers, and dashes; unique per merchant while order is active |
-| collection_mode | string | Yes | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; no default — send it explicitly |
-| mop_type | string | Conditional | Method of payment. | Optional for `hosted_payment` (enum: `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`) — pre-selects a method on the checkout page; must be `upi` for the S2S UPI Intent flow |
-| upi_flow_type | string | Conditional | UPI flow when `mop_type` is `upi` and `collection_mode` is `s2s`. | Must be `intent` for the S2S UPI Intent flow; not used for `hosted_payment` |
-| return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
-| business_model | string | No | Whether the buyer is a business or a consumer. | Enum: `B2B`, `B2C`; derived from your KYC when omitted |
-| purpose_code | string | No | FEMA/FETERS purpose code this order settles under. | Must be active and enabled on your account (e.g. `S0101`, `S0802`); derived from your KYC when omitted |
-| buyer | object | Conditional | Buyer/customer details. | Required, unless your Hosted Checkout is configured to collect buyer details on the payment page. See Buyer object |
-| product | object | Yes | Product or service being purchased. | See Product object |
-| invoice | object | Yes | Invoice metadata. | See Invoice object |
+| amount | string | Yes | Amount to collect, in rupees. | Decimal string such as `"1000.00"`; a JSON number is also accepted. More than two decimal places are rounded to two — `1000.456` is charged as `1000.46`. Greater than 0 and at most 10,000,000.00 |
+| currency | string | Yes | ISO 4217 currency code. | `INR` |
+| reference_id | string | Yes | Your reference for the order. | 1–50 chars; letters, numbers and hyphens only (`ORDER-123456`, not `ORDER_123456`); unique across your orders. See [Duplicate requests](#duplicate-requests) |
+| collection_mode | string | Yes | How the payment is collected. | `hosted_payment` or `s2s`; no default |
+| mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`. S2S UPI Intent: required, `upi` |
+| upi_flow_type | string | Conditional | UPI flow. | S2S UPI Intent: required, `intent` |
+| return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
+| business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; derived from your KYC when omitted |
+| purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`); derived from your KYC when omitted |
+| buyer | object | Yes | The buyer. | See Buyer |
+| product | object | Yes | What is being sold. | See Product |
+| invoice | object | Yes | Invoice metadata. | See Invoice |
 
-Notes:
-- "Conditional" required means the field is required only when the stated condition is met.
+When you omit `purpose_code`, it is filled in only if your account has exactly one allowed code; otherwise it is left unset for later classification. Neither `business_model` nor `purpose_code` is returned by Create Order, and neither can be changed after the order is created. Read them back with [Get Order Details](/api-reference/v3/order/get).
 
 #### Buyer
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| name | string | Yes | Full name of the buyer. | Max 255 chars; letters, spaces, and common name punctuation (.,-' ) |
-| email | string | Yes | Email of the buyer. | RFC 5322 email format |
-| phone | string | Yes | Phone number with country code. | Valid phone number; E.164 preferred (e.g., `+9198xxxxxxxx`) |
-| address | object | Yes | Buyer address. | See Address object |
-| ip_address | string | Conditional | Customer IP address. | Required for S2S UPI Intent; not accepted for Hosted Checkout. IPv4/IPv6 |
-| user_agent | string | Conditional | Browser/device user agent. | Required for S2S UPI Intent; not accepted for Hosted Checkout. Typical browser user agent string |
+| name | string | Yes | Full name. | Max 255 chars |
+| email | string | Yes | Email address. | A valid email address |
+| phone | string | Yes | Phone number with country code. | E.164: `+`, the country code, then the number, e.g. `+919812345678`; `9812345678` is refused |
+| address | object | Yes | Address. | See Address |
+| ip_address | string | Conditional | The customer's IP address. | S2S UPI Intent: required. IPv4 or IPv6 |
+| user_agent | string | Conditional | The customer's browser user agent. | S2S UPI Intent: required |
 
-#### Address (Buyer.address)
+#### Address (buyer.address)
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| line_1 | string | No | Address line 1. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
-| line_2 | string | No | Address line 2. | Text up to ~255 chars; use standard address characters (letters, numbers, spaces, , . - / #) |
-| city | string | No | City. | Alphabetic only; Max 255 chars |
-| state | string | No | State/Province. | Alphabetic only; Max 255 chars |
-| postal_code | string | Yes | Postal/ZIP code. | 6 chars; numbers |
+| line_1 | string | No | Address line 1. | |
+| line_2 | string | No | Address line 2. | |
+| city | string | No | City. | Max 255 chars |
+| state | string | No | State. | Max 255 chars |
+| postal_code | string | Yes | PIN code. | A valid 6-digit Indian PIN code |
 
 #### Product
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| name | string | Yes | Product or service name. | Max 255 chars; letters, numbers, spaces, and common punctuation |
-| description | string | No | Description of the product/service. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
-| type_of_goods | string | Yes | Nature of goods/services. | Enum: `digital_goods`, `physical_goods`, `service` |
-| hs_code | string | Conditional | 8-digit HS Code. Required for physical goods | Max 8 chars; numbers |
-| hs_code_description | string | No | HS Code description. | Max 1024 chars; letters, numbers, spaces, and common punctuation |
+| name | string | Yes | Product or service name. | |
+| description | string | No | Description. | Max 1024 chars |
+| type_of_goods | string | Yes | Nature of what is sold. | `physical_goods`, `digital_goods` or `service` |
+| hs_code | string | Conditional | 8-digit HS code. | Required for `physical_goods`; must be a known HS code |
+| hs_code_description | string | No | HS code description. | |
 
 #### Invoice
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| number | string | Yes | Invoice number. | Max 255 chars; letters, numbers, dashes/slashes |
-| date | string | No | Invoice date (ISO 8601). | Format: `YYYY-MM-DD` |
-
-## Response
-
-### Hosted Checkout Response
-
-For hosted checkout mode, the response includes:
-- `order_id`: Unique order identifier
-- `session_id`: 64-character hex string. Pass this to the EximPe JS SDK to open the payment page
-
-<Warning>
-  **Session validity.** The `session_id` is valid for **15 minutes**. If it expires, create a new order to get a fresh one. Reusing an expired or already-completed session returns `Invalid or expired session`.
-</Warning>
-
-### S2S UPI Intent Response
-
-For S2S UPI Intent mode, the response includes:
-- `order_id`: Unique order identifier
-- `intent_uri`: UPI intent link that can be used to open UPI apps directly
-- `test_simulator_url`: **Sandbox only** — a URL you open in a browser to complete the payment without a real UPI app
-
-<Tip>
-  In the **sandbox environment**, the response carries an extra `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without a real UPI app or a mobile device. The result follows the test VPA you use in the simulator. This field is **not returned in production**.
-</Tip>
-
-### Purpose code errors
-
-A `purpose_code` you send is validated, not silently dropped:
-
-| Condition | Code | Message |
-|---|---|---|
-| Unknown or inactive code | `40310` | Invalid Purpose code given. |
-| Valid code, not enabled on your account | `40311` | Purpose code is not enabled for this merchant. |
-| `business_model` outside `B2B` / `B2C` | `400` | `"business_model": ["\"X\" is not a valid choice."]` |
+| number | string | Yes | Invoice number. | Max 255 chars. Letters, numbers, spaces and ``. , ' - / & _ ( ) : ; ! @ # $ % * + = < > [ ] { } \| ~`` — unlike `reference_id`, underscores are allowed. Unique across your orders that have not failed |
+| date | string | No | Invoice date. | `YYYY-MM-DD` |
 
 ## Examples
 
@@ -171,12 +116,11 @@ A `purpose_code` you send is validated, not silently dropped:
 {
   "amount": "1000.00",
   "currency": "INR",
-  "reference_id": "ORDER_123456",
+  "reference_id": "ORDER-123456",
   "collection_mode": "hosted_payment",
   "mop_type": "upi",
   "return_url": "https://yourdomain.com/payment/callback/",
   "business_model": "B2C",
-  "purpose_code": "S0101",
   "buyer": {
     "name": "Alice Smith",
     "email": "alice.smith@example.com",
@@ -196,8 +140,8 @@ A `purpose_code` you send is validated, not silently dropped:
     "type_of_goods": "physical_goods"
   },
   "invoice": {
-    "number": "INV_0HOZ0C",
-    "date": "2025-09-04"
+    "number": "INV-2026-0001",
+    "date": "2026-09-21"
   }
 }
 ```
@@ -206,11 +150,10 @@ A `purpose_code` you send is validated, not silently dropped:
 {
   "amount": "1000.00",
   "currency": "INR",
-  "reference_id": "ORDER_123457",
+  "reference_id": "ORDER-123457",
   "collection_mode": "s2s",
   "mop_type": "upi",
   "upi_flow_type": "intent",
-  "return_url": "https://yourdomain.com/payment/callback/",
   "buyer": {
     "name": "John Doe",
     "email": "john.doe@example.com",
@@ -221,26 +164,50 @@ A `purpose_code` you send is validated, not silently dropped:
       "state": "Delhi",
       "postal_code": "110001"
     },
-    "ip_address": "192.168.1.100",
+    "ip_address": "203.0.113.10",
     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
   },
   "product": {
     "name": "Smartphone",
     "description": "This is a sample product description",
-    "hs_code": "98051000",
-    "hs_code_description": "Portable automatic data processing machines",
+    "hs_code": "85171290",
+    "hs_code_description": "Telephones for cellular networks, other than smartphones",
     "type_of_goods": "physical_goods"
   },
   "invoice": {
-    "number": "INV_0HOZ0C",
-    "date": "2025-09-04"
+    "number": "INV-2026-0002",
+    "date": "2026-09-21"
   }
 }
 ```
 
 </CodeGroup>
 
-## Response Examples
+## Response
+
+A successful create returns `201 Created`.
+
+### Hosted Checkout
+
+- `order_id`: The order's ID
+- `session_id`: A 64-character hex string. Pass it to the EximPe JS SDK to open the payment page
+
+<Warning>
+  **The `session_id` is valid for 15 minutes.** After that, create a new order to get a fresh one. An expired or already-completed session returns `Invalid or expired session`.
+</Warning>
+
+### S2S UPI Intent
+
+- `order_id`: The order's ID
+- `intent_uri`: The UPI payment request to open the customer's UPI app with. See [Invoking the intent](#invoking-the-intent)
+- `expires_at`: When the intent stops accepting payment, in UTC — 5 minutes after creation
+- `test_simulator_url`: **Sandbox only.** Open it in a browser to complete the payment without a real UPI app; the result follows the test VPA you use in the simulator. Not returned in production
+
+Sandbox responses may carry other testing fields. Ignore any field not listed here.
+
+### Invoking the intent
+
+Depending on how your account collects UPI, `intent_uri` comes either as a complete URI (`upi://pay?pa=...`) or as its query string alone (`pa=...&pn=...`). Handle both: if it does not start with `upi://`, prefix it with `upi://pay?` before invoking it, and never add a second scheme. See the [integration guide](/integration-guide/v3/web-integration/s2s-upi-intent#step-3-invoke-upi-intent) for Android, iOS and desktop handling.
 
 <CodeGroup>
 
@@ -261,7 +228,8 @@ A `purpose_code` you send is validated, not silently dropped:
   "message": "S2S UPI Request created successfully",
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
-    "order_id": "OD2000992103"
+    "order_id": "OD2000992103",
+    "expires_at": "2026-09-21T10:35:00Z"
   }
 }
 ```
@@ -273,6 +241,7 @@ A `purpose_code` you send is validated, not silently dropped:
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
     "order_id": "OD2000992103",
+    "expires_at": "2026-09-21T10:35:00Z",
     "test_simulator_url": "<simulator URL returned by the sandbox API>"
   }
 }
@@ -280,23 +249,54 @@ A `purpose_code` you send is validated, not silently dropped:
 
 </CodeGroup>
 
-## Implementation Notes
+## Errors
 
-### Classification
+Refusals use the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` always carries `ERR_ORDER_002` — read `details` to see what failed and fix that field before retrying.
 
-- Neither `business_model` nor `purpose_code` is echoed in the create response. Read them back with [Get Order Details](/api-reference/v3/order/get).
-- Both are create-time only — `PATCH /pg/orders/{order_id}/` does not accept them.
-- `business_model` is stored `NOT NULL` with a `B2C` default, so an order EximPe could not classify reads back as `B2C`, indistinguishable from one you sent as `B2C`. An unresolved `purpose_code`, being nullable, reads back as `null`.
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `400` | `ERR_ORDER_002` | A field is missing or invalid | Keyed by field and nested like the request, one message per field, e.g. `{"buyer": {"phone": "Enter a valid phone number."}}` |
+| `400` | `ERR_ORDER_002` | `reference_id` has a character other than a letter, number or hyphen | `{"reference_id": "Invalid input: ORDER_123456"}` |
+| `400` | `ERR_ORDER_002` | `reference_id` is already used by one of your orders | `{"reference_id": "Reference ID already exists"}` |
+| `400` | `ERR_ORDER_002` | `invoice.number` is already used by one of your orders that has not failed | `{"invoice": {"number": "Invoice Number already exists"}}` |
+| `400` | `ERR_ORDER_002` | `collection_mode` is missing or unrecognised | `{"collection_mode": "Invalid collection mode"}` |
+| `400` | `ERR_ORDER_002` | `business_model` is not `B2B` or `B2C` | `{"business_model": "\"b2b\" is not a valid choice."}` |
+| `400` | `ERR_ORDER_002` | `purpose_code` is unknown or inactive | A string, not an object: `"Invalid Purpose code given."` |
+| `400` | `ERR_ORDER_002` | `purpose_code` is valid but not enabled on your account | A string, not an object: `"Purpose code is not enabled for this merchant."` |
+| `400` | `ERR_ORDER_002` | `amount` is 0 or less, or above 10,000,000.00 | `{"total_amount": "Total amount must be greater than 0"}` or `{"total_amount": "Total amount must be less than or equal to 10,000,000"}` |
+| `401` | `ERR_AUTH_000` | `X-Client-ID` or `X-Client-Secret` is missing | `{"authentication": "Missing credentials."}` |
+| `401` | `ERR_AUTH_001` | The credentials are wrong | `{"authentication": "Invalid credentials."}` |
+| `401` | `ERR_AUTH_000` | A PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
+| `401` | `ERR_AUTH_001` | `X-Merchant-ID` is not one of your active sub-merchants | `{"authentication": "Invalid X-Merchant-ID provided."}` |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your merchant account is not active | `{"authentication": "Merchant account is inactive."}` |
+| `403` | — | S2S payments are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
+| `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
 
-### Hosted Checkout
+```json Duplicate reference_id
+{
+  "success": false,
+  "error": {
+    "code": "ERR_ORDER_002",
+    "message": "Validation error",
+    "details": {
+      "reference_id": "Reference ID already exists"
+    }
+  }
+}
+```
 
-1. Create the order from your backend and read `session_id` from the response. Never create orders from the browser — it would expose your client secret.
-2. Load the EximPe JS SDK on your page and call `eximpe.checkout({ sessionId })` to open the payment page.
-3. The customer is redirected to your `return_url` whether the payment succeeds, fails, or is cancelled.
-4. Never trust the redirect alone — confirm the outcome from your backend with the [Order Status API](/api-reference/v3/order/get-status) or the [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful).
+## Duplicate requests
 
-### S2S UPI Intent
+Create Order does not support an idempotency key, and it does not replay an earlier response.
 
-- The response includes a UPI intent link (`intent_uri`) that can be used to open UPI apps directly. Prefix it with `upi://pay?` (or an app-specific scheme) before invoking it — see the [integration guide](/integration-guide/v3/web-integration/s2s-upi-intent#step-3-invoke-upi-intent) for platform-specific handling.
-- Poll the [Order Status API](/api-reference/v3/order/get-status) or wait for the [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful) to confirm the outcome.
-- `buyer.ip_address` and `buyer.user_agent` are required for fraud prevention.
+- **`reference_id` is single-use.** It must be unique across all your orders, whatever their status — a failed order still holds its `reference_id`. Sending one that is already used is refused with `Reference ID already exists`; the original order is not returned.
+- **`invoice.number` is unique across your orders that have not failed.** Once an order fails, its invoice number can be used again.
+- For a PSP, both rules apply per sub-merchant.
+
+## After creating the order
+
+- **Hosted Checkout.** Load the EximPe JS SDK on your page and call `eximpe.checkout({ sessionId })` within 15 minutes. The customer is sent to your `return_url` whether the payment succeeds, fails or is cancelled.
+- **S2S UPI Intent.** Invoke the `intent_uri` on the customer's device before `expires_at`.
+- **Confirm the outcome from your backend.** Never trust the redirect or the UPI app alone: check the [Order Status API](/api-reference/v3/order/get-status) or wait for the [Payment Successful webhook](/api-reference/v3/webhooks/payment-successful).
+
+Integration guides: [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [S2S UPI Intent](/integration-guide/v3/web-integration/s2s-upi-intent)
