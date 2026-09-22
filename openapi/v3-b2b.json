@@ -505,11 +505,11 @@
                         "status": "action_required",
                         "outstanding": [],
                         "refusal": {
-                          "reason": "PURPOSE_CODE_NOT_ALLOWED",
+                          "reason": null,
                           "missing": [
-                            "purpose_code"
+                            "outstanding"
                           ],
-                          "outstanding_cents": 0
+                          "outstanding_cents": 73750
                         }
                       }
                     }
