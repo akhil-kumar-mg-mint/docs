@@ -310,7 +310,7 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
 <ParamField path="refusal" type="object">
   Why the gateway refused a set the checklist called complete. Present **only** alongside `status: action_required` — absent from every other response, so read it as a key that may not be there rather than one that is sometimes `null`.
 
-  Where `outstanding` says what the *checklist* still wants, this says what the *gateway* did. They answer different questions, which is exactly why a refusal usually arrives with `outstanding` empty.
+  Where `outstanding` says what the *checklist* still wants, this says what the *gateway* did. They answer different questions, and the handoff only runs once the checklist is satisfied — so a refusal **always** arrives with `outstanding` empty.
 
   | Key | |
   |---|---|
@@ -325,9 +325,13 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
   | `PURPOSE_CODE_NOT_ALLOWED` | The purpose code is not one the account this payment **settles to** is allow-listed for. For a PSP that is the sub-merchant on the order, not the calling credential. |
   | `PURPOSE_CODE_NOT_IN_REGISTRY` | The code is not an LRS purpose code at all. |
   | `PAN_NOT_VERIFIED` | The remitter's PAN is unverified, and could not be verified now. |
-  | `PAN_NAME_MISMATCH` | The PAN is verified, but its holder is not the buyer named on the order. |
-  | `SENDER_NAME_MISMATCH` | The name on the credit that funded the payment is not the PAN holder's. |
+  | `PAN_NAME_MISMATCH` | The buyer named on the order is not the PAN's registered holder — the verification vendor's verdict. |
+  | `SENDER_NAME_MISMATCH` | The same two names, judged by our own fuzzy match rather than the vendor's. |
   | `null` | No headline verdict — `missing` and `outstanding_cents` are the whole story. |
+
+  <Note>
+    **The two name verdicts are one problem, not two.** `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` compare the *same pair* — the buyer name on the order against the name the PAN is registered to. Only the judge differs: the verification vendor reaches the first, our own fuzzy match the second, which is why a name can clear one and fail the other. Build one remediation, not two: correct whichever of the two names is wrong, and send again.
+  </Note>
 
   `missing` names gateway tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
 
@@ -416,7 +420,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not `true`. |
-| `Unknown document ref.` | The `ref` is not one of the uploads held for the merchant this payment settles to. |
+| `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
 A second group is raised only by the call that **files** a complete set, as the staged values are read for the gateway. They name the same codes:

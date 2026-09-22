@@ -146,7 +146,7 @@ A refused send answers in the standard error envelope, with `details` keyed by t
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. Omit the key rather than sending an empty value. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
-| `Unknown document ref.` | The `ref` is not one of the uploads held for the merchant this payment settles to. |
+| `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
 <Note>
