@@ -12,7 +12,7 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
 <Note>
   **LRS is always scoped to the sub-merchant, never the PSP.** The purpose codes you may declare, the fees applied and the documents cited all come from the account the payment settles to.
 
-  How that account is named differs by call. [Quote LRS Amount](/api-reference/v3/lrs/quote) and the older `POST /pg/lrs/documents/` alias have no payment to read it from, so a PSP names the sub-merchant with `X-Merchant-ID`. Every call that carries a `payment_id` in its path — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) and [Upload Document](/api-reference/v3/lrs/upload-document) — derives it from the payment, and neither requires nor reads the header.
+  How that account is named differs by call. [Quote LRS Amount](/api-reference/v3/lrs/quote) and the older `POST /pg/lrs/documents/` alias have no payment to read it from, so a PSP names the sub-merchant with `X-Merchant-ID`. Every call that carries a `payment_id` in its path — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) and [Upload Document](/api-reference/v3/lrs/upload-document) — derives it from the payment.
 </Note>
 
 ## Before the buyer pays
@@ -22,9 +22,9 @@ Two calls, in order:
 1. **[Verify PAN](/api-reference/v3/lrs/verify-pan)** — confirm the buyer's PAN is real and matches their name. Nothing downstream works until this passes.
 2. **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — tells you the full amount to ask the buyer for, inclusive of TCS and our fee. Ask for that figure, and the payment covers itself.
 
-<Warning>
-  **PSPs: our fee on an LRS payment now comes from the sub-merchant.** Our fee and the GST on it are resolved against the account the payment settles to — on the quote above, and now on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) too. The submit previously resolved them against the calling PSP, whose LRS rate is usually unset, so they came out zero there and a payment was treated as covering itself for less than the quote had asked for. Expect the amount owed on a payment — and `refusal.outstanding_cents` when a complete set is refused for a shortfall — to be higher than your integration saw before. What the quote returns has not changed; the submit now agrees with it.
-</Warning>
+<Note>
+  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_cents` measures a shortfall against.
+</Note>
 
 ## Once the money lands
 

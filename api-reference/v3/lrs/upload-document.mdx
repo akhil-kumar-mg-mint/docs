@@ -83,7 +83,7 @@ Validated on upload, so a bad file fails here rather than at submit time.
 
   **A `ref` uploaded against one sub-merchant's payment is not citable on a sibling's.** The scope follows the settling account, so a file two sub-merchants both need is uploaded once for each.
 
-  A `ref` owned by the PSP account itself is the exception: it resolves on any payment settling to that PSP or to any of its sub-merchants. Uploads a PSP filed before verification was scoped this way are owned that way, and keep resolving; new ones arise when a PSP settles a payment of its own.
+  A `ref` owned by the PSP account itself is the exception: it resolves on any payment settling to that PSP or to any of its sub-merchants.
 </ParamField>
 
 <ParamField path="type" type="string" required>

@@ -43,7 +43,7 @@ As a PSP you onboard the businesses you collect for as sub-merchants. Collection
 
 ### What are the requirements to integrate?
 
-A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request also sends `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls neither require nor read it: they derive the sub-merchant from the payment.
+A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request also sends `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls derive the sub-merchant from the payment instead.
 
 ### What does it cost me?
 
