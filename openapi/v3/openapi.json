@@ -2693,7 +2693,7 @@
     "/pg/payments/{payment_id}/documents/": {
       "post": {
         "summary": "Upload a supporting document",
-        "description": "Uploads one supporting file for a payment's verification and answers with a `ref`. Send that `ref` under the document's checklist code in the `documents` array of [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — uploading a file does not answer a requirement; the submit does.\n\nUpload each file as it arrives; nothing has to be held back until the set is complete. Extension, size (10 MB) and PDF encryption are validated here, so a bad file fails on upload rather than at submit time.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document itself is merchant-scoped, so a `ref` stays valid across a retried attempt or a recurring installment, and a `ref` that is not yours reads as unknown rather than as someone else's file. Uploads are immutable — to replace one, upload again and submit the new `ref` under the same code.\n\n`POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**PSP callers must send `X-Merchant-ID`.** This is a `multipart/form-data` request.",
+        "description": "Uploads one supporting file for a payment's verification and answers with a `ref`. Send that `ref` under the document's checklist code in the `documents` array of [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — uploading a file does not answer a requirement; the submit does.\n\nUpload each file as it arrives; nothing has to be held back until the set is complete. Extension, size (10 MB) and PDF encryption are validated here, so a bad file fails on upload rather than at submit time.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document is scoped to the merchant the payment settles to — the sub-merchant named on the order, not the credential that uploaded it — so a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file, and a PSP cannot carry one `ref` across two different sub-merchants. Uploads are immutable — to replace one, upload again and submit the new `ref` under the same code.\n\n`POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**The settling merchant is derived from the payment**, so `X-Merchant-ID` is neither required nor read on this route. This is a `multipart/form-data` request.",
         "tags": [
           "LRS"
         ],
@@ -2853,7 +2853,7 @@
     "/pg/payments/{payment_id}/verification/": {
       "get": {
         "summary": "Get verification requirements",
-        "description": "Returns everything a payment's checklist calls for — every field and document, which are already satisfied, and which are still outstanding. The checklist is chosen by two facts on the order: its business model and its purpose code. Until both are declared no checklist claims the payment, and this endpoint asks for them instead — `business_model` and `purpose_code` come back `null`, and the two facts are listed as ordinary outstanding fields.\n\nThe verification webhook lists what a payment is *missing* — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B-services one. This returns the *whole* set. Both describe the same items in the same shape, from the same read — an entry here is an entry there plus `satisfied` and `provided`.\n\n**There is no rolled-up `status`.** \"Every box is ticked\" is not \"the payment passed\", and the POST on this same URL returns a `status` of its own. Fold your own roll-up from the items, and read `settlement_status` for where the payment actually stands — including whether sending anything is still possible.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Returns everything a payment's checklist calls for — every field and document, which are already satisfied, and which are still outstanding. The checklist is chosen by two facts on the order: its business model and its purpose code. Until both are declared no checklist claims the payment, and this endpoint asks for them instead — `business_model` and `purpose_code` come back `null`, and the two facts are listed as ordinary outstanding fields.\n\nThe verification webhook lists what a payment is *missing* — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B-services one. This returns the *whole* set. Both describe the same items in the same shape, from the same read — an entry here is an entry there plus `satisfied` and `provided`.\n\n**There is no rolled-up `status`.** \"Every box is ticked\" is not \"the payment passed\", and the POST on this same URL returns a `status` of its own. Fold your own roll-up from the items, and read `settlement_status` for where the payment actually stands — including whether sending anything is still possible.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**The account this payment settles to is derived from the payment**, not from the calling credential — `X-Merchant-ID` is neither required nor read on this route.",
         "tags": [
           "LRS"
         ],
@@ -3075,7 +3075,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**PSP callers must send `X-Merchant-ID`.**",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The account this payment settles to is derived from the payment**, not from the calling credential — the purpose-code allowlist and the settlement terms come from that account, and `X-Merchant-ID` is neither required nor read on this route.",
         "tags": [
           "LRS"
         ],
@@ -3235,6 +3235,46 @@
                             "invoice_number",
                             "invoice"
                           ]
+                        },
+                        "refusal": {
+                          "type": "object",
+                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and only on LRS payments — absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did, which is why a refusal usually arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
+                          "required": [
+                            "reason",
+                            "missing",
+                            "outstanding_cents"
+                          ],
+                          "properties": {
+                            "reason": {
+                              "type": "string",
+                              "nullable": true,
+                              "enum": [
+                                "PURPOSE_CODE_NOT_ALLOWED",
+                                "PURPOSE_CODE_NOT_IN_REGISTRY",
+                                "PAN_NOT_VERIFIED",
+                                "PAN_NAME_MISMATCH",
+                                "SENDER_NAME_MISMATCH",
+                                null
+                              ],
+                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` — the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` — it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` — the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` — the PAN is verified but its holder is not the buyer on the order. `SENDER_NAME_MISMATCH` — the name on the credit that funded the payment is not the PAN holder's. `null` — no headline verdict; `missing` and `outstanding_cents` are the whole story.",
+                              "example": "PURPOSE_CODE_NOT_ALLOWED"
+                            },
+                            "missing": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "What the gateway still wants, in its own vocabulary — these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
+                              "example": [
+                                "purpose_code"
+                              ]
+                            },
+                            "outstanding_cents": {
+                              "type": "integer",
+                              "description": "The shortfall still owed on the payment — principal plus MDR, GST and TCS, less what was received — in paise. `0` when the refusal is not about money, which is every verdict except `SENDER_NAME_MISMATCH` and a null reason.",
+                              "example": 0
+                            }
+                          }
                         }
                       }
                     }
@@ -3280,7 +3320,14 @@
                       "data": {
                         "payment_id": "PR6938527534",
                         "status": "action_required",
-                        "outstanding": []
+                        "outstanding": [],
+                        "refusal": {
+                          "reason": "PURPOSE_CODE_NOT_ALLOWED",
+                          "missing": [
+                            "purpose_code"
+                          ],
+                          "outstanding_cents": 0
+                        }
                       }
                     }
                   },

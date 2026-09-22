@@ -10,7 +10,9 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
 </Info>
 
 <Note>
-  **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. LRS is always scoped to the sub-merchant, never the PSP.
+  **LRS is always scoped to the sub-merchant, never the PSP.** The purpose codes you may declare, the fees applied and the documents cited all come from the account the payment settles to.
+
+  How that account is named differs by call. [Quote LRS Amount](/api-reference/v3/lrs/quote) and the older `POST /pg/lrs/documents/` alias have no payment to read it from, so a PSP names the sub-merchant with `X-Merchant-ID`. Every call that carries a `payment_id` in its path — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) and [Upload Document](/api-reference/v3/lrs/upload-document) — derives it from the payment, and neither requires nor reads the header.
 </Note>
 
 ## Before the buyer pays

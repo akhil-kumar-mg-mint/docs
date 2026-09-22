@@ -10,7 +10,9 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
 </Info>
 
 <Note>
-  **PSPs send `X-Merchant-ID` on every call here**, naming the sub-merchant the payment belongs to. The purpose codes you may declare come from that sub-merchant's account, not yours.
+  **This flow is always scoped to the sub-merchant, never the PSP.** The purpose codes you may declare come from the account the payment settles to, not from the credential you call with.
+
+  Every call on this page carries a `payment_id` in its path and derives that account from the payment, so none of them requires or reads `X-Merchant-ID`. A PSP sends that header when it [creates the order](/api-reference/v3/order/create), before there is a payment to read it from.
 </Note>
 
 ## There is no identity step
