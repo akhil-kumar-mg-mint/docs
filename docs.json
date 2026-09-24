@@ -338,6 +338,7 @@
       },
       {
         "version": "Version 3",
+        "default": true,
         "tabs": [
           {
             "tab": "Integration Guide",
