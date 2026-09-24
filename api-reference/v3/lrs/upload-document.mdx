@@ -79,7 +79,11 @@ Validated on upload, so a bad file fails here rather than at submit time.
 <ParamField path="ref" type="string" required>
   The upload's identifier. Send it as `documents[].ref` on the verification submit.
 
-  The stored file is scoped to **your merchant account**, not to the payment in the path — so a `ref` stays valid across a retried attempt or a recurring installment, and a `ref` that is not yours reads as unknown rather than as someone else's file.
+  The stored file is scoped to the merchant the payment **settles to** — the sub-merchant named on the order, not the credential that uploaded it — and not to the payment in the path. So a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file.
+
+  **A `ref` uploaded against one sub-merchant's payment is not citable on a sibling's.** The scope follows the settling account, so a file two sub-merchants both need is uploaded once for each.
+
+  A `ref` owned by the PSP account itself is the exception: it resolves on any payment settling to that PSP or to any of its sub-merchants.
 </ParamField>
 
 <ParamField path="type" type="string" required>

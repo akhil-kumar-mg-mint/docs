@@ -184,7 +184,7 @@ Field values are strings, numbers or booleans.
 | `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | `true`, once the payer has affirmed the wording in the item's `message` |
 | `business_model` | `B2B` or `B2C`. Case-insensitive. |
-| `purpose_code` | A FEMA/FETERS code your merchant account is allow-listed for, e.g. `S0305`. Case-insensitive. |
+| `purpose_code` | A FEMA/FETERS code the account this payment **settles to** is allow-listed for, e.g. `S0305`. Case-insensitive. For a PSP that is the sub-merchant on the order, not the calling credential. |
 
 <Warning>
   **An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
@@ -243,7 +243,7 @@ This is deliberate: nobody collects a passport scan, a visa and a letter of admi
 
 ## The response
 
-Three keys, whatever you sent:
+Three keys, whatever you sent — and a fourth, `refusal`, on the one response that has something more to say: a complete set the gateway refused.
 
 <CodeGroup>
 
@@ -278,7 +278,12 @@ Three keys, whatever you sent:
   "data": {
     "payment_id": "PR6938527534",
     "status": "action_required",
-    "outstanding": []
+    "outstanding": [],
+    "refusal": {
+      "reason": null,
+      "missing": ["outstanding"],
+      "outstanding_cents": 73750
+    }
   }
 }
 ```
@@ -302,6 +307,41 @@ Three keys, whatever you sent:
   This is the list, not a pointer to one. You do not need a second call to learn what is left.
 </ParamField>
 
+<ParamField path="refusal" type="object">
+  Why the gateway refused a set the checklist called complete. Present **only** alongside `status: action_required` — absent from every other response, so read it as a key that may not be there rather than one that is sometimes `null`.
+
+  Where `outstanding` says what the *checklist* still wants, this says what the *gateway* did. They answer different questions, and the handoff only runs once the checklist is satisfied — so a refusal **always** arrives with `outstanding` empty.
+
+  | Key | |
+  |---|---|
+  | `reason` | The headline verdict, upper-case — or `null` when there is no verdict beyond the items in `missing`. |
+  | `missing` | What the gateway still wants, **in its own vocabulary**. These are not checklist codes. |
+  | `outstanding_cents` | The shortfall still owed — principal plus MDR, GST and TCS, less what was received — in **paise**. `0` when the refusal is not about money. |
+
+  `reason` is one of:
+
+  | Value | What it means |
+  |---|---|
+  | `PURPOSE_CODE_NOT_ALLOWED` | The purpose code is not one the account this payment **settles to** is allow-listed for. For a PSP that is the sub-merchant on the order, not the calling credential. |
+  | `PURPOSE_CODE_NOT_IN_REGISTRY` | The code is not an LRS purpose code at all. |
+  | `PAN_NOT_VERIFIED` | The remitter's PAN is unverified, and could not be verified now. |
+  | `PAN_NAME_MISMATCH` | The buyer named on the order is not the PAN's registered holder — the verification vendor's verdict. |
+  | `SENDER_NAME_MISMATCH` | The same two names, judged by our own fuzzy match rather than the vendor's. |
+  | `null` | No headline verdict — `missing` and `outstanding_cents` are the whole story. |
+
+  <Note>
+    **The two name verdicts are one problem, not two.** `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` compare the *same pair* — the buyer name on the order against the name the PAN is registered to. Only the judge differs: the verification vendor reaches the first, our own fuzzy match the second, which is why a name can clear one and fail the other. Build one remediation, not two: correct whichever of the two names is wrong, and send again.
+  </Note>
+
+  `missing` names gateway tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
+
+  The purpose-code and PAN verdicts are reached before anything else is looked at, so each carries exactly one entry in `missing` and `outstanding_cents: 0`. Only `SENDER_NAME_MISMATCH` and a `null` reason can carry a shortfall, or more than one entry.
+
+  <Note>
+    **`refusal` is a shortcut, not the record.** The same verdict always arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass), translated into the checklist codes you send under. An integration driven by events needs nothing from here; this exists so a caller holding the response does not have to wait for the webhook to learn why.
+  </Note>
+</ParamField>
+
 <Warning>
   **`action_required` never means your details were discarded.** Everything that reached us is held against the payment, whether the call ended in a refusal, a vendor outage or a half-finished set. You re-send the one thing that failed, not the whole set.
 </Warning>
@@ -311,6 +351,8 @@ Three keys, whatever you sent:
 That pair is not a contradiction — it is the most important thing this response says. The checklist is satisfied; the **gateway** refused. Supplying a PAN is not the same as it verifying, and no requirement list has anything to say about that.
 
 The verdict arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass), same event type and same shape as any other, with the conclusion folded into the relevant entry's `message` — a shortfall's rupee figure, a PAN that would not verify, a sender who is not the account holder.
+
+This same response says it too, in `refusal` — the verdict, what the gateway still wants, and any shortfall in paise. Read that if you would rather not wait for the event.
 
 ## Completion
 
@@ -378,7 +420,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not `true`. |
-| `Unknown document ref.` | The `ref` is not one of your uploads. |
+| `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
 A second group is raised only by the call that **files** a complete set, as the staged values are read for the gateway. They name the same codes:

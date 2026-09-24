@@ -43,7 +43,7 @@ In sandbox the sub-merchant is activated within seconds and you can start collec
 
 ## Then use their merchant ID
 
-Once activated you get a **merchant ID**. Send it as `X-Merchant-ID` on every call you make for that sub-merchant.
+Once activated you get a **merchant ID**. Send it as `X-Merchant-ID` on the calls that name a sub-merchant before there is a payment to read one from — `POST /pg/orders/`, `POST /pg/vba/`, `POST /pg/lrs/*`, `POST /pg/payment-links/` and the other create routes. The `/pg/payments/<id>/…` routes derive the sub-merchant from the payment itself.
 
 You can also do all of this over the API rather than the dashboard:
 

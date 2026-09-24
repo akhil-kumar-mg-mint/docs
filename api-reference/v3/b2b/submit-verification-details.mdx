@@ -45,7 +45,7 @@ A payment with no `business_model` and `purpose_code` on its order has no requir
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-Merchant-ID: <sub_merchant_id>' -H 'X-API-Version: 3.0.0' \
+  -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
   -d '{ "fields": { "business_model": "B2B", "purpose_code": "S0802" }, "finalize": false }'
 ```
