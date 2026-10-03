@@ -8,7 +8,7 @@ openapi: 'POST /pg/payments/{payment_id}/verification/'
 
 When a payment needs verification details before it can settle, this is where you send them. One call carries every field the payment is waiting on, and you can send them as you collect them rather than all at once.
 
-Use it when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`.
+Use it when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`, or a [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) webhook.
 
 <Note>
   **This replaces `POST /pg/payments/{uid}/upload-verification-details/`**, which is deprecated. The old endpoint took one fixed set of fields, rewrote them all on every call, and worked on a single gateway. Move existing integrations across when convenient; build new ones here.
@@ -70,6 +70,7 @@ These are the ones an import payment is most often asked for:
 | `buyer_email` · `buyer_phone` | Buyer contact details |
 | `hs_code` | Harmonised System code — asked for when the order ships physical goods |
 | `iec` | Importer-Exporter Code of the buying business |
+| `buyer_pan` | The buyer's PAN, e.g. `ABCDE1234F`. Checked with the issuer during the call — see [Sending `buyer_pan`](#sending-buyer_pan) |
 | `business_model` | `B2B` or `B2C` |
 | `purpose_code` | The FEMA/FETERS code this order settles under, e.g. `S0101`. It must be one the account this payment **settles to** is enabled for — for a PSP that is the sub-merchant on the order, not the calling credential. An unrecognised or un-enabled code is a `400`, never a stored value. |
 
@@ -96,6 +97,34 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 <Warning>
   **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends — `GET` the payment and read `settlement_status` before you send.
 </Warning>
+
+## Sending `buyer_pan`
+
+`buyer_pan` is asked for on payments that EximPe collects and that are not LRS. [Buyer PAN verification](/integration-guide/v3/web-integration/buyer-pan) explains which payments need it and what passes. Send it under `fields` like any other code:
+
+```json
+{
+  "fields": {
+    "buyer_pan": "ABCDE1234F"
+  }
+}
+```
+
+Unlike the other codes, a PAN is **checked with the issuer during the call**, and the response tells you how the check went:
+
+- **It passed.** The call succeeds and `buyer_pan` leaves `outstanding`. If the PAN was the only thing holding the payment, the payment moves to `UNDER_REVIEW`. After that, further sends are refused as for any payment under review, so send any other outstanding codes in the same call or before it.
+- **It was rejected.** The call is a `400` whose `details.buyer_pan` says why (see [Errors](#errors)). The rest of the call is still saved. You are sent the ask again, as [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), naming `buyer_pan`. Send a corrected PAN.
+- **The check could not run.** The call is a `503`. Nothing was charged against your attempts, and the PAN you sent is kept and checked again once the issuer's service is back. Retry the same call after a short wait; it is safe to repeat.
+
+<Warning>
+  **An order gets 5 PAN checks.** Each new PAN checked uses one, including the automatic check after the payment succeeds. Sending a PAN that was already rejected gets the same answer without using a check, and a `503` uses none. Once all 5 are used, the call answers `ERR_BUYER_PAN_001` and the payment cannot be verified through the API; contact EximPe support.
+</Warning>
+
+A payment whose `business_model` and `purpose_code` have not been declared yet still accepts `buyer_pan`. The PAN is stored and checked as soon as the payment is classified. That can happen in the same call: send `business_model`, `purpose_code` and `buyer_pan` together, and the PAN is checked in that call.
+
+<Note>
+  **The PAN and the name on it are never echoed back.** Neither a response nor an error repeats the PAN you sent or names its holder.
+</Note>
 
 ## The response
 
@@ -148,6 +177,55 @@ A refused send answers in the standard error envelope, with `details` keyed by t
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
+
+### `buyer_pan` errors
+
+Every refusal of a `buyer_pan` names it in `details`. The PAN you sent is never repeated.
+
+| Status | `error.code` | `details.buyer_pan` | When |
+|---|---|---|---|
+| `400` | `40359` | `Not a requirement of this payment.` | The payment does not take a buyer PAN: it has not succeeded, EximPe does not collect it, or it is an LRS payment (including one you classify as LRS in the same call). |
+| `400` | `40359` | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
+| `400` | `40359` | `Enter a valid PAN in the format ABCDE1234F.` | Not 5 letters, 4 digits and a letter. Lowercase is accepted. |
+| `400` | `40359` | `This PAN was not found. Check the number.` | The issuer has no such PAN. |
+| `400` | `40359` | `This is a business PAN. A B2C payment needs the buyer's personal PAN.` | A company or other business PAN on a `B2C` payment. |
+| `400` | `40359` | `This is a personal PAN. A B2B payment needs the buying business's PAN.` | A personal PAN on a `B2B` payment. |
+| `400` | `40359` | `This PAN is inactive.` | The PAN is not active. |
+| `400` | `40359` | `The name on this PAN doesn't match the order's buyer name.` | `B2B` only: the name on the PAN does not match the order's `buyer_name`, or the order has no `buyer_name`. |
+| `400` | `40359` | `This PAN could not be verified.` | Rejected for any other reason. |
+| `400` | `ERR_BUYER_PAN_001` | `All PAN verification attempts for this payment have been used. Contact EximPe support to continue.` | All 5 checks have been used. No new ask is sent. |
+| `503` | `ERR_BUYER_PAN_002` | `PAN verification is temporarily unavailable; please try again.` | The issuer's service could not be reached. No check was used; retry the call. |
+| `503` | `ERR_BUYER_PAN_002` | `A check of this PAN is already running; retry shortly.` | Another check of the same order's PAN is in progress. Retry in a few seconds. |
+
+For the `400`s with code `40359`, `message` names the flow as described below. For the two `ERR_BUYER_PAN` codes, `message` is the same sentence as `details.buyer_pan`.
+
+```json Rejected PAN
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": {
+      "buyer_pan": "This is a business PAN. A B2C payment needs the buyer's personal PAN."
+    }
+  }
+}
+```
+
+```json Issuer unavailable
+{
+  "success": false,
+  "error": {
+    "code": "ERR_BUYER_PAN_002",
+    "message": "PAN verification is temporarily unavailable; please try again.",
+    "details": {
+      "buyer_pan": "PAN verification is temporarily unavailable; please try again."
+    }
+  }
+}
+```
+
+A send to a payment that has already moved to `UNDER_REVIEW` or later is refused before anything is checked: `400`, code `40360`, `Payment is not in a state that accepts verification details.`
 
 <Note>
   **`message` names the flow that refused you, so it varies.** A payment we cannot yet place — one whose business model and purpose code have not been declared — reads `Invalid verification request.` rather than the wording above, because there is no flow to name. The `code` is the same either way. Branch on `code`, never on `message`.

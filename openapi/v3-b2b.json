@@ -244,7 +244,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed \u2014 a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed \u2014 a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment, except `buyer_pan`: a PAN sent before classification is stored and checked once the payment is classified.\n\n**`buyer_pan` is checked with the issuer during the call.** It is asked for on non-LRS payments that EximPe collects. A pass releases a payment held only for its PAN. A rejection is a 400 whose `details.buyer_pan` says why, and the ask is sent again. When the order's 5 PAN checks are used up the call answers `ERR_BUYER_PAN_001`, and when the check cannot run it answers 503 `ERR_BUYER_PAN_002`; retry that one. The rest of the send is saved in every case. See [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#sending-buyer_pan).\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "LRS"
         ],
@@ -277,7 +277,7 @@
                 "properties": {
                   "fields": {
                     "type": "object",
-                    "description": "Answers keyed by checklist code, e.g. `{\"buyer_city\": \"Bengaluru\", \"invoice_number\": \"INV-2026-0041\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; `invoice_amount` is a decimal string in rupees and `declaration` is a boolean. An unknown key is a 400 rather than a silent drop \u2014 a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
+                    "description": "Answers keyed by checklist code, e.g. `{\"buyer_city\": \"Bengaluru\", \"invoice_number\": \"INV-2026-0041\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; `invoice_amount` is a decimal string in rupees and `declaration` is a boolean. An unknown key is a 400 rather than a silent drop \u2014 a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400. `buyer_pan` takes the buyer's PAN (`ABCDE1234F`), which is verified with the issuer during the call; the PAN is never echoed back.",
                     "additionalProperties": true,
                     "example": {
                       "buyer_name": "Northwind Technologies Pvt Ltd",
@@ -532,7 +532,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code. A `buyer_pan` refusal names `buyer_pan` in `details`: out of scope, blank, malformed, or rejected by the issuer, with code 40359 as above. When all 5 PAN checks for the order are used, the code is `ERR_BUYER_PAN_001` instead.",
             "content": {
               "application/json": {
                 "schema": {
@@ -623,6 +623,44 @@
                         "message": "Invalid LRS request.",
                         "details": {
                           "buyer_city": "Blank value; omit the key instead."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The buyer PAN could not be checked: the issuer's service is unavailable, or another check of the same order's PAN is running. No check is used, the PAN and the rest of the send are kept, and the PAN is checked again in the background. Retry the same call after a short wait.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "issuer_unavailable": {
+                    "summary": "The issuer's service is unavailable",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_BUYER_PAN_002",
+                        "message": "PAN verification is temporarily unavailable; please try again.",
+                        "details": {
+                          "buyer_pan": "PAN verification is temporarily unavailable; please try again."
+                        }
+                      }
+                    }
+                  },
+                  "check_running": {
+                    "summary": "Another check is running",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_BUYER_PAN_002",
+                        "message": "A check of this PAN is already running; retry shortly.",
+                        "details": {
+                          "buyer_pan": "A check of this PAN is already running; retry shortly."
                         }
                       }
                     }

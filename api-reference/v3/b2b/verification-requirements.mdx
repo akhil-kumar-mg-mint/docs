@@ -115,7 +115,7 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
 
   | Value | What it means for you |
   |---|---|
-  | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
+  | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. A non-LRS payment that EximPe collects also stays here until its buyer PAN is verified, with `buyer_pan` among the items — see [Buyer PAN Verification](/integration-guide/v3/web-integration/buyer-pan). |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
   | `UNDER_REVIEW` | Filed and with EximPe Ops. **Sending is closed.** |
   | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/submit-settlement) opens. |

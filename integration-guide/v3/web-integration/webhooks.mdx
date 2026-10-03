@@ -15,6 +15,7 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
 | **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
 | **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
+| **Payment Details Missing** | A non-LRS payment succeeds, but its order is missing verification details. Sent alongside Verification Needed with the same list | Send what `details_missing` names. If the list includes `buyer_pan`, see [Buyer PAN verification](/integration-guide/v3/web-integration/buyer-pan) |
 | **Payment Under Review** | A payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
 | **Verification Status** | A filed LRS verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |

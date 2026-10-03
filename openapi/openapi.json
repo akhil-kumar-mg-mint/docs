@@ -13274,6 +13274,14 @@
             "description": "Buyer's phone number with country code",
             "pattern": "^\\+[1-9]\\d{1,14}$"
           },
+          "pan_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "The buyer's PAN. For a B2B order, the buying business's PAN; for a B2C order, the buyer's personal PAN. Only the format is checked here: the PAN is verified with the issuer after the payment succeeds, and only on payments that need it (see Buyer PAN Verification). Lowercase is accepted and stored uppercase; null or an empty string is the same as leaving it out.",
+            "pattern": "^[A-Za-z]{5}[0-9]{4}[A-Za-z]$",
+            "maxLength": 10,
+            "example": "ABCDE1234F"
+          },
           "address": {
             "$ref": "#/components/schemas/v3_Address"
           },
@@ -16055,6 +16063,14 @@
               "phone": {
                 "type": "string",
                 "description": "Phone number with country code"
+              },
+              "pan_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "The buyer's PAN. For a B2B payment, the buying business's PAN; for a B2C payment, the buyer's personal PAN. Only the format is checked here: the PAN is verified with the issuer after the payment succeeds, and only on payments that need it (see Buyer PAN Verification). Lowercase is accepted and stored uppercase; null or an empty string is the same as leaving it out.",
+                "pattern": "^[A-Za-z]{5}[0-9]{4}[A-Za-z]$",
+                "maxLength": 10,
+                "example": "ABCDE1234F"
               },
               "send_sms": {
                 "type": "boolean",

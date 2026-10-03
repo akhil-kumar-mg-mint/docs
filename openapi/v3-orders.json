@@ -51,9 +51,10 @@
                     "return_url": "https://yourdomain.com/payment/callback/",
                     "business_model": "B2C",
                     "buyer": {
-                      "name": "Alice Smith",
-                      "email": "alice.smith@example.com",
+                      "name": "Test Buyer",
+                      "email": "test.buyer@example.com",
                       "phone": "+919812345678",
+                      "pan_number": "ABCDE1234F",
                       "address": {
                         "line_1": "221B Baker Street",
                         "city": "Mumbai",
@@ -427,6 +428,14 @@
             "type": "string",
             "description": "Phone number in E.164 format: `+`, the country code, then the number (e.g. `+919812345678`)",
             "pattern": "^\\+[1-9]\\d{1,14}$"
+          },
+          "pan_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "The buyer's PAN. For a B2B order, the buying business's PAN; for a B2C order, the buyer's personal PAN. Only the format is checked here: the PAN is verified with the issuer after the payment succeeds, and only on payments that need it (see Buyer PAN Verification). Lowercase is accepted and stored uppercase; null or an empty string is the same as leaving it out.",
+            "pattern": "^[A-Za-z]{5}[0-9]{4}[A-Za-z]$",
+            "maxLength": 10,
+            "example": "ABCDE1234F"
           },
           "address": {
             "$ref": "#/components/schemas/v3_Address"
