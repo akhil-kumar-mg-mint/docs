@@ -46,10 +46,9 @@
                     "expiry_date": "2026-12-31T18:29:59Z",
                     "preferred_payment_method": "UPI",
                     "buyer": {
-                      "name": "Test Buyer",
-                      "email": "test.buyer@example.com",
+                      "name": "Rahul Sharma",
+                      "email": "rahul.sharma@example.com",
                       "phone": "+919876543210",
-                      "pan_number": "ABCDE1234F",
                       "send_sms": true,
                       "send_email": true,
                       "address": {
@@ -1254,14 +1253,6 @@
             "type": "string",
             "description": "Buyer's phone number with country code (e.g. +919876543210). A number without the + and country code is refused.",
             "pattern": "^\\+[1-9]\\d{1,14}$"
-          },
-          "pan_number": {
-            "type": "string",
-            "nullable": true,
-            "description": "The buyer's PAN. For a B2B payment, the buying business's PAN; for a B2C payment, the buyer's personal PAN. Only the format is checked here: the PAN is verified with the issuer after the payment succeeds, and only on payments that need it (see Buyer PAN Verification). Lowercase is accepted and stored uppercase; null or an empty string is the same as leaving it out.",
-            "pattern": "^[A-Za-z]{5}[0-9]{4}[A-Za-z]$",
-            "maxLength": 10,
-            "example": "ABCDE1234F"
           },
           "send_sms": {
             "type": "boolean",

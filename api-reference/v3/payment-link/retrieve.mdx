@@ -96,7 +96,7 @@ A link the buyer paid on their second try, with the rest of the response left ou
 - `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
 - `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after. `payments` gives the method of each payment.
 - `buyer`, `product`, `invoice`: As sent on create.
-  - `buyer.pan_number` is the buyer PAN on file: the one you sent when you created the link, or a `buyer_pan` sent later through [Submit Verification Details](/api-reference/v3/payment/submit-verification-details). Otherwise it is `null`. `buyer.dob` is `null` unless it was collected from the buyer.
+  - `buyer.pan_number` is the buyer PAN on file: a `buyer_pan` sent through [Submit Verification Details](/api-reference/v3/payment/submit-verification-details) after the payment. A payment link takes no PAN when it is created, so until then it is `null`. `buyer.dob` is `null` unless it was collected from the buyer.
   - `product.hs_code` and `product.hs_code_description` are `null`: the link does not store them.
   - `invoice.date` and `invoice.file` are `null` unless they were added to the order later.
 - `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes. When `paid_payment_id` differs from `link_id`, the money moved on that payment rather than on the link, and `settlement` does not follow it: reconcile by `paid_payment_id`.

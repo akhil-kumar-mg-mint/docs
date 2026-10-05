@@ -31,13 +31,9 @@ The PAN must be valid and active, and it must be the right kind for the payment'
 
 ## Send it up front
 
-Every way of creating a payment takes the PAN. Sending it up front means you are not asked for it later:
+Send the PAN as `buyer.pan_number` at [Create Order](/api-reference/v3/order/create) and you are not asked for it later.
 
-| Where | Field |
-|---|---|
-| [Create Order](/api-reference/v3/order/create) | `buyer.pan_number` |
-| [Create Payment Link](/api-reference/v3/payment-link/create) | `buyer.pan_number` |
-| EximPe payment forms | Turn on PAN collection for the form. The buyer must then enter their PAN to pay |
+Payment links and EximPe payment forms don't take a PAN. For a payment made through one, you are asked for the PAN after the payment succeeds, as described below.
 
 Only the format (`ABCDE1234F`: 5 letters, 4 digits, a letter) is checked when the PAN is sent. The PAN is verified with the issuer after the payment succeeds.
 
@@ -87,7 +83,7 @@ Once a verified PAN is on file, a payment held only for its PAN moves to `UNDER_
     No. LRS payments keep their own PAN step, and are never asked for `buyer_pan`.
   </Accordion>
   <Accordion title="Is the PAN shown back to me?">
-    Order and payment link details return it as `buyer.pan_number`. Error messages never repeat a PAN or name its holder.
+    Order details return it as `buyer.pan_number`, and so do payment link details once you have sent it after the payment. Error messages never repeat a PAN or name its holder.
   </Accordion>
   <Accordion title="Why was a B2C payment rejected for a business PAN?">
     A `B2C` payment needs the buyer's personal PAN. If the buyer is a business, the payment should have been classified as `B2B`. Classification cannot be changed after it is declared, so contact EximPe support.

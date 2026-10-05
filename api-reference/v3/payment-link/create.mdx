@@ -23,7 +23,6 @@ A link stays open until it is paid, its `expiry_date` passes, or you [deactivate
 - `expiry_date`: When the link stops accepting payment. Defaults to one year from today
 - `preferred_payment_method`: The payment method the buyer should pay with
 - `buyer.send_sms` / `buyer.send_email`: Send the link to the buyer as soon as it is created
-- `buyer.pan_number`: The buyer's PAN, so you are not asked for it after the payment
 - `business_model`: Whether the buyer is a business (`B2B`) or a consumer (`B2C`)
 - `purpose_code`: The FEMA/FETERS purpose code the payment settles under (e.g. `S0802`)
 
@@ -58,12 +57,7 @@ The following tables define the request parameters, including nested objects, ty
 | phone | string | Yes | Phone number with country code. | Starts with `+` and the country code, e.g. `+919876543210`; `9876543210` is refused |
 | send_sms | boolean | No | Send the link to `phone` by SMS once it is created. | Default `false` |
 | send_email | boolean | No | Send the link to `email` once it is created. | Default `false` |
-| pan_number | string | No | The buyer's PAN. For a B2B payment, the buying business's PAN; for a B2C payment, the buyer's personal PAN. | Format `ABCDE1234F`: 5 letters, 4 digits, 1 letter. Lowercase is accepted and stored uppercase. `null` or `""` is the same as leaving it out |
 | address | object | Yes | Buyer address. | See Address object |
-
-<Note>
-  **Only the format of `pan_number` is checked when you create the link.** The PAN is verified with the issuer after the buyer pays, and only for payments that need it. See [Buyer PAN verification](/integration-guide/v3/web-integration/buyer-pan). [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) returns it as `buyer.pan_number`.
-</Note>
 
 #### Address (Buyer.address)
 
@@ -159,7 +153,6 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `400` | `ERR_ORDER_002` | A field is missing or invalid | Keyed by field and nested like the request, e.g. `{"buyer": {"phone": "Enter a valid phone number."}}` |
-| `400` | `ERR_ORDER_002` | `buyer.pan_number` is not in the PAN format | `{"buyer": {"pan_number": "Enter a valid PAN in the format ABCDE1234F."}}`. The value you sent is never echoed back |
 | `400` | `ERR_ORDER_002` | `reference_id` is already used by one of your orders | `{"reference_id": "Reference ID already exists"}` |
 | `400` | `ERR_ORDER_002` | `invoice.number` is already used by one of your orders that has not failed | `{"invoice": {"number": "Invoice Number already exists"}}` |
 | `400` | `ERR_ORDER_002` | `expiry_date` is in the past, or more than 365 days away | `{"expiry_date": "Expiry date cannot be beyond 1 year from now."}` |
@@ -186,10 +179,9 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
   "expiry_date": "2026-12-31T18:29:59Z",
   "preferred_payment_method": "UPI",
   "buyer": {
-    "name": "Test Buyer",
-    "email": "test.buyer@example.com",
+    "name": "Rahul Sharma",
+    "email": "rahul.sharma@example.com",
     "phone": "+919876543210",
-    "pan_number": "ABCDE1234F",
     "send_sms": true,
     "send_email": true,
     "address": {
