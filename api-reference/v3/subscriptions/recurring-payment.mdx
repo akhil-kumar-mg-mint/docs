@@ -10,6 +10,10 @@ Trigger a charge on an active **ADHOC** subscription. The call initiates the pay
 This endpoint only supports **ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered — check it with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status).
 </Info>
 
+<Note>
+Cashfree debits an ADHOC charge on the next day, so each call is for tomorrow's debit date, and only one charge can be initiated per debit date. A second call before then returns `409`, as does a call when the mandate is not active.
+</Note>
+
 ### Path Parameters
 
 <ParamField path="subscription_id" type="string" required>
@@ -70,7 +74,33 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
 }
 ```
 
-```json 503 - API error
+```json 409 - Charge already initiated for this debit date
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Validation error",
+    "details": {
+      "pre_debit": "A charge is already initiated for 2026-10-10"
+    }
+  }
+}
+```
+
+```json 409 - Mandate not active
+{
+  "success": false,
+  "error": {
+    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "message": "Validation error",
+    "details": {
+      "recurring": "Subscription mandate is not active (status: CANCELLED)"
+    }
+  }
+}
+```
+
+```json 502 - API error
 {
   "success": false,
   "error": {
