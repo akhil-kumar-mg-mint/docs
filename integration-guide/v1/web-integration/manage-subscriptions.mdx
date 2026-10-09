@@ -88,13 +88,19 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/pre_debit_not
 }
 ```
 
+The `debit_date` must be later than today (IST); today or an earlier date returns `400`. Each notification must also be for a later date than any notification still active on the subscription. Sending a second one for the same date, or an earlier one, returns `409`.
+
 ### Trigger Payment
 
-<Note>
-  **Test/Sandbox Environment**: In the test/sandbox environment, the recurring payment can be called immediately after the pre-debit notification is sent. The 48-hour (or 24-hour for daily billing) waiting period requirement applies only to the production environment.
-</Note>
+On the `debit_date` of an active pre-debit notification, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v1/subscriptions/recurring-payment) API.
 
-On the scheduled billing date, trigger the recurring payment using the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v1/subscriptions/recurring-payment) API.
+<Note>
+  A recurring payment can only be charged on the debit date of an active pre-debit notification, in test/sandbox as well as production. The call returns `409` when:
+  - no pre-debit notification is active for today, for example when you call before the notified date;
+  - an earlier recurring charge on the subscription is still pending.
+
+  Because `debit_date` must be later than today, you cannot send a notification and charge it on the same day. In test/sandbox there is no 48-hour (or 24-hour) wait beyond that: charge on the notified date.
+</Note>
 
 #### Sample Request
 

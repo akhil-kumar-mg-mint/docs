@@ -3636,6 +3636,26 @@
               }
             }
           },
+          "409": {
+            "description": "A pre-debit notification is already active for this debit date or a later one. Send the next notification for a later date.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "pre_debit": "A charge is already initiated for 2026-10-10; a new one must be for a later date."
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Configuration / unexpected error",
             "content": {
@@ -3656,8 +3676,8 @@
               }
             }
           },
-          "503": {
-            "description": "PayU API error",
+          "502": {
+            "description": "PayU could not be reached, timed out, or rejected the request",
             "content": {
               "application/json": {
                 "schema": {
@@ -3719,11 +3739,31 @@
             }
           },
           "400": {
-            "description": "Validation / business error",
+            "description": "Validation / business error (e.g. amount above the subscription's billing amount or the pre-debit notified amount)",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The charge conflicts with the subscription's state: no pre-debit notification is active, the active one is for a later date (a recurring charge is only permitted on the debit date of an active pre-debit notification), or an earlier charge is still pending.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "recurring": "Recurring charge is only permitted on a notified debit date. No pre-debit notification is active for today (2026-10-09)."
+                    }
+                  }
                 }
               }
             }
@@ -3748,8 +3788,8 @@
               }
             }
           },
-          "503": {
-            "description": "PayU API error",
+          "502": {
+            "description": "PayU could not be reached, timed out, or rejected the request",
             "content": {
               "application/json": {
                 "schema": {
