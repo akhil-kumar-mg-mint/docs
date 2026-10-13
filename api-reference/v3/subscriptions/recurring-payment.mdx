@@ -10,6 +10,10 @@ Trigger a charge on an active **ADHOC** subscription. The call initiates the pay
 This endpoint only supports **ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered — check it with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status).
 </Info>
 
+<Info>
+A `409` means the subscription's own state refused the charge — there is no active pre-debit notification for today, or a charge is already in progress. A `400` means the amount is above the billing amount or above the pre-debit notified amount. In both cases nothing reached the bank: fix the cause, then call again. A `502` means the payment network failed.
+</Info>
+
 ### Path Parameters
 
 <ParamField path="subscription_id" type="string" required>
@@ -59,23 +63,34 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
 {
   "success": false,
   "error": {
-    "code": "PAYMENT_GATEWAY_VALIDATION_ERROR",
+    "code": "ERR_PAYMENT_001",
     "message": "Validation error",
     "details": {
-      "amount": [
-        "Recurring amount must be less than or equal to the subscription billing amount"
-      ]
+      "amount": "Recurring amount must be less than or equal to the subscription billing amount"
     }
   }
 }
 ```
 
-```json 503 - API error
+```json 409 - Charge refused
 {
   "success": false,
   "error": {
-    "code": "PAYMENT_GATEWAY_API_ERROR",
-    "message": "Payment gateway API error",
+    "code": "ERR_PAYMENT_001",
+    "message": "Validation error",
+    "details": {
+      "recurring": ["A recurring charge is already in progress for this subscription; wait for it to complete before initiating another."]
+    }
+  }
+}
+```
+
+```json 502 - API error
+{
+  "success": false,
+  "error": {
+    "code": "ERR_PAYMENT_003",
+    "message": "API error",
     "details": {
       "message": "Failed to trigger recurring payment"
     }

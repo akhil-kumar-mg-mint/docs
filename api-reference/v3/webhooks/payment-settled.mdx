@@ -18,8 +18,8 @@ This webhook is triggered when funds are successfully transferred to the merchan
 ```json Example Payload
 {
     "event_type": "PAYMENT_SETTLED",
-    "event_time": "2024-02-15 16:53:15",
-    "version": "1.0",
+    "event_time": "2026-02-15T16:53:15.123456",
+    "version": "3.0.0",
     "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
     "data": {
         "settlements": [
@@ -28,7 +28,9 @@ This webhook is triggered when funds are successfully transferred to the merchan
                 "settlement_utr": "ST8174378817",
                 "settlement_done_at": "2025-06-20T19:22:54.734256Z",
                 "forex_rate": 86,
-                "settlement_amount": 1952.8
+                "settlement_amount": 1952.8,
+                "settlement_charges": 40.5,
+                "settlement_gst": 7.29
             }
         ]
     }
@@ -46,13 +48,13 @@ This webhook is triggered when funds are successfully transferred to the merchan
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
       
-      **Example**: `"2024-02-15 16:53:15"`
+      **Example**: `"2026-02-15T16:53:15.123456"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Envelope version (e.g. "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -99,6 +101,18 @@ This webhook is triggered when funds are successfully transferred to the merchan
       Final settlement amount transferred to the merchant
       
       **Example**: `1952.8`
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_charges" type="number" required>
+      Platform fees deducted from the settlement
+
+      **Example**: `40.5`
+    </ParamField>
+
+    <ParamField path="data.settlements[].settlement_gst" type="number" required>
+      GST charged on those fees
+
+      **Example**: `7.29`
     </ParamField>
   </Tab>
 </Tabs>

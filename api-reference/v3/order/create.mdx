@@ -62,7 +62,7 @@ Fields not listed as required are optional. "Conditional" means the field is req
 | mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`. S2S UPI Intent: required, `upi` |
 | upi_flow_type | string | Conditional | UPI flow. | S2S UPI Intent: required, `intent` |
 | return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
-| business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; derived from your KYC when omitted |
+| business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; when omitted, derived from your KYC if it names exactly one model, otherwise left unset until the payment is classified |
 | purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`); derived from your KYC when omitted |
 | buyer | object | Yes | The buyer. | See Buyer |
 | product | object | Yes | What is being sold. | See Product |

@@ -43,7 +43,7 @@ As a PSP you onboard the businesses you collect for as sub-merchants. Collection
 
 ### What are the requirements to integrate?
 
-A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request also sends `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls derive the sub-merchant from the payment instead.
+A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. We recommend sending `X-API-Version: 3.0.0` on every request. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls derive the sub-merchant from the payment instead.
 
 ### What does it cost me?
 
@@ -187,7 +187,7 @@ Resident individuals only, including minors through a guardian. Not companies, p
 
 ### Can a parent pay for a student?
 
-Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Set `relation` to something other than `SELF` and name the student in the `student_*` fields. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
+Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Send the student as a person in `persons`, with a `relation` to the remitter such as `CHILD`. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
 
 ### Why must the money come from the remitter's own account?
 
@@ -217,7 +217,7 @@ Yes. Every LRS payment carries a verification expiry. Miss it and the payment ex
 
 ### Why verify the PAN before quoting?
 
-An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and returns a `reason`: `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH`.
+An inactive (not linked to Aadhaar), non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and returns a `reason`: `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH`.
 
 Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declaration.
 

@@ -22,8 +22,8 @@ This webhook is triggered when a merchant account is approved and can start coll
 ```json Example Payload
 {
     "event_type": "MERCHANT_APPROVED",
-    "event_time": "2024-12-15 14:32:18",
-    "version": "1.0",
+    "event_time": "2026-12-15T14:32:18.456789",
+    "version": "3.0.0",
     "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
     "data": {
         "approved_at": "2024-12-15T14:32:18.456789Z",
@@ -47,13 +47,13 @@ This webhook is triggered when a merchant account is approved and can start coll
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
       
-      **Example**: `"2024-12-15 14:32:18"`
+      **Example**: `"2026-12-15T14:32:18.456789"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Envelope version (e.g. "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>

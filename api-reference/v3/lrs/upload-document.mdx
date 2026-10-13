@@ -40,11 +40,7 @@ The path resolves the payment before anything is stored, under the same ownershi
 | `student_id_or_visa` | Student visa **or** university ID card — one code, either document |
 | `student_id` | University ID card (`S1107`, which has no travel leg) |
 | `fee_invoice` | Fee invoice |
-| `passenger_list` | Name and passport number of every traveller |
-| `traveller_passports` | Passports of all travellers |
-| `traveller_visas` | Visas of all travellers |
-| `ticket` | Travel tickets |
-| `invoice` | Commercial invoice, or the invoice for a trip |
+| `invoice` | Commercial invoice |
 | `relationship_declaration` | Self-declaration of the remitter's relationship to the person the remittance is for |
 
 <Warning>
@@ -96,13 +92,7 @@ Uploads are immutable. To replace one, upload the file again — you get a new `
 
 ## Waiving instead of uploading
 
-Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit:
-
-```json
-{ "documents": [{ "code": "traveller_visas", "waiver_reason": "Destination is visa-free for this passport" }] }
-```
-
-A waiver on a document that is not waivable is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
+Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit. **No LRS checklist marks a document waivable today**, so a waiver on an LRS document is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
 
 <Note>
   `POST /pg/lrs/documents/` predates this route and still works as an alias over the same implementation. New integrations should use the payment-scoped path.

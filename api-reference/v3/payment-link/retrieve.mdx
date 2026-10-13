@@ -94,7 +94,7 @@ A link the buyer paid on their second try, with the rest of the response left ou
 
 - `link_id`: The link's ID. `payment_id` is the same value, kept for compatibility.
 - `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
-- `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after. `payments` gives the method of each payment.
+- `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid. After that it is the method of the payment that paid the link, or `null` when none was recorded. `payments` gives the method of each payment.
 - `buyer`, `product`, `invoice`: As sent on create.
   - `buyer.pan_number` and `buyer.dob` are `null` unless they were collected from the buyer.
   - `product.hs_code` and `product.hs_code_description` are `null`: the link does not store them.

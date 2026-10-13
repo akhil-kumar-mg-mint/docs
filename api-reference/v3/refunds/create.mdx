@@ -3,3 +3,9 @@ title: 'Create Refund'
 description: 'Create a new refund for a previously successful payment.'
 openapi: 'POST /pg/refunds/'
 ---
+
+## Implementation Notes
+
+- **Retry with a `reference_id`.** If a call times out, send it again with the same `reference_id`, `payment_id` and `refund_amount`. You get the original refund back, not a second one. The same `reference_id` with a different amount is refused.
+- **Refunds cannot add up to more than the payment.** Refunds that have not failed count toward the payment amount. Two requests sent at once cannot both succeed if together they pass it; the second is refused.
+- **A successful call returns `201`.** The body carries the `refund_id` and the `reference_id`. The refund's outcome follows in its status and by webhook.

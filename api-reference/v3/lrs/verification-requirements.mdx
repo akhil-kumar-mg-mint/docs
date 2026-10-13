@@ -35,7 +35,7 @@ The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-need
 
 ## Response
 
-Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, a payment nothing has classified, and a travel payment whose documents include waivable ones.
+Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, a payment nothing has classified, and a travel payment at the `PASSENGER_DETAILS` level.
 
 <CodeGroup>
 
@@ -117,12 +117,6 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": false
       },
       {
-        "code": "remitter_relation",
-        "message": "Remitter's relation to the person the remittance is for",
-        "satisfied": false,
-        "provided": false
-      },
-      {
         "code": "buyer_declaration",
         "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
         "satisfied": false,
@@ -135,25 +129,10 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": false
       },
       {
-        "code": "student_name",
-        "message": "Name of the student the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
-      },
-      {
-        "code": "student_dob",
-        "message": "Date of birth of the student the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
-      },
-      {
-        "code": "student_passport_number",
-        "message": "Passport number of the student the remittance is for",
-        "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
+        "code": "persons",
+        "message": "The person this remittance is for",
+        "satisfied": false,
+        "provided": false
       }
     ],
     "documents": [
@@ -189,7 +168,13 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
         "provided": false,
         "optional": true
       }
-    ]
+    ],
+    "review": {
+      "review_state": "FRESH",
+      "rejection_reason": "",
+      "reviewed_at": null,
+      "documents": []
+    }
   }
 }
 ```
@@ -223,7 +208,7 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 }
 ```
 
-```json S0306, travel — waivable documents
+```json S0306, travel — passenger details level
 {
   "success": true,
   "message": "Verification requirements",
@@ -233,48 +218,100 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
     "settlement_status": "ACTION_REQUIRED",
     "business_model": "B2C",
     "purpose_code": "S0306",
-    "fields": ["… the same buyer, invoice, remitter and amount fields as S0305, minus the student ones …"],
-    "documents": [
+    "fields": [
       {
-        "code": "relationship_declaration",
-        "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+        "code": "buyer_name",
+        "message": "Buyer / remitter name",
         "satisfied": true,
-        "provided": false,
-        "condition": "PAYING_FOR_SOMEONE_ELSE"
+        "provided": true
       },
       {
-        "code": "passenger_list",
-        "message": "Passenger list — name and passport number of every traveller",
+        "code": "buyer_address_line_1",
+        "message": "Buyer address line 1",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "traveller_passports",
-        "message": "Passports of all travellers",
+        "code": "buyer_city",
+        "message": "Buyer city",
         "satisfied": false,
         "provided": false
       },
       {
-        "code": "traveller_visas",
-        "message": "Visas of all travellers",
-        "satisfied": false,
-        "provided": false,
-        "waivable": true
-      },
-      {
-        "code": "ticket",
-        "message": "Travel tickets",
-        "satisfied": false,
-        "provided": false,
-        "waivable": true
-      },
-      {
-        "code": "invoice",
-        "message": "Invoice for the trip",
+        "code": "buyer_state",
+        "message": "Buyer state",
         "satisfied": false,
         "provided": false
+      },
+      {
+        "code": "buyer_postal_code",
+        "message": "Buyer PIN code",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "buyer_email",
+        "message": "Buyer email",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "buyer_phone",
+        "message": "Buyer phone",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "invoice_number",
+        "message": "Invoice number",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "invoice_date",
+        "message": "Invoice date",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "remitter_pan",
+        "message": "Remitter PAN",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "remitter_dob",
+        "message": "Remitter date of birth (as per PAN)",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "buyer_declaration",
+        "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "amount_to_be_settled",
+        "message": "Amount to be settled for this payment, in INR",
+        "satisfied": false,
+        "provided": false
+      },
+      {
+        "code": "persons",
+        "message": "Travellers on this remittance",
+        "satisfied": false,
+        "provided": false,
+        "condition": "PASSENGER_DETAILS_LEVEL"
       }
-    ]
+    ],
+    "documents": [],
+    "review": {
+      "review_state": "FRESH",
+      "rejection_reason": "",
+      "reviewed_at": null,
+      "documents": []
+    }
   }
 }
 ```
@@ -304,13 +341,14 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
   |---|---|
   | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
-  | `UNDER_REVIEW` | Filed and with us. **Sending is closed** — see below. |
-  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
+  | `UNDER_REVIEW` | Filed and with us. **Sending is closed** — see below. This value does not change when Ops approves: read [`review.review_state`](#the-review) for the decision. |
+  | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
+  | `VERIFIED` | Only on older payments approved before approval was recorded separately. A payment approved today stays `UNDER_REVIEW`. Sending is closed. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
 
   A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.
 
-  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true, and a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded refuses sends too. Read this key before you send, and you will not collect a refusal you had no way to see coming.
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -320,6 +358,37 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 <ParamField path="purpose_code" type="string | null" required>
   The FEMA/FETERS purpose code the order settles under, or `null` while none is declared.
 </ParamField>
+
+### The review
+
+A classified payment also carries a `review` object — what Ops decided about the verification, in words that do not depend on which flow the payment is in. It is the one place that tells an approved payment from one still waiting, because both keep `settlement_status: "UNDER_REVIEW"`.
+
+<ParamField path="review.review_state" type="string" required>
+  | Value | What it means |
+  |---|---|
+  | `FRESH` | Nothing has been filed. |
+  | `DRAFT` | Saved but not submitted. An LRS payment never shows it. |
+  | `UNDER_REVIEW` | Filed and waiting for Ops. |
+  | `CHANGES_REQUESTED` | Ops sent it back. The payment is open again. |
+  | `APPROVED` | Ops approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
+  | `REJECTED` | Ops rejected it. Terminal. |
+</ParamField>
+
+<ParamField path="review.rejection_reason" type="string">
+  The reviewer's overall comment on a send-back or rejection. An empty string when there is none.
+</ParamField>
+
+<ParamField path="review.reviewed_at" type="string | null">
+  When Ops last decided, as an ISO timestamp, or `null`.
+</ParamField>
+
+<ParamField path="review.documents" type="array">
+  One entry per stored document: `doc_type`, `doc_status` (`PENDING` · `VERIFIED` · `REJECTED`) and the reviewer's `rejection_comment` for that file. These keys differ from the `documents` array described [below](#what-was-sent-under-a-document-code), which calls them `code` and `rejection_reason`.
+</ParamField>
+
+<Note>
+  An unclassified payment has no checklist and no review, so the `review` key is absent from that response.
+</Note>
 
 ### The items
 
@@ -376,14 +445,15 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 
   | Value | Owed when |
   |---|---|
-  | `PAYING_FOR_SOMEONE_ELSE` | `remitter_relation` is declared as anything other than `SELF`. |
-  | `PHYSICAL_GOODS_ONLY` | The order ships physical goods. |
+  | `PAYING_FOR_SOMEONE_ELSE` | A person other than the remitter is on the remittance. |
+  | `PASSENGER_DETAILS_LEVEL` | The payment's [verification level](/api-reference/v3/lrs/submit-verification-details#verification-level) is `PASSENGER_DETAILS`. |
+  | `GOODS_PURPOSE_CODE` | The order's purpose code is a goods code. |
 
-  While the condition cannot yet be evaluated — the relation has not been declared — the item reads `satisfied: true`, `provided: false`. It is still listed, so you know it exists.
+  While the condition cannot yet be evaluated — no person has been sent — the item reads `satisfied: true`, `provided: false`. It is still listed, so you know it exists.
 </ParamField>
 
 <ParamField path="waivable" type="boolean">
-  Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file — a visa the destination does not require, a ticket not yet issued.
+  Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file. No LRS checklist marks a document waivable today.
 
   A waivable document stays `satisfied: false` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
 </ParamField>
@@ -476,10 +546,9 @@ The one exception is the light B2C set (`S0101`, `S0802`, `S0301`), which asks f
 |---|---|
 | `remitter_pan` | Remitter PAN |
 | `remitter_dob` | Remitter date of birth, as per PAN |
-| `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
 | `amount_to_be_settled` | The amount to settle for this payment, in INR |
-| Who the money is for | Conditional: owed once `remitter_relation` is not `SELF`. Education codes ask for `student_name` · `student_dob` (· `student_passport_number` on `S0305`); travel codes ask for `primary_person_name` · `primary_person_dob` · `primary_person_passport_number` |
+| `persons` | The people on the remittance. Education: exactly one, the student. Travel: every traveller, but only at the `PASSENGER_DETAILS` level. See [Persons](/api-reference/v3/lrs/submit-verification-details#persons) |
 
 <Note>
   **The remitter's name is not on this list, and neither is the TCS.** The name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan), which you call before you can quote or submit — it is already on file under the PAN you declare. The TCS is the figure we quote against the payer's year-to-date LRS usage; [Quote LRS Amount](/api-reference/v3/lrs/quote) tells you what to collect, and the credit is checked against it. Neither is yours to re-declare here.
@@ -494,12 +563,7 @@ Documents, per purpose code:
 | `student_id_or_visa` — student visa **or** university ID card | required | — | — |
 | `student_id` — university ID card | — | required | — |
 | `fee_invoice` | optional | optional | — |
-| `passenger_list` | — | — | required |
-| `traveller_passports` | — | — | required |
-| `traveller_visas` | — | — | required, waivable |
-| `ticket` | — | — | required, waivable |
-| `invoice` — invoice for the trip | — | — | required |
-| `relationship_declaration` | conditional | conditional | conditional |
+| `relationship_declaration` | conditional | conditional | — |
 
 <Note>
   **`student_id_or_visa` is one code that accepts either document.** Upload a visa or a university ID card under this single code — there is no separate `student_visa` or `university_id_card` to send, and no alternative group to reconcile. `S1107` has no travel leg, so no visa exists and the university ID stands alone as `student_id`.
@@ -509,12 +573,12 @@ Documents, per purpose code:
 
 | Code | Extra fields | Documents |
 |---|---|---|
-| `S0101` — goods | `product_description`, `iec`, and `hs_code` (conditional: physical goods) | `invoice` |
-| `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | none | `invoice` |
+| `S0101` — goods | `invoice_amount`, `declaration`, `hs_code` and `iec` | `invoice` |
+| `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | `invoice_amount` and `declaration` | `invoice` |
 
 ## The requirement set can grow
 
-Answering one requirement can reveal another. Declaring `remitter_relation` as anything other than `SELF` flips the fields naming the person the money is for — `student_*` on the education codes, `primary_person_*` on the travel ones — and the relationship self-declaration to `satisfied: false`, because they are only owed in that case.
+Answering one requirement can reveal another. Sending a person other than the remitter flips `relationship_declaration` to `satisfied: false`, because it is only owed in that case. Moving a travel account to the `PASSENGER_DETAILS` level makes `persons` owed on payments created after the change.
 
 This is expected. Re-read `fields` and `documents` after every write rather than assuming the list you started with is final.
 

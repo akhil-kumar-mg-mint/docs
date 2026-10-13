@@ -43,7 +43,7 @@ The webhook is created **only if**:
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | Delivered on a per-merchant rate-capped queue, so a burst of payments arrives smoothly rather than all at once |
+| **Pacing** | Queued per merchant and sent in batches every 2 minutes, so a burst of payments arrives smoothly rather than all at once. The first attempt is not immediate. |
 
 ### Headers
 
@@ -94,7 +94,7 @@ These are complete, unedited payloads — nothing is trimmed.
       { "code": "invoice_date", "message": "Invoice date" },
       { "code": "remitter_pan", "message": "Remitter PAN" },
       { "code": "remitter_dob", "message": "Remitter date of birth (as per PAN)" },
-      { "code": "remitter_relation", "message": "Remitter's relation to the person the remittance is for" },
+      { "code": "persons", "message": "The person this remittance is for" },
       { "code": "buyer_declaration", "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose" },
       { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" }
     ],
@@ -120,7 +120,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "action_required_fields": ["… the same fourteen field entries as S0305 …"],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
@@ -142,20 +142,17 @@ These are complete, unedited payloads — nothing is trimmed.
     "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same sixteen field entries as S0305 …"],
+    "action_required_fields": [
+      "… the thirteen buyer, invoice and remitter entries shared with S0305 …",
+      { "code": "persons", "message": "Travellers on this remittance" }
+    ],
     "payment_verification_expiry": null,
-    "action_required_documents": [
-      { "code": "passenger_list", "message": "Passenger list — name and passport number of every traveller" },
-      { "code": "traveller_passports", "message": "Passports of all travellers" },
-      { "code": "traveller_visas", "message": "Visas of all travellers", "waivable": true },
-      { "code": "ticket", "message": "Travel tickets", "waivable": true },
-      { "code": "invoice", "message": "Invoice for the trip" }
-    ]
+    "action_required_documents": []
   }
 }
 ```
 
-```json S0305, after the relation is declared as PARENT
+```json S0305, after a person other than the remitter is listed
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T11:02:19.730558",
@@ -168,10 +165,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" },
-      { "code": "student_name", "message": "Name of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
-      { "code": "student_dob", "message": "Date of birth of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" },
-      { "code": "student_passport_number", "message": "Passport number of the student the remittance is for", "condition": "PAYING_FOR_SOMEONE_ELSE" }
+      { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" }
     ],
     "payment_verification_expiry": null,
     "action_required_documents": [
@@ -185,9 +179,9 @@ These are complete, unedited payloads — nothing is trimmed.
 </CodeGroup>
 
 <Note>
-  The three travel codes carry identical checklists. They differ in what the remittance is *for*, not in what you must collect.
+  The three travel codes carry identical checklists. They differ in what the remittance is *for*, not in what you must collect. A travel checklist owes no documents, and lists `persons` only for a merchant set up to collect traveller details.
 
-  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice and remitter fields dropped off, because declaring them satisfied them; and four `PAYING_FOR_SOMEONE_ELSE` items **appeared**, because declaring `remitter_relation` as `PARENT` is what makes them owed.
+  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice, remitter and `persons` fields dropped off, because sending them satisfied them; and a `PAYING_FOR_SOMEONE_ELSE` item **appeared**, because listing a person other than the remitter in `persons` is what makes `relationship_declaration` owed.
 </Note>
 
 ---
@@ -291,7 +285,7 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="condition" type="string">
-      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `remitter_relation` has been declared as something other than `SELF`.
+      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `persons` lists someone other than the remitter.
 
       An item with this key was **not** on the earlier event and is not arbitrary — the key names what brought it in.
     </ParamField>
@@ -422,7 +416,7 @@ The gateway's own vocabulary is translated into the codes you collected under, s
 |---|---|---|
 | `remitter_pan` | Either the PAN did not verify, or the name on the credit received does not match its verified holder. | Verify the PAN with [Verify PAN](/api-reference/v3/lrs/verify-pan), and declare the PAN of whoever actually holds the account the credit came from. |
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
-| `student_name` · `primary_person_name` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person's name, date of birth and — where the code asks for it — passport number. Education codes name them under `student_*`, travel codes under `primary_person_*`. |
+| `persons` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
@@ -498,7 +492,7 @@ The requirement flags are unchanged and sit alongside the new keys — an entry 
 
 ## Conditionals can appear later
 
-An item like the relationship self-declaration only shows up once its condition holds. Declaring `remitter_relation` as anything other than `SELF` brings in several items at once — the fields naming the person the money is for (`student_*` on the education codes, `primary_person_*` on the travel ones) and `relationship_declaration` — so they can arrive in an event **after** you thought you had the full list. Each carries `condition`, so the arrival is explicable rather than arbitrary.
+An item like the relationship self-declaration only shows up once its condition holds. On the education codes, listing a person other than the remitter in `persons` brings in `relationship_declaration`, so it can arrive in an event **after** you thought you had the full list. It carries `condition`, so the arrival is explicable rather than arbitrary.
 
 The reverse also happens: answering the remitter identity fields removes them from the next event. The list is what is *outstanding*, not what the checklist asks for in total.
 

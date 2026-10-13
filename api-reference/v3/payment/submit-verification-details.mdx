@@ -41,10 +41,11 @@ Your answers go in `fields`, keyed by code; files you have already uploaded go i
 {
   "fields": {
     "buyer_name": "Acme Imports Pvt Ltd",
-    "product_description": "Cotton knitted t-shirts",
     "invoice_number": "INV-2026-0041",
     "buyer_postal_code": "560001",
-    "hs_code": "6109"
+    "invoice_amount": "125000.00",
+    "hs_code": "6109",
+    "declaration": true
   }
 }
 ```
@@ -57,32 +58,57 @@ Your answers go in `fields`, keyed by code; files you have already uploaded go i
 
 **The codes come from the payment, not from a fixed list.** Read them off `action_required_fields` on the webhook, or call `GET /pg/payments/{payment_id}/verification/` at any time for the full set with a `satisfied` flag on each item. What a payment is asked for depends on what it is, and it changes as the underlying regulatory requirements do — read the codes rather than hardcoding them, and a revision reaches you without a release on your side.
 
-These are the ones an import payment is most often asked for:
+These are the ones a goods payment is asked for:
 
 | Code | |
 |---|---|
 | `buyer_name` | Name of the buyer / importer |
-| `product_description` | Description of the goods or services |
 | `invoice_number` | Invoice or order number |
 | `invoice_date` | Invoice date, `YYYY-MM-DD` |
 | `buyer_address_line_1` | Street address of the buyer |
 | `buyer_city` · `buyer_state` · `buyer_postal_code` | Rest of the buyer's address |
 | `buyer_email` · `buyer_phone` | Buyer contact details |
-| `hs_code` | Harmonised System code — asked for when the order ships physical goods |
+| `invoice_amount` | Invoice total in rupees, as a decimal string, as stated on the invoice |
+| `declaration` | `true`, once the goods are received and the invoice is genuine. A boolean |
+| `hs_code` | Harmonised System code of the goods |
 | `iec` | Importer-Exporter Code of the buying business |
 | `business_model` | `B2B` or `B2C` |
 | `purpose_code` | The FEMA/FETERS code this order settles under, e.g. `S0101`. It must be one the account this payment **settles to** is enabled for — for a PSP that is the sub-merchant on the order, not the calling credential. An unrecognised or un-enabled code is a `400`, never a stored value. |
 
-Document codes work the same way; an import payment is typically asked for `invoice`.
+Document codes work the same way; a goods payment is asked for `invoice`.
 
 <Note>
   **`type_of_goods` is not sent here.** It is part of the order's product details, declared when you create the order, and it is never listed as outstanding.
 </Note>
 
+## Sending `iec`
+
+A goods payment is asked for the buyer's IEC, and it is **checked with the issuer during the call**, against the buyer name on the order. Send the 10-digit IEC, or the firm's PAN if that is its IEC. The response tells you how the check went:
+
+- **It passed.** The call succeeds and `iec` leaves `outstanding`.
+- **It was rejected.** The call is a `400` whose `details.iec` says why. The rest of the call is still saved.
+- **The check could not run.** The call is a `503` with `ERR_B2B_GOODS_IEC_002`. Nothing was charged against your attempts. Retry the same call after a short wait.
+
+| `details.iec` | Cause |
+|---|---|
+| `Not a valid IEC. Send the 10-digit IEC, or the firm's PAN if that is its IEC.` | The value is neither a 10-digit IEC nor a PAN. |
+| `This IEC was not found. Check the number.` | The issuer has no such IEC. |
+| `The name on this IEC doesn't match the order's buyer name.` | The IEC belongs to a different name than the order's `buyer_name`. |
+| `This IEC could not be verified.` | The issuer would not confirm it. |
+| `Not a requirement of this payment.` | The payment is not a goods payment that EximPe collects. |
+
+<Warning>
+  **An order gets 5 IEC checks.** Once they are used the call answers `ERR_B2B_GOODS_IEC_001` and the payment cannot be verified through this endpoint — contact EximPe support.
+</Warning>
+
+Neither the IEC nor the name on it is echoed back in a response or an error.
+
 <Warning>
   **`business_model` and `purpose_code` must travel together, and only once.** They place the payment, and until both are set nothing else about it can be checked — so send them first, or in the same call as the rest. Send one without the other and the call is refused naming the one you left out; once set, sending either again is a `400`.
 
-  `business_model` is listed when nothing has *declared* it, not when it is empty — it defaults to `B2C`, so sending `"business_model": "B2C"` is a real answer rather than a no-op. Many orders arrive already classified, so `GET` the payment first if you are unsure.
+  `business_model` is listed when nothing has declared it. It has no default — until you send it, or we can tell it from the merchant's categories, `GET` returns `null` for it. Many orders arrive already classified, so `GET` the payment first if you are unsure.
+
+  The two must also agree. A purpose code that belongs to one side cannot be filed under the other: `S0305` is a consumer purpose code, so `"business_model": "B2B", "purpose_code": "S0305"` is refused with `ERR_IMPORT_VERIFICATION_003`, `details.purpose_code` naming the pair.
 </Warning>
 
 ## Send as much or as little as you have
@@ -93,8 +119,16 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
   **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without it.
 </Note>
 
+<Note>
+  **Where a complete set goes depends on who collected the payment.** On a payment EximPe collects, the set is filed with EximPe's own review. On a goods payment collected through a partner rail, the details are passed to that rail first, and the response reports its answer: `in_review` if it took them, `action_required` if it still wants documents. The shape of your call is the same either way.
+</Note>
+
+<Note>
+  **You can send the details before the money lands.** On a payment EximPe collects, details staged ahead of the payment are read when it is captured: a complete set goes straight to review and is filed for you, an incomplete one leaves the payment in `ACTION_REQUIRED` with a settlement `message` saying what is missing — `A business model and purpose code are required to settle this payment`, `Verification details are required to settle the payment` or `A verified buyer PAN is required to settle this payment`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
+</Note>
+
 <Warning>
-  **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends — `GET` the payment and read `settlement_status` before you send.
+  **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends, and so does a captured payment that was rejected or fully refunded — `GET` the payment and read `settlement_status` before you send.
 </Warning>
 
 ## The response
@@ -118,8 +152,22 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 | `outstanding` | The codes still owed **after** this write. Empty when nothing is. You do not need a second call to learn what is left. |
 
 <Note>
-  Payments that go through an additional verification step can return two further values, `in_review` and `action_required`. They do not arise on this flow.
+  `in_review` and `action_required` appear when the set is handed to a verification step: LRS, B2B services and B2B goods payments, and payments collected through a partner rail. `in_review` means the set was complete and filed; `action_required` means it was complete and the payment was not passed. A checklist with no such step stops at `complete`. The `refusal` object is LRS only.
 </Note>
+
+## Goods payments
+
+A B2B goods payment (`S0101`) is filed through this endpoint like the others. When every item is satisfied the set is filed on that call, the response answers `in_review`, and the payment moves to `UNDER_REVIEW`. `declaration` has to be `true`, and the IEC has to have passed its check.
+
+Once it is filed, Ops decides:
+
+| Decision | What you receive | What the payment does |
+|---|---|---|
+| Approved | [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) with `verification_status` `APPROVED` and an empty `message`. | `settlement_status` stays `UNDER_REVIEW`; [`review.review_state`](/api-reference/v3/lrs/verification-requirements#the-review) reads `APPROVED`. |
+| Rejected | `VERIFICATION_STATUS` with `REJECTED`, the reviewer's comment in `message`, and each document's own `rejection_reason`. | Terminal. `settlement_status` becomes `NOT_APPLICABLE` and a full refund is raised. |
+| Sent back for changes | Nothing. A goods send-back raises no webhook. | `settlement_status` returns to `ACTION_REQUIRED` and sending reopens. `GET` the payment and read `review.review_state` (`CHANGES_REQUESTED`) to see it. |
+
+Document entries in the `VERIFICATION_STATUS` event carry `code`, `message`, `doc_status` (`PENDING`, `VERIFIED` or `REJECTED`) and, when the reviewer left one, `rejection_reason`. A goods document has no `ref`.
 
 ## Errors
 
@@ -139,6 +187,16 @@ A refused send answers in the standard error envelope, with `details` keyed by t
 }
 ```
 
+Some refusals carry a code of their own:
+
+| Status | `error.code` | When |
+|---|---|---|
+| `400` | `40360` | No such payment for this merchant, or the verification has already been filed, or the payment was rejected or fully refunded. Nothing you send reopens a rejected payment. |
+| `400` | `ERR_DECLARATION_001` | `declaration` was sent as something other than `true` or `false`. `details` names the field. |
+| `400` | `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together, e.g. a business buyer filing a travel code. `details.purpose_code` names the pair. |
+| `400` | `ERR_B2B_GOODS_IEC_001` | All 5 IEC checks for the order have been used. |
+| `503` | `ERR_B2B_GOODS_IEC_002` | The IEC check could not run. Retry the same call. |
+
 | Message | Cause |
 |---|---|
 | `Not a requirement of this payment's checklist.` | The code is not one this payment asks for. |
@@ -146,11 +204,18 @@ A refused send answers in the standard error envelope, with `details` keyed by t
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. Omit the key rather than sending an empty value. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
+| `Not a date; send YYYY-MM-DD.` | A date field that will not parse. |
+| `The invoice date cannot be in the future.` | `invoice_date` is after today. |
+| `Not an amount; send a number like "500000.00".` | An amount field that is not a decimal. |
+| `Amount must be greater than zero.` | An amount field of zero or less. |
+| `Enter a valid Indian PIN code.` | `buyer_postal_code` is not in the India Post directory. |
+| `Enter a valid email address.` | `buyer_email` is not an email address. |
+| `Enter a valid PAN in the format ABCDE1234F.` | `remitter_pan` is not in PAN format. |
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
 <Note>
-  **`message` names the flow that refused you, so it varies.** A payment we cannot yet place — one whose business model and purpose code have not been declared — reads `Invalid verification request.` rather than the wording above, because there is no flow to name. The `code` is the same either way. Branch on `code`, never on `message`.
+  **`message` names the flow that refused you, so it varies.** B2B services reads `Invalid B2B services request.`, and every other classified flow, B2B goods included, reads `Invalid LRS request.` as above. A payment we cannot yet place — one whose business model and purpose code have not been declared — reads `Invalid verification request.` rather than the wording above, because there is no flow to name. The `code` is the same either way. Branch on `code`, never on `message`.
 </Note>
 
 <Warning>

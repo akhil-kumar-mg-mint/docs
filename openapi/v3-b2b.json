@@ -158,7 +158,13 @@
                             "satisfied": false,
                             "provided": false
                           }
-                        ]
+                        ],
+                        "review": {
+                          "review_state": "FRESH",
+                          "rejection_reason": "",
+                          "reviewed_at": null,
+                          "documents": []
+                        }
                       }
                     }
                   },
@@ -315,7 +321,58 @@
                         "waiver_reason": {
                           "type": "string",
                           "description": "Why this document is not being supplied. Only accepted on items whose `waivable` is true.",
-                          "example": "Destination is visa-free for this passport"
+                          "example": "Not issued yet"
+                        }
+                      }
+                    }
+                  },
+                  "persons": {
+                    "type": "array",
+                    "description": "The people on an LRS remittance, sent beside `fields` and `documents`. Education (`S0305`, `S1107`): exactly one entry, the student; the payer is identified by `remitter_pan` in `fields`. Travel: every traveller, but only when the payment's verification level is `PASSENGER_DETAILS`. Sending `persons` again replaces the list. Not used on a B2B-services payment.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "is_remitter"
+                      ],
+                      "properties": {
+                        "is_remitter": {
+                          "type": "boolean",
+                          "description": "`true` for the person paying. At most one entry may be the remitter.",
+                          "example": false
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Required for everyone who is not the remitter. Omit it for the remitter: the name comes from Verify PAN.",
+                          "example": "Ananya Kumar"
+                        },
+                        "relation": {
+                          "type": "string",
+                          "enum": [
+                            "PARENT",
+                            "GUARDIAN",
+                            "SPOUSE",
+                            "SIBLING",
+                            "CHILD",
+                            "OTHER"
+                          ],
+                          "description": "Required for everyone who is not the remitter: that person's relation to the remitter, so a student paid for by a parent is `CHILD`. Not allowed on the remitter's own entry.",
+                          "example": "CHILD"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "`YYYY-MM-DD`. Required for an education student who is not the remitter. Not in the future, and not more than 120 years ago.",
+                          "example": "2005-09-30"
+                        },
+                        "nationality": {
+                          "type": "string",
+                          "description": "Two-letter country code. Required for every traveller on a travel code.",
+                          "example": "IN"
+                        },
+                        "passport_number": {
+                          "type": "string",
+                          "description": "Letters, digits and dashes, up to 32 characters. Required for every traveller and for the one person on `S0305`. Self-declared and never checked against a register.",
+                          "example": "Z1234567"
                         }
                       }
                     }
@@ -576,7 +633,7 @@
                     }
                   },
                   "order_refused_the_write": {
-                    "summary": "Filing writes the values onto the order, which validates them",
+                    "summary": "A value the order would refuse is refused on the send",
                     "value": {
                       "success": false,
                       "error": {
@@ -725,9 +782,10 @@
             "type": "string",
             "enum": [
               "PAYING_FOR_SOMEONE_ELSE",
-              "PHYSICAL_GOODS_ONLY"
+              "PASSENGER_DETAILS_LEVEL",
+              "GOODS_PURPOSE_CODE"
             ],
-            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 `remitter_relation` is declared as something other than `SELF`. `PHYSICAL_GOODS_ONLY` \u2014 the order ships physical goods.",
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 the payment's verification level is `PASSENGER_DETAILS`. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code.",
             "example": "PAYING_FOR_SOMEONE_ELSE"
           },
           "waivable": {
@@ -780,7 +838,7 @@
               "EXPIRED",
               "REJECTED"
             ],
-            "description": "The payment's own state \u2014 not a roll-up of the checklist. Staging closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends. Read it before you POST.",
+            "description": "The payment's own state \u2014 not a roll-up of the checklist. Staging closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. `UNDER_REVIEW` does not change when Ops approves \u2014 read `review.review_state` for the decision. Read it before you POST.",
             "example": "ACTION_REQUIRED"
           },
           "business_model": {
@@ -812,6 +870,57 @@
             "description": "Every document this checklist calls for, satisfied or not. Empty on an unclassified payment.",
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
+            }
+          },
+          "review": {
+            "type": "object",
+            "description": "What Ops decided about the verification, the same words for every flow. Absent on an unclassified payment, which has no checklist and no review.",
+            "properties": {
+              "review_state": {
+                "type": "string",
+                "enum": [
+                  "FRESH",
+                  "DRAFT",
+                  "UNDER_REVIEW",
+                  "CHANGES_REQUESTED",
+                  "APPROVED",
+                  "REJECTED"
+                ],
+                "description": "`FRESH` \u2014 nothing filed. `DRAFT` \u2014 saved, not submitted. `UNDER_REVIEW` \u2014 filed, waiting for Ops. `CHANGES_REQUESTED` \u2014 Ops sent it back. `APPROVED` \u2014 Ops approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
+                "example": "UNDER_REVIEW"
+              },
+              "rejection_reason": {
+                "type": "string",
+                "description": "The reviewer's overall comment on a send-back or rejection. Empty when there is none.",
+                "example": ""
+              },
+              "reviewed_at": {
+                "type": "string",
+                "nullable": true,
+                "description": "When Ops last decided, as an ISO timestamp, or `null`.",
+                "example": null
+              },
+              "documents": {
+                "type": "array",
+                "description": "One entry per stored document. `doc_status` is `PENDING`, `VERIFIED` or `REJECTED` on an LRS payment, and `PENDING`, `ACCEPTED` or `REJECTED` on the others.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "doc_type": {
+                      "type": "string",
+                      "example": "invoice"
+                    },
+                    "doc_status": {
+                      "type": "string",
+                      "example": "PENDING"
+                    },
+                    "rejection_comment": {
+                      "type": "string",
+                      "example": ""
+                    }
+                  }
+                }
+              }
             }
           }
         }

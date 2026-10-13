@@ -40,7 +40,7 @@ After creation, the sub-merchant status depends on the environment:
 | tax_id | string | Yes | Tax identification number. | Alphanumeric with dashes |
 | website | string | Yes | Company website URL. | Must include `https://` prefix |
 | monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | Enum: `LESS_THAN_5_K`, `BETWEEN_5_K_AND_20_K`, `BETWEEN_20_K_AND_50_K`, `BETWEEN_50_K_AND_100_K`, `BETWEEN_100_K_AND_250_K`, `BETWEEN_250_K_AND_500_K`, `ABOVE_500_K` |
-| business_category | string | Yes | Business category (comma-separated for multiple). | Enum: `E-commerce (physical goods & cross-border shipping)`, `Digital goods / software / downloads`, `SaaS / subscriptions / recurring billing`, `Services (delivered cross-border)`, `Marketplace / platform (multiple sellers)`, `Other` |
+| business_category | string | Yes | Business category (comma-separated for multiple). | Enum: `E-commerce (physical goods & cross-border shipping)`, `Digital goods / software / downloads`, `SaaS / subscriptions / recurring billing`, `Services (delivered cross-border)`, `Marketplace / platform (multiple sellers)`, `Other`. PSPs creating sub-merchants send category slugs instead; see [Business Category](#business-category) |
 | business_category_other | string | Conditionally | Description when category includes "Other". | Required if `business_category` includes `Other` |
 | business_mode | string | Yes | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
 | description_of_products_and_services | string | Yes | Detailed description of products/services. | Max 1024 chars |
@@ -302,7 +302,7 @@ Notes:
 
 | Code | Message | Description |
 |---|---|---|
-| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
+| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors. For a PSP, a `business_category` that is not one of your approved verticals is refused with a message that names the value and lists the slugs you may use |
 
 ## Implementation Notes
 
@@ -320,4 +320,7 @@ Country fields (`registered_country`, `communication_country`, `bank_country`) m
 Phone numbers must include the country code in E.164 format (e.g., `+919876543210`, `+14155551234`).
 
 ### Business Category
-Multiple categories can be comma-separated. When `"Other"` is included, `business_category_other` must provide a description.
+How you send `business_category` depends on who you are. Multiple categories can be comma-separated.
+
+- **PSPs creating sub-merchants** send one or more category slugs, each from the verticals EximPe approved for your account — for example `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Labels, purpose codes and any slug outside your approved verticals are refused with a `400`, and the message names the value and lists the slugs you may use. The sub-merchant's allowed purpose codes follow from the slugs, so you do not need `business_category_other`.
+- **Everyone else**, including PSPs set up for export collections, sends the labels in the table above. When `"Other"` is included, `business_category_other` must provide a description.

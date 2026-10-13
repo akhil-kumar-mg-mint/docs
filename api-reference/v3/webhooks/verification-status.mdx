@@ -9,24 +9,32 @@ description: "Technical reference for the VERIFICATION_STATUS webhook event, inc
 
 **Event Type**: `VERIFICATION_STATUS`
 **Category**: Payment Verification
-**Description**: The verdict on a filed LRS verification — approved or rejected
+**Description**: The verdict on a filed verification — approved or rejected
 
 A filed verification is reviewed by us. This webhook carries the conclusion of that review: the verdict, the reviewer's comment, and the state of every document slot on the verification at that moment.
 
-It is the event that closes the loop [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) opened. That event says what a payment owes; this one says what came of sending it.
+It is the event that closes the loop the ask opened — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services payment. Those events say what a payment owes; this one says what came of sending it.
 
 <Note>
   **Two verdicts, one event.** `VERIFICATION_STATUS` fires on an approval and on a rejection, in the same shape. `verification_status` is the only key that tells them apart.
 </Note>
 
 <Warning>
-  **A send-back is not a verdict, and does not arrive here.** When a review sends a verification back for changes, the payment goes on owing something — so it is [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) that is raised, carrying the reviewer's comment and the outstanding list. `VERIFICATION_STATUS` is only ever `APPROVED` or `REJECTED`.
+  **A send-back is not a verdict, and does not arrive here.** When a review sends a verification back for changes, the payment goes on owing something — so the ask is raised again, carrying the reviewer's comment: [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services payment. `VERIFICATION_STATUS` is only ever `APPROVED` or `REJECTED`.
 </Warning>
 
 ### When the webhook is sent
 
 1. **A review approves the verification.** `verification_status` is `APPROVED` and `message` is an empty string — an approval has nothing to say beyond itself.
 2. **A review rejects the verification.** `verification_status` is `REJECTED` and `message` carries the reviewer's comment verbatim.
+
+The same two events are raised for an LRS, a B2B services and a B2B goods payment. Where each review outcome is announced:
+
+| Payment | Approved | Rejected | Sent back for changes |
+|---|---|---|---|
+| LRS | `VERIFICATION_STATUS` | `VERIFICATION_STATUS` | [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) |
+| B2B services | `VERIFICATION_STATUS` | `VERIFICATION_STATUS` | [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) |
+| B2B goods | `VERIFICATION_STATUS` | `VERIFICATION_STATUS` | Nothing — a B2B goods send-back raises no webhook |
 
 The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
 
@@ -45,7 +53,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | **Delivered immediately**, not on the per-merchant rate-capped queue the verification asks ride. A verdict is the answer to something a payer is waiting on, so it is not held behind a burst of requirement events. |
+| **Pacing** | **Delivered immediately**, not in the per-merchant batches, sent every 2 minutes, that the verification asks wait for. A verdict is the answer to something a payer is waiting on, so it is not held behind a burst of requirement events. |
 
 ### Headers
 
@@ -72,7 +80,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 
 <CodeGroup>
 
-```json Approved
+```json Approved, LRS
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-09-09T11:42:06.318204",
@@ -107,7 +115,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 }
 ```
 
-```json Rejected
+```json Rejected, LRS
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-09-09T14:07:51.662940",
@@ -131,6 +139,52 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
         "message": "University ID card",
         "ref": "4480912337",
         "doc_status": "VERIFIED"
+      }
+    ]
+  }
+}
+```
+
+```json Approved, B2B goods
+{
+  "event_type": "VERIFICATION_STATUS",
+  "event_time": "2026-10-14T09:21:44.508113",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440032",
+  "data": {
+    "payment_id": "PR5164093827",
+    "order_id": "OD7730215946",
+    "verification_status": "APPROVED",
+    "message": "",
+    "documents": [
+      {
+        "code": "invoice",
+        "message": "Commercial invoice",
+        "doc_status": "VERIFIED"
+      }
+    ]
+  }
+}
+```
+
+```json Rejected, B2B services
+{
+  "event_type": "VERIFICATION_STATUS",
+  "event_time": "2026-10-14T11:03:19.274660",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440033",
+  "data": {
+    "payment_id": "PR7712349900",
+    "order_id": "OD1122334455",
+    "verification_status": "REJECTED",
+    "message": "The invoice does not match the declared amount.",
+    "documents": [
+      {
+        "code": "invoice",
+        "message": "Commercial invoice",
+        "ref": "5282347894",
+        "doc_status": "REJECTED",
+        "rejection_reason": "The invoice total is illegible."
       }
     ]
   }
@@ -213,7 +267,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
     These five are the only keys an entry on a verdict carries. The checklist flags — `waivable`, `condition`, `optional`, `one_of` — belong to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed), which describes what is owed; a verdict describes what was decided, and never carries them.
 
     <ParamField path="code" type="string" required>
-      The checklist document code — the same value you uploaded the file under as `type`, and the same value you submitted it under as a document's `code`.
+      The checklist document code — the same value you uploaded the file under as `type`, and the same value you submitted it under as a document's `code`. On a B2B payment it is the document type, such as `invoice`.
     </ParamField>
 
     <ParamField path="message" type="string" required>
@@ -221,9 +275,9 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
     </ParamField>
 
     <ParamField path="ref" type="string">
-      The upload identifier [Upload Document](/api-reference/v3/lrs/upload-document) returned for the file held in this slot. It is the same `ref` you submitted, so it maps straight onto your own record of what you sent.
+      The upload identifier the upload call returned for the file held in this slot — [Upload Document](/api-reference/v3/lrs/upload-document) for an LRS payment, [Upload Document](/api-reference/v3/b2b/upload-document) for a B2B services one. It is the same `ref` you submitted, so it maps straight onto your own record of what you sent.
 
-      Absent on a slot discharged by a waiver — there is no file to identify.
+      Absent on an LRS slot discharged by a waiver — there is no file to identify. On a B2B services payment it is present only when the document came from an upload you made, and it is never present on a B2B goods payment.
     </ParamField>
 
     <ParamField path="doc_status" type="string">
@@ -261,7 +315,7 @@ Two things never appear:
 - **The files themselves.** No document file, URL or download link is ever included in a webhook payload. `ref` identifies the upload; it is not a link to it.
 
 <Note>
-  A slot listed here is a slot on **this** verification. For the whole checklist — including fields, optional items, and what is still outstanding — call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which reports the same three document keys alongside `satisfied` and `provided`.
+  A slot listed here is a slot on **this** verification. For the whole checklist — including fields, optional items, and what is still outstanding — call Get Verification Requirements — [LRS](/api-reference/v3/lrs/verification-requirements) or [B2B services](/api-reference/v3/b2b/verification-requirements) — which reports the same three document keys alongside `satisfied` and `provided`.
 </Note>
 
 ## Ordering two verdicts
@@ -294,12 +348,12 @@ Deliveries can also arrive out of order after a retry. Keep the verdict with the
     `data.message` is the verdict on the verification; each entry with `doc_status: "REJECTED"` carries the reason for that document in `rejection_reason`. Entries that read `VERIFIED` need nothing — asking a payer to re-send those is asking for work already done.
   </Step>
   <Step title="Confirm where the payment stands">
-    [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) reports `settlement_status`, which says whether sending anything further is still possible.
+    Get Verification Requirements — [LRS](/api-reference/v3/lrs/verification-requirements) or [B2B services](/api-reference/v3/b2b/verification-requirements) — reports `settlement_status`, which says whether sending anything further is still possible.
   </Step>
 </Steps>
 
 <Note>
-  **A rejection here is not the same as a send-back.** A send-back keeps the payment in `ACTION_REQUIRED` and re-raises [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) with the outstanding list — that is the event to act on when you are being asked for a replacement. Read `settlement_status` before you send anything after a `REJECTED` verdict.
+  **A rejection here is not the same as a send-back.** A send-back keeps the payment in `ACTION_REQUIRED` and raises the ask again — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services one — and that is the event to act on when you are being asked for a replacement. A rejection is final: the payment moves to `NOT_APPLICABLE` and a full refund is raised. Read `settlement_status` before you send anything after a `REJECTED` verdict.
 </Note>
 
 ## Related
@@ -307,6 +361,9 @@ Deliveries can also arrive out of order after a retry. Keep the verdict with the
 <CardGroup cols={2}>
   <Card title="LRS_VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/lrs-verification-needed">
     What a payment owes — including after a send-back.
+  </Card>
+  <Card title="VERIFICATION_NEEDED" icon="webhook" href="/api-reference/v3/webhooks/verification-needed">
+    What a B2B services payment owes — including after a send-back.
   </Card>
   <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
     The whole set, on demand, with `settlement_status`.

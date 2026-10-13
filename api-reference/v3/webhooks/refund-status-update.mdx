@@ -23,7 +23,9 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
                 "bank_arn": null,
                 "comments": "Refund is in progress",
                 "order_id": "OD2683049175",
+                "order_reference_id": "S2SICR1QPK",
                 "refund_id": "RF7405286913",
+                "refund_reference_id": "RF-2026-0043",
                 "payment_id": "PR1938472605",
                 "refund_amount": 1180,
                 "refund_status": "PROCESSING",
@@ -80,10 +82,22 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
       **Example**: `"OD2683049175"`
     </ParamField>
 
+    <ParamField path="data.refunds[].order_reference_id" type="string">
+      Your reference ID for the order, as sent when it was created. `null` when the order has none.
+
+      **Example**: `"S2SICR1QPK"`
+    </ParamField>
+
     <ParamField path="data.refunds[].refund_id" type="string" required>
       Unique refund identifier
       
       **Example**: `"RF7405286913"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_reference_id" type="string">
+      Your reference for the refund — the `reference_id` sent when it was created, or the one we generated when none was sent. `null` when the refund has none.
+
+      **Example**: `"RF-2026-0043"`
     </ParamField>
 
     <ParamField path="data.refunds[].payment_id" type="string" required>

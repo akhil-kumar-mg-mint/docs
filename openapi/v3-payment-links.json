@@ -1563,7 +1563,7 @@
           "mop_type": {
             "type": "string",
             "nullable": true,
-            "description": "The method the buyer paid with, in lowercase (e.g. upi, credit_card, net_banking). Can be null even after the link is paid."
+            "description": "The method the buyer paid with, in lowercase (e.g. upi, credit_card, net_banking). Null until the link is paid; after that, the method of the payment that paid the link, or null when none was recorded."
           },
           "status": {
             "type": "string",
@@ -1633,7 +1633,7 @@
           "mop_type": {
             "type": "string",
             "nullable": true,
-            "description": "The method the buyer paid with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING). Can be null even after the link is paid."
+            "description": "The method the buyer paid with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING). Null until the link is paid; after that, the method of the payment that paid the link, or null when none was recorded."
           },
           "settlement": {
             "$ref": "#/components/schemas/v3_PaymentLinkSettlement"

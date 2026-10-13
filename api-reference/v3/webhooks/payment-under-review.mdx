@@ -19,10 +19,14 @@ This is the event that ends the verification conversation. Everything the paymen
   If you already handle [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), you can route this event through the same handler and it will do the right thing.
 </Note>
 
+<Note>
+  **LRS payments only.** A B2B services payment whose set was filed receives [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) with `verification_status: "IN_REVIEW"` and an empty list instead. B2B goods payments raise no event when they move to Under Review.
+</Note>
+
 ### When the webhook is sent
 
 1. **An LRS submit passed.** A complete set was filed through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), the gateway verified the PAN, matched the sender to the account holder, reconciled TCS and confirmed the credit covers the amount. The synchronous response to that same call reads `"status": "in_review"`.
-2. **In sandbox**, when a simulated payment is moved to Under Review — either by supplying the last outstanding verification field, or by choosing that settlement status on the simulator page.
+2. **In sandbox**, when a simulated payment's settlement status is set to Under Review. Supplying the last outstanding verification field in sandbox also moves the payment to Under Review, but that path sends [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) carrying the payment's own body — not this event.
 
 The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
 
@@ -37,6 +41,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+| **Pacing** | Sent as soon as the event is created |
 
 ### Headers
 
@@ -154,7 +159,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 
 ## The family this event belongs to
 
-Four events share one body, so a single handler can read all of them:
+Three events share one body, so a single handler can read all of them:
 
 | Event | `action_required_fields` | Means |
 |---|---|---|
@@ -163,6 +168,8 @@ Four events share one body, so a single handler can read all of them:
 | `PAYMENT_UNDER_REVIEW` | `[]` | Nothing is owed; the payment is with us. |
 
 The one difference worth knowing: on `LRS_VERIFICATION_NEEDED` the list holds **objects** (`{code, message, …}`); on the other two it holds **strings**. Check the element type, or route on `event_type`.
+
+[`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) is not one of them — it carries a verdict in five keys.
 
 ## Related
 

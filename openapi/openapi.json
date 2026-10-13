@@ -648,6 +648,8 @@
                         "created_at": "2025-08-20T06:13:30.033816Z"
                       }
                     ],
+                    "business_model": "B2C",
+                    "purpose_code": "S0101",
                     "status": "payment_successful",
                     "status_message": "Payment captured successfully",
                     "created_at": "2025-08-20T06:13:29.988329Z"
@@ -762,7 +764,7 @@
                     "status": "payment_successful",
                     "status_message": "Payment captured successfully",
                     "created_at": "2025-11-04T10:53:33.444171Z",
-                    "updated_at": "2025-11-04T11:01:17.586554Z"
+                    "last_updated_at": "2025-11-04T11:01:17.586554Z"
                   }
                 }
               }
@@ -1468,14 +1470,15 @@
               },
               "example": {
                 "payment_id": "PR2024120567891",
-                "refund_amount": "2250.00"
+                "refund_amount": "2250.00",
+                "reference_id": "REFUND-2024-0001"
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Refund created successfully",
+          "201": {
+            "description": "Refund created",
             "content": {
               "application/json": {
                 "schema": {
@@ -1491,14 +1494,15 @@
                     "message": "Refund Request Queued",
                     "transaction_id": "138605980",
                     "bank_ref_num": null,
-                    "refund_amount": "1000"
+                    "refund_amount": "1000",
+                    "reference_id": "REFUND-2024-0001"
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid request",
+            "description": "Validation error. The payment is not captured or is on hold, the total of refunds that have not failed would exceed the payment amount (`refund_amount`: \"Total refund amount would exceed payment amount\"), `reference_id` was reused with a different amount, or your refund balance does not cover the refund (`ERR_REFUND_004`, with `available_balance` and `requested_amount` in `details`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1525,9 +1529,17 @@
         ],
         "parameters": [
           {
-            "name": "payment_id",
+            "name": "order_id",
             "in": "query",
-            "description": "Filter by payment ID.",
+            "description": "Filter by EximPe order ID (e.g. `OD9795883191`).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_reference_id",
+            "in": "query",
+            "description": "Filter by your own order reference ID.",
             "schema": {
               "type": "string"
             }
@@ -1535,7 +1547,7 @@
           {
             "name": "reference_id",
             "in": "query",
-            "description": "Filter by order reference ID.",
+            "description": "Filter by your own refund reference ID, the `reference_id` you sent on Create Refund.",
             "schema": {
               "type": "string"
             }
@@ -1543,7 +1555,7 @@
           {
             "name": "from_date",
             "in": "query",
-            "description": "Filter refunds created from this date. Format: YYYY-MM-DD.",
+            "description": "Refunds created on or after this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
@@ -1552,18 +1564,10 @@
           {
             "name": "to_date",
             "in": "query",
-            "description": "Filter refunds created up to this date. Format: YYYY-MM-DD.",
+            "description": "Refunds created up to and including this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
-            }
-          },
-          {
-            "name": "merchant_id",
-            "in": "query",
-            "description": "Filter refunds by merchant ID.",
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -3969,7 +3973,7 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid lock details, merchant account not identified, email required, or notification group error",
+            "description": "Validation error — invalid lock details, merchant account not identified, or email required",
             "content": {
               "application/json": {
                 "schema": {
@@ -7094,6 +7098,21 @@
               "$ref": "#/components/schemas/v1_PaymentRequest"
             }
           },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "nullable": true,
+            "description": "Whether the buyer is a business or a consumer. `null` until it is known: the order did not declare one and your KYC does not name exactly one."
+          },
+          "purpose_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "FEMA/FETERS purpose code the order settles under (e.g. `S0802`), or `null` until it is known.",
+            "example": "S0802"
+          },
           "status": {
             "type": "string",
             "description": "Order status",
@@ -7200,7 +7219,7 @@
               "order_id",
               "status",
               "created_at",
-              "updated_at"
+              "last_updated_at"
             ],
             "properties": {
               "order_id": {
@@ -7217,7 +7236,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "updated_at": {
+              "last_updated_at": {
                 "type": "string",
                 "format": "date-time"
               }
@@ -7596,6 +7615,15 @@
           "refund_amount": {
             "type": "string",
             "description": "The amount to be refunded. Can be a partial amount."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL that receives refund status updates for this refund."
           }
         }
       },
@@ -7655,6 +7683,11 @@
             "format": "date-time",
             "nullable": true,
             "description": "The timestamp of when the refund was completed."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
           }
         }
       },
@@ -10601,6 +10634,21 @@
               "$ref": "#/components/schemas/v2_PaymentRequest"
             }
           },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "nullable": true,
+            "description": "Whether the buyer is a business or a consumer. `null` until it is known: the order did not declare one and your KYC does not name exactly one."
+          },
+          "purpose_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "FEMA/FETERS purpose code the order settles under (e.g. `S0802`), or `null` until it is known.",
+            "example": "S0802"
+          },
           "status": {
             "type": "string",
             "description": "Order status",
@@ -10707,7 +10755,7 @@
               "order_id",
               "status",
               "created_at",
-              "updated_at"
+              "last_updated_at"
             ],
             "properties": {
               "order_id": {
@@ -10724,7 +10772,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "updated_at": {
+              "last_updated_at": {
                 "type": "string",
                 "format": "date-time"
               }
@@ -11103,6 +11151,15 @@
           "refund_amount": {
             "type": "string",
             "description": "The amount to be refunded. Can be a partial amount."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL that receives refund status updates for this refund."
           }
         }
       },
@@ -11162,6 +11219,11 @@
             "format": "date-time",
             "nullable": true,
             "description": "The timestamp of when the refund was completed."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
           }
         }
       },
@@ -13819,6 +13881,21 @@
               "$ref": "#/components/schemas/v3_PaymentRequest"
             }
           },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "nullable": true,
+            "description": "Whether the buyer is a business or a consumer. `null` until it is known: the order did not declare one and your KYC does not name exactly one."
+          },
+          "purpose_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "FEMA/FETERS purpose code the order settles under (e.g. `S0802`), or `null` until it is known.",
+            "example": "S0802"
+          },
           "status": {
             "type": "string",
             "description": "Order status",
@@ -13925,7 +14002,7 @@
               "order_id",
               "status",
               "created_at",
-              "updated_at"
+              "last_updated_at"
             ],
             "properties": {
               "order_id": {
@@ -13942,7 +14019,7 @@
                 "type": "string",
                 "format": "date-time"
               },
-              "updated_at": {
+              "last_updated_at": {
                 "type": "string",
                 "format": "date-time"
               }
@@ -14321,6 +14398,15 @@
           "refund_amount": {
             "type": "string",
             "description": "The amount to be refunded. Can be a partial amount."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+          },
+          "callback_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL that receives refund status updates for this refund."
           }
         }
       },
@@ -14380,6 +14466,11 @@
             "format": "date-time",
             "nullable": true,
             "description": "The timestamp of when the refund was completed."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
           }
         }
       },

@@ -15,8 +15,8 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
 | **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
 | **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
-| **Payment Under Review** | A payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
-| **Verification Status** | A filed LRS verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
+| **Payment Under Review** | An LRS payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
+| **Verification Status** | A filed LRS, B2B services or B2B goods verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |
 | **Payment Settled** | Money is settled to you | Update your books |
 | **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
@@ -237,9 +237,17 @@ public function webhook(Request $request) {
 
 ## If your endpoint is down
 
-We retry. First attempt is immediate, then at **1 minute**, **5 minutes**, **15 minutes**, and **1 hour**. After 5 failed attempts we stop.
+We retry. A delivery fails when your endpoint answers with anything other than a `2xx`, does not answer within **10 seconds**, or cannot be reached. After a failed attempt we try again **1 minute** later, then **5 minutes**, **15 minutes** and **1 hour** after each further failure — **5 attempts** in all. After the fifth failure we stop sending that event.
 
-Anything other than `200 OK` counts as a failure, so return `200` as soon as you have stored the event, and do your processing afterwards.
+Return `200` as soon as you have stored the event, and do your processing afterwards.
+
+<Note>
+  **Verification asks are batched.** [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) and [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) are not sent the moment they are created. They are queued per merchant and sent in batches every **2 minutes**, so the first attempt can come a couple of minutes later — longer behind a burst — and their retries ride the same batches. Every other event is sent as soon as it is created.
+</Note>
+
+<Warning>
+  **An event is a snapshot.** Its body is fixed when we create it, and `event_time` is that moment, not the moment of delivery. Because verification asks wait for a batch and verdicts do not, two events for one payment can arrive out of order. Order them by `event_time`, and when it matters call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) for where the payment stands now.
+</Warning>
 
 <Warning>
   **Four things to get right.**

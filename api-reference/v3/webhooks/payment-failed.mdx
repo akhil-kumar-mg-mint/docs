@@ -22,18 +22,25 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
 ```json Example Payload
 {
     "event_type": "PAYMENT_FAILED",
-    "event_time": "2024-02-15 16:53:15Z",
-    "version": "1.0",
+    "event_time": "2026-02-15T16:53:15.123456",
+    "version": "3.0.0",
     "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
-        "status": "failed",
+        "status": "FAILED",
         "message": "Cancelled by user",
-        "mop_type": "upi",
+        "mop_type": "UPI",
         "order_id": "OD3376378679",
         "link_id": null,
         "payment_id": "PR6938527534",
+        "amount": 1000,
         "bank_ref_num": "OD3376378679-PR6938527534",
-        "payment_completed_at": "2025-06-24T12:30:44.000000Z"
+        "extended_status": "USER_DROPPED",
+        "payment_message": null,
+        "payment_completed_at": "2025-06-24T12:30:44.000000Z",
+        "utr": null,
+        "virtual_account_id": null,
+        "subscription_id": null,
+        "merchant_reference_id": "S2SICR1QPJ"
     }
 }
 ```
@@ -51,13 +58,13 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in ISO 8601 format
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
       
-      **Example**: `"2024-02-15 16:53:15Z"`
+      **Example**: `"2026-02-15T16:53:15.123456"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Envelope version (e.g. "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -114,10 +121,44 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
       **Example**: `"OD3376378679-PR6938527534"`
     </ParamField>
 
+    <ParamField path="data.amount" type="number" required>
+      Payment amount
+
+      **Example**: `1000`
+    </ParamField>
+
+    <ParamField path="data.extended_status" type="string" required>
+      Detailed status code for the payment
+
+      **Example**: `"USER_DROPPED"`
+    </ParamField>
+
+    <ParamField path="data.payment_message" type="string">
+      Additional processor-level message; may be null
+    </ParamField>
+
     <ParamField path="data.payment_completed_at" type="string" required>
       ISO 8601 payment completion timestamp
       
       **Example**: `"2025-06-24T12:30:44.000000Z"`
+    </ParamField>
+
+    <ParamField path="data.utr" type="string">
+      UTR of the payment (if any); may be empty or null
+    </ParamField>
+
+    <ParamField path="data.virtual_account_id" type="string">
+      Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
+    </ParamField>
+
+    <ParamField path="data.subscription_id" type="string">
+      Subscription ID if this payment is linked to a subscription mandate; otherwise null
+    </ParamField>
+
+    <ParamField path="data.merchant_reference_id" type="string" required>
+      Your reference ID for the order
+
+      **Example**: `"S2SICR1QPJ"`
     </ParamField>
   </Tab>
 </Tabs>

@@ -22,8 +22,8 @@ This webhook is triggered when a subscription status changes or subscription inf
 ```json Example Payload
 {
     "event_type": "SUBSCRIPTION_STATUS",
-    "event_time": "2024-02-15 16:53:15",
-    "version": "1.0",
+    "event_time": "2026-02-15T16:53:15.123456",
+    "version": "3.0.0",
     "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
     "data": {
         "subscriptions": [
@@ -54,13 +54,13 @@ This webhook is triggered when a subscription status changes or subscription inf
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
 
-      **Example**: `"2024-02-15 16:53:15"`
+      **Example**: `"2026-02-15T16:53:15.123456"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Envelope version (e.g. "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>

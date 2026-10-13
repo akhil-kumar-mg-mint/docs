@@ -17,21 +17,25 @@ This webhook is triggered when a payment is refunded to the customer through Exi
 
 ```json Example Payload
 {
-    "event_type": "PAYMENT_REFUNDED",
-    "event_time": "2024-02-15 16:53:15",
-    "version": "1.0",
-    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
         "refunds": [
             {
-                "payment_request_id": "PR7485664995",
+                "bank_arn": "74523129087",
+                "comments": "Refund processed successfully",
                 "order_id": "OD6085456489",
+                "order_reference_id": "S2SICR1QPJ",
                 "refund_id": "RF2684785771",
-                "amount": 1000,
-                "bank_arn": "arn"
+                "refund_reference_id": "RF-2026-0044",
+                "payment_id": "PR7485664995",
+                "refund_amount": 1000,
+                "refund_completed_at": "2026-02-15T16:53:15.123456"
             }
         ]
-    }
+    },
+    "version": "3.0.0",
+    "event_time": "2026-02-15T16:53:15.481203",
+    "event_type": "PAYMENT_REFUNDED",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34"
 }
 ```
 
@@ -46,13 +50,13 @@ This webhook is triggered when a payment is refunded to the customer through Exi
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in YYYY-MM-DD HH:MM:SS format
+      Timestamp when the event occurred in ISO 8601 format
       
-      **Example**: `"2024-02-15 16:53:15"`
+      **Example**: `"2026-02-15T16:53:15.481203"`
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "1.0")
+      Webhook payload version (currently "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -71,16 +75,16 @@ This webhook is triggered when a payment is refunded to the customer through Exi
       Array of refund objects containing the refund information
     </ParamField>
 
-    <ParamField path="data.refunds[].payment_request_id" type="string" required>
-      Original payment request ID that was refunded
-      
-      **Example**: `"PR7485664995"`
-    </ParamField>
-
     <ParamField path="data.refunds[].order_id" type="string" required>
       Order ID associated with the refund
       
       **Example**: `"OD6085456489"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].order_reference_id" type="string">
+      Your reference ID for the order, as sent when it was created. `null` when the order has none.
+
+      **Example**: `"S2SICR1QPJ"`
     </ParamField>
 
     <ParamField path="data.refunds[].refund_id" type="string" required>
@@ -89,16 +93,40 @@ This webhook is triggered when a payment is refunded to the customer through Exi
       **Example**: `"RF2684785771"`
     </ParamField>
 
-    <ParamField path="data.refunds[].amount" type="number" required>
+    <ParamField path="data.refunds[].refund_reference_id" type="string">
+      Your reference for the refund — the `reference_id` sent when it was created, or the one we generated when none was sent. `null` when the refund has none.
+
+      **Example**: `"RF-2026-0044"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].payment_id" type="string" required>
+      Original payment ID that was refunded
+
+      **Example**: `"PR7485664995"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_amount" type="number" required>
       Refund amount
       
       **Example**: `1000`
     </ParamField>
 
+    <ParamField path="data.refunds[].comments" type="string">
+      Human-readable note describing the refund outcome
+
+      **Example**: `"Refund processed successfully"`
+    </ParamField>
+
     <ParamField path="data.refunds[].bank_arn" type="string">
       Bank ARN (Acquirer Reference Number) - may be null
       
-      **Example**: `"arn"`
+      **Example**: `"74523129087"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_completed_at" type="string">
+      Timestamp when the refund completed - `null` when the completion time is not known
+
+      **Example**: `"2026-02-15T16:53:15.123456"`
     </ParamField>
   </Tab>
 </Tabs>

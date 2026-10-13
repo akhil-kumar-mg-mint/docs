@@ -34,7 +34,11 @@ This webhook names what a payment still owes before it can be filed. It is the g
 A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
 <Note>
-  **Ops approving or rejecting a B2B services verification raises nothing.** Only the send-back does. Read those two from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) — an approval leaves `settlement_status` at `UNDER_REVIEW`, a rejection moves it to `NOT_APPLICABLE` and raises a full refund.
+  **Ops approving or rejecting a B2B services verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), not this event.** Only the send-back raises `VERIFICATION_NEEDED`. An approval leaves `settlement_status` at `UNDER_REVIEW`; a rejection moves it to `NOT_APPLICABLE` and raises a full refund — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) reports both. A B2B goods send-back raises no webhook at all.
+</Note>
+
+<Note>
+  **`IN_REVIEW` is how a B2B services payment says it is under review.** [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review) is sent for LRS payments only, so a filed B2B services set arrives here, with `verification_status: "IN_REVIEW"` and an empty list.
 </Note>
 
 <Warning>
@@ -54,7 +58,7 @@ The webhook is **delivered only if** your merchant account (or parent, for sub-m
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | Delivered on a per-merchant rate-capped queue, so a burst of payments arrives smoothly rather than all at once |
+| **Pacing** | Queued per merchant and sent in batches every 2 minutes, so a burst of payments arrives smoothly rather than all at once. The first attempt is not immediate. |
 
 ### Headers
 
@@ -279,7 +283,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 | `business_model` | Nothing has *declared* whether the buyer is `B2C` or `B2B`. |
 
 <Warning>
-  **`business_model` is listed when nothing has declared it — not when it is empty.** It is never empty; it defaults to `B2C`. A default nobody stood behind is worth telling you about, and sending `"business_model": "B2C"` is a real answer rather than a no-op.
+  **`business_model` is listed while it is undeclared.** It has no default: an order carries one only when you send it, or when the merchant's KYC names a single business model and fills it in. The two facts are asked for independently — a payment that has a purpose code and no business model lists `business_model` alone.
 </Warning>
 
 <Tip>
@@ -291,7 +295,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
 
 <Note>
-  **Declaring the classification does not raise a fresh event on a non-LRS payment.** The follow-up ask is only re-sent when the new checklist is an LRS one, where it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Otherwise, read the new checklist's codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
+  **Declaring the classification can raise a fresh ask.** If the new checklist is an LRS one, it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). If it is a B2B goods or B2B services one that still owes items, a new `VERIFICATION_NEEDED` names them — sent together with `PAYMENT_DETAILS_MISSING`, which carries the same list. Any other checklist raises nothing: read its codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
 </Note>
 
 <Note>
