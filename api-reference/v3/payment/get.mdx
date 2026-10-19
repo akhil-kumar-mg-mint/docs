@@ -1,0 +1,64 @@
+---
+title: 'Get Payment'
+description: 'Retrieve one payment with its order, settlement, refunds and method-of-payment details.'
+openapi: '/openapi/v3-payments.json GET /pg/payments/{payment_id}/'
+---
+
+## Overview
+
+Returns the full record of one payment: the order it belongs to, the settlement that paid it out, any refunds against it, and details of the method the buyer used. Take the `payment_id` from [List Payments](/api-reference/v3/payment/list) or from a payment webhook.
+
+<Note>
+  **PSPs can fetch any payment they can act for**: their own, or any sub-merchant's. `X-Merchant-ID` is not needed here, and does not narrow the lookup.
+</Note>
+
+## Payment status
+
+`status` is the payment's status as recorded: `pending`, `captured` or `failed`.
+
+<Note>
+  **A pending payment that has expired still reads `pending` here.** [List Payments](/api-reference/v3/payment/list) shows the same payment as `failed`. Treat a `pending` payment whose order has passed its expiry as failed.
+</Note>
+
+`order.status` is the order's status, not the payment's: `payment_pending`, `payment_successful` or `failed`. An order can have several payments, one per attempt, so a `failed` payment can belong to a `payment_successful` order.
+
+## Response Fields
+
+- `order.amount` is a decimal string with two places, e.g. `"1500.00"`. The same applies to `settlement.settlement_amount` and `refund[].refund_amount`. Parse them as decimals, never as floats.
+- `settlement` is `null` until the payment is settled.
+- `refund` lists refunds against the payment, newest first, and is `[]` when there are none. `refund_status` is one of `initiated`, `processing`, `refunded`, `failed`, `reversed`, `on_hold` or `bank_rejected_refund`.
+- `collection_mode` is how the payment was collected: `hosted_payment`, `payment_link` or `s2s`.
+- `mop_type` and `order.opted_mop_type` are lowercase, e.g. `upi` or `credit_card`. `opted_mop_type` is the method chosen when the order was created; `mop_type` is the one the buyer actually used.
+- `mop_detail` depends on `mop_type`:
+
+| `mop_type` | `mop_detail` |
+|---|---|
+| `upi` | `vpa` |
+| `credit_card`, `debit_card` | `card_last_4_digits`, `card_holder_name`, `card_issuer_country`, `card_issuer_bank` |
+| `net_banking` | `bank_ref_num`, `acq_id` |
+| `qr`, or any other method | `null` |
+
+Any field inside `mop_detail` can be `null` when the payment provider did not return it.
+
+- `created_at`, `payment_completed_at`, `order.created_at`, and the timestamps under `settlement` and `refund`, are UTC with microseconds, e.g. `2026-10-15T06:44:13.414209Z`.
+
+## Errors
+
+A payment ID that does not exist, or belongs to a merchant you cannot act for, returns `404`:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERR_PAYMENT_005",
+    "message": "Payment not found",
+    "details": {
+      "payment_id": "Payment not found"
+    }
+  }
+}
+```
+
+<Info>
+  The response is the same whatever `X-API-Version` you send. v1, v2 and v3 integrations share this endpoint and its response.
+</Info>
