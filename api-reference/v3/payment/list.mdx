@@ -1,0 +1,95 @@
+---
+title: 'List Payments'
+description: 'Page through your payments, newest first, filtered by status, method, date or reference.'
+openapi: '/openapi/v3-payments.json GET /pg/payments/'
+---
+
+## Overview
+
+Returns your payments a page at a time, newest first. Each entry carries the payment's `status`, its buyer, its amount and the order behind it. To get the full record of one payment — settlement, refunds and method-of-payment details — call [Get Payment](/api-reference/v3/payment/get) with its `payment_id`.
+
+<Note>
+  **PSPs get one list covering every payment they can act for**: their own and all their sub-merchants'. `merchant` on each entry says whose it is. To narrow the list to one sub-merchant, send that sub-merchant's ID in `X-Merchant-ID`, or pass it as the `merchant` filter.
+</Note>
+
+## Query Parameters
+
+All parameters are optional, and you can combine filters.
+
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `page` | integer | `1` | Page number. |
+| `page_size` | integer | `250` | Payments per page. Values above `1000` are capped at `1000`. |
+| `ordering` | string | `-created_at` | `created_at`, `last_updated_at` or `payment_completed_at`. Prefix with `-` for descending. |
+| `search` | string | | Case-insensitive partial match across payment ID, order ID, reference ID, invoice number, buyer name, buyer email and bank reference. |
+| `payment_id` | string | | Exact payment ID. |
+| `order_id` | string | | Exact order ID. |
+| `reference_id` | string | | Exact reference ID. Case-sensitive. |
+| `invoice_number` | string | | Exact invoice number. Case-sensitive. |
+| `buyer_name` | string | | Exact buyer name. Case-sensitive: `John Doe` matches but `john` does not. Use `search` for a partial match. |
+| `merchant` | string | | Merchant ID. |
+| `currency` | string | | ISO 4217 code, e.g. `INR`. |
+| `mop_type` | string | | `upi`, `credit_card`, `debit_card`, `net_banking`, `qr`. |
+| `collection_mode` | string | | `hosted_payment`, `payment_link`, `s2s`. |
+| `status` | string | | `pending`, `captured`, `failed`. |
+| `from_created_at` / `to_created_at` | date | | Created within this range, `YYYY-MM-DD` in UTC. Both ends are included. |
+| `from_payment_completed_at` / `to_payment_completed_at` | date | | Completed within this range, `YYYY-MM-DD` in UTC. Both ends are included. |
+
+`mop_type`, `collection_mode` and `status` are case-insensitive and take several values separated by commas, e.g. `status=captured,failed`.
+
+<Warning>
+  **An invalid value is refused with a `500`, not a `400`.** An unknown `status`, `mop_type` or `collection_mode`, or a date that is not `YYYY-MM-DD`, returns `500` with `error.code` `40350`. `error.details.error` names the problem:
+
+  ```json
+  {
+    "success": false,
+    "error": {
+      "code": 40350,
+      "message": "Failed to retrieve domestic payment requests",
+      "details": {
+        "error": "{'status': ErrorDetail(string='Invalid value. Must be one of: PENDING, CAPTURED, FAILED, INVALID', code='invalid')}"
+      }
+    }
+  }
+  ```
+</Warning>
+
+## Pagination
+
+`data` wraps the page:
+
+| Field | Description |
+|---|---|
+| `count` | Total payments across all pages |
+| `page` | This page's number |
+| `page_size` | Payments per page |
+| `next` | Full URL of the next page, or `null` on the last one |
+| `previous` | Full URL of the previous page, or `null` on the first one |
+| `results` | The payments on this page |
+
+Follow `next` until it is `null`. A page past the last one is not returned empty. It is refused with a `500` whose `error.details.error` is `"Invalid page."`.
+
+## Payment status
+
+| `status` | Meaning |
+|---|---|
+| `pending` | Started, with no final outcome yet. |
+| `captured` | Paid. |
+| `failed` | Declined, abandoned, or expired before it completed. `comment` says why when there is a reason. |
+
+<Note>
+  **Expired payments read differently in the list and in the filter.** A pending payment that passes its expiry is shown as `failed` here, but the `status` filter matches the status as recorded. So `status=pending` can return entries that read `failed`, and `status=failed` will not find them. [Get Payment](/api-reference/v3/payment/get) shows the recorded status, so the same payment reads `pending` there.
+</Note>
+
+## Response Fields
+
+- `payment_id` is the payment's ID (`PR` followed by 10 digits). [Get Payment](/api-reference/v3/payment/get) takes it.
+- `amount.amount` and `amount.total_amount` are decimal strings without trailing zeros, e.g. `"1500"` or `"2499.5"`. Parse them as decimals, never as floats. `total_amount` adds GST where GST applies; otherwise it equals `amount`.
+- `mop_type` is the method the buyer paid with, in lowercase (`upi`, `credit_card`). It is `null` when no method was chosen.
+- `comment` says why a payment failed, or what state it is in, when there is something to say; otherwise it is `null`.
+- `order_id` is the order behind the payment (`OD` followed by 10 digits). One order can have several payments, one per attempt.
+- `created_at` is UTC with microseconds, e.g. `2026-10-15T06:44:13.414209Z`.
+
+<Info>
+  The response is the same whatever `X-API-Version` you send. v1, v2 and v3 integrations share this endpoint and its response.
+</Info>
