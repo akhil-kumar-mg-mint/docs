@@ -37,23 +37,6 @@ All parameters are optional, and you can combine filters.
 
 `mop_type`, `collection_mode` and `status` are case-insensitive and take several values separated by commas, e.g. `status=captured,failed`.
 
-<Warning>
-  **An invalid value is refused with a `500`, not a `400`.** An unknown `status`, `mop_type` or `collection_mode`, or a date that is not `YYYY-MM-DD`, returns `500` with `error.code` `40350`. `error.details.error` names the problem:
-
-  ```json
-  {
-    "success": false,
-    "error": {
-      "code": 40350,
-      "message": "Failed to retrieve domestic payment requests",
-      "details": {
-        "error": "{'status': ErrorDetail(string='Invalid value. Must be one of: PENDING, CAPTURED, FAILED, INVALID', code='invalid')}"
-      }
-    }
-  }
-  ```
-</Warning>
-
 ## Pagination
 
 `data` wraps the page:
