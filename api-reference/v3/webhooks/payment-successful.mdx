@@ -17,7 +17,7 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 
 - **Regular payment flow:** After a payment success callback is received, the payment is updated to CAPTURED and the webhook is created.
 - **VBA transfer flow:** After a VBA transfer payment is successfully recorded, the webhook is created.
-- The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+- The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
 ---
 
@@ -26,7 +26,7 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |

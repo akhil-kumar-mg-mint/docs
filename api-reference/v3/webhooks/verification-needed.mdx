@@ -45,7 +45,7 @@ A **verified** payment sends no webhook — `VERIFIED` means nothing is outstand
   **Not every refused submit raises this event.** It is raised only where the refusal maps to a checklist item. A call refused for a reason that names no item — a body we could not read, or staging already closed because the set has been filed — answers in the response and raises nothing. Treat the response as authoritative on your own calls, and this event as how you learn about changes you did not make.
 </Warning>
 
-The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL. Without one nothing reaches you — some producers skip recording the event at all, others record it and it is simply never sent, so an event you never received is not evidence of anything on our side either way.
+The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured. Without one nothing reaches you — some producers skip recording the event at all, others record it and it is simply never sent, so an event you never received is not evidence of anything on our side either way.
 
 ---
 
@@ -54,7 +54,7 @@ The webhook is **delivered only if** your merchant account (or parent, for sub-m
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |

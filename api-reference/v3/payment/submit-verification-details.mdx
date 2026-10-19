@@ -152,7 +152,7 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 | `outstanding` | The codes still owed **after** this write. Empty when nothing is. You do not need a second call to learn what is left. |
 
 <Note>
-  `in_review` and `action_required` appear when the set is handed to a verification step: LRS, B2B services and B2B goods payments, and payments collected through a partner rail. `in_review` means the set was complete and filed; `action_required` means it was complete and the payment was not passed. A checklist with no such step stops at `complete`. The `refusal` object is LRS only.
+  `in_review` and `action_required` appear when the set is handed to a verification step: LRS, B2B services and B2B goods payments, and payments collected through a partner rail. `in_review` means the set was complete and filed; `action_required` means it was complete and the payment was not passed. A checklist with no such step stops at `complete`. When the set was complete but not filed, the response also carries a `refusal` object; this applies to any of these handlers, not only LRS.
 </Note>
 
 ## Goods payments

@@ -152,8 +152,8 @@
               }
             }
           },
-          "503": {
-            "description": "Service unavailable",
+          "502": {
+            "description": "Payment gateway API error (`ERR_PAYMENT_003`), or the gateway could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -300,8 +300,8 @@
               }
             }
           },
-          "503": {
-            "description": "Service unavailable",
+          "502": {
+            "description": "Payment gateway API error (`ERR_PAYMENT_003`), or the gateway could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -402,8 +402,8 @@
               }
             }
           },
-          "503": {
-            "description": "Service unavailable",
+          "502": {
+            "description": "Payment gateway API error (`ERR_PAYMENT_003`), or the gateway could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -558,8 +558,8 @@
               }
             }
           },
-          "503": {
-            "description": "Payment gateway API error",
+          "502": {
+            "description": "Payment gateway API error (`ERR_PAYMENT_003`), or the gateway could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -648,8 +648,8 @@
               }
             }
           },
-          "503": {
-            "description": "Payment gateway API error",
+          "502": {
+            "description": "Payment gateway API error (`ERR_PAYMENT_003`), or the gateway could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -691,17 +691,17 @@
           },
           "billing_interval": {
             "type": "integer",
-            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year."
+            "description": "Number of billing cycle units between each recurring payment. For example, if billing_cycle is MONTHLY and billing_interval is 2, payments recur every 2 months. If billing_cycle is DAILY and billing_interval is 7, payments recur every 7 days. If billing_cycle is YEARLY and billing_interval is 1, payments recur every year. Required unless `billing_cycle` is `ADHOC`."
           },
           "payment_start_date": {
             "type": "string",
             "format": "date",
-            "description": "First debit date (YYYY-MM-DD). Must be later than today in IST."
+            "description": "First debit date (YYYY-MM-DD). Must be later than today in IST. Required unless `billing_cycle` is `ADHOC`."
           },
           "payment_end_date": {
             "type": "string",
             "format": "date",
-            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be on or after payment_start_date."
+            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be on or after payment_start_date. Required unless `billing_cycle` is `ADHOC`."
           },
           "remarks": {
             "type": "string",
@@ -715,10 +715,7 @@
         "required": [
           "billing_amount",
           "billing_currency",
-          "billing_cycle",
-          "billing_interval",
-          "payment_start_date",
-          "payment_end_date"
+          "billing_cycle"
         ]
       },
       "CreateOrderRequest": {
@@ -1246,7 +1243,7 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Selects the API version this call is made against. Send `3.0.0` for v3.",
+        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. The response carries an `X-API-Version` header: the version you sent, or when you sent none, your account's default (`3.0.0`, or `1.0.0` for a PayU account and `2.0.0` for a Cashfree account that is not routed by lane). A missing or different value does not fail the call.",
         "x-displayName": "API Version",
         "x-example": "3.0.0"
       }

@@ -147,7 +147,3 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
 
   **Example**: `"Goods or Services Not Provided / Not Received"`
 </ParamField>
-
-<Note>
-  **Some disputes carry a reason code instead.** A dispute raised through some payment methods has no `reason_description` or `data.event_type`. It carries `data.reason_code` — the reason code reported for the dispute — and `data.bank_case_number`, the bank's reference for the case, in their place. Handle both shapes.
-</Note>

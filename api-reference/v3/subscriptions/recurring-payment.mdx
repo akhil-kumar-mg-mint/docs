@@ -14,6 +14,13 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
 A `409` means the subscription's own state refused the charge — there is no active pre-debit notification for today, or a charge is already in progress. A `400` means the amount is above the billing amount or above the pre-debit notified amount. In both cases nothing reached the bank: fix the cause, then call again. A `502` means the payment network failed.
 </Info>
 
+<Info>
+**PayU and Cashfree differ on this endpoint.**
+
+- **PayU**: `invoice_display_number` is required (use the value sent in the pre-debit notification); `transaction_id` is optional. The charge needs an active pre-debit notification for today, so the `409` for a missing pre-debit and the `400` for an amount above the pre-debit amount apply to PayU only. The response `data` is `{ "order_id", "status", "message" }`. It can return `202` when PayU accepted the debit but the bank outcome is still pending, and a failed debit returns `400` with `{ "error": "<reason>" }` in `details`.
+- **Cashfree**: `invoice_display_number` is not required and `amount` is ignored for the charge. A `409` is returned when a charge is already initiated for tomorrow, the day Cashfree debits.
+</Info>
+
 ### Path Parameters
 
 <ParamField path="subscription_id" type="string" required>
@@ -23,7 +30,15 @@ A `409` means the subscription's own state refused the charge — there is no ac
 ### Request Body
 
 <ParamField body="amount" type="number">
-  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it.
+  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. On PayU it must also not exceed the pre-debit notified amount. Cashfree ignores it.
+</ParamField>
+
+<ParamField body="invoice_display_number" type="string">
+  Your display number for this charge. Required for PayU; not needed for Cashfree.
+</ParamField>
+
+<ParamField body="transaction_id" type="string">
+  Optional unique transaction ID (max 64 characters). A `REC-` prefixed ID is generated when omitted.
 </ParamField>
 
 ### Response Fields
@@ -79,7 +94,7 @@ A `409` means the subscription's own state refused the charge — there is no ac
     "code": "ERR_PAYMENT_001",
     "message": "Validation error",
     "details": {
-      "recurring": ["A recurring charge is already in progress for this subscription; wait for it to complete before initiating another."]
+      "recurring": "A recurring charge is already in progress for this subscription; wait for it to complete before initiating another."
     }
   }
 }

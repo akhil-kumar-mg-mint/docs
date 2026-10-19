@@ -15,7 +15,7 @@ Retrieve a paginated list of all sub-merchants under the authenticated PSP accou
 | Name | Type | Required | Description |
 |---|---|---|---|
 | page | integer | No | Page number (default: 1) |
-| page_size | integer | No | Number of results per page (default: 10) |
+| page_size | integer | No | Number of results per page (default: 250, maximum: 1000) |
 | search | string | No | Search by brand name or legal name |
 | ordering | string | No | Sort field. Prefix with `-` for descending. Options: `created_at`, `last_updated_at` |
 
@@ -39,7 +39,7 @@ Retrieve a paginated list of all sub-merchants under the authenticated PSP accou
   "data": {
     "count": 3,
     "page": 1,
-    "page_size": 10,
+    "page_size": 250,
     "next": null,
     "previous": null,
     "results": [
@@ -73,7 +73,7 @@ Retrieve a paginated list of all sub-merchants under the authenticated PSP accou
   "data": {
     "count": 0,
     "page": 1,
-    "page_size": 10,
+    "page_size": 250,
     "next": null,
     "previous": null,
     "results": []

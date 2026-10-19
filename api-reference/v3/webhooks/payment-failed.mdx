@@ -11,7 +11,7 @@ description: "Technical reference for the PAYMENT_FAILED webhook event, includin
 **Category**: Payment  
 **Description**: Payment transaction has failed
 
-This webhook is triggered when a customer's payment attempt fails through EximPe.
+This webhook is triggered when a customer's payment attempt fails through EximPe. It is also sent when an attempt expires without an outcome, and when a hosted checkout ends with no payment attempted, in which case `extended_status` is `NOT_ATTEMPTED`.
 
 ---
 
@@ -115,8 +115,8 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
       **Example**: `"PR6938527534"`
     </ParamField>
 
-    <ParamField path="data.bank_ref_num" type="string" required>
-      Bank reference number
+    <ParamField path="data.bank_ref_num" type="string">
+      Bank reference number. `null` when the attempt never reached the bank, such as an expiry or a checkout that ended with no attempt
       
       **Example**: `"OD3376378679-PR6938527534"`
     </ParamField>

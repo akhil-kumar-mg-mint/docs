@@ -201,12 +201,17 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 | | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
 |---|:---:|:---:|:---:|
 | Buyer and invoice fields | same | same | same |
+| Buyer address line 1, city and state | optional | optional | optional |
 | Remitter identity, declaration, `amount_to_be_settled` | same | same | same |
 | `persons` | exactly one person: the student | exactly one person: the student | only at `PASSENGER_DETAILS`: every traveller, the remitter included |
 | Passport number on each person | required, the remitter included | not asked for | required |
 | Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | none |
 | Optional documents | `fee_invoice` | `fee_invoice` | — |
 | Conditional document | `relationship_declaration` | `relationship_declaration` | — |
+
+<Note>
+  **The address lines are optional here; the PIN code is not.** `buyer_address_line_1`, `buyer_city` and `buyer_state` never block completion on an LRS checklist, and a blank value sent for one is ignored rather than refused. The body examples above include them for completeness. `buyer_postal_code` is still required. A B2C payment captured without an `invoice_date` is given the UTC date of the capture.
+</Note>
 
 <Warning>
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
@@ -294,7 +299,7 @@ A list that breaks one of these rules is refused as a whole, and each carries a 
 | `ERR_LRS_MERCHANT_016` | Select the nationality of every passenger. | A travel entry has no `nationality`. |
 | `ERR_LRS_MERCHANT_017` | Enter the passport number of every person. | A travel entry, or the `S0305` student, has no `passport_number`. |
 | `ERR_LRS_MERCHANT_018` | Enter the date of birth of the person the remittance is for. | An education student who is not the remitter has no `dob`. |
-| `ERR_LRS_MERCHANT_019` | Exactly one person is required for this purpose code. | An education send with none, or more than one. |
+| `ERR_LRS_MERCHANT_019` | Exactly one person is required for this purpose code. | An education send that lists more than one person. Sending no `persons` is not refused; the person stays outstanding. |
 
 The rules on a single entry answer under `40359`, with the message in `details`:
 
@@ -438,7 +443,7 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
     **The two name verdicts are one problem, not two.** `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` compare the *same pair* — the buyer name on the order against the name the PAN is registered to. Only the judge differs: the verification vendor reaches the first, our own fuzzy match the second, which is why a name can clear one and fail the other. Build one remediation, not two: correct whichever of the two names is wrong, and send again.
   </Note>
 
-  `missing` names gateway tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
+  `missing` names gateway tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves no amount to settle after charges, for an account whose amount is derived), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
 
   The purpose-code and PAN verdicts are reached before anything else is looked at, so each carries exactly one entry in `missing` and `outstanding_cents: 0`. Only `SENDER_NAME_MISMATCH` and a `null` reason can carry a shortfall, or more than one entry.
 
@@ -497,7 +502,7 @@ A complete set can fail to reach a verdict at all:
 
 Every refusal is answered in the standard error envelope.
 
-Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+Every refusal is a `400`, whatever the reason, except a PAN check that could not run because the PAN provider is unavailable, which is a `503` (`ERR_LRS_MERCHANT_006`). The code inside the envelope is what tells refusals apart, not the status.
 
 | `error.code` | When |
 |---|---|
@@ -506,6 +511,10 @@ Every refusal is a `400`, whatever the reason — the code inside the envelope i
 | `ERR_DECLARATION_001` | `buyer_declaration` was sent as something other than `true` or `false`. `details` names the field. |
 | `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — a business buyer filing an LRS code, for example. `details.purpose_code` names the pair. |
 | `ERR_LRS_MERCHANT_016` to `ERR_LRS_MERCHANT_019` | The `persons` list breaks a purpose-code rule — see [Person errors](#person-errors). |
+| `ERR_LRS_MERCHANT_006` | The PAN provider could not answer (`503`). Your details are saved; retry the same call. |
+| `ERR_LRS_MERCHANT_022` | `amount_to_be_settled` was sent for a payment whose amount EximPe derives from the credit. Omit it. |
+| `ERR_LRS_MERCHANT_024` | The merchant's LRS MDR rate is not configured, so the amount cannot be derived. Contact support. |
+| `ERR_LRS_MERCHANT_025` | The amount to be settled could not be derived for this payment. Contact support. |
 | `ERR_LRS_MERCHANT_021` | A complete set could not be filed because the bank credit for this payment has no recorded amount. Your details are saved. Repeat the same request once EximPe has recorded the credit; if it persists, contact support. |
 
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:

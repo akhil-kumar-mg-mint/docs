@@ -57,7 +57,7 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "3.0.0")
+      Webhook payload version, the API version of your account (for example "3.0.0")
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
@@ -113,7 +113,7 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
     </ParamField>
 
     <ParamField path="data.refunds[].refund_status" type="string" required>
-      Current status of the refund
+      Current status of the refund. One of `PROCESSING`, `REVERSED`, `ON_HOLD` or `BANK_REJECTED_REFUND`. A refund that has just been created (`INITIATED`) sends no webhook, and the final outcomes arrive as [`PAYMENT_REFUNDED`](/api-reference/v3/webhooks/payment-refunded) and [`REFUND_FAILED`](/api-reference/v3/webhooks/refund-failed) instead.
       
       **Example**: `"PROCESSING"`
     </ParamField>

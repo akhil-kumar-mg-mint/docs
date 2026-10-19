@@ -36,7 +36,7 @@ The same two events are raised for an LRS, a B2B services and a B2B goods paymen
 | B2B services | `VERIFICATION_STATUS` | `VERIFICATION_STATUS` | [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) |
 | B2B goods | `VERIFICATION_STATUS` | `VERIFICATION_STATUS` | Nothing — a B2B goods send-back raises no webhook |
 
-The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
 <Note>
   **There is no sandbox trigger for this event.** It is raised by a review of a verification you filed, and a review is not something a simulator performs. Integrate the handler against the payloads on this page; you will see your first real delivery when a filed verification is reviewed.
@@ -49,7 +49,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |

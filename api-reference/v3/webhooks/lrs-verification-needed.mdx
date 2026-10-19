@@ -29,7 +29,7 @@ This webhook fires when a payment settling under an LRS purpose code is missing 
 4. **When a filed verification is sent back for changes.** A review can return a verification rather than decide it — a document is the wrong one, a field needs correcting. The payment owes something again, so it is this event that carries the ask, with the reviewer's comment in the top-level `message` — see [When a review sends it back](#when-a-review-sends-it-back). A review that **decides** the verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) instead.
 
 The webhook is created **only if**:
-- Your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL
+- Your merchant account (or parent, for sub-merchants) has a webhook URL configured
 - The payment is actually owed something — a payment with everything already supplied gets **no event at all**. Silence is the "nothing owed" signal.
 
 ---
@@ -39,7 +39,7 @@ The webhook is created **only if**:
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
@@ -84,9 +84,6 @@ These are complete, unedited payloads — nothing is trimmed.
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
       { "code": "buyer_name", "message": "Buyer / remitter name" },
-      { "code": "buyer_address_line_1", "message": "Buyer address line 1" },
-      { "code": "buyer_city", "message": "Buyer city" },
-      { "code": "buyer_state", "message": "Buyer state" },
       { "code": "buyer_postal_code", "message": "Buyer PIN code" },
       { "code": "buyer_email", "message": "Buyer email" },
       { "code": "buyer_phone", "message": "Buyer phone" },
@@ -120,7 +117,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same fourteen field entries as S0305 …"],
+    "action_required_fields": ["… the same field entries as S0305 …"],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
@@ -143,8 +140,8 @@ These are complete, unedited payloads — nothing is trimmed.
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      "… the thirteen buyer, invoice and remitter entries shared with S0305 …",
-      { "code": "persons", "message": "Travellers on this remittance" }
+      "… the buyer, invoice and remitter entries shared with S0305 …",
+      { "code": "persons", "message": "Travellers on this remittance", "condition": "PASSENGER_DETAILS_LEVEL" }
     ],
     "payment_verification_expiry": null,
     "action_required_documents": []
@@ -285,7 +282,7 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="condition" type="string">
-      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `persons` lists someone other than the remitter.
+      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `persons` lists someone other than the remitter. `PASSENGER_DETAILS_LEVEL` means the payment's verification level is passenger details, which is when a travel checklist lists `persons`.
 
       An item with this key was **not** on the earlier event and is not arbitrary — the key names what brought it in.
     </ParamField>
@@ -418,6 +415,7 @@ The gateway's own vocabulary is translated into the codes you collected under, s
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
 | `persons` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
+| `derived_amount_credit_too_small` | For an account whose amount to be settled is derived from the credit: the credit leaves nothing to settle after EximPe's charges and the TCS. | The buyer has to send a larger amount. There is nothing to re-send under this name. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
 <Warning>

@@ -111,12 +111,15 @@ The last two need your sandbox account on the **Simulator** gateway. None of the
 | `ACTION_REQUIRED` | Something is still outstanding — details not sent yet, or sent and not passed. |
 | `IN_REVIEW` | Accepted; awaiting bank processing. For LRS the amount is posted to the buyer's LRS counter at this point. |
 | `VERIFIED` | Nothing outstanding. **No webhook is sent** for this — do not wait on one. |
+| `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). |
 | `EXPIRED` | The verification window closed. Terminal; the money goes back to the buyer. |
 
 Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLED` webhook take over.
 
 <Note>
-  The submit call answers with where the payment stands and nothing else — `IN_REVIEW` if the set was complete and passed, `ACTION_REQUIRED` if anything is still owed.
+  The submit call answers with a lowercase `status` and the codes still `outstanding`. `status` is `incomplete` (something is still owed), `complete` (nothing owed, nothing filed yet), `in_review` (the set was complete and passed) or `action_required` (the set was complete and was not passed; a `refusal` object says why). These are not the uppercase `verification_status` values above.
+
+  The same state is spelled three ways depending on where you read it: `UNDER_REVIEW` is a payment's `settlement_status`, `IN_REVIEW` is the `verification_status` on webhooks, and `in_review` is the `status` of the submit response.
 </Note>
 
 ### The buyer paid less than the amount due. What now?
@@ -179,7 +182,7 @@ Resident individuals only, including minors through a guardian. Not companies, p
 
 ### What are the limits?
 
-₹25,00,000 per payment, and USD 250,000 per person per financial year across every bank they use — not just payments through us. We refuse anything that would breach the annual cap on the data we can see.
+A transfer into a Virtual Bank Account must be under ₹25,00,000, an order created through the API can be for at most ₹1,00,00,000, and the cap is USD 250,000 per person per financial year across every bank they use — not just payments through us. We refuse anything that would breach the annual cap on the data we can see.
 
 ### Which purpose codes are supported?
 
@@ -229,7 +232,7 @@ No scanned PAN card is needed — PAN is a field, validated electronically.
 
 ### When do I upload documents?
 
-Up front, before you submit, and not tied to a payment. Each [upload](/api-reference/v3/lrs/upload-document) returns a `ref` you pass in the submit call.
+Up front, before you submit. Each [upload](/api-reference/v3/lrs/upload-document) returns a `ref` you pass in the submit call. For an LRS payment the `ref` is scoped to the merchant the payment settles to, not to one payment. On a B2B services payment it is bound to the payment you uploaded it against.
 
 ### What happens if a document is rejected?
 

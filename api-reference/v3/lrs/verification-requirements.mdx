@@ -59,20 +59,23 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
       {
         "code": "buyer_address_line_1",
         "message": "Buyer address line 1",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_city",
         "message": "Buyer city",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_state",
         "message": "Buyer state",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_postal_code",
@@ -228,20 +231,23 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
       {
         "code": "buyer_address_line_1",
         "message": "Buyer address line 1",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_city",
         "message": "Buyer city",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_state",
         "message": "Buyer state",
-        "satisfied": false,
-        "provided": false
+        "satisfied": true,
+        "provided": false,
+        "optional": true
       },
       {
         "code": "buyer_postal_code",
@@ -536,7 +542,18 @@ Buyer and invoice basics, read straight off the order:
 
 `buyer_name` · `buyer_address_line_1` · `buyer_city` · `buyer_state` · `buyer_postal_code` · `buyer_email` · `buyer_phone` · `invoice_number` · `invoice_date`
 
-The one exception is the light B2C set (`S0101`, `S0802`, `S0301`), which asks for `buyer_name` and an optional invoice, and nothing else.
+On the LRS and B2C checklists `buyer_address_line_1`, `buyer_city` and `buyer_state` are `optional`: they are listed, they never block completion, and a blank value sent for one is ignored. `buyer_postal_code` stays required. The B2B checklists still require all of them.
+
+When a B2C payment is captured with no `invoice_date`, it is set to the UTC date of the capture, so that item is not owed for a payment that has not been given one.
+
+The light B2C set (`S0101`, `S0802`, `S0301`) asks for those nine fields and no remitter identity, then adds:
+
+| Code | Asks for |
+|---|---|
+| `invoice_amount` | Invoice total in INR, as stated on the invoice |
+| `declaration` | The declaration the payer affirms: the purchase is genuine and the invoice is accurate |
+| `hs_code` | HS code of the goods. Owed only when the purpose code is a physical-goods code |
+| `invoice` (document) | Optional |
 
 ### LRS checklists
 
@@ -547,11 +564,15 @@ The one exception is the light B2C set (`S0101`, `S0802`, `S0301`), which asks f
 | `remitter_pan` | Remitter PAN |
 | `remitter_dob` | Remitter date of birth, as per PAN |
 | `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
-| `amount_to_be_settled` | The amount to settle for this payment, in INR |
+| `amount_to_be_settled` | The amount to settle for this payment, in INR. Not on the list for a merchant whose amount is derived from the credit, see below |
 | `persons` | The people on the remittance. Education: exactly one, the student. Travel: every traveller, but only at the `PASSENGER_DETAILS` level. See [Persons](/api-reference/v3/lrs/submit-verification-details#persons) |
 
 <Note>
   **The remitter's name is not on this list, and neither is the TCS.** The name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan), which you call before you can quote or submit — it is already on file under the PAN you declare. The TCS is the figure we quote against the payer's year-to-date LRS usage; [Quote LRS Amount](/api-reference/v3/lrs/quote) tells you what to collect, and the credit is checked against it. Neither is yours to re-declare here.
+</Note>
+
+<Note>
+  **When EximPe derives the amount for your merchant account, `amount_to_be_settled` is not on the checklist at all.** It is absent from `fields`, and sending it is refused with `ERR_LRS_MERCHANT_022`. The amount is worked out when a complete set is filed: the credit, less EximPe's MDR and GST on it, less the TCS on what remains. If the credit is too small to leave any amount to settle, the set is refused with `derived_amount_credit_too_small` in [`refusal.missing`](/api-reference/v3/lrs/submit-verification-details#the-response) and the buyer must send a larger amount. Ask your EximPe integration manager whether your account works this way. [Quote LRS Amount](/api-reference/v3/lrs/quote) is not available to it either.
 </Note>
 
 Documents, per purpose code:

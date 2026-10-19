@@ -9,9 +9,9 @@ description: "Technical reference for the MERCHANT_APPROVED webhook event, inclu
 
 **Event Type**: `MERCHANT_APPROVED`  
 **Category**: Onboarding  
-**Description**: Merchant account has been approved and activated
+**Description**: Sub-merchant account has been approved and activated
 
-This webhook is triggered when a merchant account is approved and can start collecting payments through EximPe.
+This webhook is triggered when a sub-merchant account is approved and can start collecting payments through EximPe. Only sub-merchant approvals send it, and it is delivered to the parent merchant's webhook URL. A direct merchant's own approval sends nothing.
 
 ---
 
@@ -26,7 +26,7 @@ This webhook is triggered when a merchant account is approved and can start coll
     "version": "3.0.0",
     "sequence_number": "a3791670-7c5d-4a86-aa7a-fe35e58a9dbb",
     "data": {
-        "approved_at": "2024-12-15T14:32:18.456789Z",
+        "approved_at": "2026-12-15T14:32:18.456789",
         "merchant_id": "1380229823",
         "legal_name": "TechStore Solutions Private Limited",
         "trade_name": "TechStore Online"
@@ -71,11 +71,11 @@ This webhook is triggered when a merchant account is approved and can start coll
     <ParamField path="data.approved_at" type="string" required>
       ISO 8601 timestamp when the merchant was approved
       
-      **Example**: `"2024-12-15T14:32:18.456789Z"`
+      **Example**: `"2026-12-15T14:32:18.456789"`
     </ParamField>
 
     <ParamField path="data.merchant_id" type="string" required>
-      Unique identifier for the approved merchant
+      Unique identifier for the approved sub-merchant
       
       **Example**: `"1380229823"`
     </ParamField>

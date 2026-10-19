@@ -2518,7 +2518,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN and a `purpose_code` the sub-merchant is enabled for.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN. Not available to an account whose amount to be settled EximPe derives from the credit: the call is refused with `ERR_LRS_MERCHANT_023`, because such an account declares no amount to quote.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2538,8 +2538,7 @@
                 "type": "object",
                 "required": [
                   "pan",
-                  "amount",
-                  "purpose_code"
+                  "amount"
                 ],
                 "properties": {
                   "pan": {
@@ -2554,15 +2553,14 @@
                   },
                   "purpose_code": {
                     "type": "string",
-                    "description": "FEMA purpose code; must be one the sub-merchant is enabled for.",
+                    "description": "Ignored. The quote is priced on `pan` and `amount` alone; accepted so existing callers keep working.",
                     "example": "S0305"
                   }
                 }
               },
               "example": {
                 "pan": "ABCDE1234F",
-                "amount": 1200000,
-                "purpose_code": "S0305"
+                "amount": 1200000
               }
             }
           }
@@ -2678,7 +2676,7 @@
             }
           },
           "400": {
-            "description": "Invalid request — validation error, unverified PAN, or purpose code not enabled.",
+            "description": "Invalid request — validation error, unverified PAN, or `ERR_LRS_MERCHANT_023` when the account's amount to be settled is derived from the credit.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2704,7 +2702,7 @@
     "/pg/payments/{payment_id}/documents/": {
       "post": {
         "summary": "Upload a supporting document",
-        "description": "Uploads one supporting file for a payment's verification and answers with a `ref`. Send that `ref` under the document's checklist code in the `documents` array of [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — uploading a file does not answer a requirement; the submit does.\n\nUpload each file as it arrives; nothing has to be held back until the set is complete. Extension, size (10 MB) and PDF encryption are validated here, so a bad file fails on upload rather than at submit time.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. The stored document is scoped to the merchant the payment settles to — the sub-merchant named on the order, not the credential that uploaded it — so a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file: a `ref` uploaded against one sub-merchant's payment is not citable on a sibling's, while a `ref` owned by the PSP account itself resolves on any payment settling to that PSP or to any of its sub-merchants. Uploads are immutable — to replace one, upload again and submit the new `ref` under the same code.\n\n`POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**The settling merchant is derived from the payment.** This is a `multipart/form-data` request.",
+        "description": "Uploads one supporting file for a payment's verification and answers with a `ref`. Send that `ref` under the document's checklist code in the `documents` array of [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — uploading a file does not answer a requirement; the submit does.\n\nUpload each file as it arrives; nothing has to be held back until the set is complete. Extension, size (10 MB) and PDF encryption are validated here, so a bad file fails on upload rather than at submit time.\n\nThe path resolves the payment before anything is stored, under the same ownership rules as the verification endpoint. On a B2B services payment the file is stored against the payment itself and its `ref` is citable only from that payment. On every other flow the stored document is scoped to the merchant the payment settles to — the sub-merchant named on the order, not the credential that uploaded it — so a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file: a `ref` uploaded against one sub-merchant's payment is not citable on a sibling's, while a `ref` owned by the PSP account itself resolves on any payment settling to that PSP or to any of its sub-merchants. Uploads are immutable — to replace one, upload again and submit the new `ref` under the same code.\n\n`POST /pg/lrs/documents/` predates this route and still works as an alias; new integrations should use this one.\n\n**The settling merchant is derived from the payment.** This is a `multipart/form-data` request.",
         "tags": [
           "LRS"
         ],
@@ -2753,10 +2751,6 @@
                       "student_id_or_visa",
                       "student_id",
                       "fee_invoice",
-                      "passenger_list",
-                      "traveller_passports",
-                      "traveller_visas",
-                      "ticket",
                       "invoice",
                       "relationship_declaration",
                       "delivery_proof"
@@ -2912,7 +2906,7 @@
                 "examples": {
                   "classified": {
                     "summary": "A classified payment (S0305)",
-                    "description": "Extract — the real response lists every item the checklist holds. `buyer_name` came in with the payment itself; the conditional items are satisfied vacuously until `remitter_relation` says otherwise; the optional fee invoice never blocks completion.",
+                    "description": "Extract — the real response lists every item the checklist holds. `buyer_name` came in with the payment itself; the address lines are optional and never block completion; the relationship declaration is satisfied vacuously until `persons` lists someone other than the remitter; the optional fee invoice never blocks completion.",
                     "value": {
                       "success": true,
                       "message": "Verification requirements",
@@ -2930,8 +2924,29 @@
                             "provided": true
                           },
                           {
+                            "code": "buyer_address_line_1",
+                            "message": "Buyer address line 1",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
                             "code": "buyer_city",
                             "message": "Buyer city",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "message": "Buyer state",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "message": "Buyer PIN code",
                             "satisfied": false,
                             "provided": false
                           },
@@ -2942,8 +2957,8 @@
                             "provided": false
                           },
                           {
-                            "code": "remitter_relation",
-                            "message": "Remitter's relation to the person the remittance is for",
+                            "code": "remitter_dob",
+                            "message": "Remitter date of birth (as per PAN)",
                             "satisfied": false,
                             "provided": false
                           },
@@ -2960,11 +2975,10 @@
                             "provided": false
                           },
                           {
-                            "code": "student_name",
-                            "message": "Name of the student the remittance is for",
-                            "satisfied": true,
-                            "provided": false,
-                            "condition": "PAYING_FOR_SOMEONE_ELSE"
+                            "code": "persons",
+                            "message": "The person this remittance is for",
+                            "satisfied": false,
+                            "provided": false
                           }
                         ],
                         "documents": [
@@ -3000,7 +3014,13 @@
                             "provided": false,
                             "optional": true
                           }
-                        ]
+                        ],
+                        "review": {
+                          "review_state": "FRESH",
+                          "rejection_reason": "",
+                          "reviewed_at": null,
+                          "documents": []
+                        }
                       }
                     }
                   },
@@ -3086,7 +3106,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential — the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed — a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on any payment whose complete set went to a verification step and was not filed.\n\n**The settling merchant is derived from the payment**, not from the calling credential — the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "LRS"
         ],
@@ -3119,7 +3139,7 @@
                 "properties": {
                   "fields": {
                     "type": "object",
-                    "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; the amount (`amount_to_be_settled`) is a decimal string in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400.",
+                    "description": "Answers keyed by checklist code, e.g. `{\"remitter_pan\": \"ABCPK1234F\", \"buyer_city\": \"Bengaluru\"}`. Values are strings, numbers or booleans. Dates are `YYYY-MM-DD`; the amount (`amount_to_be_settled`) is a decimal string in rupees. An unknown key is a 400 rather than a silent drop — a typo you never hear about would leave the payment waiting forever for a field you believe you sent. Omit a key rather than sending null or an empty string; a blank value is also a 400, except `buyer_address_line_1`, `buyer_city` and `buyer_state` on an LRS or B2C checklist, where they are optional and a blank is ignored.",
                     "additionalProperties": true,
                     "example": {
                       "buyer_name": "Acme Imports Pvt Ltd",
@@ -3149,8 +3169,60 @@
                         },
                         "waiver_reason": {
                           "type": "string",
-                          "description": "Why this document is not being supplied. Only accepted on items whose `waivable` is true.",
-                          "example": "Destination is visa-free for this passport"
+                          "description": "Why this document is not being supplied. Only accepted on items whose `waivable` is true; no LRS or B2B services item is waivable today, so a waiver is refused with \"This document cannot be waived.\"",
+                          "example": "Not applicable to this payment"
+                        }
+                      }
+                    }
+                  },
+                  "persons": {
+                    "type": "array",
+                    "description": "The people on the remittance. Sent beside `fields` and `documents`, never inside `fields`. Education purpose codes take exactly one person, the student. Travel purpose codes take every traveller, and ask for them only when the account's verification level is `PASSENGER_DETAILS`. Sending the list again replaces it. A list that breaks a purpose-code rule is refused as a whole with `ERR_LRS_MERCHANT_016` to `ERR_LRS_MERCHANT_019`. LRS only.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "is_remitter"
+                      ],
+                      "properties": {
+                        "is_remitter": {
+                          "type": "boolean",
+                          "description": "`true` for the person paying. At most one entry may be the remitter.",
+                          "example": true
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Required for everyone who is not the remitter. Omit it for the remitter.",
+                          "example": "Meera Kumar"
+                        },
+                        "relation": {
+                          "type": "string",
+                          "enum": [
+                            "SELF",
+                            "PARENT",
+                            "GUARDIAN",
+                            "SPOUSE",
+                            "SIBLING",
+                            "CHILD",
+                            "OTHER"
+                          ],
+                          "description": "Required for everyone who is not the remitter: that person's relation to the remitter. Not allowed on the remitter's own entry.",
+                          "example": "SPOUSE"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "format": "date",
+                          "description": "`YYYY-MM-DD`. Required for an education student who is not the remitter.",
+                          "example": "2004-05-17"
+                        },
+                        "nationality": {
+                          "type": "string",
+                          "description": "Two-letter country code. Required for every traveller on a travel code.",
+                          "example": "IN"
+                        },
+                        "passport_number": {
+                          "type": "string",
+                          "description": "Letters, digits and dashes, up to 32 characters. Required for every traveller, and for the one person on `S0305`.",
+                          "example": "Y7654321"
                         }
                       }
                     }
@@ -3249,7 +3321,7 @@
                         },
                         "refusal": {
                           "type": "object",
-                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and only on LRS payments — absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did. The handoff only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
+                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed — absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did. The handoff only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
                           "required": [
                             "reason",
                             "missing",
@@ -3275,7 +3347,7 @@
                               "items": {
                                 "type": "string"
                               },
-                              "description": "What the gateway still wants, in its own vocabulary — these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
+                              "description": "What the gateway still wants, in its own vocabulary — these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves no amount to settle after charges, on an account whose amount is derived), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
                               "example": [
                                 "purpose_code"
                               ]
@@ -7526,9 +7598,10 @@
             "type": "string",
             "enum": [
               "PAYING_FOR_SOMEONE_ELSE",
-              "PHYSICAL_GOODS_ONLY"
+              "PASSENGER_DETAILS_LEVEL",
+              "GOODS_PURPOSE_CODE"
             ],
-            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` — `remitter_relation` is declared as something other than `SELF`. `PHYSICAL_GOODS_ONLY` — the order ships physical goods.",
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` — `persons` lists someone other than the remitter. `PASSENGER_DETAILS_LEVEL` — the payment's verification level is passenger details, which is when a travel checklist lists `persons`. `GOODS_PURPOSE_CODE` — the order's purpose code is a physical-goods code.",
             "example": "PAYING_FOR_SOMEONE_ELSE"
           },
           "waivable": {
@@ -7634,6 +7707,58 @@
             "items": {
               "$ref": "#/components/schemas/v3_VerificationRequirementItem"
             }
+          },
+          "review": {
+            "type": "object",
+            "description": "Present on a classified payment; absent while nothing has classified it. What Ops decided about the verification, in words that do not depend on the payment's flow. It is the one place that tells an approved payment from one still waiting, because both keep `settlement_status: \"UNDER_REVIEW\"`.",
+            "properties": {
+              "review_state": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "FRESH",
+                  "DRAFT",
+                  "UNDER_REVIEW",
+                  "CHANGES_REQUESTED",
+                  "APPROVED",
+                  "REJECTED"
+                ],
+                "description": "`FRESH` — nothing has been filed. `DRAFT` — saved but not submitted (never on an LRS payment). `UNDER_REVIEW` — filed and waiting for Ops. `CHANGES_REQUESTED` — Ops sent it back; the payment is open again. `APPROVED` — Ops approved it. `REJECTED` — Ops rejected it; terminal.",
+                "example": "FRESH"
+              },
+              "rejection_reason": {
+                "type": "string",
+                "description": "The reviewer's overall comment on a send-back or rejection. An empty string when there is none.",
+                "example": ""
+              },
+              "reviewed_at": {
+                "type": "string",
+                "nullable": true,
+                "description": "When Ops last decided, or `null` if no decision has been made.",
+                "example": null
+              },
+              "documents": {
+                "type": "array",
+                "description": "Each document's own review status and comment.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "doc_type": {
+                      "type": "string",
+                      "example": "offer_letter"
+                    },
+                    "doc_status": {
+                      "type": "string",
+                      "example": "REJECTED"
+                    },
+                    "rejection_comment": {
+                      "type": "string",
+                      "example": "Letter is for the wrong intake term."
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -7667,7 +7792,7 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. The response carries an `X-API-Version` header: the version you sent, or when you sent none, your account's default (`3.0.0`, or `1.0.0` for a PayU account and `2.0.0` for a Cashfree account that is not routed by lane). A missing or different value does not fail the call.",
         "x-displayName": "API Version",
         "x-example": "3.0.0"
       }

@@ -302,7 +302,7 @@ Notes:
 
 | Code | Message | Description |
 |---|---|---|
-| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors. For a PSP, a `business_category` that is not one of your approved verticals is refused with a message that names the value and lists the slugs you may use |
+| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors. For a PSP, a `business_category` that is not one of your approved verticals is refused with a message that names the value and lists the slugs you may use; an unknown value or a purpose code is refused with "Send a category slug from the PSP's approved verticals." and no list |
 
 ## Implementation Notes
 
@@ -322,5 +322,5 @@ Phone numbers must include the country code in E.164 format (e.g., `+91987654321
 ### Business Category
 How you send `business_category` depends on who you are. Multiple categories can be comma-separated.
 
-- **PSPs creating sub-merchants** send one or more category slugs, each from the verticals EximPe approved for your account — for example `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Labels, purpose codes and any slug outside your approved verticals are refused with a `400`, and the message names the value and lists the slugs you may use. The sub-merchant's allowed purpose codes follow from the slugs, so you do not need `business_category_other`.
+- **PSPs creating sub-merchants** send one or more category slugs, each from the verticals EximPe approved for your account — for example `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Labels, purpose codes and any slug outside your approved verticals are refused with a `400`. Only a slug outside your approved verticals gets a message that lists the slugs you may use; the others say "Send a category slug from the PSP's approved verticals." with no list. The sub-merchant's allowed purpose codes follow from the slugs, so you do not need `business_category_other`.
 - **Everyone else**, including PSPs set up for export collections, sends the labels in the table above. When `"Other"` is included, `business_category_other` must provide a description.

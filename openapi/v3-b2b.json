@@ -478,7 +478,7 @@
                         },
                         "refusal": {
                           "type": "object",
-                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and only on LRS payments \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did. The handoff only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
+                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did. The handoff only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
                           "required": [
                             "reason",
                             "missing",
@@ -504,7 +504,7 @@
                               "items": {
                                 "type": "string"
                               },
-                              "description": "What the gateway still wants, in its own vocabulary \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
+                              "description": "What the gateway still wants, in its own vocabulary \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves no amount to settle after charges, on an account whose amount is derived), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
                               "example": [
                                 "purpose_code"
                               ]
@@ -955,7 +955,7 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. The response carries an `X-API-Version` header: the version you sent, or when you sent none, your account's default (`3.0.0`, or `1.0.0` for a PayU account and `2.0.0` for a Cashfree account that is not routed by lane). A missing or different value does not fail the call.",
         "x-displayName": "API Version",
         "x-example": "3.0.0"
       }

@@ -28,7 +28,7 @@ This is the event that ends the verification conversation. Everything the paymen
 1. **An LRS submit passed.** A complete set was filed through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), the gateway verified the PAN, matched the sender to the account holder, reconciled TCS and confirmed the credit covers the amount. The synchronous response to that same call reads `"status": "in_review"`.
 2. **In sandbox**, when a simulated payment's settlement status is set to Under Review. Supplying the last outstanding verification field in sandbox also moves the payment to Under Review, but that path sends [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) carrying the payment's own body — not this event.
 
-The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
 ---
 
@@ -37,7 +37,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |

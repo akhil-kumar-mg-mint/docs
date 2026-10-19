@@ -210,7 +210,7 @@ A set staged before the money lands is filed for you when the payment is capture
 
 ## Errors
 
-Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+Every refusal is a `400`, whatever the reason, except a PAN check that could not run, which is a `503` (`ERR_BUYER_PAN_002`). The code inside the envelope is what tells refusals apart, not the status.
 
 | `error.code` | When |
 |---|---|

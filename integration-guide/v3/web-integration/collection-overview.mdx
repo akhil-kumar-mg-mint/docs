@@ -21,7 +21,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
   <Step title="The buyer pays">
-    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet — unless you already staged a complete set, in which case a payment EximPe collects goes straight to `UNDER_REVIEW`.
+    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet — unless you already staged a complete set. A goods or services payment EximPe collects then goes straight to `UNDER_REVIEW`. An LRS payment is still `ACTION_REQUIRED` at capture and is filed a moment later, in the background.
   </Step>
   <Step title="Send the compliance details">
     Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
@@ -96,6 +96,7 @@ Ask for the amount to be collected. Declare the amount to be settled. Collect th
 | `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
 | `IN_REVIEW` | Details accepted, bank is processing | Wait |
 | `VERIFIED` | Nothing outstanding. No webhook fires for this. | Nothing |
+| `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | Act on a rejection |
 | `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
 
 Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.

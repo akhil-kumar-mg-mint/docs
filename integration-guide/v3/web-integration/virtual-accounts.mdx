@@ -94,7 +94,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
   }'
 ```
 
-<Warning>Sandbox only. This endpoint does not exist in production.</Warning>
+<Warning>Sandbox only. In production the endpoint answers `403` and nothing is simulated.</Warning>
 
 You get back the payment the credit created — `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
 
