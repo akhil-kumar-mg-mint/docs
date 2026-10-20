@@ -23,7 +23,7 @@ Fetch every payment EximPe has recorded against the subscription — the mandate
 </ResponseField>
 
 <ResponseField name="reference_id" type="string">
-  Merchant-facing reference ID for the order.
+  Merchant-facing reference ID for the order. For a recurring debit, it is the `payment_id` that [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment) returned, so you can match the debit to your own order. If the same debit is retried, each retry is a separate payment whose `reference_id` has `-attempt-1`, `-attempt-2`, and so on appended — search for the `payment_id` to find every attempt. Older debits, and debits not started through that call, may carry a generated reference starting `SUBPAY-` instead.
 </ResponseField>
 
 <ResponseField name="amount" type="number">
@@ -82,7 +82,7 @@ Fetch every payment EximPe has recorded against the subscription — the mandate
     {
       "payment_id": "dpr_abc123",
       "order_id": "OD2000992103",
-      "reference_id": "SUBPAY-SUB7989707770-1",
+      "reference_id": "REC-SUB7989707770-a1b2c3d4",
       "amount": 1000.00,
       "currency": "INR",
       "status": "CAPTURED",

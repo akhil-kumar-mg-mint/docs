@@ -191,7 +191,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.merchant_reference_id" type="string" required>
-      Your reference ID for the order
+      Your reference ID for the order. For a recurring subscription debit, it is the `payment_id` that [Trigger Recurring Payment](/api-reference/v2/subscriptions/recurring-payment) returned, with `-attempt-1`, `-attempt-2`, and so on appended if the debit was retried.
       
       **Example**: `"S2SICR1QPJ"`
     </ParamField>
