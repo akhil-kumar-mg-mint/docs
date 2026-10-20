@@ -136,6 +136,10 @@ Card mandates usually require 3D Secure authentication. If the response carries 
   **No `acstemplate` in the response** means no 3D Secure step was required for that card. Move straight to confirming the mandate.
 </Note>
 
+<Tip>
+  **On the Simulator gateway in sandbox**, the `acstemplate` leads to the **Card Mandate Simulator** page instead of an issuer. No real card is checked or charged, and the card details are not stored. Choose **Success** to make the subscription `ACTIVE`, or **Failure** with a card decline such as *Do not honour* to make it `FAILED`. Then run the debits with [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment) — see [Testing in sandbox](/integration-guide/v3/web-integration/subscription-upi-intent#testing-in-sandbox), which applies to card subscriptions too.
+</Tip>
+
 ## Step 3: Confirm the mandate is active
 
 A created subscription is not yet a live mandate. Check with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status) before you rely on it, and watch the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) for the `PENDING` → `ACTIVE` transition.

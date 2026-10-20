@@ -87,6 +87,10 @@ Once the mandate is active, the debits run themselves on the billing cycle you s
 | The full payment history | [Get Subscription Payments](/api-reference/v3/subscriptions/payments) |
 | One debit's order | [Get Order](/api-reference/v3/order/get) · [Get Order Status](/api-reference/v3/order/get-status) |
 
+<Tip>
+  **Testing in sandbox:** there is no billing date to wait for. If your sandbox account is on the **Simulator** gateway, run each cycle's debit on demand with [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment) — choose success, a specific decline, or cancellation, and receive the same webhook a real debit sends. A success moves the subscription to its next cycle.
+</Tip>
+
 <Note>
   **A collected debit is not a settled one.** Each recurring payment is money collected in India, and it still needs its compliance details before it can settle abroad. See [Collection Overview](/integration-guide/v3/web-integration/collection-overview#payment-statuses).
 </Note>
@@ -94,7 +98,7 @@ Once the mandate is active, the debits run themselves on the billing cycle you s
 ## Modify or cancel the mandate
 
 <Warning>
-  **Production only.** Modify and cancel are not available in sandbox.
+  **Production only** — with one exception: if your sandbox account is on the **Simulator** gateway, modify and cancel work against the simulated mandate, so you can test both flows and the `ACTIVE` → `CANCELLED` webhook. On any other sandbox gateway they are not available.
 </Warning>
 
 ### Modify the mandate
@@ -196,6 +200,10 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
 </Warning>
 
 If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged.
+
+<Tip>
+  **Testing in sandbox:** on the **Simulator** gateway the charge waits for the debit day, which never comes on its own. Settle it with [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment), passing the `payment_id` from the response above (or nothing, to settle the oldest pending charge).
+</Tip>
 
 ## View subscription payments
 

@@ -126,6 +126,10 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/intent/' \
 
 Keep the `subscription_id`. Every call on the [Manage Subscriptions](/integration-guide/v3/web-integration/manage-subscriptions) page is addressed by it.
 
+<Tip>
+  **On the Simulator gateway in sandbox**, the response also carries `test_simulator_url` — the page where the mandate is approved, since no UPI app can approve a sandbox mandate. See [Testing in sandbox](#testing-in-sandbox). It is **not returned in production**.
+</Tip>
+
 <Note>
   **Card flow or intent flow.**
 
@@ -251,6 +255,24 @@ Every debit the mandate authorises is a payment collected in India, created in *
 <Card title="Collection Overview" icon="shield-check" href="/integration-guide/v3/web-integration/collection-overview">
   What a payment needs after it is collected, and how it reaches you abroad.
 </Card>
+
+## Testing in sandbox
+
+If your sandbox account is on the **Simulator** gateway, you can run the whole subscription lifecycle without a UPI app, a bank, or a billing date. If it isn't, ask your EximPe integration manager to assign it.
+
+1. **Create the subscription** as in [Step 1](#step-1-create-the-subscription). The `intent_uri` and QR code are real-shaped but point at a sandbox payee no UPI app resolves.
+2. **Approve the mandate.** Open `test_simulator_url` in a browser — the **UPI Mandate Simulator** page — and choose an outcome:
+   - **Success** — the subscription moves `PENDING` → `ACTIVE`.
+   - **Failure**, with a decline such as *Incorrect UPI PIN* — the subscription moves `PENDING` → `FAILED`.
+
+   Either way you receive the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status), plus [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) or [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) for the mandate payment — the same events as in production.
+3. **Run the debits.** Call [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment) once per debit, choosing success, a specific decline, or cancellation. Each call records the debit's order and payment and sends its webhook; a success moves the subscription to its next billing cycle, and the last cycle's success moves it to `EXPIRED`.
+
+[Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status), [Modify](/api-reference/v3/subscriptions/modify-mandate) and [Cancel](/api-reference/v3/subscriptions/cancel-mandate) work against the simulated mandate too.
+
+<Note>
+  None of this exists in production: `test_simulator_url` is not returned, and Simulate Recurring Payment returns `403`.
+</Note>
 
 ---
 

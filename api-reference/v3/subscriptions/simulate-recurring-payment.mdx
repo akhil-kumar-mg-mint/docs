@@ -1,0 +1,191 @@
+---
+title: 'Simulate Recurring Payment (Sandbox)'
+description: "Run a subscription's next recurring debit to success, failure, or cancellation on demand, and receive the same webhook a real debit sends."
+api: 'POST /pg/subscriptions/{subscription_id}/simulate_recurring_payment/'
+---
+
+<Warning>
+  **Sandbox only.** This endpoint returns `403` in production. It operates only on subscriptions whose mandate was created through the **Simulator** payment gateway — a subscription on a real gateway is rejected with `403`.
+
+  Your account must be assigned the Simulator gateway in sandbox. Contact your EximPe integration manager if it isn't.
+</Warning>
+
+## Overview
+
+A real recurring debit happens on the bank's timetable: on the billing date for a `MONTHLY`, `WEEKLY` or `DAILY` subscription, the day after the call for an **ADHOC** one. In sandbox there is no bank, so nothing runs on its own.
+
+This endpoint stands in for the day the debit runs. Each call settles **one** debit, records its order and payment exactly as a real debit does, and sends the same webhook — so you can exercise success, every decline, and the end of a subscription without waiting for a billing date.
+
+## Which debit it runs
+
+| Subscription | The debit this call settles |
+| :--- | :--- |
+| **ADHOC** | The oldest charge you initiated with [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment) and that hasn't been debited yet, or the one `payment_id` names. With nothing initiated, the call is rejected with `400`. |
+| `MONTHLY`, `WEEKLY`, `DAILY` | The current billing cycle, for the subscription's `billing_amount`. The first cycle is `payment_start_date`. |
+
+The subscription must be `ACTIVE`. Approve the mandate first — see [Testing in sandbox](/integration-guide/v3/web-integration/subscription-upi-intent#testing-in-sandbox).
+
+## What happens
+
+| `payment_status` | Payment | Webhook | Billing cycle |
+| :--- | :--- | :--- | :--- |
+| `SUCCESS` | `CAPTURED` | [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) | Moves to the next cycle |
+| `FAILED` | `FAILED`, with the decline as its message | [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) | Unchanged — the next call retries the same cycle |
+| `CANCELLED` | `FAILED`, message `Subscription payment cancelled` | [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) | Unchanged |
+
+Both webhooks carry `subscription_id`, and the payment appears in [Get Subscription Payments](/api-reference/v3/subscriptions/payments). An ADHOC charge is used up whatever its outcome: to try again, trigger a new one.
+
+When the debit for the **last** cycle before `payment_end_date` succeeds, the subscription completes: it moves to `EXPIRED` and the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) fires. Any call after that is rejected with `400`.
+
+### Path Parameters
+
+<ParamField path="subscription_id" type="string" required>
+  The unique identifier (uid) of the subscription.
+</ParamField>
+
+### Request Body
+
+<ParamField body="payment_status" type="string" required>
+  The outcome of the debit: `SUCCESS`, `FAILED`, or `CANCELLED`. Uppercase.
+</ParamField>
+
+<ParamField body="failure_reason" type="string">
+  The decline to simulate when `payment_status` is `FAILED`. It must belong to the subscription's payment method; an unknown reason, or one for the other method, is rejected with `400`. Defaults to the method's most common decline.
+
+  | UPI | Card |
+  | :--- | :--- |
+  | `insufficient_funds` — Insufficient funds **(default)** | `do_not_honour` — Do not honour **(default)** |
+  | `invalid_mpin` — Incorrect UPI PIN | `insufficient_funds` — Insufficient funds |
+  | `limit_exceeded` — Transaction limit exceeded | `expired_card` — Expired card |
+  | `risk_declined` — Declined by bank risk check | `incorrect_cvv` — Incorrect CVV |
+  | `bank_offline` — Bank servers offline | `authentication_failed` — 3-D Secure authentication failed |
+  | | `issuer_unavailable` — Issuer unavailable |
+
+  The label is what the payment's `status_message` and the webhook's `message` carry, so you can assert on it end to end.
+</ParamField>
+
+<ParamField body="payment_id" type="string">
+  ADHOC only: the `REC-` `payment_id` that [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment) returned, to settle that charge instead of the oldest one.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="subscription_id" type="string">
+  The subscription identifier.
+</ResponseField>
+
+<ResponseField name="event" type="string">
+  The kind of debit outcome simulated: `SUBSCRIPTION_PAYMENT_SUCCESS`, `SUBSCRIPTION_PAYMENT_FAILED`, or `SUBSCRIPTION_PAYMENT_CANCELLED`. The webhook you receive is the one in the table above.
+</ResponseField>
+
+<ResponseField name="payment_id" type="string">
+  The debit's `REC-` identifier — for an ADHOC charge, the one Trigger Recurring Payment returned.
+</ResponseField>
+
+<ResponseField name="order_id" type="string">
+  The order created for this debit. The webhook carries the same `order_id`.
+</ResponseField>
+
+<ResponseField name="payment_status" type="string">
+  `SUCCESS`, `FAILED`, or `CANCELLED`.
+</ResponseField>
+
+<ResponseField name="payment_amount" type="number">
+  The amount debited.
+</ResponseField>
+
+<ResponseField name="cycle_date" type="string">
+  The billing date this debit was for (YYYY-MM-DD). For an ADHOC charge, the day it was scheduled for.
+</ResponseField>
+
+<ResponseField name="failure_reason" type="string">
+  The decline's label, or `null` on success.
+</ResponseField>
+
+<ResponseField name="next_due_date" type="string">
+  The next billing date after this call (YYYY-MM-DD), or `null` for an ADHOC subscription or one that has just completed.
+</ResponseField>
+
+<ResponseField name="subscription_status" type="string">
+  The subscription's status after this call — `ACTIVE`, or `EXPIRED` after the final cycle.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/simulate_recurring_payment/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "payment_status": "FAILED",
+  "failure_reason": "insufficient_funds"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 - Debit simulated (success)
+{
+  "success": true,
+  "message": "Recurring payment simulated successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "event": "SUBSCRIPTION_PAYMENT_SUCCESS",
+    "payment_id": "REC-SUB7989707770-f263a68e",
+    "order_id": "OD9366611050",
+    "payment_status": "SUCCESS",
+    "payment_amount": 1000.0,
+    "cycle_date": "2027-01-15",
+    "failure_reason": null,
+    "next_due_date": "2027-02-15",
+    "subscription_status": "ACTIVE"
+  }
+}
+```
+
+```json 200 - Debit simulated (failure)
+{
+  "success": true,
+  "message": "Recurring payment simulated successfully",
+  "data": {
+    "subscription_id": "SUB7989707770",
+    "event": "SUBSCRIPTION_PAYMENT_FAILED",
+    "payment_id": "REC-SUB7989707770-d85ccda7",
+    "order_id": "OD2337448822",
+    "payment_status": "FAILED",
+    "payment_amount": 1000.0,
+    "cycle_date": "2027-02-15",
+    "failure_reason": "Insufficient funds",
+    "next_due_date": "2027-02-15",
+    "subscription_status": "ACTIVE"
+  }
+}
+```
+
+```json 400 - Nothing to debit
+{
+  "success": false,
+  "error": {
+    "code": "ERR_PAYMENT_001",
+    "message": "Validation error",
+    "details": {
+      "error": "No ADHOC charge is pending; initiate one with recurring_payment first"
+    }
+  }
+}
+```
+</ResponseExample>
+
+## Errors
+
+| Status | When |
+| :--- | :--- |
+| `400` | `payment_status` is not `SUCCESS`, `FAILED` or `CANCELLED` |
+| `400` | Unknown `failure_reason`, or one for the other payment method |
+| `400` | The subscription is not `ACTIVE` (still `PENDING`, `CANCELLED`, `EXPIRED`, …) |
+| `400` | ADHOC with no charge initiated, or `payment_id` names no pending charge |
+| `400` | No billing cycle remains before `payment_end_date` |
+| `400` | Another debit for the subscription is still being recorded |
+| `403` | Production, or a subscription that is not on the Simulator gateway |
+| `404` | The subscription does not exist or is not yours |

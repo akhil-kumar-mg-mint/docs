@@ -6,6 +6,10 @@ api: 'POST /pg/subscriptions/{subscription_id}/recurring_payment/'
 
 Trigger a charge on an active **ADHOC** subscription. The call initiates the payment — the outcome (success, failure, or cancellation) arrives asynchronously by webhook, and the order and payment records are created at that point.
 
+<Tip>
+**Testing in sandbox:** on the **Simulator** gateway, settle the charge this call initiates with [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment).
+</Tip>
+
 <Info>
 This endpoint only supports **ADHOC** subscriptions. The subscription must have an active mandate before a recurring payment can be triggered — check it with [Get Subscription Mandate Status](/api-reference/v3/subscriptions/mandate-status).
 </Info>
