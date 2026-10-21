@@ -21,7 +21,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
   <Step title="The buyer pays">
-    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet — unless you already staged a complete set. A goods or services payment EximPe collects then goes straight to `UNDER_REVIEW`. An LRS payment is still `ACTION_REQUIRED` at capture and is filed a moment later, in the background.
+    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet — unless you already saved a complete set. A goods or services payment EximPe collects then goes straight to `UNDER_REVIEW`. An LRS payment is still `ACTION_REQUIRED` at capture and is filed a moment later, in the background.
   </Step>
   <Step title="Send the compliance details">
     Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
@@ -32,7 +32,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
     For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step before the payment and no tax — on a payment EximPe collects, the buying business's PAN is checked once the payment succeeds. See [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
 
-    You can send the details before the money lands. On a payment EximPe collects, details staged ahead of the payment are read when it is captured: a complete set goes straight to review and is filed for you, an incomplete one leaves the payment in `ACTION_REQUIRED` with a settlement `message` saying what is missing — `A business model and purpose code are required to settle this payment`, `Verification details are required to settle the payment` or `A verified buyer PAN is required to settle this payment`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
+    You can send the details before the money lands. On a payment EximPe collects, details saved ahead of the payment are read when it is captured: a complete set goes straight to review and is filed for you, an incomplete one leaves the payment in `ACTION_REQUIRED` with a settlement `message` saying what is missing — `A business model and purpose code are required to settle this payment`, `Verification details are required to settle the payment` or `A verified buyer PAN is required to settle this payment`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
   </Step>
   <Step title="Get your money">
     We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.

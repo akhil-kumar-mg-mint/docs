@@ -133,7 +133,7 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
 </Note>
 
 <Warning>
-  **A citation is not what satisfies the item — the file is.** The `invoice` item reads as satisfied because an accepted invoice exists on the payment, not because you named a `ref`. So citing a ref again after Ops rejected that invoice leaves the item outstanding: upload a replacement, then cite the new `ref`. Check [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) rather than assuming a repeat citation cleared it.
+  **A citation is not what satisfies the item — the file is.** The `invoice` item reads as satisfied because an accepted invoice exists on the payment, not because you named a `ref`. So citing a ref again after EximPe rejected that invoice leaves the item outstanding: upload a replacement, then cite the new `ref`. Check [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) rather than assuming a repeat citation cleared it.
 </Warning>
 
 <Note>
@@ -153,7 +153,7 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 </Note>
 
 <Warning>
-  **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. The staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/b2b/verification-requirements) the same path to read `settlement_status` before you send.
+  **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. A later edit would leave your saved details disagreeing with what was filed. [`GET`](/api-reference/v3/b2b/verification-requirements) the same path to read `settlement_status` before you send.
 </Warning>
 
 ## The response
@@ -191,22 +191,22 @@ Three keys, whatever you sent:
 | `status` | Meaning |
 |---|---|
 | `incomplete` | Something is still owed — `outstanding` lists the codes. |
-| `complete` | Everything was sent, but the set was staged rather than filed (`finalize: false`). |
-| `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
+| `complete` | Everything was sent, but the set was saved rather than filed (`finalize: false`). |
+| `in_review` | The complete set was filed. The payment is with EximPe for review. |
 
 <Note>
   **Three values, not four.** A complete set either files — `in_review` — or is refused with a `400` naming what to fix. There is no `action_required` here; do not write a branch for a value you will never receive.
 </Note>
 
 <Warning>
-  **A refusal never discards your details.** Everything you sent is staged against the payment before the filing is attempted, so a `400` on the finalizing call costs you a re-send of the one thing that failed, not the whole set.
+  **A refusal never discards your details.** Everything you sent is saved against the payment before the filing is attempted, so a `400` on the finalizing call costs you a re-send of the one thing that failed, not the whole set.
 </Warning>
 
 ## Completion
 
-A complete B2B services set hands off to its own verification gateway, and `in_review` is what says it got there. That handoff is also what writes the staged values onto the order, and it is where the two comparisons against what we hold are made — the invoice total against the credit, and the invoice number against your other payments.
+A complete B2B services set goes to verification when it is filed, and `in_review` says it got there. That is also where your saved values are applied to the order and the two comparisons against what we hold are made — the invoice total against the credit, and the invoice number against your other payments.
 
-A set staged before the money lands is filed for you when the payment is captured, so a payment EximPe collects can arrive already in review. If the filing is refused, the payment returns to `ACTION_REQUIRED`.
+A set saved before the money lands is filed for you when the payment is captured, so a payment EximPe collects can arrive already in review. If the filing is refused, the payment returns to `ACTION_REQUIRED`.
 
 ## Errors
 
@@ -288,7 +288,7 @@ Two things are only judged when a complete set is filed, because they compare ag
 ```
 
 <Note>
-  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that staged it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
+  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
 </Note>
 
 ## Related

@@ -17,25 +17,25 @@ This webhook is triggered when a payment is refunded to the customer through Exi
 
 ```json Example Payload
 {
+    "event_type": "PAYMENT_REFUNDED",
+    "event_time": "2026-02-15T16:53:15.481203",
+    "version": "3.0.0",
+    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34",
     "data": {
         "refunds": [
             {
-                "bank_arn": "74523129087",
-                "comments": "Refund processed successfully",
-                "order_id": "OD6085456489",
-                "order_reference_id": "S2SICR1QPJ",
                 "refund_id": "RF2684785771",
                 "refund_reference_id": "RF-2026-0044",
+                "order_id": "OD6085456489",
+                "order_reference_id": "S2SICR1QPJ",
                 "payment_id": "PR7485664995",
                 "refund_amount": 1000,
+                "comments": "Refund processed successfully",
+                "bank_arn": "74523129087",
                 "refund_completed_at": "2026-02-15T16:53:15.123456"
             }
         ]
-    },
-    "version": "3.0.0",
-    "event_time": "2026-02-15T16:53:15.481203",
-    "event_type": "PAYMENT_REFUNDED",
-    "sequence_number": "e40552bf-ed12-4f35-9a97-162d97e6fa34"
+    }
 }
 ```
 
@@ -50,18 +50,16 @@ This webhook is triggered when a payment is refunded to the customer through Exi
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in ISO 8601 format
-      
-      **Example**: `"2026-02-15T16:53:15.481203"`
+      UTC, no timezone suffix, e.g. `"2026-02-15T16:53:15.481203"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version, the API version of your account (for example "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"e40552bf-ed12-4f35-9a97-162d97e6fa34"`
     </ParamField>
 

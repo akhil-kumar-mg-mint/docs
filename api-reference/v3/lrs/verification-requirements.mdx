@@ -35,11 +35,11 @@ The [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-need
 
 ## Response
 
-Complete, unedited responses: an education payment (`S0305`) with nothing supplied yet, a payment nothing has classified, and a travel payment at the `PASSENGER_DETAILS` level.
+Example responses: an education payment with nothing supplied yet, a payment nothing has classified, and a travel payment on an account that collects traveller details.
 
 <CodeGroup>
 
-```json S0305, nothing supplied yet
+```json Education — nothing supplied yet
 {
   "success": true,
   "message": "Verification requirements",
@@ -211,7 +211,7 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 }
 ```
 
-```json S0306, travel — passenger details level
+```json Travel — traveller details
 {
   "success": true,
   "message": "Verification requirements",
@@ -347,14 +347,14 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
   |---|---|
   | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
-  | `UNDER_REVIEW` | Filed and with us. **Sending is closed** — see below. This value does not change when Ops approves: read [`review.review_state`](#the-review) for the decision. |
+  | `UNDER_REVIEW` | Filed and with EximPe. **Sending is closed** — see below. This value does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
   | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
-  | `VERIFIED` | Only on older payments approved before approval was recorded separately. A payment approved today stays `UNDER_REVIEW`. Sending is closed. |
+  | `VERIFIED` | Legacy value; treat as approved. Sending is closed. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
 
   A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.
 
-  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true, and a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded refuses sends too. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+  Once the verification has been **filed**, sending closes: a `POST` to this path is refused. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true, and a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded refuses sends too. Read this key before you send, and you will not collect a refusal you had no way to see coming.
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -367,17 +367,17 @@ Complete, unedited responses: an education payment (`S0305`) with nothing suppli
 
 ### The review
 
-A classified payment also carries a `review` object — what Ops decided about the verification, in words that do not depend on which flow the payment is in. It is the one place that tells an approved payment from one still waiting, because both keep `settlement_status: "UNDER_REVIEW"`.
+A classified payment also carries a `review` object — what EximPe decided about the verification, in words that do not depend on which flow the payment is in. It is the one place that tells an approved payment from one still waiting, because both keep `settlement_status: "UNDER_REVIEW"`.
 
 <ParamField path="review.review_state" type="string" required>
   | Value | What it means |
   |---|---|
   | `FRESH` | Nothing has been filed. |
   | `DRAFT` | Saved but not submitted. An LRS payment never shows it. |
-  | `UNDER_REVIEW` | Filed and waiting for Ops. |
-  | `CHANGES_REQUESTED` | Ops sent it back. The payment is open again. |
-  | `APPROVED` | Ops approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
-  | `REJECTED` | Ops rejected it. Terminal. |
+  | `UNDER_REVIEW` | Filed and waiting for EximPe review. |
+  | `CHANGES_REQUESTED` | EximPe sent it back. The payment is open again. |
+  | `APPROVED` | EximPe approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
+  | `REJECTED` | EximPe rejected it. Terminal. |
 </ParamField>
 
 <ParamField path="review.rejection_reason" type="string">
@@ -385,7 +385,7 @@ A classified payment also carries a `review` object — what Ops decided about t
 </ParamField>
 
 <ParamField path="review.reviewed_at" type="string | null">
-  When Ops last decided, as an ISO timestamp, or `null`.
+  When EximPe last decided, as an ISO timestamp, or `null`.
 </ParamField>
 
 <ParamField path="review.documents" type="array">
@@ -452,7 +452,7 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
   | Value | Owed when |
   |---|---|
   | `PAYING_FOR_SOMEONE_ELSE` | A person other than the remitter is on the remittance. |
-  | `PASSENGER_DETAILS_LEVEL` | The payment's [verification level](/api-reference/v3/lrs/submit-verification-details#verification-level) is `PASSENGER_DETAILS`. |
+  | `PASSENGER_DETAILS_LEVEL` | Your account [collects traveller details](/api-reference/v3/lrs/submit-verification-details#verification-level) on travel payments. |
   | `GOODS_PURPOSE_CODE` | The order's purpose code is a goods code. |
 
   While the condition cannot yet be evaluated — no person has been sent — the item reads `satisfied: true`, `provided: false`. It is still listed, so you know it exists.
@@ -504,12 +504,9 @@ An entry in `documents` carries three more keys once a row exists for that code.
   **These three are LRS-only, and documents-only.** Entries in `fields` never carry them — a field has no file and no reviewer mark — and the B2B goods and B2B services responses are unchanged. The same three keys appear on document entries in [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), with the same meanings.
 </Note>
 
-## No `status`, deliberately
+## No rolled-up `status`
 
-Earlier versions returned a rolled-up `status` of `complete` / `incomplete` / `not_applicable`. It is gone, for two reasons:
-
-- **It answered the wrong question.** "Every box is ticked" is not "the payment passed". A payment can be complete on its checklist and still be refused at the gateway — a PAN that will not verify, a sender who is not the account holder, a credit that does not cover the amount.
-- **It collided.** The `POST` on this same URL returns a `status` too, and there the word reports what the gateway did. One word, two meanings, same path.
+This response has no `complete` / `incomplete` status. "Every box is ticked" is not "the payment passed": a payment can be complete on its checklist and still be refused at verification (a PAN that will not verify, a sender who is not the account holder, a credit that does not cover the amount). The `POST` on this URL also returns a `status`, with a different meaning.
 
 Fold your own roll-up when you want one, against a definition you chose:
 
@@ -565,14 +562,14 @@ The light B2C set (`S0101`, `S0802`, `S0301`) asks for those nine fields and no 
 | `remitter_dob` | Remitter date of birth, as per PAN |
 | `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
 | `amount_to_be_settled` | The amount to settle for this payment, in INR. Not on the list for a merchant whose amount is derived from the credit, see below |
-| `persons` | The people on the remittance. Education: exactly one, the student. Travel: every traveller, but only at the `PASSENGER_DETAILS` level. See [Persons](/api-reference/v3/lrs/submit-verification-details#persons) |
+| `persons` | The people on the remittance. Education: exactly one, the student. Travel: every traveller, but only if your account collects traveller details. See [Persons](/api-reference/v3/lrs/submit-verification-details#persons) |
 
 <Note>
   **The remitter's name is not on this list, and neither is the TCS.** The name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan), which you call before you can quote or submit — it is already on file under the PAN you declare. The TCS is the figure we quote against the payer's year-to-date LRS usage; [Quote LRS Amount](/api-reference/v3/lrs/quote) tells you what to collect, and the credit is checked against it. Neither is yours to re-declare here.
 </Note>
 
 <Note>
-  **When EximPe derives the amount for your merchant account, `amount_to_be_settled` is not on the checklist at all.** It is absent from `fields`, and sending it is refused with `ERR_LRS_MERCHANT_022`. The amount is worked out when a complete set is filed: the credit, less EximPe's MDR and GST on it, less the TCS on what remains. If the credit is too small to leave any amount to settle, the set is refused with `derived_amount_credit_too_small` in [`refusal.missing`](/api-reference/v3/lrs/submit-verification-details#the-response) and the buyer must send a larger amount. Ask your EximPe integration manager whether your account works this way. [Quote LRS Amount](/api-reference/v3/lrs/quote) is not available to it either.
+  **If `amount_to_be_settled` is not in `fields`, EximPe derives it — do not send it.** Sending it is refused with `ERR_LRS_MERCHANT_022`. The amount is worked out when a complete set is filed: the credit, less EximPe's MDR and GST on it, less the TCS on what remains. If the credit is too small to leave any amount to settle, the set is refused with `derived_amount_credit_too_small` in [`refusal.missing`](/api-reference/v3/lrs/submit-verification-details#the-response) and the buyer must send a larger amount. [Quote LRS Amount](/api-reference/v3/lrs/quote) is not available for such an account.
 </Note>
 
 Documents, per purpose code:
@@ -599,7 +596,7 @@ Documents, per purpose code:
 
 ## The requirement set can grow
 
-Answering one requirement can reveal another. Sending a person other than the remitter flips `relationship_declaration` to `satisfied: false`, because it is only owed in that case. Moving a travel account to the `PASSENGER_DETAILS` level makes `persons` owed on payments created after the change.
+Answering one requirement can reveal another. Sending a person other than the remitter flips `relationship_declaration` to `satisfied: false`, because it is only owed in that case. If your account collects traveller details on travel payments, `persons` is owed on them.
 
 This is expected. Re-read `fields` and `documents` after every write rather than assuming the list you started with is final.
 

@@ -1471,7 +1471,7 @@
               "example": {
                 "payment_id": "PR2024120567891",
                 "refund_amount": "2250.00",
-                "reference_id": "REFUND-2024-0001"
+                "reference_id": "RF-2026-0001"
               }
             }
           }
@@ -1495,7 +1495,7 @@
                     "transaction_id": "138605980",
                     "bank_ref_num": null,
                     "refund_amount": "1000",
-                    "reference_id": "REFUND-2024-0001"
+                    "reference_id": "RF-2026-0001"
                   }
                 }
               }
@@ -1588,19 +1588,23 @@
                   "results": [
                     {
                       "refund_id": "RF8380989720",
-                      "refund_amount": 11,
+                      "refund_amount": "11.00",
                       "refund_status": "INITIATED",
                       "refunded_at": null,
                       "message": "Refund Request Queued",
-                      "payment_id": "PR8867819681"
+                      "payment_id": "PR8867819681",
+                      "reference_id": "RF-2026-0002",
+                      "created_at": "2026-02-15T16:53:15.123456Z"
                     },
                     {
                       "refund_id": "RF8370660295",
-                      "refund_amount": 12,
+                      "refund_amount": "12.00",
                       "refund_status": "INITIATED",
                       "refunded_at": null,
                       "message": "No action status found",
-                      "payment_id": "PR3828502708"
+                      "payment_id": "PR3828502708",
+                      "reference_id": "RF-2026-0003",
+                      "created_at": "2026-02-15T16:54:02.481203Z"
                     }
                   ]
                 }
@@ -1649,11 +1653,14 @@
                   "message": "Refund details retrieved successfully",
                   "data": {
                     "refund_id": "RF1481534012",
-                    "refund_amount": 12,
+                    "payment_id": "PR3828502708",
+                    "refund_amount": "12.00",
                     "refund_status": "INITIATED",
                     "refunded_at": null,
                     "message": "No action status found",
-                    "payment_id": "PR3828502708"
+                    "settlement_details": {},
+                    "reference_id": "RF-2026-0003",
+                    "created_at": "2026-02-15T16:54:02.481203Z"
                   }
                 }
               }
@@ -7618,7 +7625,7 @@
           },
           "reference_id": {
             "type": "string",
-            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+            "description": "Your own reference for this refund: letters, numbers and hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
           },
           "callback_url": {
             "type": "string",
@@ -7674,9 +7681,8 @@
             "description": "The bank reference number for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refunded_at": {
             "type": "string",
@@ -7688,6 +7694,24 @@
             "type": "string",
             "nullable": true,
             "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Returned when you retrieve a single refund. Empty until the refund is adjusted in a settlement; then `settlement_id` and `refund_adjusted_at`.",
+            "properties": {
+              "settlement_id": {
+                "type": "string"
+              },
+              "refund_adjusted_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         }
       },
@@ -7748,9 +7772,8 @@
             "description": "Unique identifier for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refund_status": {
             "type": "string",
@@ -7770,6 +7793,16 @@
           "payment_id": {
             "type": "string",
             "description": "The ID of the payment that was refunded."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
           }
         }
       },
@@ -11154,7 +11187,7 @@
           },
           "reference_id": {
             "type": "string",
-            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+            "description": "Your own reference for this refund: letters, numbers and hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
           },
           "callback_url": {
             "type": "string",
@@ -11210,9 +11243,8 @@
             "description": "The bank reference number for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refunded_at": {
             "type": "string",
@@ -11224,6 +11256,24 @@
             "type": "string",
             "nullable": true,
             "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Returned when you retrieve a single refund. Empty until the refund is adjusted in a settlement; then `settlement_id` and `refund_adjusted_at`.",
+            "properties": {
+              "settlement_id": {
+                "type": "string"
+              },
+              "refund_adjusted_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         }
       },
@@ -11284,9 +11334,8 @@
             "description": "Unique identifier for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refund_status": {
             "type": "string",
@@ -11306,6 +11355,16 @@
           "payment_id": {
             "type": "string",
             "description": "The ID of the payment that was refunded."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
           }
         }
       },
@@ -14401,7 +14460,7 @@
           },
           "reference_id": {
             "type": "string",
-            "description": "Your own reference for this refund. Alphanumeric with hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
+            "description": "Your own reference for this refund: letters, numbers and hyphens, up to 255 characters. Send the same value to retry safely: a repeat with the same payment and amount returns the original refund instead of creating a second one. A repeat with a different amount is refused. Generated for you when omitted."
           },
           "callback_url": {
             "type": "string",
@@ -14457,9 +14516,8 @@
             "description": "The bank reference number for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refunded_at": {
             "type": "string",
@@ -14471,6 +14529,24 @@
             "type": "string",
             "nullable": true,
             "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Returned when you retrieve a single refund. Empty until the refund is adjusted in a settlement; then `settlement_id` and `refund_adjusted_at`.",
+            "properties": {
+              "settlement_id": {
+                "type": "string"
+              },
+              "refund_adjusted_at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         }
       },
@@ -14531,9 +14607,8 @@
             "description": "Unique identifier for the refund."
           },
           "refund_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "The refunded amount."
+            "type": "string",
+            "description": "The refunded amount in rupees, as a decimal string with two places, e.g. \"1000.00\"."
           },
           "refund_status": {
             "type": "string",
@@ -14553,6 +14628,16 @@
           "payment_id": {
             "type": "string",
             "description": "The ID of the payment that was refunded."
+          },
+          "reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your refund reference ID."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
           }
         }
       },

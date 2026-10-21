@@ -51,7 +51,7 @@ From there it is one loop, repeated until nothing is outstanding:
 </Note>
 
 <Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, a complete set staged ahead of the credit is filed for you when the payment is captured, and the payment goes straight to `UNDER_REVIEW`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
+  **You can send the details before the money lands.** On a payment EximPe collects, a complete set saved ahead of the credit is filed for you when the payment is captured, and the payment goes straight to `UNDER_REVIEW`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
 </Note>
 
 If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent; call it any time.
@@ -97,17 +97,17 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 
 ## While it is in review
 
-Ops either approves the verification, sends it back for changes, or rejects it. Approval and rejection arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) with `APPROVED` or `REJECTED`; a send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). You can also read the outcome from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements):
+EximPe review either approves the verification, sends it back for changes, or rejects it. Approval and rejection arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) with `APPROVED` or `REJECTED`; a send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). You can also read the outcome from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements):
 
 | What you see | What happened | What you do |
 | :--- | :--- | :--- |
-| `UNDER_REVIEW`, `review.review_state` `UNDER_REVIEW` | Still with Ops | Nothing |
+| `UNDER_REVIEW`, `review.review_state` `UNDER_REVIEW` | Still with EximPe | Nothing |
 | `UNDER_REVIEW`, `review.review_state` `APPROVED` | Approved — `settlement_status` does not change on approval | Nothing; wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) |
 | back to `ACTION_REQUIRED` | Sent back for changes. Staging has reopened | Re-read the set, correct what is wrong, and file again |
 | `NOT_APPLICABLE` | Rejected. The payment will not settle, and there is no resubmit path | Stop verifying it and follow the refund — see below |
 
 <Note>
-  **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), with `verification_status` back at `ACTION_REQUIRED`.** `message` carries the Ops comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes; it is empty only when the checklist really is satisfied and the comment alone says what to change.
+  **A send-back arrives as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), with `verification_status` back at `ACTION_REQUIRED`.** `message` carries the reviewer's comment — the same text the merchant is emailed, and usually the only thing that says *why* it came back. `action_required_fields` names whatever the checklist still owes; it is empty only when the checklist really is satisfied and the comment alone says what to change.
 
   **An empty list here does not mean there is nothing to do.** The payment is open again because a person asked for a change. Branch on `verification_status` — the same event carries `IN_REVIEW` with an empty list when a submit passes, and that one genuinely needs nothing from you.
 </Note>
@@ -118,7 +118,7 @@ A full refund of the credit is raised in the same moment. Where the payment sits
 
 | Rail | What the refund does |
 | :--- | :--- |
-| Bank transfer into a Virtual Bank Account | Recorded and paid out by our Ops team. It stays `INITIATED` until they file it with the bank — that is not a stalled refund |
+| Bank transfer into a Virtual Bank Account | Recorded and paid out by EximPe. It stays `INITIATED` until they file it with the bank — that is not a stalled refund |
 | Everything else | Submitted to the payment gateway straight away, and it walks the usual refund lifecycle with [`REFUND_STATUS_UPDATE`](/api-reference/v3/webhooks/refund-status-update) events |
 
 <Warning>
@@ -157,7 +157,7 @@ Integrations go wrong here more often by sending something extra than by leaving
 Every one of them is a `400` if you send it, the same as any unknown key.
 
 <Note>
-  **`invoice_amount` and `declaration` are asked for**, and used to be on this list. Both are checklist items now: the amount is cross-checked against the credit, and the declaration has to be `true`.
+  **`invoice_amount` and `declaration` are asked for.** Both are checklist items: the amount is cross-checked against the credit, and the declaration has to be `true`.
 </Note>
 
 ## Related

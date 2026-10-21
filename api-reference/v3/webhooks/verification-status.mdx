@@ -11,16 +11,14 @@ description: "Technical reference for the VERIFICATION_STATUS webhook event, inc
 **Category**: Payment Verification
 **Description**: The verdict on a filed verification — approved or rejected
 
-A filed verification is reviewed by us. This webhook carries the conclusion of that review: the verdict, the reviewer's comment, and the state of every document slot on the verification at that moment.
+A filed verification is reviewed by EximPe. This webhook carries the conclusion of that review: the verdict, the reviewer's comment, and the state of every document slot on the verification at that moment.
 
 It is the event that closes the loop the ask opened — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services payment. Those events say what a payment owes; this one says what came of sending it.
 
-<Note>
-  **Two verdicts, one event.** `VERIFICATION_STATUS` fires on an approval and on a rejection, in the same shape. `verification_status` is the only key that tells them apart.
-</Note>
+`VERIFICATION_STATUS` fires on an approval and on a rejection, in the same shape. `verification_status` is the only key that tells them apart.
 
 <Warning>
-  **A send-back is not a verdict, and does not arrive here.** When a review sends a verification back for changes, the payment goes on owing something — so the ask is raised again, carrying the reviewer's comment: [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services payment. `VERIFICATION_STATUS` is only ever `APPROVED` or `REJECTED`.
+  **A send-back is not a verdict, and does not arrive here.** When a review sends a verification back for changes, the payment keeps owing something, so the ask is raised again with the reviewer's comment: [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services payment. `VERIFICATION_STATUS` is only ever `APPROVED` or `REJECTED`. A rejection is final: the payment moves to `NOT_APPLICABLE` and a full refund is raised, so read `settlement_status` before you send anything after a `REJECTED` verdict.
 </Warning>
 
 ### When the webhook is sent
@@ -39,7 +37,7 @@ The same two events are raised for an LRS, a B2B services and a B2B goods paymen
 The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
 <Note>
-  **There is no sandbox trigger for this event.** It is raised by a review of a verification you filed, and a review is not something a simulator performs. Integrate the handler against the payloads on this page; you will see your first real delivery when a filed verification is reviewed.
+  **There is no sandbox trigger for this event.** It is raised when EximPe reviews a verification you filed. Integrate your handler against the payloads on this page.
 </Note>
 
 ---
@@ -53,7 +51,8 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | **Delivered immediately**, not in the per-merchant batches, sent every 2 minutes, that the verification asks wait for. A verdict is the answer to something a payer is waiting on, so it is not held behind a burst of requirement events. |
+
+Delivery: immediate, not batched.
 
 ### Headers
 
@@ -68,7 +67,7 @@ The webhook is created **only if** your merchant account (or parent, for sub-mer
 
 **Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
 
-Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -76,11 +75,11 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
 
 The payment, the verdict, the reviewer's comment, and every document slot on the verification.
 
-`data` holds **exactly five keys** on both verdicts. These are complete, unedited payloads — nothing is trimmed.
+`data` holds **exactly five keys** on both verdicts.
 
 <CodeGroup>
 
-```json Approved, LRS
+```json Approved — LRS
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-09-09T11:42:06.318204",
@@ -115,7 +114,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 }
 ```
 
-```json Rejected, LRS
+```json Rejected — LRS
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-09-09T14:07:51.662940",
@@ -145,7 +144,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 }
 ```
 
-```json Approved, B2B goods
+```json Approved — B2B goods
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-10-14T09:21:44.508113",
@@ -167,7 +166,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 }
 ```
 
-```json Rejected, B2B services
+```json Rejected — B2B services
 {
   "event_type": "VERIFICATION_STATUS",
   "event_time": "2026-10-14T11:03:19.274660",
@@ -193,10 +192,6 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
 
 </CodeGroup>
 
-<Note>
-  **An approval's `message` is an empty string, not a sentence and not `null`.** The key is always present; on an approval there is nothing for a reviewer to say that the verdict does not already say.
-</Note>
-
 ---
 
 ## Field Specifications
@@ -208,19 +203,15 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-
-      **Example**: `"2026-09-09T11:42:06.318204"`
+      UTC, no timezone suffix, e.g. `"2026-09-09T11:42:06.318204"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for this webhook event (UUID), useful for idempotency.
-
-      **It is an identifier, not a sequence.** The value is random and carries no order — see [Ordering two verdicts](#ordering-two-verdicts).
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate. See [Ordering two verdicts](#ordering-two-verdicts).
     </ParamField>
 
     <ParamField path="data" type="object" required>
@@ -253,7 +244,7 @@ The payment, the verdict, the reviewer's comment, and every document slot on the
     <ParamField path="data.message" type="string" required>
       The reviewer's comment, verbatim. Safe to log, and safe to render to a payer.
 
-      **Empty string on an approval.** On a rejection it is the reason the verification as a whole was refused — which is not always the same as any one document's `rejection_reason`.
+      **Empty string (not `null`) on an approval.** On a rejection it is the reason the verification as a whole was refused — which is not always the same as any one document's `rejection_reason`.
     </ParamField>
 
     <ParamField path="data.documents" type="array" required>
@@ -314,9 +305,7 @@ Two things never appear:
 - **Superseded documents.** Re-uploading a document gives you a new `ref` and the newer row supersedes the older; only the current row for each slot is listed.
 - **The files themselves.** No document file, URL or download link is ever included in a webhook payload. `ref` identifies the upload; it is not a link to it.
 
-<Note>
-  A slot listed here is a slot on **this** verification. For the whole checklist — including fields, optional items, and what is still outstanding — call Get Verification Requirements — [LRS](/api-reference/v3/lrs/verification-requirements) or [B2B services](/api-reference/v3/b2b/verification-requirements) — which reports the same three document keys alongside `satisfied` and `provided`.
-</Note>
+A slot listed here is a slot on **this** verification. For the whole checklist, including fields, optional items and what is still outstanding, call Get Verification Requirements ([LRS](/api-reference/v3/lrs/verification-requirements) or [B2B services](/api-reference/v3/b2b/verification-requirements)), which reports the same three document keys alongside `satisfied` and `provided`.
 
 ## Ordering two verdicts
 
@@ -324,9 +313,7 @@ A payment can be reviewed more than once, so two `VERIFICATION_STATUS` deliverie
 
 **Order them by `event_time` on the envelope.** It is the moment the event was created, and it is the only key on the payload that orders anything.
 
-<Warning>
-  **`sequence_number` does not order events.** Despite the name it is a random unique identifier — a UUID — minted per event. Use it for idempotency, to recognise a redelivery of an event you already processed. Comparing two of them tells you nothing about which verdict came first.
-</Warning>
+`sequence_number` does not order events. It is a random UUID per event: use it to recognise a redelivery, not to tell which verdict came first.
 
 Deliveries can also arrive out of order after a retry. Keep the verdict with the latest `event_time` and discard an older one that lands after it, rather than letting whatever arrived last win.
 
@@ -345,16 +332,12 @@ Deliveries can also arrive out of order after a retry. Keep the verdict with the
     Nothing further is needed from either of you. [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) is the next event in this payment's life.
   </Step>
   <Step title="On `REJECTED`, show what failed">
-    `data.message` is the verdict on the verification; each entry with `doc_status: "REJECTED"` carries the reason for that document in `rejection_reason`. Entries that read `VERIFIED` need nothing — asking a payer to re-send those is asking for work already done.
+    `data.message` is the verdict on the verification; each entry with `doc_status: "REJECTED"` carries the reason for that document in `rejection_reason`. Entries that read `VERIFIED` need nothing, so do not ask the payer to re-send them.
   </Step>
   <Step title="Confirm where the payment stands">
     Get Verification Requirements — [LRS](/api-reference/v3/lrs/verification-requirements) or [B2B services](/api-reference/v3/b2b/verification-requirements) — reports `settlement_status`, which says whether sending anything further is still possible.
   </Step>
 </Steps>
-
-<Note>
-  **A rejection here is not the same as a send-back.** A send-back keeps the payment in `ACTION_REQUIRED` and raises the ask again — [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B services one — and that is the event to act on when you are being asked for a replacement. A rejection is final: the payment moves to `NOT_APPLICABLE` and a full refund is raised. Read `settlement_status` before you send anything after a `REJECTED` verdict.
-</Note>
 
 ## Related
 

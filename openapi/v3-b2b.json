@@ -250,7 +250,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed \u2014 a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to stage without triggering it.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused handoff carries `refusal`.** When a complete set is filed and the gateway refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what the gateway still wants in its own vocabulary (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed \u2014 a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "LRS"
         ],
@@ -328,7 +328,7 @@
                   },
                   "persons": {
                     "type": "array",
-                    "description": "The people on an LRS remittance, sent beside `fields` and `documents`. Education (`S0305`, `S1107`): exactly one entry, the student; the payer is identified by `remitter_pan` in `fields`. Travel: every traveller, but only when the payment's verification level is `PASSENGER_DETAILS`. Sending `persons` again replaces the list. Not used on a B2B-services payment.",
+                    "description": "The people on an LRS remittance, sent beside `fields` and `documents`. Education (`S0305`, `S1107`): exactly one entry, the student; the payer is identified by `remitter_pan` in `fields`. Travel: every traveller, but only when your account collects traveller details. Sending `persons` again replaces the list. Not used on a B2B-services payment.",
                     "items": {
                       "type": "object",
                       "required": [
@@ -380,7 +380,7 @@
                   "finalize": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether to run a complete set through the payment's verification gateway \u2014 the LRS gateway on an LRS payment, the B2B-services one on a services payment. Never forces an incomplete set through."
+                    "description": "Whether to file a complete set for verification. Never forces an incomplete set through."
                   },
                   "linked_payment_id": {
                     "type": "string",
@@ -462,7 +462,7 @@
                             "in_review",
                             "action_required"
                           ],
-                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and needs no gateway handoff). `in_review` \u2014 the set was complete, the gateway took it, and it passed. `action_required` \u2014 the set was complete and filed, and the gateway did not pass the payment. It never means your details were discarded.",
+                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and is not filed for verification). `in_review` \u2014 the set was complete, it was filed, and verification passed. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment. It never means your details were discarded.",
                           "example": "incomplete"
                         },
                         "outstanding": {
@@ -478,7 +478,7 @@
                         },
                         "refusal": {
                           "type": "object",
-                          "description": "Why the gateway refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what the gateway did. The handoff only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
+                          "description": "Why verification refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what verification found. Verification only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
                           "required": [
                             "reason",
                             "missing",
@@ -504,7 +504,7 @@
                               "items": {
                                 "type": "string"
                               },
-                              "description": "What the gateway still wants, in its own vocabulary \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves no amount to settle after charges, on an account whose amount is derived), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
+                              "description": "What verification still wants \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves nothing to settle after charges; if `amount_to_be_settled` is not in `fields`, EximPe derives it \u2014 do not send it), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
                               "example": [
                                 "purpose_code"
                               ]
@@ -540,7 +540,7 @@
                   },
                   "in_review": {
                     "summary": "in_review \u2014 the payment is with us",
-                    "description": "Everything the checklist asks for was sent, the set went through the verification gateway, and it passed. Nothing further to send.",
+                    "description": "Everything the checklist asks for was sent, the set was filed, and verification passed. Nothing further to send.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -552,8 +552,8 @@
                     }
                   },
                   "action_required": {
-                    "summary": "action_required \u2014 the gateway did not pass it",
-                    "description": "An empty `outstanding` with this status is not a contradiction: the checklist is satisfied, the gateway refused \u2014 which is why `outstanding` is always empty when `refusal` is present. The verdict arrives as an LRS_VERIFICATION_NEEDED event with the conclusion folded into the relevant entry's message. No event at all means the handoff itself did not land \u2014 repeat the same request.",
+                    "summary": "action_required \u2014 verification did not pass it",
+                    "description": "An empty `outstanding` with this status is not a contradiction: the checklist is satisfied, verification refused \u2014 which is why `outstanding` is always empty when `refusal` is present. The verdict arrives as an LRS_VERIFICATION_NEEDED event with the conclusion folded into the relevant entry's message. No event at all means verification gave no verdict \u2014 repeat the same request.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -572,8 +572,8 @@
                     }
                   },
                   "complete": {
-                    "summary": "complete \u2014 staged, not filed",
-                    "description": "The checklist is satisfied but nothing went to the gateway: either you passed `finalize: false`, or this payment's checklist is not an LRS one.",
+                    "summary": "complete \u2014 saved, not filed",
+                    "description": "The checklist is satisfied but nothing was filed: either you passed `finalize: false`, or this payment's checklist is not an LRS one.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -589,7 +589,7 @@
             }
           },
           "400": {
-            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or staging has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code.",
+            "description": "The payment id does not resolve, the send names codes the checklist does not, the order refuses the values on write, or sending has already closed. `error.message` names the payment's flow \u2014 an LRS payment reads \"Invalid LRS request.\", a B2B services payment \"Invalid B2B services request.\", and a payment nothing has classified yet \"Invalid verification request.\" The code is the same either way, so branch on the code.",
             "content": {
               "application/json": {
                 "schema": {
@@ -608,7 +608,7 @@
                     }
                   },
                   "already_filed": {
-                    "summary": "Staging closes once the verification has been filed",
+                    "summary": "Sending closes once the verification has been filed",
                     "value": {
                       "success": false,
                       "error": {
@@ -647,7 +647,7 @@
                   },
                   "duplicate_invoice_number": {
                     "summary": "The invoice number is already used by another payment (B2B services)",
-                    "description": "`invoice_number` is unique per merchant, and the collision is raised by the call that files, as the staged values are written onto the order. This refusal carries its own code rather than the shared `40359`. **B2B services only** \u2014 the LRS path writes the order without catching the collision, so there it surfaces as a `500` rather than this `400`.",
+                    "description": "`invoice_number` is unique per merchant, and the collision is raised by the call that files, as your saved values are applied to the order. This refusal carries its own code rather than the shared `40359`. **B2B services only** \u2014 the LRS path writes the order without catching the collision, so there it surfaces as a `500` rather than this `400`.",
                     "value": {
                       "success": false,
                       "error": {
@@ -785,7 +785,7 @@
               "PASSENGER_DETAILS_LEVEL",
               "GOODS_PURPOSE_CODE"
             ],
-            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 the payment's verification level is `PASSENGER_DETAILS`. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code.",
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 your account collects traveller details on travel payments. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code.",
             "example": "PAYING_FOR_SOMEONE_ELSE"
           },
           "waivable": {
@@ -838,7 +838,7 @@
               "EXPIRED",
               "REJECTED"
             ],
-            "description": "The payment's own state \u2014 not a roll-up of the checklist. Staging closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. `UNDER_REVIEW` does not change when Ops approves \u2014 read `review.review_state` for the decision. Read it before you POST.",
+            "description": "The payment's own state \u2014 not a roll-up of the checklist. Sending closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. `UNDER_REVIEW` does not change when EximPe approves \u2014 read `review.review_state` for the decision. Read it before you POST.",
             "example": "ACTION_REQUIRED"
           },
           "business_model": {
@@ -874,7 +874,7 @@
           },
           "review": {
             "type": "object",
-            "description": "What Ops decided about the verification, the same words for every flow. Absent on an unclassified payment, which has no checklist and no review.",
+            "description": "What EximPe decided about the verification, the same words for every flow. Absent on an unclassified payment, which has no checklist and no review.",
             "properties": {
               "review_state": {
                 "type": "string",
@@ -886,7 +886,7 @@
                   "APPROVED",
                   "REJECTED"
                 ],
-                "description": "`FRESH` \u2014 nothing filed. `DRAFT` \u2014 saved, not submitted. `UNDER_REVIEW` \u2014 filed, waiting for Ops. `CHANGES_REQUESTED` \u2014 Ops sent it back. `APPROVED` \u2014 Ops approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
+                "description": "`FRESH` \u2014 nothing filed. `DRAFT` \u2014 saved, not submitted. `UNDER_REVIEW` \u2014 filed, waiting for EximPe review. `CHANGES_REQUESTED` \u2014 EximPe sent it back. `APPROVED` \u2014 EximPe approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
                 "example": "UNDER_REVIEW"
               },
               "rejection_reason": {
@@ -897,7 +897,7 @@
               "reviewed_at": {
                 "type": "string",
                 "nullable": true,
-                "description": "When Ops last decided, as an ISO timestamp, or `null`.",
+                "description": "When EximPe last decided, as an ISO timestamp, or `null`.",
                 "example": null
               },
               "documents": {
@@ -955,7 +955,7 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. The response carries an `X-API-Version` header: the version you sent, or when you sent none, your account's default (`3.0.0`, or `1.0.0` for a PayU account and `2.0.0` for a Cashfree account that is not routed by lane). A missing or different value does not fail the call.",
+        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
         "x-displayName": "API Version",
         "x-example": "3.0.0"
       }

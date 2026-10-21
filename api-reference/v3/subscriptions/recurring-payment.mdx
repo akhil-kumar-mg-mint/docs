@@ -15,10 +15,10 @@ A `409` means the subscription's own state refused the charge — there is no ac
 </Info>
 
 <Info>
-**PayU and Cashfree differ on this endpoint.**
+**What applies depends on the subscription's payment method.**
 
-- **PayU**: `invoice_display_number` is required (use the value sent in the pre-debit notification); `transaction_id` is optional. The charge needs an active pre-debit notification for today, so the `409` for a missing pre-debit and the `400` for an amount above the pre-debit amount apply to PayU only. The response `data` is `{ "order_id", "status", "message" }`. It can return `202` when PayU accepted the debit but the bank outcome is still pending, and a failed debit returns `400` with `{ "error": "<reason>" }` in `details`.
-- **Cashfree**: `invoice_display_number` is not required and `amount` is ignored for the charge. A `409` is returned when a charge is already initiated for tomorrow, the day Cashfree debits.
+- **Methods that use a pre-debit notification**: `invoice_display_number` is required (use the value sent in the pre-debit notification); `transaction_id` is optional. The charge needs an active pre-debit notification for today, so the `409` for a missing pre-debit and the `400` for an amount above the pre-debit amount apply here only. The response `data` is `{ "order_id", "status", "message" }`. It can return `202` when the debit was accepted but the bank outcome is still pending, and a failed debit returns `400` with `{ "error": "<reason>" }` in `details`.
+- **Other methods**: `invoice_display_number` is not required and `amount` is ignored for the charge. A `409` is returned when a charge is already initiated for tomorrow, the day the debit happens.
 </Info>
 
 ### Path Parameters
@@ -30,11 +30,11 @@ A `409` means the subscription's own state refused the charge — there is no ac
 ### Request Body
 
 <ParamField body="amount" type="number">
-  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. On PayU it must also not exceed the pre-debit notified amount. Cashfree ignores it.
+  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. For methods that use a pre-debit notification it must also not exceed the pre-debit notified amount; other methods ignore it.
 </ParamField>
 
 <ParamField body="invoice_display_number" type="string">
-  Your display number for this charge. Required for PayU; not needed for Cashfree.
+  Your display number for this charge. Required for methods that use a pre-debit notification; not needed otherwise.
 </ParamField>
 
 <ParamField body="transaction_id" type="string">

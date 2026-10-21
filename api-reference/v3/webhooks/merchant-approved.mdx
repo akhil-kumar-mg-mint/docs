@@ -47,18 +47,16 @@ This webhook is triggered when a sub-merchant account is approved and can start 
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-      
-      **Example**: `"2026-12-15T14:32:18.456789"`
+      UTC, no timezone suffix, e.g. `"2026-12-15T14:32:18.456789"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"a3791670-7c5d-4a86-aa7a-fe35e58a9dbb"`
     </ParamField>
 

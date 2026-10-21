@@ -17,9 +17,7 @@ This webhook fires when a payment settling under an LRS purpose code is missing 
   **This event replaces the others for LRS payments.** A payment that receives `LRS_VERIFICATION_NEEDED` will not also receive [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed). Two events carrying different lists for the same outstanding work would leave you chasing both.
 </Note>
 
-<Note>
-  Fires for all five LRS purpose codes — `S0305` and `S1107` (education), and `S0303`, `S0304` and `S0306` (travel). What it names differs per code; see [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) for the whole set.
-</Note>
+It fires for all five LRS purpose codes: `S0305` and `S1107` (education), and `S0303`, `S0304` and `S0306` (travel). What it names differs per code; see [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) for the whole set.
 
 ### When the webhook is sent
 
@@ -43,7 +41,8 @@ The webhook is created **only if**:
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | Queued per merchant and sent in batches every 2 minutes, so a burst of payments arrives smoothly rather than all at once. The first attempt is not immediate. |
+
+Delivery: batched, up to about 2 minutes. See [Delivery and duplicates](/integration-guide/v3/web-integration/webhooks#delivery-and-duplicates).
 
 ### Headers
 
@@ -58,7 +57,7 @@ The webhook is created **only if**:
 
 **Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
 
-Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -66,11 +65,9 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
 
 The payment, its state, and every item it still owes and why.
 
-These are complete, unedited payloads — nothing is trimmed.
-
 <CodeGroup>
 
-```json Education, with travel leg (S0305)
+```json Education — studies abroad
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T10:30:00.123456",
@@ -105,7 +102,7 @@ These are complete, unedited payloads — nothing is trimmed.
 }
 ```
 
-```json Education, fees only (S1107)
+```json Education — fees only
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T10:31:12.884210",
@@ -117,7 +114,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same field entries as S0305 …"],
+    "action_required_fields": ["… the same field entries as the first example …"],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
@@ -127,7 +124,7 @@ These are complete, unedited payloads — nothing is trimmed.
 }
 ```
 
-```json Travel (S0303 / S0304 / S0306)
+```json Travel
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T10:32:41.005917",
@@ -140,7 +137,7 @@ These are complete, unedited payloads — nothing is trimmed.
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      "… the buyer, invoice and remitter entries shared with S0305 …",
+      "… the buyer, invoice and remitter entries shared with the education examples …",
       { "code": "persons", "message": "Travellers on this remittance", "condition": "PASSENGER_DETAILS_LEVEL" }
     ],
     "payment_verification_expiry": null,
@@ -149,7 +146,7 @@ These are complete, unedited payloads — nothing is trimmed.
 }
 ```
 
-```json S0305, after a person other than the remitter is listed
+```json Education — after listing another person
 {
   "event_type": "LRS_VERIFICATION_NEEDED",
   "event_time": "2026-08-14T11:02:19.730558",
@@ -175,11 +172,9 @@ These are complete, unedited payloads — nothing is trimmed.
 
 </CodeGroup>
 
-<Note>
-  The three travel codes carry identical checklists. They differ in what the remittance is *for*, not in what you must collect. A travel checklist owes no documents, and lists `persons` only for a merchant set up to collect traveller details.
+The three travel codes carry identical checklists. A travel checklist owes no documents, and lists `persons` only when your account collects traveller details.
 
-  The last tab is the same payment as the first, later in its life. Two things changed: the buyer, invoice, remitter and `persons` fields dropped off, because sending them satisfied them; and a `PAYING_FOR_SOMEONE_ELSE` item **appeared**, because listing a person other than the remitter in `persons` is what makes `relationship_declaration` owed.
-</Note>
+The last tab is the same payment as the first, later in its life. The buyer, invoice, remitter and `persons` fields dropped off because sending them satisfied them, and a `PAYING_FOR_SOMEONE_ELSE` item appeared, because listing a person other than the remitter in `persons` makes `relationship_declaration` owed.
 
 ---
 
@@ -192,17 +187,15 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-
-      **Example**: `"2026-08-14T10:30:00.123456"`
+      UTC, no timezone suffix, e.g. `"2026-08-14T10:30:00.123456"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for this webhook event (UUID), useful for idempotency
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
 
       **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
     </ParamField>
@@ -227,8 +220,6 @@ These are complete, unedited payloads — nothing is trimmed.
 
     <ParamField path="data.verification_status" type="string" required>
       The payment's own settlement state at the moment the event was raised — normally `ACTION_REQUIRED`, or `INFO_PENDING` earlier in the flow.
-
-      It is read live rather than asserted, because this event is sent both when a payment first owes its details and when a submit was refused, and it must say what is true at that moment.
     </ParamField>
 
     <ParamField path="data.message" type="string" required>
@@ -254,9 +245,7 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="data.payment_verification_expiry" type="string | null" required>
-      A gateway-set verification deadline where one exists. **Always `null` on the LRS rails**, which have no such clock.
-
-      The key is sent regardless so the payload shape does not change under you depending on which rail a payment arrived through — [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) carries a real date here.
+      **Always `null`** on LRS payments, which have no such deadline. The key is sent so the payload has the same shape as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), which carries a real date here.
     </ParamField>
   </Tab>
 
@@ -270,7 +259,7 @@ These are complete, unedited payloads — nothing is trimmed.
     <ParamField path="message" type="string" required>
       A sentence about the item, safe to render to a payer.
 
-      On the requirement list it describes what the item **is**. On a [refusal](#after-a-submit-that-did-not-pass) the same key says what **went wrong** instead — one key, always the plainest thing there is to say about the item in that context.
+      On the requirement list it describes what the item **is**. On a [refusal](#after-a-submit-that-did-not-pass) it says what **went wrong** instead.
 
       On a [send-back](#when-a-review-sends-it-back) it stays the item's label; what went wrong with a particular document is in that entry's `rejection_reason`.
     </ParamField>
@@ -282,9 +271,7 @@ These are complete, unedited payloads — nothing is trimmed.
     </ParamField>
 
     <ParamField path="condition" type="string">
-      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `persons` lists someone other than the remitter. `PASSENGER_DETAILS_LEVEL` means the payment's verification level is passenger details, which is when a travel checklist lists `persons`.
-
-      An item with this key was **not** on the earlier event and is not arbitrary — the key names what brought it in.
+      Present on items that are owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` means `persons` lists someone other than the remitter. `PASSENGER_DETAILS_LEVEL` means your account collects traveller details on travel payments, which is when a travel checklist lists `persons`.
     </ParamField>
 
     <ParamField path="optional" type="boolean">
@@ -313,15 +300,13 @@ These are complete, unedited payloads — nothing is trimmed.
 
 ---
 
-<Note>
-  **This event lists only what is outstanding.** Optional items and conditional items whose condition does not hold never appear, and neither does anything already supplied. For the whole set — including optionals you could still offer a payer — call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which returns the same entries plus `satisfied` and `provided`.
-</Note>
+This event lists only what is outstanding. Optional items, conditional items whose condition does not hold, and anything already supplied never appear. For the whole set, call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements), which returns the same entries plus `satisfied` and `provided`.
 
 ## After a submit that did not pass
 
-Sending everything the list named is not the same as passing. Once a set is complete it goes to the verification gateway, which verifies the remitter's PAN against the name and date of birth, matches the credit's sender to the account holder, recomputes TCS and checks that the money received covers what is being settled. Any of those can refuse.
+Sending everything the list named is not the same as passing. Once a set is complete it is checked: the remitter's PAN against the name and date of birth, the credit's sender against the account holder, the TCS, and that the money received covers what is being settled. Any of those can refuse.
 
-A refusal arrives as **this same event** — same type, same envelope, the same eight keys. Nothing is added: an LRS payment should learn what it owes in one vocabulary and one shape, whether the answer came from the checklist or from the checks that run after it. Only the `message` and the entries differ.
+A refusal arrives as **this same event**, with the same envelope and keys. Only the `message` and the entries differ.
 
 <CodeGroup>
 
@@ -399,15 +384,13 @@ A refusal arrives as **this same event** — same type, same envelope, the same 
 
 </CodeGroup>
 
-<Note>
-  **The payment stays in Action Required and stays submittable.** Nothing is lost: everything you sent is still held against the payment. Fix what is named and re-send only that — a partial send is merged with what is already there.
-</Note>
+The payment stays in Action Required and you can submit again. Everything you sent is still held against it: fix what is named and re-send only that, since a partial send is merged with what is already there.
 
-There is no separate `outstanding` or `reason` key to branch on. Whatever they used to say now lives inside the relevant entry's `message` — the shortfall's rupee figure inside the `outstanding` entry, a PAN mismatch inside `remitter_pan`, and so on. Read the two lists the same way you already do for the requirement event; a refusal names the same thing in the same place, never a second structure to learn.
+There is no separate `outstanding` or `reason` key. The shortfall's rupee figure is in the `outstanding` entry's `message`, a PAN mismatch in `remitter_pan`'s, and so on. Read the two lists the same way as for the requirement event.
 
 ### The codes a refusal names
 
-The gateway's own vocabulary is translated into the codes you collected under, so a fix goes back through the same endpoint and the same key:
+Each refusal is reported under the code you collected it under, so a fix goes back through the same endpoint and key:
 
 | Code | What it means | What to do |
 |---|---|---|
@@ -415,16 +398,14 @@ The gateway's own vocabulary is translated into the codes you collected under, s
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
 | `persons` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
-| `derived_amount_credit_too_small` | For an account whose amount to be settled is derived from the credit: the credit leaves nothing to settle after EximPe's charges and the TCS. | The buyer has to send a larger amount. There is nothing to re-send under this name. |
+| `derived_amount_credit_too_small` | `amount_to_be_settled` is not collected from you (EximPe derives it from the credit), and the credit leaves nothing to settle after EximPe's charges and the TCS. | The buyer has to send a larger amount. There is nothing to re-send under this name. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
-<Warning>
-  **`outstanding` is a conclusion, not a code.** It is the one entry with nothing to re-send under that name: the credit is short by the amount its `message` states. Either the buyer tops up — link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up) — or a smaller `amount_to_be_settled` is declared.
-</Warning>
+`outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. Either the buyer tops up (link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up)) or you declare a smaller `amount_to_be_settled`.
 
 ## When a review sends it back
 
-A filed verification is reviewed by us, and a review has three outcomes. Two of them are verdicts and arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). The third is a **send-back**: the reviewer returns the verification for changes rather than deciding it, the payment owes something again, and that arrives here — same event, same shape.
+A filed verification is reviewed by EximPe, and a review has three outcomes. Two of them are verdicts and arrive as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). The third is a **send-back**: the reviewer returns the verification for changes rather than deciding it, the payment owes something again, and that arrives here — same event, same shape.
 
 One thing is particular to this trigger:
 
@@ -472,12 +453,10 @@ The requirement flags are unchanged and sit alongside the new keys — an entry 
 }
 ```
 
-<Note>
-  **`message` on an entry is still the document's label.** The new `rejection_reason` is what went wrong with that file; `message` goes on describing what the item is. Show the label to say what you are asking for, and the rejection reason to say why you are asking again.
-</Note>
+An entry's `message` is still the document's label; `rejection_reason` is what went wrong with that file. Show the label to say what you are asking for, and the rejection reason to say why you are asking again.
 
 <Warning>
-  **A send-back is sent on every send-back, including one that lists nothing.** A reviewer can return a verification with the whole instruction in their comment and no item marked outstanding. Both lists then arrive as `[]` and `message` carries everything there is to act on:
+  **A send-back can list nothing.** A reviewer can return a verification with the whole instruction in their comment and no item marked outstanding. Both lists then arrive as `[]` and `message` carries everything there is to act on:
 
   ```json
   "message": "The invoice date and the admission letter disagree. Please check with the payer and resubmit.",
@@ -513,9 +492,7 @@ The reverse also happens: answering the remitter identity fields removes them fr
   </Step>
 </Steps>
 
-<Note>
-  **Respond `2xx` as soon as you have accepted the payload**, so the delivery is not retried, and verify the signature before acting on it.
-</Note>
+Respond `2xx` as soon as you have accepted the payload, so the delivery is not retried, and verify the signature before acting on it.
 
 ## Do not hardcode the codes
 

@@ -26,7 +26,7 @@ This webhook is triggered when funds are successfully transferred to the merchan
             {
                 "settlement_id": "ST8174378817",
                 "settlement_utr": "ST8174378817",
-                "settlement_done_at": "2025-06-20T19:22:54.734256",
+                "settlement_done_at": "2026-02-15T16:50:54.734256",
                 "forex_rate": 86,
                 "settlement_amount": 1952.8,
                 "settlement_charges": 40.5,
@@ -48,18 +48,16 @@ This webhook is triggered when funds are successfully transferred to the merchan
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-      
-      **Example**: `"2026-02-15T16:53:15.123456"`
+      UTC, no timezone suffix, e.g. `"2026-02-15T16:53:15.123456"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"a3791670-7c5d-4a86-aa7a-fe35e58a9dbb"`
     </ParamField>
 
@@ -88,7 +86,7 @@ This webhook is triggered when funds are successfully transferred to the merchan
     <ParamField path="data.settlements[].settlement_done_at" type="string" required>
       ISO 8601 timestamp when the settlement was completed
       
-      **Example**: `"2025-06-20T19:22:54.734256"`
+      **Example**: `"2026-02-15T16:50:54.734256"`
     </ParamField>
 
     <ParamField path="data.settlements[].forex_rate" type="number" required>

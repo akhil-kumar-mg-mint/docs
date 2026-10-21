@@ -62,17 +62,15 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
 </ParamField>
 
 <ParamField path="event_time" type="string" required>
-  ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-
-  **Example**: `"2026-06-11T18:31:02.417755"`
+  UTC, no timezone suffix, e.g. `"2026-06-11T18:31:02.417755"`. Parse tolerantly — fractional seconds can be absent.
 </ParamField>
 
 <ParamField path="version" type="string" required>
-  Envelope version (e.g. "3.0.0")
+  API version of your account, e.g. `"3.0.0"`
 </ParamField>
 
 <ParamField path="sequence_number" type="string" required>
-  Unique identifier for this webhook event (UUID), useful for idempotency.
+  Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
 </ParamField>
 
 <ParamField path="data" type="object" required>

@@ -36,7 +36,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
         "bank_ref_num": "OD3376378679-PR6938527534",
         "extended_status": "USER_DROPPED",
         "payment_message": null,
-        "payment_completed_at": "2025-06-24T12:30:44.000000Z",
+        "payment_completed_at": "2026-02-15T16:53:10.000000Z",
         "utr": null,
         "virtual_account_id": null,
         "subscription_id": null,
@@ -58,18 +58,16 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-      
-      **Example**: `"2026-02-15T16:53:15.123456"`
+      UTC, no timezone suffix, e.g. `"2026-02-15T16:53:15.123456"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"e40552bf-ed12-4f35-9a97-162d97e6fa34"`
     </ParamField>
 
@@ -128,7 +126,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.extended_status" type="string" required>
-      Detailed status code for the payment
+      Detailed status code for the failure. One of `FAILED`, `USER_DROPPED`, `NOT_ATTEMPTED`, `EXPIRED`, `TERMINATED`, `CANCELLED`, `VOID`, `BOUNCED`, `AUTHORIZATION_FAILED`, `GATEWAY_DECLINED`, `GATEWAY_ERROR` or `AUTO_REFUNDED`. New values may be added, so handle an unknown one gracefully.
 
       **Example**: `"USER_DROPPED"`
     </ParamField>
@@ -140,7 +138,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     <ParamField path="data.payment_completed_at" type="string" required>
       ISO 8601 payment completion timestamp
       
-      **Example**: `"2025-06-24T12:30:44.000000Z"`
+      **Example**: `"2026-02-15T16:53:10.000000Z"`
     </ParamField>
 
     <ParamField path="data.utr" type="string">
@@ -148,7 +146,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.virtual_account_id" type="string">
-      Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
+      Virtual account ID, if the payment came in through a virtual account; otherwise null.
     </ParamField>
 
     <ParamField path="data.subscription_id" type="string">
