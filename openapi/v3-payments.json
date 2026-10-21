@@ -1,0 +1,1215 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EximPe Payment Gateway API — v3 Payments",
+    "version": "3.0.0",
+    "description": "List and retrieve payments on the v3 API. v1 and v2 use the same paths and return the same response; this spec carries the v3 reference."
+  },
+  "servers": [
+    {
+      "url": "https://api-pacb-uat.eximpe.com",
+      "description": "Payment Gateway Sandbox URL"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Payments"
+    }
+  ],
+  "paths": {
+    "/pg/payments/": {
+      "get": {
+        "summary": "List Payments",
+        "description": "Return a paginated list of payments, newest first, with optional filters.",
+        "operationId": "v3_listPayments",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          },
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number, starting at 1. Stop when `next` is null: a page past the last one is refused with a 500.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Payments per page. Values above 1000 are capped at 1000.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 250
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "required": false,
+            "description": "Sort order. Prefix with `-` for descending. An unrecognised value is ignored.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "-created_at",
+                "created_at",
+                "-last_updated_at",
+                "last_updated_at",
+                "-payment_completed_at",
+                "payment_completed_at"
+              ],
+              "default": "-created_at"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Case-insensitive substring match across payment ID, order ID, reference ID, invoice number, buyer name, buyer email and bank reference.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "query",
+            "required": false,
+            "description": "Exact payment ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_id",
+            "in": "query",
+            "required": false,
+            "description": "Exact order ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reference_id",
+            "in": "query",
+            "required": false,
+            "description": "Exact reference ID (case-sensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "invoice_number",
+            "in": "query",
+            "required": false,
+            "description": "Exact invoice number (case-sensitive).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "buyer_name",
+            "in": "query",
+            "required": false,
+            "description": "Exact buyer name (case-sensitive). Use `search` for a partial match.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "merchant",
+            "in": "query",
+            "required": false,
+            "description": "Merchant ID. PSPs can use it to narrow the list to one sub-merchant.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "description": "ISO 4217 currency code, e.g. `INR`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mop_type",
+            "in": "query",
+            "required": false,
+            "description": "Method of payment. Case-insensitive; comma-separate several values.",
+            "schema": {
+              "type": "string",
+              "example": "upi,credit_card"
+            }
+          },
+          {
+            "name": "collection_mode",
+            "in": "query",
+            "required": false,
+            "description": "`hosted_payment`, `payment_link` or `s2s`. Case-insensitive; comma-separate several values.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "`pending`, `captured` or `failed`. Case-insensitive; comma-separate several values. Matches the status as recorded — see the note on expired payments.",
+            "schema": {
+              "type": "string",
+              "example": "captured"
+            }
+          },
+          {
+            "name": "from_created_at",
+            "in": "query",
+            "required": false,
+            "description": "Created on or after this date (`YYYY-MM-DD`, UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_created_at",
+            "in": "query",
+            "required": false,
+            "description": "Created on or before this date (`YYYY-MM-DD`, UTC). The whole day is included.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "from_payment_completed_at",
+            "in": "query",
+            "required": false,
+            "description": "Completed on or after this date (`YYYY-MM-DD`, UTC).",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_payment_completed_at",
+            "in": "query",
+            "required": false,
+            "description": "Completed on or before this date (`YYYY-MM-DD`, UTC). The whole day is included.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of payments",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ListPaymentsResponse"
+                },
+                "examples": {
+                  "One page": {
+                    "summary": "One page",
+                    "value": {
+                      "success": true,
+                      "message": "Domestic payment requests retrieved successfully",
+                      "data": {
+                        "count": 2,
+                        "page": 1,
+                        "page_size": 250,
+                        "next": null,
+                        "previous": null,
+                        "results": [
+                          {
+                            "payment_id": "PR4350279153",
+                            "merchant": {
+                              "id": "4417290356",
+                              "name": "Acme Exports"
+                            },
+                            "reference_id": "ORD-2026-000123",
+                            "buyer": {
+                              "name": "Rahul Sharma",
+                              "email": "rahul.sharma@example.com",
+                              "phone": "+919876543210"
+                            },
+                            "order_id": "OD8196969047",
+                            "invoice_number": "INV2026000123",
+                            "amount": {
+                              "amount": "1500",
+                              "total_amount": "1500",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-10-15T06:44:13.414209Z",
+                            "comment": null,
+                            "mop_type": "upi",
+                            "status": "captured"
+                          },
+                          {
+                            "payment_id": "PR1352481140",
+                            "merchant": {
+                              "id": "4417290356",
+                              "name": "Acme Exports"
+                            },
+                            "reference_id": "ORD-2026-000118",
+                            "buyer": {
+                              "name": "Priya Nair",
+                              "email": "priya.nair@example.com",
+                              "phone": "+919812345678"
+                            },
+                            "order_id": "OD3094308378",
+                            "invoice_number": "INV2026000118",
+                            "amount": {
+                              "amount": "2499.5",
+                              "total_amount": "2499.5",
+                              "currency": "INR"
+                            },
+                            "created_at": "2026-10-14T08:22:59.613699Z",
+                            "comment": "Payment abandoned by user",
+                            "mop_type": "credit_card",
+                            "status": "failed"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Invalid filter value, invalid date or a page past the last one",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Invalid status": {
+                    "summary": "Invalid status",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40350,
+                        "message": "Failed to retrieve domestic payment requests",
+                        "details": {
+                          "error": "{'status': ErrorDetail(string='Invalid value. Must be one of: PENDING, CAPTURED, FAILED, INVALID', code='invalid')}"
+                        }
+                      }
+                    }
+                  },
+                  "Page past the last one": {
+                    "summary": "Page past the last one",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40350,
+                        "message": "Failed to retrieve domestic payment requests",
+                        "details": {
+                          "error": "Invalid page."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/payments/{payment_id}/": {
+      "get": {
+        "summary": "Get Payment",
+        "description": "Return one payment with its order, settlement, refunds and method-of-payment details.",
+        "operationId": "v3_getPayment",
+        "tags": [
+          "Payments"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          },
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "description": "Payment ID, e.g. `PR4350279153`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The payment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_GetPaymentResponse"
+                },
+                "examples": {
+                  "UPI, settled and partly refunded": {
+                    "summary": "UPI, settled and partly refunded",
+                    "value": {
+                      "success": true,
+                      "message": "Domestic payment request details retrieved successfully",
+                      "data": {
+                        "payment_id": "PR4350279153",
+                        "order": {
+                          "order_id": "OD8196969047",
+                          "reference_id": "ORD-2026-000123",
+                          "amount": "1500.00",
+                          "currency": "INR",
+                          "opted_mop_type": "upi",
+                          "buyer": {
+                            "name": "Rahul Sharma",
+                            "email": "rahul.sharma@example.com",
+                            "phone": "+919876543210",
+                            "address": {
+                              "line_1": "12 MG Road",
+                              "line_2": "Indiranagar",
+                              "city": "Bengaluru",
+                              "state": "Karnataka",
+                              "postal_code": "560038"
+                            },
+                            "pan_number": null,
+                            "dob": null
+                          },
+                          "product": {
+                            "name": "Annual software licence",
+                            "description": "12-month subscription",
+                            "hs_code": "99831000",
+                            "hs_code_description": "Professional, technical and other services",
+                            "type_of_goods": "service"
+                          },
+                          "status": "payment_successful",
+                          "status_message": "Payment captured successfully",
+                          "created_at": "2026-10-15T06:44:13.101924Z"
+                        },
+                        "settlement": {
+                          "id": "ST6937597440",
+                          "settlement_id": "67c41a7a-010a-4667-82f2-fb529cdcdbe6",
+                          "settlement_completed_at": "2026-10-16T09:40:58.189094Z",
+                          "settlement_amount": "17.62",
+                          "settlement_currency": "USD",
+                          "utr_number": "UTR2026101600042",
+                          "number_of_transactions": 1,
+                          "created_at": "2026-10-16T09:40:58.199249Z",
+                          "last_updated_at": "2026-10-16T09:40:58.199249Z"
+                        },
+                        "refund": [
+                          {
+                            "refund_id": "RF7781203345",
+                            "refund_amount": "500.00",
+                            "refund_status": "refunded",
+                            "refunded_at": "2026-10-17T11:02:41.000000Z",
+                            "message": null,
+                            "payment_id": "PR4350279153",
+                            "reference_id": "RFD-2026-0007",
+                            "created_at": "2026-10-17T10:58:12.553201Z"
+                          }
+                        ],
+                        "collection_mode": "hosted_payment",
+                        "mop_type": "upi",
+                        "bank_ref_num": "629012345678",
+                        "mop_detail": {
+                          "vpa": "rahul@okhdfc"
+                        },
+                        "payment_completed_at": "2026-10-15T06:45:02.000000Z",
+                        "status": "captured",
+                        "status_message": null,
+                        "created_at": "2026-10-15T06:44:13.414209Z"
+                      }
+                    }
+                  },
+                  "Card, not yet settled": {
+                    "summary": "Card, not yet settled",
+                    "value": {
+                      "success": true,
+                      "message": "Domestic payment request details retrieved successfully",
+                      "data": {
+                        "payment_id": "PR4636695748",
+                        "order": {
+                          "order_id": "OD9373039350",
+                          "reference_id": "ORD-2026-000123",
+                          "amount": "1500.00",
+                          "currency": "INR",
+                          "opted_mop_type": "credit_card",
+                          "buyer": {
+                            "name": "Rahul Sharma",
+                            "email": "rahul.sharma@example.com",
+                            "phone": "+919876543210",
+                            "address": {
+                              "line_1": "12 MG Road",
+                              "line_2": "Indiranagar",
+                              "city": "Bengaluru",
+                              "state": "Karnataka",
+                              "postal_code": "560038"
+                            },
+                            "pan_number": null,
+                            "dob": null
+                          },
+                          "product": {
+                            "name": "Annual software licence",
+                            "description": "12-month subscription",
+                            "hs_code": "99831000",
+                            "hs_code_description": "Professional, technical and other services",
+                            "type_of_goods": "service"
+                          },
+                          "status": "payment_successful",
+                          "status_message": "Payment captured successfully",
+                          "created_at": "2026-10-15T06:44:13.101924Z"
+                        },
+                        "settlement": null,
+                        "refund": [],
+                        "collection_mode": "s2s",
+                        "mop_type": "credit_card",
+                        "bank_ref_num": "1463805794228025856",
+                        "mop_detail": {
+                          "card_last_4_digits": "1091",
+                          "card_holder_name": null,
+                          "card_issuer_country": "IN",
+                          "card_issuer_bank": "HDFC Bank"
+                        },
+                        "payment_completed_at": "2026-10-15T06:45:02.000000Z",
+                        "status": "captured",
+                        "status_message": null,
+                        "created_at": "2026-10-15T06:44:13.414209Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No payment with this ID for your account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Not found": {
+                    "summary": "Not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_005",
+                        "message": "Payment not found",
+                        "details": {
+                          "payment_id": "Payment not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "clientAuth": {
+        "type": "apiKey",
+        "name": "X-Client-ID",
+        "in": "header",
+        "description": "**Client Application ID** - Your unique application identifier used to authenticate API requests. You can find your Client ID in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client ID",
+        "x-example": "your-client-id"
+      },
+      "clientSecretAuth": {
+        "type": "apiKey",
+        "name": "X-Client-Secret",
+        "in": "header",
+        "description": "**Client Secret Key** - Your secret key used alongside the Client ID for secure authentication. Keep this confidential and never expose it in client-side code. Available in the Developer Settings section of the merchant dashboard.",
+        "x-displayName": "Client Secret",
+        "x-example": "your-client-secret"
+      },
+      "merchantAuth": {
+        "type": "apiKey",
+        "name": "X-Merchant-ID",
+        "in": "header",
+        "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
+        "x-displayName": "Merchant ID",
+        "x-example": "your-merchant-id"
+      },
+      "apiVersionHeader": {
+        "type": "apiKey",
+        "name": "X-API-Version",
+        "in": "header",
+        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "x-displayName": "API Version",
+        "x-example": "3.0.0"
+      }
+    },
+    "schemas": {
+      "v3_ErrorDetails": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "description": "Error code (e.g., ERR_ORDER_002). The list endpoint's own failure sends a number (40350).",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "description": "What failed. Usually an object keyed by the offending field and nested the way the request is (e.g. buyer.address.postal_code), with one message per field. A purpose_code refusal sends a single string instead.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      },
+      "v3_ErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Indicates if the request was successful. Always false for error responses."
+          },
+          "error": {
+            "$ref": "#/components/schemas/v3_ErrorDetails"
+          }
+        }
+      },
+      "v3_PaymentListItem": {
+        "type": "object",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Payment ID — `PR` followed by 10 digits."
+          },
+          "merchant": {
+            "type": "object",
+            "nullable": true,
+            "description": "Whose payment this is. For a PSP, one of its sub-merchants or the PSP itself.",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Merchant ID."
+              },
+              "name": {
+                "type": "string",
+                "description": "Merchant display name."
+              }
+            }
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your reference for the order."
+          },
+          "buyer": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer name."
+              },
+              "email": {
+                "type": "string",
+                "description": "Buyer email."
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer phone, with country code.",
+                "nullable": true
+              }
+            }
+          },
+          "order_id": {
+            "type": "string",
+            "description": "The order this payment belongs to — `OD` followed by 10 digits."
+          },
+          "invoice_number": {
+            "type": "string",
+            "description": "The order's invoice number."
+          },
+          "amount": {
+            "type": "object",
+            "properties": {
+              "amount": {
+                "type": "string",
+                "description": "Order amount as a decimal string without trailing zeros, e.g. `\"1500\"`, `\"2499.5\"`."
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "Amount including GST where GST applies; otherwise equal to `amount`. Same format as `amount`."
+              },
+              "currency": {
+                "type": "string",
+                "description": "ISO 4217 currency code.",
+                "nullable": true
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was created, UTC with microseconds."
+          },
+          "comment": {
+            "type": "string",
+            "description": "Why the payment failed or what state it is in, when there is something to say; otherwise `null`.",
+            "nullable": true
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment, lowercase.",
+            "nullable": true,
+            "enum": [
+              "upi",
+              "credit_card",
+              "debit_card",
+              "net_banking",
+              "qr",
+              null
+            ]
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status. A pending payment past its expiry reads `failed` here.",
+            "enum": [
+              "pending",
+              "captured",
+              "failed"
+            ]
+          }
+        }
+      },
+      "v3_ListPaymentsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total payments across all pages."
+              },
+              "page": {
+                "type": "integer",
+                "description": "This page's number."
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "Payments per page."
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "description": "Full URL of the next page, or `null` on the last one."
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true,
+                "description": "Full URL of the previous page, or `null` on the first one."
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_PaymentListItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_PaymentOrder": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "Order ID."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Your reference for the order."
+          },
+          "amount": {
+            "type": "string",
+            "description": "Order amount as a decimal string with two places, e.g. `\"1500.00\"`."
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217 currency code."
+          },
+          "opted_mop_type": {
+            "type": "string",
+            "description": "Method of payment chosen when the order was created, lowercase.",
+            "nullable": true
+          },
+          "buyer": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer name."
+              },
+              "email": {
+                "type": "string",
+                "description": "Buyer email."
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer phone.",
+                "nullable": true
+              },
+              "address": {
+                "type": "object",
+                "nullable": true,
+                "properties": {
+                  "line_1": {
+                    "type": "string",
+                    "description": "Line 1.",
+                    "nullable": true
+                  },
+                  "line_2": {
+                    "type": "string",
+                    "description": "Line 2.",
+                    "nullable": true
+                  },
+                  "city": {
+                    "type": "string",
+                    "description": "City.",
+                    "nullable": true
+                  },
+                  "state": {
+                    "type": "string",
+                    "description": "State.",
+                    "nullable": true
+                  },
+                  "postal_code": {
+                    "type": "string",
+                    "description": "Postal code.",
+                    "nullable": true
+                  }
+                }
+              },
+              "pan_number": {
+                "type": "string",
+                "description": "Buyer PAN, when collected.",
+                "nullable": true
+              },
+              "dob": {
+                "type": "string",
+                "description": "Buyer date of birth, `YYYY-MM-DD`, when collected.",
+                "nullable": true
+              }
+            }
+          },
+          "product": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Product name."
+              },
+              "description": {
+                "type": "string",
+                "description": "Product description.",
+                "nullable": true
+              },
+              "hs_code": {
+                "type": "string",
+                "description": "HS code.",
+                "nullable": true
+              },
+              "hs_code_description": {
+                "type": "string",
+                "description": "HS code description.",
+                "nullable": true
+              },
+              "type_of_goods": {
+                "type": "string",
+                "description": "Type of goods.",
+                "nullable": true
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Order status.",
+            "enum": [
+              "payment_pending",
+              "payment_successful",
+              "failed"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "description": "Order status message.",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the order was created."
+          }
+        }
+      },
+      "v3_PaymentSettlement": {
+        "type": "object",
+        "nullable": true,
+        "description": "The settlement that paid this payment out, or `null` until it is settled.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Settlement ID — `ST` followed by 10 digits."
+          },
+          "settlement_id": {
+            "type": "string",
+            "description": "Settlement reference."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement completed.",
+            "nullable": true
+          },
+          "settlement_amount": {
+            "type": "string",
+            "description": "Settled amount as a decimal string with two places."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "description": "Settlement currency."
+          },
+          "utr_number": {
+            "type": "string",
+            "description": "UTR of the settlement transfer.",
+            "nullable": true
+          },
+          "number_of_transactions": {
+            "type": "integer",
+            "description": "Payments in the settlement."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement was created."
+          },
+          "last_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement was last updated."
+          }
+        }
+      },
+      "v3_PaymentRefund": {
+        "type": "object",
+        "properties": {
+          "refund_id": {
+            "type": "string",
+            "description": "Refund ID."
+          },
+          "refund_amount": {
+            "type": "string",
+            "description": "Refunded amount as a decimal string with two places."
+          },
+          "refund_status": {
+            "type": "string",
+            "description": "Refund status.",
+            "enum": [
+              "initiated",
+              "processing",
+              "refunded",
+              "failed",
+              "reversed",
+              "on_hold",
+              "bank_rejected_refund"
+            ]
+          },
+          "refunded_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund completed.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Refund status message.",
+            "nullable": true
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The payment refunded."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Reference ID of the refund.",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the refund was created."
+          }
+        }
+      },
+      "v3_Payment": {
+        "type": "object",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Payment ID."
+          },
+          "order": {
+            "$ref": "#/components/schemas/v3_PaymentOrder"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/v3_PaymentSettlement"
+          },
+          "refund": {
+            "type": "array",
+            "description": "Refunds against this payment, newest first. `[]` when there are none.",
+            "items": {
+              "$ref": "#/components/schemas/v3_PaymentRefund"
+            }
+          },
+          "collection_mode": {
+            "type": "string",
+            "description": "How the payment was collected.",
+            "nullable": true,
+            "enum": [
+              "hosted_payment",
+              "payment_link",
+              "s2s",
+              null
+            ]
+          },
+          "mop_type": {
+            "type": "string",
+            "description": "Method of payment, lowercase.",
+            "nullable": true
+          },
+          "bank_ref_num": {
+            "type": "string",
+            "description": "Bank or network reference for the payment.",
+            "nullable": true
+          },
+          "mop_detail": {
+            "nullable": true,
+            "description": "Details for the method of payment. `null` for QR and any method not listed.",
+            "oneOf": [
+              {
+                "title": "UPI",
+                "type": "object",
+                "properties": {
+                  "vpa": {
+                    "type": "string",
+                    "description": "Payer VPA.",
+                    "nullable": true
+                  }
+                }
+              },
+              {
+                "title": "Card",
+                "type": "object",
+                "properties": {
+                  "card_last_4_digits": {
+                    "type": "string",
+                    "description": "Last four digits of the card.",
+                    "nullable": true
+                  },
+                  "card_holder_name": {
+                    "type": "string",
+                    "description": "Card holder name.",
+                    "nullable": true
+                  },
+                  "card_issuer_country": {
+                    "type": "string",
+                    "description": "Issuer country code.",
+                    "nullable": true
+                  },
+                  "card_issuer_bank": {
+                    "type": "string",
+                    "description": "Issuing bank.",
+                    "nullable": true
+                  }
+                }
+              },
+              {
+                "title": "Net banking",
+                "type": "object",
+                "properties": {
+                  "bank_ref_num": {
+                    "type": "string",
+                    "description": "Bank reference number.",
+                    "nullable": true
+                  },
+                  "acq_id": {
+                    "type": "string",
+                    "description": "Acquirer ID.",
+                    "nullable": true
+                  }
+                }
+              }
+            ]
+          },
+          "payment_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment completed.",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status as recorded. Unlike List Payments, a pending payment past its expiry still reads `pending` here.",
+            "enum": [
+              "pending",
+              "captured",
+              "failed"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "description": "Payment status message.",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the payment was created, UTC with microseconds."
+          }
+        }
+      },
+      "v3_GetPaymentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_Payment"
+          }
+        }
+      }
+    }
+  }
+}

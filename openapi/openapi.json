@@ -1040,9 +1040,9 @@
             }
           },
           {
-            "name": "merchant_id",
+            "name": "merchant",
             "in": "query",
-            "description": "Filter by merchant ID.",
+            "description": "Filter by merchant ID (the `id` shown under `merchant`). PSPs can use it to narrow the list to one sub-merchant.",
             "schema": {
               "type": "string"
             }
@@ -1275,7 +1275,8 @@
                       "settlement_currency": "USD",
                       "utr_number": "cea2ae3a-182c-457a-aa57-fa425000cfb8",
                       "number_of_transactions": 1,
-                      "created_date": "2025-09-04T09:40:58.199249Z"
+                      "created_at": "2025-09-04T09:40:58.199249Z",
+                      "last_updated_at": "2025-09-04T09:40:58.199249Z"
                     },
                     "refund": [],
                     "collection_mode": "hosted_payment",
@@ -1287,7 +1288,7 @@
                     "payment_completed_at": "2025-09-04T09:38:44.000000Z",
                     "status": "captured",
                     "status_message": null,
-                    "created_date": "2025-09-04T09:38:43.422672Z"
+                    "created_at": "2025-09-04T09:38:43.422672Z"
                   }
                 }
               }
@@ -7465,7 +7466,6 @@
       "v1_PaymentInList": {
         "type": "object",
         "required": [
-          "id",
           "merchant",
           "reference_id",
           "buyer",
@@ -7542,8 +7542,7 @@
             "properties": {
               "amount": {
                 "type": "string",
-                "description": "Amount in decimal format (e.g., \"100.00\")",
-                "pattern": "^\\d+\\.\\d{2}$"
+                "description": "Amount as a decimal string without trailing zeros (e.g. \"1500\", \"2499.5\")"
               },
               "total_amount": {
                 "type": "string",
@@ -7674,11 +7673,6 @@
             "type": "string",
             "nullable": true,
             "description": "A message providing more detail about the refund status."
-          },
-          "bank_ref_num": {
-            "type": "string",
-            "nullable": true,
-            "description": "The bank reference number for the refund."
           },
           "refund_amount": {
             "type": "string",
@@ -8755,7 +8749,7 @@
           "collection_mode",
           "mop_type",
           "status",
-          "created_date"
+          "created_at"
         ],
         "properties": {
           "payment_id": {
@@ -8873,15 +8867,14 @@
                 "type": "string",
                 "description": "Unique settlement identifier"
               },
-              "settlement_completed_date": {
+              "settlement_completed_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement completion timestamp"
               },
               "settlement_amount": {
-                "type": "number",
-                "format": "float",
-                "description": "Settlement amount"
+                "type": "string",
+                "description": "Settlement amount, as a decimal string with two places (e.g. \"976.40\")"
               },
               "settlement_currency": {
                 "type": "string",
@@ -8895,10 +8888,15 @@
                 "type": "integer",
                 "description": "Number of transactions in settlement"
               },
-              "created_date": {
+              "created_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement creation timestamp"
+              },
+              "last_updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement last-updated timestamp"
               }
             }
           },
@@ -8942,22 +8940,22 @@
                 "title": "UPI Details",
                 "type": "object",
                 "properties": {
-                  "upi_id": {
+                  "vpa": {
                     "type": "string",
-                    "description": "UPI ID for UPI payments"
+                    "description": "Payer VPA (UPI ID)"
                   }
                 },
                 "required": [
-                  "upi_id"
+                  "vpa"
                 ]
               },
               {
                 "title": "Card Details",
                 "type": "object",
                 "properties": {
-                  "card_mask": {
+                  "card_last_4_digits": {
                     "type": "string",
-                    "description": "Masked card number"
+                    "description": "Last four digits of the card"
                   },
                   "card_holder_name": {
                     "type": "string",
@@ -8973,7 +8971,7 @@
                   }
                 },
                 "required": [
-                  "card_mask",
+                  "card_last_4_digits",
                   "card_holder_name",
                   "card_issuer_country",
                   "card_issuer_bank"
@@ -9019,7 +9017,7 @@
             "nullable": true,
             "description": "Payment status message"
           },
-          "created_date": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
             "description": "Payment creation timestamp"
@@ -11027,7 +11025,6 @@
       "v2_PaymentInList": {
         "type": "object",
         "required": [
-          "id",
           "merchant",
           "reference_id",
           "buyer",
@@ -11104,8 +11101,7 @@
             "properties": {
               "amount": {
                 "type": "string",
-                "description": "Amount in decimal format (e.g., \"100.00\")",
-                "pattern": "^\\d+\\.\\d{2}$"
+                "description": "Amount as a decimal string without trailing zeros (e.g. \"1500\", \"2499.5\")"
               },
               "total_amount": {
                 "type": "string",
@@ -11236,11 +11232,6 @@
             "type": "string",
             "nullable": true,
             "description": "A message providing more detail about the refund status."
-          },
-          "bank_ref_num": {
-            "type": "string",
-            "nullable": true,
-            "description": "The bank reference number for the refund."
           },
           "refund_amount": {
             "type": "string",
@@ -12214,7 +12205,7 @@
           "collection_mode",
           "mop_type",
           "status",
-          "created_date"
+          "created_at"
         ],
         "properties": {
           "payment_id": {
@@ -12332,15 +12323,14 @@
                 "type": "string",
                 "description": "Unique settlement identifier"
               },
-              "settlement_completed_date": {
+              "settlement_completed_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement completion timestamp"
               },
               "settlement_amount": {
-                "type": "number",
-                "format": "float",
-                "description": "Settlement amount"
+                "type": "string",
+                "description": "Settlement amount, as a decimal string with two places (e.g. \"976.40\")"
               },
               "settlement_currency": {
                 "type": "string",
@@ -12354,10 +12344,15 @@
                 "type": "integer",
                 "description": "Number of transactions in settlement"
               },
-              "created_date": {
+              "created_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement creation timestamp"
+              },
+              "last_updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement last-updated timestamp"
               }
             }
           },
@@ -12401,22 +12396,22 @@
                 "title": "UPI Details",
                 "type": "object",
                 "properties": {
-                  "upi_id": {
+                  "vpa": {
                     "type": "string",
-                    "description": "UPI ID for UPI payments"
+                    "description": "Payer VPA (UPI ID)"
                   }
                 },
                 "required": [
-                  "upi_id"
+                  "vpa"
                 ]
               },
               {
                 "title": "Card Details",
                 "type": "object",
                 "properties": {
-                  "card_mask": {
+                  "card_last_4_digits": {
                     "type": "string",
-                    "description": "Masked card number"
+                    "description": "Last four digits of the card"
                   },
                   "card_holder_name": {
                     "type": "string",
@@ -12432,7 +12427,7 @@
                   }
                 },
                 "required": [
-                  "card_mask",
+                  "card_last_4_digits",
                   "card_holder_name",
                   "card_issuer_country",
                   "card_issuer_bank"
@@ -12478,7 +12473,7 @@
             "nullable": true,
             "description": "Payment status message"
           },
-          "created_date": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
             "description": "Payment creation timestamp"
@@ -14300,7 +14295,6 @@
       "v3_PaymentInList": {
         "type": "object",
         "required": [
-          "id",
           "merchant",
           "reference_id",
           "buyer",
@@ -14377,8 +14371,7 @@
             "properties": {
               "amount": {
                 "type": "string",
-                "description": "Amount in decimal format (e.g., \"100.00\")",
-                "pattern": "^\\d+\\.\\d{2}$"
+                "description": "Amount as a decimal string without trailing zeros (e.g. \"1500\", \"2499.5\")"
               },
               "total_amount": {
                 "type": "string",
@@ -14509,11 +14502,6 @@
             "type": "string",
             "nullable": true,
             "description": "A message providing more detail about the refund status."
-          },
-          "bank_ref_num": {
-            "type": "string",
-            "nullable": true,
-            "description": "The bank reference number for the refund."
           },
           "refund_amount": {
             "type": "string",
@@ -15487,7 +15475,7 @@
           "collection_mode",
           "mop_type",
           "status",
-          "created_date"
+          "created_at"
         ],
         "properties": {
           "payment_id": {
@@ -15605,15 +15593,14 @@
                 "type": "string",
                 "description": "Unique settlement identifier"
               },
-              "settlement_completed_date": {
+              "settlement_completed_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement completion timestamp"
               },
               "settlement_amount": {
-                "type": "number",
-                "format": "float",
-                "description": "Settlement amount"
+                "type": "string",
+                "description": "Settlement amount, as a decimal string with two places (e.g. \"976.40\")"
               },
               "settlement_currency": {
                 "type": "string",
@@ -15627,10 +15614,15 @@
                 "type": "integer",
                 "description": "Number of transactions in settlement"
               },
-              "created_date": {
+              "created_at": {
                 "type": "string",
                 "format": "date-time",
                 "description": "Settlement creation timestamp"
+              },
+              "last_updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Settlement last-updated timestamp"
               }
             }
           },
@@ -15674,22 +15666,22 @@
                 "title": "UPI Details",
                 "type": "object",
                 "properties": {
-                  "upi_id": {
+                  "vpa": {
                     "type": "string",
-                    "description": "UPI ID for UPI payments"
+                    "description": "Payer VPA (UPI ID)"
                   }
                 },
                 "required": [
-                  "upi_id"
+                  "vpa"
                 ]
               },
               {
                 "title": "Card Details",
                 "type": "object",
                 "properties": {
-                  "card_mask": {
+                  "card_last_4_digits": {
                     "type": "string",
-                    "description": "Masked card number"
+                    "description": "Last four digits of the card"
                   },
                   "card_holder_name": {
                     "type": "string",
@@ -15705,7 +15697,7 @@
                   }
                 },
                 "required": [
-                  "card_mask",
+                  "card_last_4_digits",
                   "card_holder_name",
                   "card_issuer_country",
                   "card_issuer_bank"
@@ -15751,7 +15743,7 @@
             "nullable": true,
             "description": "Payment status message"
           },
-          "created_date": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
             "description": "Payment creation timestamp"
