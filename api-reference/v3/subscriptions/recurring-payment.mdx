@@ -11,7 +11,7 @@ This endpoint only supports **ADHOC** subscriptions. The subscription must have 
 </Info>
 
 <Info>
-A `409` means the subscription's own state refused the charge — there is no active pre-debit notification for today, or a charge is already in progress. A `400` means the amount is above the billing amount or above the pre-debit notified amount. In both cases nothing reached the bank: fix the cause, then call again. A `502` means the payment network failed.
+A `409` means the subscription's own state refused the charge — there is no active pre-debit notification for today, or a charge is already in progress. A `400` means the amount is above the billing amount or above the pre-debit notified amount, or the `reference_id` is invalid or already used. In both cases nothing reached the bank: fix the cause, then call again. A `502` means the payment network failed.
 </Info>
 
 <Info>
@@ -38,6 +38,10 @@ For methods that use a pre-debit notification, `invoice_display_number` is requi
   Optional unique transaction ID (max 64 characters). A `REC-` prefixed ID is generated when omitted.
 </ParamField>
 
+<ParamField body="reference_id" type="string">
+  Your reference for this charge: 1–50 letters, numbers and hyphens. It becomes this debit's `payment_id`, so the outcome comes back under your own reference. Must be unique across your orders, including failed ones. If omitted, a `payment_id` is generated with a `REC-` prefix.
+</ParamField>
+
 ### Response Fields
 
 <ResponseField name="subscription_id" type="string">
@@ -45,7 +49,7 @@ For methods that use a pre-debit notification, `invoice_display_number` is requi
 </ResponseField>
 
 <ResponseField name="payment_id" type="string">
-  Identifier of this debit, generated with a `REC-` prefix. Store it against your order: when the debit's outcome arrives, its payment carries this value as `merchant_reference_id` in the [Payment Successful](/api-reference/v3/webhooks/payment-successful) and [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhooks, and as `reference_id` in [Get Subscription Payments](/api-reference/v3/subscriptions/payments). A retried debit has `-attempt-1`, `-attempt-2`, and so on appended. It is not the ID of a payment record, so [Get Payment](/api-reference/v3/payment/get) does not accept it.
+  Identifier of this debit: the `reference_id` you sent, or one generated with a `REC-` prefix. Store it against your order: when the debit's outcome arrives, its payment carries this value as `merchant_reference_id` in the [Payment Successful](/api-reference/v3/webhooks/payment-successful) and [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhooks, and as `reference_id` in [Get Subscription Payments](/api-reference/v3/subscriptions/payments). A retried debit has `-attempt-1`, `-attempt-2`, and so on appended. It is not the ID of a payment record, so [Get Payment](/api-reference/v3/payment/get) does not accept it.
 </ResponseField>
 
 <ResponseField name="payment_amount" type="number">
@@ -79,6 +83,19 @@ For methods that use a pre-debit notification, `invoice_display_number` is requi
     "message": "Validation error",
     "details": {
       "amount": "Recurring amount must be less than or equal to the subscription billing amount"
+    }
+  }
+}
+```
+
+```json 400 - Reference ID already used
+{
+  "success": false,
+  "error": {
+    "code": "ERR_PAYMENT_001",
+    "message": "Validation error",
+    "details": {
+      "reference_id": "Reference ID already exists"
     }
   }
 }

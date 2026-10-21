@@ -162,7 +162,7 @@ An **ADHOC** subscription has no billing cycle: nothing is debited until you ask
 
 The subscription must have an active mandate first. Then:
 
-1. **Initiate** — call the API with an optional `amount`
+1. **Initiate** — call the API with an optional `amount` and `reference_id`
 2. **Wait** — the debit is processed asynchronously, typically the day after the call
 3. **Webhook** — the outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) arrives by webhook, and the order and payment records are created at that point
 
@@ -196,6 +196,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
 </Warning>
 
 If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged.
+
+To name the debit yourself, pass a `reference_id` (1–50 letters, numbers and hyphens, unique across your orders). It is used as the debit's `payment_id`. Omit it and one is generated with a `REC-` prefix.
 
 Store the returned `payment_id` against your order. When the outcome arrives, the debit's payment carries it as `merchant_reference_id` in the webhook and as `reference_id` in [Get Subscription Payments](/api-reference/v3/subscriptions/payments), so you can match the result to your order even when several debits on one subscription are in flight. If the debit is retried, each retry has `-attempt-1`, `-attempt-2`, and so on appended.
 

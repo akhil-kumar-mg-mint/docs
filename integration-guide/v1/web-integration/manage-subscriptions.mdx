@@ -107,7 +107,8 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   -H "X-API-Version: 1.0.0" \
   -d '{
     "amount": 1000.00,
-    "invoice_display_number": "INV-2025-001"
+    "invoice_display_number": "INV-2025-001",
+    "reference_id": "ORDER-2025-001"
   }'
 ```
 
@@ -123,6 +124,8 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   }
 }
 ```
+
+`reference_id` is optional: 1–50 letters, numbers and hyphens, unique across your orders. It becomes the recurring order's `reference_id`. Omit it and one is generated with a `REC-` prefix.
 
 Use the standard [**Get Payment**](https://docs.eximpe.com/api-reference/v1/payment/get) or [**Get Order**](https://docs.eximpe.com/api-reference/v1/order/get) APIs or webhooks to track installment success and failures.
 
