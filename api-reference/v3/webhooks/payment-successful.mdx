@@ -17,7 +17,7 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 
 - **Regular payment flow:** After a payment success callback is received, the payment is updated to CAPTURED and the webhook is created.
 - **VBA transfer flow:** After a VBA transfer payment is successfully recorded, the webhook is created.
-- The webhook is created **only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL.
+- The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
 ---
 
@@ -26,7 +26,7 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
@@ -39,10 +39,12 @@ This webhook is triggered when a payment is marked CAPTURED (after a payment suc
 | `User-Agent` | `Eximpe-Webhook/1.0` |
 | `X-Webhook-Event` | `PAYMENT_SUCCESSFUL` |
 | `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
-| `X-Webhook-Signature` | HMAC-SHA256 signature of the request body (JSON string with keys sorted, no extra whitespace), using your API key as the secret. Hex-encoded. |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
 
-**Signature verification (recommended):**  
-Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UTF-8 request body as received. Compare the hex result with the `X-Webhook-Signature` header to ensure the webhook is from the platform and unchanged.
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -53,8 +55,8 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 ```json Example Payload
 {
   "event_type": "PAYMENT_SUCCESSFUL",
-  "event_time": "2025-02-12T10:30:00.123456Z",
-  "version": "2.0.0",
+  "event_time": "2026-02-12T10:30:00.123456",
+  "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
   "data": {
     "payment_id": "770e8400-e29b-41d4-a716-446655440002",
@@ -67,7 +69,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     "bank_ref_num": "BANKREF123",
     "extended_status": "SUCCESS",
     "payment_message": null,
-    "payment_completed_at": "2025-02-12T10:29:55.000000Z",
+    "payment_completed_at": "2026-02-12T10:29:55.000000Z",
     "utr": "UTR123456",
     "virtual_account_id": "USER09",
     "subscription_id": null,
@@ -89,18 +91,16 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created
-      
-      **Example**: `"2025-02-12T10:30:00.123456Z"`
+      UTC, no timezone suffix, e.g. `"2026-02-12T10:30:00.123456"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "2.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for this webhook event (UUID), useful for idempotency
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
     </ParamField>
 
@@ -171,7 +171,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     <ParamField path="data.payment_completed_at" type="string" required>
       ISO 8601 datetime when payment completed (typically set for success)
       
-      **Example**: `"2025-02-12T10:29:55.000000Z"`
+      **Example**: `"2026-02-12T10:29:55.000000Z"`
     </ParamField>
 
     <ParamField path="data.utr" type="string">
@@ -181,7 +181,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
     </ParamField>
 
     <ParamField path="data.virtual_account_id" type="string">
-      Virtual account ID of the MerchantVBA (if this payment is linked to a VBA); otherwise null
+      Virtual account ID, if the payment came in through a virtual account; otherwise null.
       
       **Example**: `"USER09"`
     </ParamField>
@@ -203,7 +203,7 @@ Compute `HMAC-SHA256(encryption_key, raw_body)` where `raw_body` is the exact UT
 ## What to Do When You Receive This Webhook
 
 1. **Respond with HTTP 2xx** (e.g. `200 OK`) as soon as you have accepted the payload, so the platform marks the delivery as successful and does not retry.
-2. **Verify the signature** using your API key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
+2. **Verify the signature** using your Encryption Key and the raw request body (HMAC-SHA256, hex) to ensure authenticity.
 3. **Use `data.payment_id` and `data.order_id`** to reconcile with your system or fetch more details from the Partner API.
 4. **If `data.link_id` is not `null`**, the payment was made through that payment link — refund and reconcile it by `data.payment_id`. See [Tracking a payment link](/api-reference/v3/payment-link/create#tracking-a-payment-link).
 5. **Note:** You may subsequently receive a **VERIFICATION_NEEDED** webhook if verification details are missing on the order (see [Verification Needed](/api-reference/v3/webhooks/verification-needed)). LRS payments receive [**LRS_VERIFICATION_NEEDED**](/api-reference/v3/webhooks/lrs-verification-needed) instead.

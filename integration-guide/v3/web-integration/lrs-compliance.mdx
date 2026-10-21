@@ -84,7 +84,7 @@ Collect it on top of the amount to be settled. The bank pays it to the governmen
 
 Everything else on this page — who may pay, the limit, the declaration, the tax — is the same for every LRS payment. This is the only part that varies, and it varies by **purpose code**.
 
-**Common to every LRS payment.** The buyer's name, address and contact; the invoice number and date; the remitter's PAN, date of birth and relation; `buyer_declaration`; and `amount_to_be_settled`, what is to be settled. Every LRS purpose code asks for these. [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) is the authoritative list for any given payment.
+**Common to every LRS payment.** The buyer's name, PIN code and contact (street address, city and state are optional); the invoice number and date; the remitter's PAN and date of birth; `buyer_declaration`; and `amount_to_be_settled`, what is to be settled (not asked for when EximPe derives it from the credit for your account). Every LRS purpose code asks for these. [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) is the authoritative list for any given payment.
 
 The remitter's *name* is not among them: [Verify PAN](/api-reference/v3/lrs/verify-pan) records it, and that call is a prerequisite of quoting or submitting. Nor is the TCS — we quote it, [Quote LRS Amount](/api-reference/v3/lrs/quote) tells you what to collect, and the credit is checked against our own figure.
 
@@ -99,7 +99,7 @@ What follows is what each code adds on top — first what its group shares, then
     | `S0305` | Studying abroad — tuition, where the student usually travels |
     | `S1107` | Education fees with no travel involved |
 
-    **Shared by both.** The student's name and date of birth. The letter of admission, and a relationship declaration where the buyer is not the student. An invoice may be asked for.
+    **Shared by both.** The student, as one entry in the `persons` list — with their name, relation to the buyer and date of birth when the student is not the buyer. The letter of admission, and a relationship declaration where the buyer is not the student. A fee invoice may be asked for.
 
     **`S0305` only.** The student's passport number, their passport, and either their student visa or their university ID card.
 
@@ -113,7 +113,7 @@ What follows is what each code adds on top — first what its group shares, then
     | `S0304` | Travel for medical treatment |
     | `S0303` | Travel for pilgrimage |
 
-    **Shared by all three.** No extra fields beyond the common set. Expect to ask the buyer for the passenger list, the travellers' passports, their visas, the ticket, and an invoice. A relationship declaration where the buyer is not the traveller. Visas and the ticket can be waived with a reason — a visa-free destination, for instance.
+    **Shared by all three.** No extra fields beyond the common set, and no documents. If EximPe has set your account to collect passenger details, expect to send every traveller's nationality and passport number as `persons`.
   </Tab>
 </Tabs>
 
@@ -124,7 +124,7 @@ What follows is what each code adds on top — first what its group shares, then
 ## What partners get wrong
 
 - **The money comes from someone else's account.** Enforce own-account payment in your UX. Where a parent pays, onboard the parent as the buyer.
-- **Treating the student as the buyer.** Capture the student separately, and set `relation` to `SELF` only when they really are the same person.
+- **Treating the student as the buyer.** Capture the student separately, and send only the remitter (`is_remitter: true`) when they really are the same person.
 - **Quoting before verifying the PAN.** An inactive, non-individual, or name-mismatched PAN is a guaranteed rejection later. Catch it first.
 - **Showing the buyer a price without the tax.** They underpay, and you handle a shortfall.
 - **Poor document scans.** Legible, in date, right type. The offer letter is the one that matters most.

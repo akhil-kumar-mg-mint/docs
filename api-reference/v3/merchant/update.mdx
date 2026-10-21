@@ -14,7 +14,7 @@ This is a **partial update** (PATCH) — only include the fields you want to cha
 
 ## Request Parameters
 
-The request structure mirrors the [Create Merchant](/api-reference/v1/merchant/create) endpoint. All fields are optional for partial updates.
+The request structure mirrors the [Create Merchant](/api-reference/v3/merchant/create) endpoint. All fields are optional for partial updates.
 
 ### Parameter Definitions
 
@@ -27,7 +27,7 @@ The request structure mirrors the [Create Merchant](/api-reference/v1/merchant/c
 
 #### Company Details
 
-All fields from the [Create Merchant](/api-reference/v1/merchant/create#company-details) are accepted, but none are required. Only include fields you want to change.
+All fields from the [Create Merchant](/api-reference/v3/merchant/create#company-details) are accepted, but none are required. Only include fields you want to change.
 
 Key fields:
 | Name | Type | Description | Constraints |
@@ -39,16 +39,16 @@ Key fields:
 | website | string | Company website URL. | Must include `https://` prefix |
 | international_org_type | string | Type of organization. | Same enum as Create |
 | monthly_avg_transaction_volume | string | Transaction volume range. | Same enum as Create |
-| business_category | string | Business category. | Same values as Create |
+| business_category | string | Business category. | Same values as Create; PSPs send category slugs from their approved verticals, see [Business Category](/api-reference/v3/merchant/create#business-category) |
 | business_category_other | string | Required when category includes "Other". | |
 | business_mode | string | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
 | mcc | string | Merchant Category Codes. | Comma-separated 4-digit codes |
 
-For the complete field reference, see [Create Merchant — Company Details](/api-reference/v1/merchant/create#company-details).
+For the complete field reference, see [Create Merchant — Company Details](/api-reference/v3/merchant/create#company-details).
 
 #### Settlement Details
 
-All fields from the [Create Merchant](/api-reference/v1/merchant/create#settlement-details) are accepted. Only include fields you want to change.
+All fields from the [Create Merchant](/api-reference/v3/merchant/create#settlement-details) are accepted. Only include fields you want to change.
 
 ## Examples
 
@@ -225,9 +225,9 @@ This endpoint supports partial updates — only send the fields you want to chan
 When `same_as_registered_address` is set to `true`, communication address fields are automatically copied from registered address fields. If you update registered address fields and want communication to match, include `same_as_registered_address: true`.
 
 ### Validation
-All the same validations from the [Create Merchant](/api-reference/v1/merchant/create) endpoint apply:
+All the same validations from the [Create Merchant](/api-reference/v3/merchant/create) endpoint apply:
 - `website` must include the `https://` prefix
 - `phone_number` must be in E.164 format
-- `business_category`, `business_mode`, `international_org_type`, `monthly_avg_transaction_volume` must use valid enum values
+- `business_category`, `business_mode`, `international_org_type`, `monthly_avg_transaction_volume` must use valid enum values; PSPs send `business_category` as category slugs from their approved verticals
 - `mcc` must be comma-separated 4-digit codes
 - `business_category_other` is required when category includes "Other"

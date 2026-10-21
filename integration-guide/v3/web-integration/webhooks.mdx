@@ -15,8 +15,8 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 | **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
 | **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
 | **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
-| **Payment Under Review** | A payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
-| **Verification Status** | A filed LRS verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
+| **Payment Under Review** | An LRS payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
+| **Verification Status** | A filed LRS, B2B services or B2B goods verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
 | **Payment Failed** | A credit could not be processed | Investigate and reconcile |
 | **Payment Settled** | Money is settled to you | Update your books |
 | **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
@@ -74,7 +74,7 @@ There are two headers, and you get both on every delivery:
 | `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex |
 
 <Tip>
-  **Prefer V2.** Its timestamp is signed along with the body, so a captured delivery can't be replayed later with a fresh one. Split the header on `,`, take `t` and `v2`, rebuild the hash over `t + "." + raw_body`, and reject anything whose `t` is too old. V1 stays alongside it so nobody has to migrate on our schedule; the walk-through below covers V1.
+  **Prefer V2.** Its timestamp is signed along with the body, so a captured delivery can't be replayed later with a fresh one. Split the header on `,`, take `t` and `v2`, rebuild the hash over `t + "." + raw_body`, and reject anything whose `t` is too old. Both headers are sent on every delivery, so you can verify either. The walk-through below covers V1.
 </Tip>
 
 <Steps>
@@ -97,7 +97,7 @@ There are two headers, and you get both on every delivery:
 </Steps>
 
 <Warning>
-  **Use the raw body, not a re-serialised object.** If you parse the JSON and stringify it again, your bytes will differ from ours and the signature will never match. If you have no choice, serialise with sorted keys and no spaces — `json.dumps(data, sort_keys=True, separators=(",", ":"))`.
+  **Use the raw body, not a re-serialised object.** If you parse the JSON and stringify it again, your bytes will differ from ours and the signature will never match.
 </Warning>
 
 ### Code
@@ -122,16 +122,6 @@ function verifyWebhookSignature(payload, signature, encryptionKey) {
     Buffer.from(signature, 'hex'),
     Buffer.from(expectedSignature, 'hex')
   );
-}
-
-function generateSignatureFromObject(webhookData, encryptionKey) {
-  // If you need to recreate signature from a JSON object
-  // Use the same serialization as EximPe
-  const payloadJson = JSON.stringify(webhookData, Object.keys(webhookData).sort());
-  
-  const hmac = crypto.createHmac('sha256', encryptionKey);
-  hmac.update(payloadJson, 'utf8');
-  return hmac.digest('hex');
 }
 
 // Usage in Express.js
@@ -167,17 +157,6 @@ def verify_webhook_signature(payload, signature, encryption_key):
     # Compare signatures securely
     return hmac.compare_digest(signature, expected_signature)
 
-def generate_signature_from_object(webhook_data, encryption_key):
-    # If you need to recreate signature from a JSON object
-    # Use the same serialization as EximPe
-    payload_json = json.dumps(
-        webhook_data, sort_keys=True, separators=(",", ":")
-    )
-    signature = hmac.new(
-        encryption_key.encode(), payload_json.encode(), hashlib.sha256
-    ).hexdigest()
-    return signature
-
 # Usage in Flask
 from flask import Flask, request
 
@@ -207,15 +186,6 @@ function verifyWebhookSignature($payload, $signature, $encryptionKey) {
     return hash_equals($expectedSignature, $signature);
 }
 
-function generateSignatureFromObject($webhookData, $encryptionKey) {
-    // If you need to recreate signature from a JSON object
-    // Use the same serialization as EximPe
-    ksort($webhookData); // Sort keys for consistency
-    $payloadJson = json_encode($webhookData, JSON_UNESCAPED_SLASHES);
-    
-    return hash_hmac('sha256', $payloadJson, $encryptionKey);
-}
-
 // Usage in Laravel/Symfony
 public function webhook(Request $request) {
     $signature = $request->header('X-Webhook-Signature');
@@ -235,11 +205,23 @@ public function webhook(Request $request) {
 
 </CodeGroup>
 
+## Delivery and duplicates
+
+Delivery is at-least-once, so the same event can reach you more than once.
+
+- Every event carries a unique `sequence_number`. It is a UUID, not an ordering counter. A retry resends the same value, so de-duplicate on it.
+- Do not rely on arrival order. Order events by `event_time`, and when it matters call [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) for where the payment stands now.
+- `event_time` is when we created the event, not when we delivered it.
+
 ## If your endpoint is down
 
-We retry. First attempt is immediate, then at **1 minute**, **5 minutes**, **15 minutes**, and **1 hour**. After 5 failed attempts we stop.
+We retry. A delivery fails when your endpoint answers with anything other than a `2xx`, does not answer within **10 seconds**, or cannot be reached. After a failed attempt we try again **1 minute** later, then **5 minutes**, **15 minutes** and **1 hour** after each further failure, **5 attempts** in all. After the fifth failure we stop sending that event.
 
-Anything other than `200 OK` counts as a failure, so return `200` as soon as you have stored the event, and do your processing afterwards.
+Return `200` as soon as you have stored the event, and do your processing afterwards.
+
+<Note>
+  **Verification asks are batched.** [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) and [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) are queued per merchant and sent in batches every **2 minutes**, so the first attempt can come a couple of minutes later, and longer behind a burst. Their retries ride the same batches. Every other event is sent as soon as it is created.
+</Note>
 
 <Warning>
   **Four things to get right.**

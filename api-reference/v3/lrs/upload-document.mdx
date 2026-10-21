@@ -31,7 +31,7 @@ The path resolves the payment before anything is stored, under the same ownershi
 
 ## Document types
 
-`type` must be one of these. They are the codes the checklists ask for, so the value you upload under is the same value you submit under:
+`type` must be one of these, and one the payment's own flow files: a payment nothing has classified yet is refused until `business_model` and `purpose_code` are sent, and a B2B services payment accepts only its own types (`invoice` and `delivery_proof`). They are the codes the checklists ask for, so the value you upload under is the same value you submit under:
 
 | `type` | |
 |---|---|
@@ -40,12 +40,9 @@ The path resolves the payment before anything is stored, under the same ownershi
 | `student_id_or_visa` | Student visa **or** university ID card — one code, either document |
 | `student_id` | University ID card (`S1107`, which has no travel leg) |
 | `fee_invoice` | Fee invoice |
-| `passenger_list` | Name and passport number of every traveller |
-| `traveller_passports` | Passports of all travellers |
-| `traveller_visas` | Visas of all travellers |
-| `ticket` | Travel tickets |
-| `invoice` | Commercial invoice, or the invoice for a trip |
+| `invoice` | Commercial invoice |
 | `relationship_declaration` | Self-declaration of the remitter's relationship to the person the remittance is for |
+| `delivery_proof` | Post-settlement proof of delivery. B2B services only; no verification checklist asks for it. Upload it here, then file it by `ref` through [Submit post-settlement documents](/api-reference/v3/b2b/submit-settlement) |
 
 <Warning>
   **Read the types you actually need from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements)** rather than mapping this table into your code. It is the complete set any checklist can ask for, not the set *this* payment asks for, and it grows as the regulatory matrix is revised.
@@ -79,7 +76,9 @@ Validated on upload, so a bad file fails here rather than at submit time.
 <ParamField path="ref" type="string" required>
   The upload's identifier. Send it as `documents[].ref` on the verification submit.
 
-  The stored file is scoped to the merchant the payment **settles to** — the sub-merchant named on the order, not the credential that uploaded it — and not to the payment in the path. So a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file.
+  **On a B2B services payment the `ref` is bound to the payment in the path** and is citable only from that payment; see [B2B services Upload Document](/api-reference/v3/b2b/upload-document). Every other flow stores the file as described below.
+
+  Otherwise the stored file is scoped to the merchant the payment **settles to** — the sub-merchant named on the order, not the credential that uploaded it — and not to the payment in the path. So a `ref` stays valid across a retried attempt or a recurring installment, and is citable on any payment settling to that same merchant, or to that merchant's parent or one of its children. A `ref` outside that scope reads as unknown rather than as someone else's file.
 
   **A `ref` uploaded against one sub-merchant's payment is not citable on a sibling's.** The scope follows the settling account, so a file two sub-merchants both need is uploaded once for each.
 
@@ -96,13 +95,7 @@ Uploads are immutable. To replace one, upload the file again — you get a new `
 
 ## Waiving instead of uploading
 
-Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit:
-
-```json
-{ "documents": [{ "code": "traveller_visas", "waiver_reason": "Destination is visa-free for this passport" }] }
-```
-
-A waiver on a document that is not waivable is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
+Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit. A waiver on a document that is not waivable is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
 
 <Note>
   `POST /pg/lrs/documents/` predates this route and still works as an alias over the same implementation. New integrations should use the payment-scoped path.

@@ -1,12 +1,12 @@
 ---
 title: 'Submit B2B Services Verification Details'
-description: "What a B2B services payment is asked for, and how to send it — the buyer, the invoice fields, and the commercial invoice. No identity, no amount, no tax."
+description: "What a B2B services payment is asked for, and how to send it — the buyer, the invoice fields, the invoice total and declaration, and the commercial invoice. No identity document, no tax."
 openapi: '/openapi/v3-b2b.json POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
 
-A B2B services payment answers a short list: who the buyer is, which invoice this is, and the invoice itself. **No identity document, no amount to declare, no tax.** This page is that list, and what happens once it is complete.
+A B2B services payment answers a short list: who the buyer is, which invoice this is, the invoice total, a declaration, and the invoice itself. **No identity document and no tax.** Payments EximPe collects add one check after the payment, `buyer_pan`. This page is that list, and what happens once it is complete.
 
 <Note>
   **Same endpoint as [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).** One URL answers every verification ask — `fields`, `documents`, partial sends and the response shape all work identically. Only what a payment is *asked for* differs, and that is what this page covers.
@@ -57,12 +57,12 @@ They can ride along with everything else in one call, but sending them first is 
 </Warning>
 
 <Info>
-  **Which codes are B2B services?** `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106` — all against `business_model: "B2B"`. They share one requirement set. The code must also be one your settling entity is enabled for; a valid code you are not enabled for is rejected just like one that does not exist.
+  **Which codes are B2B services?** `S0802`, `S0803`, `S1005`, `S1009`, `S1010`, `S1013`, `S1015`, `S1016`, `S1017`, `S1105`, `S1106` — all against `business_model: "B2B"`. They share one requirement set.
 </Info>
 
 ## The complete body
 
-Eleven fields and one document. This is the whole of it:
+Eleven fields and one document — plus `buyer_pan` when it is owed. This is the whole of it:
 
 ```json S0802 — B2B services
 {
@@ -91,7 +91,13 @@ Eleven fields and one document. This is the whole of it:
 </Warning>
 
 <Note>
-  **Send the amount and the declaration; send no tax.** `invoice_amount` is a checklist field, in rupees, cross-checked against the credit — more than a paisa apart and the finalizing call is refused naming it. `declaration` is a boolean and has to be `true`. What settles is still the credit itself, and no tax is collected on top, so `amount_to_be_settled` stays a `400`.
+  **Send `invoice_amount` (rupees) and `declaration` (boolean `true`); no tax.** A string such as `"true"` is refused with `ERR_DECLARATION_001`.
+</Note>
+
+<Note>
+  **Payments EximPe collects add one more field, `buyer_pan`.** Once the payment is captured, the buying business's PAN is checked with the issuer, and until it passes `buyer_pan` is listed among the outstanding items and the payment stays in `ACTION_REQUIRED`. Send it under `fields` like any other code, as a twelfth entry — `"buyer_pan": "ABCDE1234F"`.
+
+  A PAN is **checked during the call**. A rejection is a `400` whose `details.buyer_pan` says why, and the rest of the call is still saved. If the check cannot run, the call is a `503` with `ERR_BUYER_PAN_002`; retry the same call. An order gets 5 PAN checks, after which the call answers `ERR_BUYER_PAN_001` and you need to contact EximPe support. On a payment that does not owe one, `buyer_pan` answers `Not a requirement of this payment.`
 </Note>
 
 ## Values
@@ -126,10 +132,6 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
   **One citation covers every invoice on the payment.** The citation names the `code`, and this flow has exactly one document type per code, so **all** the payment's invoices are filed when the set completes — not just the one whose `ref` you sent. Upload a second invoice and it goes with them; you do not cite it, and you cannot leave it out.
 </Note>
 
-<Warning>
-  **A citation is not what satisfies the item — the file is.** The `invoice` item reads as satisfied because an accepted invoice exists on the payment, not because you named a `ref`. So citing a ref again after Ops rejected that invoice leaves the item outstanding: upload a replacement, then cite the new `ref`. Check [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) rather than assuming a repeat citation cleared it.
-</Warning>
-
 <Note>
   **`waiver_reason` is not accepted on this flow.** No B2B services item is waivable, so there is nothing to discharge with a reason instead of a file. Sending one is a `400` reading `This document cannot be waived.`, keyed by the document's code.
 </Note>
@@ -143,11 +145,11 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
 Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins.
 
 <Note>
-  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the verification filed yet.
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` only to save without filing.
 </Note>
 
 <Warning>
-  **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends — the staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/b2b/verification-requirements) the same path to read `settlement_status` before you send.
+  Once you have filed, sending is closed.
 </Warning>
 
 ## The response
@@ -185,30 +187,30 @@ Three keys, whatever you sent:
 | `status` | Meaning |
 |---|---|
 | `incomplete` | Something is still owed — `outstanding` lists the codes. |
-| `complete` | Everything was sent, but the set was staged rather than filed (`finalize: false`). |
-| `in_review` | The complete set was filed. The payment is with EximPe Ops for review. |
+| `complete` | Everything was sent and saved, but not filed. |
+| `in_review` | The complete set was filed. The payment is with EximPe for review. |
 
 <Note>
   **Three values, not four.** A complete set either files — `in_review` — or is refused with a `400` naming what to fix. There is no `action_required` here; do not write a branch for a value you will never receive.
 </Note>
 
-<Warning>
-  **A refusal never discards your details.** Everything you sent is staged against the payment before the filing is attempted, so a `400` on the finalizing call costs you a re-send of the one thing that failed, not the whole set.
-</Warning>
-
 ## Completion
 
-A complete B2B services set hands off to its own verification gateway, and `in_review` is what says it got there. That handoff is also what writes the staged values onto the order — which is why a second group of refusals only appears on the finalizing call.
+A complete B2B services set goes to verification when it is filed, and `in_review` says it got there.
 
 ## Errors
 
-Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+Every refusal is a `400`, whatever the reason, except a PAN check that could not run, which is a `503` (`ERR_BUYER_PAN_002`). The code inside the envelope is what tells refusals apart, not the status.
 
 | `error.code` | When |
 |---|---|
 | `40359` | The send itself is wrong — see the messages below. Also: the payment has no requirement set, and you did not send the classifying pair. |
-| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. |
+| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed, or the payment was rejected or fully refunded. |
+| `ERR_DECLARATION_001` | `declaration` was sent as something other than `true` or `false`. `details` names the field. |
 | `ERR_IMPORT_VERIFICATION_001` | The `invoice_number` is already used by another of your payments. Raised only by the call that files — see [below](#raised-only-by-the-call-that-files). |
+| `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — a services code filed as B2C, for example. `details.purpose_code` names the pair. |
+| `ERR_BUYER_PAN_001` | All 5 PAN checks for the order have been used. Contact EximPe support. |
+| `ERR_BUYER_PAN_002` | The PAN check could not run (`503`); retry the same call. |
 | `ERR_B2B_SERVICES_004` | The verification has left your hands — under review, approved or rejected — and can no longer be edited. |
 | `ERR_B2B_SERVICES_006` | A document being filed does not belong to this payment. |
 
@@ -247,16 +249,22 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not true. No B2B services item is waivable, so every `waiver_reason` on this flow lands here. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
-### Raised only by the call that files
+### Checked on the send
 
-A second group appears only when a complete set is filed, as the staged values are read for the gateway and written onto the order:
+Value rules run on the call that carries the value. They answer under `40359` with the code named in `details`:
 
 | Message | Cause |
 |---|---|
 | `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
+| `The invoice date cannot be in the future.` | `invoice_date` is after today. |
+| `Not an amount; send a number like "500000.00".` | `invoice_amount` is not a decimal. |
+| `Amount must be greater than zero.` | `invoice_amount` is zero or negative. |
 | `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a PIN code in the India Post directory. A foreign postal code lands here — the buyer is the Indian remitter, not your customer abroad. |
+| `Enter a valid email address.` | `buyer_email` is not an email address. |
 
-Filing is also what writes the staged buyer and invoice fields onto the order, and the order validates them on write — which is where that PIN code is judged. `invoice_number` is unique per merchant, so a collision surfaces here too. Unlike the refusals above it does **not** answer under `40359` — it carries its own code:
+### Raised only by the call that files
+
+Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own: `invoice_amount` against the credit, which is refused naming `invoice_amount` when the two are more than a paisa apart, and `invoice_number`, which is unique per merchant across filed verifications. A collision does **not** answer under `40359` — it carries its own code:
 
 ```json
 {
@@ -270,9 +278,7 @@ Filing is also what writes the staged buyer and invoice fields onto the order, a
 ```
 
 <Note>
-  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that staged it — raise a new number and send that field again.
-
-  These all arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date — or writes anything to the order — until the set is complete. Your details are still saved; fix the named code and re-send only that.
+  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
 </Note>
 
 ## Related

@@ -30,7 +30,7 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
     A Virtual Account credit arrives with no Create Order call behind it, so those same basic facts get filled in afterward in the EximPe dashboard instead.
 
-    For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step and no tax at all — see [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
+    For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step before the payment and no tax — on a payment EximPe collects, the buying business's PAN is checked once the payment succeeds. See [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
   </Step>
   <Step title="Get your money">
     We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
@@ -66,7 +66,7 @@ Money can reach you by more than one Indian payment method.
 | **PSP** | You, if you collect on behalf of other businesses. You onboard them, you call the API for them, and we settle their money to you. |
 | **Sub-merchant** | A business onboarded by a PSP — a university, a hospital, a travel operator. Collections are tracked against it, and its PSP pays it onward. |
 | **Direct merchant** | You, if you collect only for yourself. We settle straight to you. |
-| **Buyer** | Whoever in India is paying you. In LRS rules and API fields they are the **remitter**, identified by PAN — `remitter_pan`, `remitter_relation`, and the remitter lock on an account. |
+| **Buyer** | Whoever in India is paying you. In LRS rules and API fields they are the **remitter**, identified by PAN — `remitter_pan`, and the remitter lock on an account. |
 
 <Warning>
   One virtual account takes payments from **many** buyers. So a credit landing does not tell you who paid — you tell us, in step 4.
@@ -94,6 +94,7 @@ Ask for the amount to be collected. Declare the amount to be settled. Collect th
 | `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
 | `IN_REVIEW` | Details accepted, bank is processing | Wait |
 | `VERIFIED` | Nothing outstanding. No webhook fires for this. | Nothing |
+| `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | Act on a rejection |
 | `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
 
 Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
@@ -110,7 +111,7 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 **The money came from someone else's account.** This applies to LRS payments only. The name on the sending account did not match the PAN you gave us, so the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
 
-**You need to refund.** Refunds go back to the buyer's own account. You can refund part of a payment, more than once. If your balance does not cover it, the call fails — collect more and try again.
+**You need to refund.** Refunds go back to the buyer's own account. You can refund part of a payment, more than once, and you can refund while a payment's verification is still open. A refund for the whole amount closes the verification, and for an LRS payment releases the limit it counted against once the refund completes. If your balance does not cover it, the call fails — collect more and try again.
 
 <Note>
   **Where refund money comes from.** A refund is netted against your upcoming settlements. We hold a balance for each merchant, and the refund comes out of money we have not settled to you yet. If that balance is too small the call is rejected, so retry once you have collected more.

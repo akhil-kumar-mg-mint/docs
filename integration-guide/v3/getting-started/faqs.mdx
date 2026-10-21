@@ -43,7 +43,7 @@ As a PSP you onboard the businesses you collect for as sub-merchants. Collection
 
 ### What are the requirements to integrate?
 
-A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. Every request also sends `X-API-Version: 3.0.0`. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls derive the sub-merchant from the payment instead.
+A merchant account with the VBA feature enabled, your `X-Client-ID` and `X-Client-Secret`, and a public HTTPS webhook endpoint. We recommend sending `X-API-Version: 3.0.0` on every request. PSP callers additionally send `X-Merchant-ID`, naming the sub-merchant, on the calls that ask for it — `POST /pg/orders/`, `POST /pg/lrs/*` and `POST /pg/payment-links/` among them. The `/pg/payments/<id>/…` calls derive the sub-merchant from the payment instead.
 
 ### What does it cost me?
 
@@ -111,12 +111,15 @@ The last two need your sandbox account on the **Simulator** gateway. None of the
 | `ACTION_REQUIRED` | Something is still outstanding — details not sent yet, or sent and not passed. |
 | `IN_REVIEW` | Accepted; awaiting bank processing. For LRS the amount is posted to the buyer's LRS counter at this point. |
 | `VERIFIED` | Nothing outstanding. **No webhook is sent** for this — do not wait on one. |
+| `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status). |
 | `EXPIRED` | The verification window closed. Terminal; the money goes back to the buyer. |
 
 Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLED` webhook take over.
 
 <Note>
-  The submit call answers with where the payment stands and nothing else — `IN_REVIEW` if the set was complete and passed, `ACTION_REQUIRED` if anything is still owed.
+  The submit call answers with a lowercase `status` and the codes still `outstanding`. `status` is `incomplete` (something is still owed), `complete` (nothing owed, nothing filed yet), `in_review` (the set was complete and passed) or `action_required` (the set was complete and was not passed; a `refusal` object says why). These are not the uppercase `verification_status` values above.
+
+  The same state is spelled three ways depending on where you read it: `UNDER_REVIEW` is a payment's `settlement_status`, `IN_REVIEW` is the `verification_status` on webhooks, and `in_review` is the `status` of the submit response.
 </Note>
 
 ### The buyer paid less than the amount due. What now?
@@ -179,7 +182,7 @@ Resident individuals only, including minors through a guardian. Not companies, p
 
 ### What are the limits?
 
-₹25,00,000 per payment, and USD 250,000 per person per financial year across every bank they use — not just payments through us. We refuse anything that would breach the annual cap on the data we can see.
+A transfer into a Virtual Bank Account must be under ₹25,00,000, an order created through the API can be for at most ₹1,00,00,000, and the cap is USD 250,000 per person per financial year across every bank they use — not just payments through us. We refuse anything that would breach the annual cap on the data we can see.
 
 ### Which purpose codes are supported?
 
@@ -187,7 +190,7 @@ Resident individuals only, including minors through a guardian. Not companies, p
 
 ### Can a parent pay for a student?
 
-Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Set `relation` to something other than `SELF` and name the student in the `student_*` fields. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
+Yes, and then **the parent is the remitter** — their PAN, their account, their LRS limit. Send the student as a person in `persons`, with a `relation` to the remitter such as `CHILD`. See [Can a parent pay?](/integration-guide/v3/web-integration/lrs-compliance#what-we-check)
 
 ### Why must the money come from the remitter's own account?
 
@@ -217,7 +220,7 @@ Yes. Every LRS payment carries a verification expiry. Miss it and the payment ex
 
 ### Why verify the PAN before quoting?
 
-An inactive, non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and returns a `reason`: `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH`.
+An inactive (not linked to Aadhaar), non-individual, or name-mismatched PAN is a guaranteed bank rejection later. [Verify PAN](/api-reference/v3/lrs/verify-pan) catches it upfront and returns a `reason`: `INVALID_PAN`, `NON_INDIVIDUAL_PAN`, `INOPERATIVE_PAN`, `NAME_MISMATCH` or `DOB_MISMATCH`.
 
 Residency cannot be proved by PAN alone — non-residents hold individual PANs too — which is why the buyer also affirms residency in the declaration.
 
@@ -229,7 +232,7 @@ No scanned PAN card is needed — PAN is a field, validated electronically.
 
 ### When do I upload documents?
 
-Up front, before you submit, and not tied to a payment. Each [upload](/api-reference/v3/lrs/upload-document) returns a `ref` you pass in the submit call.
+Up front, before you submit. Each [upload](/api-reference/v3/lrs/upload-document) returns a `ref` you pass in the submit call. For an LRS payment the `ref` is scoped to the merchant the payment settles to, not to one payment. On a B2B services payment it is bound to the payment you uploaded it against.
 
 ### What happens if a document is rejected?
 

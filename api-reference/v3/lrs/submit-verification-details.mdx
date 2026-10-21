@@ -23,9 +23,7 @@ There is nothing to map between them — every one of those places names an item
 | the webhook's `action_required_fields[].code` | the key you put in `fields` |
 | the webhook's `action_required_documents[].code` | the `code` you put in `documents` |
 
-<Note>
-  **JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint.
-</Note>
+**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through [Upload Document](/api-reference/v3/lrs/upload-document). Files are never posted to this endpoint.
 
 ## The loop
 
@@ -46,21 +44,19 @@ There is nothing to map between them — every one of those places names an item
 
 ## The body depends on the checklist
 
-There is one endpoint and one envelope — `fields`, `documents`, `finalize` — but **what belongs inside them is decided by the payment's checklist**, not by you. That checklist comes from the order's business model and purpose code together. Sending a key it does not ask for is a `400`.
+There is one endpoint and one envelope — `fields`, `documents`, `persons`, `finalize` — but **what belongs inside them is decided by the payment's checklist**, not by you. That checklist comes from the order's business model and purpose code together.
 
 You never have to work out which set applies: `GET` the same path and it tells you, or read the codes off the event.
 
-<Note>
-  **Declaring an LRS purpose code is what makes a payment an LRS one.** Send `business_model` and `purpose_code` together in `fields` — see [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#which-codes-to-send) for the rules that govern the pair — and if the code is one of the five below, the payment switches to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and starts being asked for everything on this page.
+**Declaring an LRS purpose code is what makes a payment an LRS one.** Send `business_model` and `purpose_code` together in `fields` — see [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#which-codes-to-send) for the rules that govern the pair — and if the code is one of the five below, the payment switches to [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) and starts being asked for everything on this page.
 
-  Until the pair is set no checklist claims the payment, so nothing else can be validated. The pair may ride in the same call as the rest.
-</Note>
+The pair may ride in the same call as the rest.
 
 Complete bodies for every LRS purpose code, built from the live checklists:
 
 <CodeGroup>
 
-```json S0305 - Education, with travel leg
+```json Education — study abroad
 {
   "fields": {
     "buyer_name": "Ravi Kumar",
@@ -74,13 +70,18 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "invoice_date": "2026-08-01",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
-    "remitter_relation": "PARENT",
     "buyer_declaration": true,
-    "amount_to_be_settled": "150000.00",
-    "student_name": "Ananya Kumar",
-    "student_dob": "2005-09-30",
-    "student_passport_number": "Z1234567"
+    "amount_to_be_settled": "150000.00"
   },
+  "persons": [
+    {
+      "is_remitter": false,
+      "name": "Ananya Kumar",
+      "relation": "CHILD",
+      "dob": "2005-09-30",
+      "passport_number": "Z1234567"
+    }
+  ],
   "documents": [
     { "code": "offer_letter", "ref": "<ref from Upload Document>" },
     { "code": "passport", "ref": "<ref from Upload Document>" },
@@ -91,7 +92,7 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 }
 ```
 
-```json S1107 - Education, fees only
+```json Education — fees only
 {
   "fields": {
     "buyer_name": "Ravi Kumar",
@@ -105,12 +106,17 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "invoice_date": "2026-08-01",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
-    "remitter_relation": "PARENT",
     "buyer_declaration": true,
-    "amount_to_be_settled": "150000.00",
-    "student_name": "Ananya Kumar",
-    "student_dob": "2005-09-30"
+    "amount_to_be_settled": "150000.00"
   },
+  "persons": [
+    {
+      "is_remitter": false,
+      "name": "Ananya Kumar",
+      "relation": "CHILD",
+      "dob": "2005-09-30"
+    }
+  ],
   "documents": [
     { "code": "offer_letter", "ref": "<ref from Upload Document>" },
     { "code": "student_id", "ref": "<ref from Upload Document>" },
@@ -120,7 +126,7 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 }
 ```
 
-```json S0303 / S0304 / S0306 - Travel
+```json S0303 / S0304 / S0306 - Travel, PAN only
 {
   "fields": {
     "buyer_name": "Ravi Kumar",
@@ -134,16 +140,43 @@ Complete bodies for every LRS purpose code, built from the live checklists:
     "invoice_date": "2026-08-01",
     "remitter_pan": "ABCPK1234F",
     "remitter_dob": "1985-04-12",
-    "remitter_relation": "SELF",
     "buyer_declaration": true,
     "amount_to_be_settled": "150000.00"
   },
-  "documents": [
-    { "code": "passenger_list", "ref": "<ref from Upload Document>" },
-    { "code": "traveller_passports", "ref": "<ref from Upload Document>" },
-    { "code": "traveller_visas", "waiver_reason": "Destination is visa-free for this passport" },
-    { "code": "ticket", "ref": "<ref from Upload Document>" },
-    { "code": "invoice", "ref": "<ref from Upload Document>" }
+  "finalize": true
+}
+```
+
+```json Travel — with traveller details
+{
+  "fields": {
+    "buyer_name": "Ravi Kumar",
+    "buyer_address_line_1": "12 Brigade Road",
+    "buyer_city": "Bengaluru",
+    "buyer_state": "Karnataka",
+    "buyer_postal_code": "560001",
+    "buyer_email": "ravi@example.com",
+    "buyer_phone": "+919876543210",
+    "invoice_number": "INV-2026-0041",
+    "invoice_date": "2026-08-01",
+    "remitter_pan": "ABCPK1234F",
+    "remitter_dob": "1985-04-12",
+    "buyer_declaration": true,
+    "amount_to_be_settled": "150000.00"
+  },
+  "persons": [
+    {
+      "is_remitter": true,
+      "nationality": "IN",
+      "passport_number": "Z1234567"
+    },
+    {
+      "is_remitter": false,
+      "name": "Meera Kumar",
+      "relation": "SPOUSE",
+      "nationality": "IN",
+      "passport_number": "Y7654321"
+    }
   ],
   "finalize": true
 }
@@ -151,23 +184,26 @@ Complete bodies for every LRS purpose code, built from the live checklists:
 
 </CodeGroup>
 
-<Note>
-  The three travel codes take an identical body. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect.
+The three travel codes take an identical body. They differ in what the remittance is *for* — other travel, medical treatment, pilgrimage — not in what you must collect. Travel asks for **no documents**, and asks for [`persons`](#persons) only when your account [collects traveller details](#verification-level).
 
-  The education examples declare `remitter_relation` as `PARENT`, which is what makes `relationship_declaration` and the `student_*` fields owed. Declare `SELF` and they all drop out — as they have in the travel example, where the same conditional fields are called `primary_person_*`.
+**Education is always asked for one person: the student.** The parent or sponsor who pays is not a second entry — they are identified by `remitter_pan` and `remitter_dob` in `fields`. Sending a student who is not the remitter is what makes `relationship_declaration` owed. If the remitter is the student, send only `[{ "is_remitter": true }]` (with a `passport_number` on `S0305`) and it drops out.
 
-  **The remitter's name and the TCS are not fields here.** The name is whatever [Verify PAN](/api-reference/v3/lrs/verify-pan) recorded against the PAN you declare, and the TCS is the figure we quote — sending either back would only give us a second number to disagree with.
-</Note>
+**The remitter name and TCS are not fields;** the name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan) and the TCS from the quote.
 
 ### What differs, and what does not
 
 | | `S0305` | `S1107` | `S0303` · `S0304` · `S0306` |
 |---|:---:|:---:|:---:|
 | Buyer and invoice fields | same | same | same |
+| Buyer address line 1, city and state | optional | optional | optional |
 | Remitter identity, declaration, `amount_to_be_settled` | same | same | same |
-| Who the money is for, when the relation is not `SELF` | `student_name`, `student_dob`, `student_passport_number` | `student_name`, `student_dob` | `primary_person_name`, `primary_person_dob`, `primary_person_passport_number` |
-| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | `passenger_list`, `traveller_passports`, `traveller_visas`, `ticket`, `invoice` |
+| `persons` | exactly one person: the student | exactly one person: the student | only if your account collects traveller details: every traveller, the remitter included |
+| Passport number on each person | required, the remitter included | not asked for | required |
+| Required documents | `offer_letter`, `passport`, `student_id_or_visa` | `offer_letter`, `student_id` | none |
 | Optional documents | `fee_invoice` | `fee_invoice` | — |
+| Conditional document | `relationship_declaration` | `relationship_declaration` | — |
+
+**The address lines are optional here; the PIN code is not.** `buyer_address_line_1`, `buyer_city` and `buyer_state` never block completion on an LRS checklist, and a blank value sent for one is ignored rather than refused. The body examples above include them for completeness. `buyer_postal_code` is still required.
 
 <Warning>
   **Do not branch on the purpose code in your own integration.** Read the checklist instead. The codes above are what the matrix asks for today; it is configuration, and a revision reaches you through the API without a release on your side — but only if you are reading it rather than reproducing it.
@@ -179,18 +215,15 @@ Field values are strings, numbers or booleans.
 
 | Kind | Send |
 |---|---|
-| Dates (`invoice_date`, `remitter_dob`, `student_dob`, `primary_person_dob`) | `YYYY-MM-DD` |
+| Dates (`invoice_date`, `remitter_dob`, and `dob` on a person) | `YYYY-MM-DD` |
 | Amounts (`amount_to_be_settled`) | A decimal string in rupees, e.g. `"150000.00"` |
-| `remitter_relation` | `SELF` · `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `OTHER` |
 | `buyer_declaration` | `true`, once the payer has affirmed the wording in the item's `message` |
 | `business_model` | `B2B` or `B2C`. Case-insensitive. |
 | `purpose_code` | A FEMA/FETERS code the account this payment **settles to** is allow-listed for, e.g. `S0305`. Case-insensitive. For a PSP that is the sub-merchant on the order, not the calling credential. |
 
-<Warning>
-  **An unknown key is a `400`, not a silent drop.** A misspelled `remitter_pan` that we quietly ignored would leave the payment waiting forever for a field you believe you sent. Every key is checked before any is written, so one typo cannot half-apply a call.
-</Warning>
+**An unknown key is a `400`, not a silent drop.**
 
-Omit a key rather than sending `null` or an empty string — a blank value is itself a `400`, with the same reasoning. A boolean requirement is only satisfied by `true`; `false` reads as not yet answered.
+Omit a key rather than sending a blank value. A declaration must be a JSON boolean — the string `"true"` is refused with `ERR_DECLARATION_001`, `Declaration must be true or false.`.
 
 ### Documents
 
@@ -203,6 +236,54 @@ Each entry names one code and **exactly one** of `ref` or `waiver_reason`. Sendi
 | `waiver_reason` | Why the document is not being supplied. Only accepted on items whose `waivable` is `true`. |
 
 Sending the same code twice in one call is a `400`. Sending it again in a **later** call is fine — the newer ref or waiver replaces the earlier row.
+
+## Persons
+
+`persons` is a top-level list in the request body, beside `fields` and `documents` — not an entry inside `fields`. Each entry describes one person on the remittance.
+
+```json
+{
+  "persons": [
+    { "is_remitter": true, "nationality": "IN", "passport_number": "Z1234567" },
+    { "is_remitter": false, "name": "Meera Kumar", "relation": "SPOUSE", "nationality": "IN", "passport_number": "Y7654321" }
+  ]
+}
+```
+
+| Key | |
+|---|---|
+| `is_remitter` | Required. `true` for the person paying. At most one entry may be the remitter. |
+| `name` | Required for everyone who is not the remitter. Omit it for the remitter — the name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan). |
+| `relation` | Required for everyone who is not the remitter: **that person's relation to the remitter**, so a student paid for by a parent is `CHILD`. `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `CHILD` · `OTHER`. Not allowed on the remitter's own entry — mark the remitter with `is_remitter`, not a relation. |
+| `dob` | `YYYY-MM-DD`. Required for an education student who is not the remitter. Not in the future, and not more than 120 years ago. |
+| `nationality` | Two-letter country code, e.g. `IN`. Required for every traveller on a travel code. |
+| `passport_number` | Letters, digits and dashes, up to 32 characters. Required for every traveller, and for the one person on `S0305`. Not asked for on `S1107`: leave it out. Self-declared and never checked against a register. |
+
+Sending `persons` again replaces the list; the newest send wins. Nothing about a person is ever returned to you — the [`GET`](/api-reference/v3/lrs/verification-requirements) reports only whether `persons` is `satisfied` and `provided`.
+
+### Verification level
+
+Your EximPe contact configures whether travel payments collect traveller details; the checklist's `persons` item tells you.
+
+### Person errors
+
+A list that breaks one of these rules is refused as a whole, and each carries a code of its own:
+
+| `error.code` | Message | When |
+|---|---|---|
+| `ERR_LRS_MERCHANT_016` | Select the nationality of every passenger. | A travel entry has no `nationality`. |
+| `ERR_LRS_MERCHANT_017` | Enter the passport number of every person. | A travel entry, or the `S0305` student, has no `passport_number`. |
+| `ERR_LRS_MERCHANT_018` | Enter the date of birth of the person the remittance is for. | An education student who is not the remitter has no `dob`. |
+| `ERR_LRS_MERCHANT_019` | Exactly one person is required for this purpose code. | An education send that lists more than one person. |
+
+The rules on a single entry answer under `40359`, with the message in `details`:
+
+| Message | When |
+|---|---|
+| `The remitter's own entry cannot have a relation.` | The entry with `is_remitter: true` carries a `relation`. |
+| `Enter the name and relation of every other person.` | An entry that is not the remitter is missing its `name` or `relation`. |
+| `Only one person can be marked as the remitter.` | More than one entry has `is_remitter: true`. |
+| Format errors | Name the field in `details`; fix the value and send again. |
 
 ## Linking a top-up
 
@@ -221,29 +302,23 @@ When a credit is a further payment against an earlier one — the buyer was shor
 | `linked_payment_id` | The earlier payment this one tops up. Resolved against your own payments; a link we cannot resolve is refused. |
 | `reason` | `REMAINING_AMOUNT` — covering a shortfall on the amount to be settled. `TCS_PAYMENT` — paying the TCS separately. An audit label on the link. |
 
-<Note>
-  **A `reason` without a `linked_payment_id` is a `400`.** The reverse is fine: a link with no reason is just an unlabelled link.
+**A `reason` without a `linked_payment_id` is a `400`.** The reverse is fine: a link with no reason is just an unlabelled link.
 
-  Like `finalize`, these describe **the send**, not the payment. They are read by the call that actually files, and a call that only stages carries them nowhere — so send them with the call that completes the set.
-</Note>
+Like `finalize`, these describe **the send**, not the payment. They are read by the call that actually files, and a call that only saves carries them nowhere — so send them with the call that completes the set.
 
 ## Partial sends are merged
 
 Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins.
 
-This is deliberate: nobody collects a passport scan, a visa and a letter of admission in the same instant.
-
-<Note>
-  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without going to the verification gateway.
-</Note>
+**`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` only to save without filing.
 
 <Warning>
-  **That tolerance ends once the verification has been filed.** A payment whose `settlement_status` is `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends — the staged rows are the record of what went to the gateway, and a later edit would leave them disagreeing with what was actually filed. [`GET`](/api-reference/v3/lrs/verification-requirements) the same path to read `settlement_status` before you send.
+  Once you have filed, sending is closed.
 </Warning>
 
 ## The response
 
-Three keys, whatever you sent — and a fourth, `refusal`, on the one response that has something more to say: a complete set the gateway refused.
+Three keys, whatever you sent — and a fourth, `refusal`, on the one response that has something more to say: a complete set that did not pass verification.
 
 <CodeGroup>
 
@@ -271,7 +346,7 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
 }
 ```
 
-```json Complete, but the gateway did not pass it
+```json Complete, but verification did not pass it
 {
   "success": true,
   "message": "Verification details received",
@@ -291,14 +366,14 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
 </CodeGroup>
 
 <ParamField path="status" type="string" required>
-  Lower-case, always one of four. The first two answer *is the checklist satisfied*; the second two answer *what did the gateway do*, and only appear on a call that actually filed.
+  Lower-case, always one of four. The first two answer *is the checklist satisfied*; the second two answer *what happened when it was filed*, and only appear on a call that actually filed.
 
   | Value | What it means | What to do |
   |---|---|---|
   | `incomplete` | Something is still owed. `outstanding` names it. | Send the rest. |
-  | `complete` | Nothing is outstanding, and nothing was filed — you passed `finalize: false`, or this payment's checklist is not an LRS one and needs no gateway handoff. | Nothing, unless you held it back. |
-  | `in_review` | The set was complete, the verification gateway took it, and it passed. The payment is with us. | Nothing. |
-  | `action_required` | The set was complete and filed, and the gateway did not pass the payment. | Read the event, fix what it names, re-send only that. |
+  | `complete` | Nothing is outstanding, and nothing was filed — you passed `finalize: false`, or this payment's checklist is not an LRS one and is not filed for verification. | Nothing, unless you held it back. |
+  | `in_review` | The set was complete, it was filed, and verification passed. The payment is with EximPe. | Nothing. |
+  | `action_required` | The set was complete and filed, and verification did not pass the payment. | Read the event, fix what it names, re-send only that. |
 </ParamField>
 
 <ParamField path="outstanding" type="array" required>
@@ -308,15 +383,15 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
 </ParamField>
 
 <ParamField path="refusal" type="object">
-  Why the gateway refused a set the checklist called complete. Present **only** alongside `status: action_required` — absent from every other response, so read it as a key that may not be there rather than one that is sometimes `null`.
+  Why verification refused a set the checklist called complete. Present **only** alongside `status: action_required` — absent from every other response, so read it as a key that may not be there rather than one that is sometimes `null`.
 
-  Where `outstanding` says what the *checklist* still wants, this says what the *gateway* did. They answer different questions, and the handoff only runs once the checklist is satisfied — so a refusal **always** arrives with `outstanding` empty.
+  Where `outstanding` says what the *checklist* still wants, this says what *verification* found. Verification only runs once the checklist is satisfied, so a refusal **always** arrives with `outstanding` empty.
 
   | Key | |
   |---|---|
   | `reason` | The headline verdict, upper-case — or `null` when there is no verdict beyond the items in `missing`. |
-  | `missing` | What the gateway still wants, **in its own vocabulary**. These are not checklist codes. |
-  | `outstanding_cents` | The shortfall still owed — principal plus MDR, GST and TCS, less what was received — in **paise**. `0` when the refusal is not about money. |
+  | `missing` | What verification still wants, under the tokens listed below. These are not checklist codes. |
+  | `outstanding_cents` | The shortfall still owed — principal plus MDR, GST and TCS, less what was received — in **paise**. `0` when the refusal is not about money. The amount received is the bank credit for a payment made into a virtual account, and the order amount otherwise. |
 
   `reason` is one of:
 
@@ -329,71 +404,47 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
   | `SENDER_NAME_MISMATCH` | The same two names, judged by our own fuzzy match rather than the vendor's. |
   | `null` | No headline verdict — `missing` and `outstanding_cents` are the whole story. |
 
-  <Note>
-    **The two name verdicts are one problem, not two.** `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` compare the *same pair* — the buyer name on the order against the name the PAN is registered to. Only the judge differs: the verification vendor reaches the first, our own fuzzy match the second, which is why a name can clear one and fail the other. Build one remediation, not two: correct whichever of the two names is wrong, and send again.
-  </Note>
+  Both name mismatches mean the buyer name and the PAN name disagree; correct whichever is wrong and send again.
 
-  `missing` names gateway tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
+  `missing` uses these tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit is too small to settle), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
 
   The purpose-code and PAN verdicts are reached before anything else is looked at, so each carries exactly one entry in `missing` and `outstanding_cents: 0`. Only `SENDER_NAME_MISMATCH` and a `null` reason can carry a shortfall, or more than one entry.
 
-  <Note>
-    **`refusal` is a shortcut, not the record.** The same verdict always arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass), translated into the checklist codes you send under. An integration driven by events needs nothing from here; this exists so a caller holding the response does not have to wait for the webhook to learn why.
-  </Note>
+  The same verdict also arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass).
 </ParamField>
-
-<Warning>
-  **`action_required` never means your details were discarded.** Everything that reached us is held against the payment, whether the call ended in a refusal, a vendor outage or a half-finished set. You re-send the one thing that failed, not the whole set.
-</Warning>
 
 ### `outstanding` is empty and `status` is `action_required`
 
-That pair is not a contradiction — it is the most important thing this response says. The checklist is satisfied; the **gateway** refused. Supplying a PAN is not the same as it verifying, and no requirement list has anything to say about that.
+The checklist is satisfied; verification refused.
 
 The verdict arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass), same event type and same shape as any other, with the conclusion folded into the relevant entry's `message` — a shortfall's rupee figure, a PAN that would not verify, a sender who is not the account holder.
 
-This same response says it too, in `refusal` — the verdict, what the gateway still wants, and any shortfall in paise. Read that if you would rather not wait for the event.
-
 ## Completion
 
-`finalize` defaults to `true` and applies only to a **complete** set. It never forces an incomplete one through. Pass `finalize: false` to stage details without triggering verification — useful when you know more is coming, and the response then reads `complete` because the checklist is satisfied even though nothing was filed.
+`finalize` defaults to `true` and applies only to a **complete** set. It never forces an incomplete one through. Pass `finalize: false` only to save without filing.
 
-When a complete set is filed it runs through the verification gateway — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. `in_review` means all of that passed.
+When a complete set is filed it goes through verification — PAN verification, the sender-to-account-holder match, the TCS recomputation and the exactly-once LRS counter posting. `in_review` means all of that passed.
 
-<Note>
-  **A complete LRS set is always filed.** Sending the last outstanding item triggers verification on that same call, so the response answers `in_review` or `action_required` rather than `complete`. You only see `complete` here if you held the filing back with `finalize: false`.
-</Note>
+**A complete LRS set is always filed.** Sending the last outstanding item triggers verification on that same call, so the response answers `in_review` or `action_required` rather than `complete`. You only see `complete` here if you held the filing back with `finalize: false`.
 
-### When the handoff itself does not happen
-
-A complete set can fail to reach a verdict at all:
-
-| What happened | Answer | Event |
-|---|---|---|
-| A dependency was briefly unreachable. **Your details are saved** — staging commits before the handoff is attempted, so repeat the same request and re-send nothing. | an error, not `200` | none |
-| Verification declined the payment — for example it is already past submit. | an error, not `200` | none |
-| The gateway reached a verdict and refused. | `200`, `status: action_required` | `LRS_VERIFICATION_NEEDED` |
-
-<Note>
-  **An error is not a lost send.** Everything staged before the handoff is held against the payment, so a failed dependency costs you a repeat of the same request rather than a re-collection of the details.
-
-  Only the last row answers `200`. A refusal the gateway actually reached is a successful call that reports `action_required` and always arrives as an event too; an error response means the handoff never got that far.
-</Note>
-
-<Note>
-  Details are stored before verification is attempted and are never discarded by it.
-</Note>
+A refusal is a successful `200` that reports `action_required`. If verification cannot give a verdict the call errors and nothing is lost; send the same request again.
 
 ## Errors
 
 Every refusal is answered in the standard error envelope.
 
-Every refusal is a `400`, whatever the reason — the code inside the envelope is what tells them apart, not the status.
+Every refusal is a `400`, whatever the reason, except a PAN check that could not run because the PAN provider is unavailable, which is a `503` (`ERR_LRS_MERCHANT_006`). The code inside the envelope is what tells refusals apart, not the status.
 
 | `error.code` | When |
 |---|---|
 | `40359` | The send itself is wrong — see the codes below. Also: the payment has no checklist, and you did not send the classifying pair. |
-| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
+| `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed, or the payment was rejected or fully refunded. Nothing you send reopens a rejected payment. Read `settlement_status` from the [`GET`](/api-reference/v3/lrs/verification-requirements) first. |
+| `ERR_DECLARATION_001` | `buyer_declaration` was sent as something other than `true` or `false`. `details` names the field. |
+| `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — a business buyer filing an LRS code, for example. `details.purpose_code` names the pair. |
+| `ERR_LRS_MERCHANT_016` to `ERR_LRS_MERCHANT_019` | The `persons` list breaks a purpose-code rule — see [Person errors](#person-errors). |
+| `ERR_LRS_MERCHANT_006` | The PAN provider could not answer (`503`). Your details are saved; retry the same call. |
+| `ERR_LRS_MERCHANT_022` · `ERR_LRS_MERCHANT_024` · `ERR_LRS_MERCHANT_025` | Amount could not be derived — contact EximPe. |
+| `ERR_LRS_MERCHANT_021` | If verification cannot give a verdict the call errors and nothing is lost; send the same request again. |
 
 A `400` on the send carries `details` keyed by the offending code, so one call reports every problem at once:
 
@@ -423,17 +474,14 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 
-A second group is raised only by the call that **files** a complete set, as the staged values are read for the gateway. They name the same codes:
+Value rules run on the send that carries the value, and name the same codes:
 
 | Message | Cause |
 |---|---|
-| `Not a date; send YYYY-MM-DD.` | A date field that will not parse. |
-| `Not an amount; send a number like "500000.00".` | An `amount_to_be_settled` that is not a decimal. |
-| `Not a recognised relation.` | `remitter_relation` outside the six accepted values. |
+| Format errors | Name the field in `details`; fix the value and send again. |
+| `The date of birth does not match the one this PAN was verified with.` | `remitter_dob` differs from the date of birth [Verify PAN](/api-reference/v3/lrs/verify-pan) recorded for `remitter_pan`. |
 
-<Note>
-  These arrive on the finalizing call rather than the call that staged the value, because nothing reads a date as a date — or writes anything to the order — until the set is complete. Your details are still saved — fix the named code and re-send only that.
-</Note>
+Every value in a call is checked before any is written, so one bad value cannot half-apply a send. What is left for the call that **files** a complete set is verification's own verdict — see [`refusal`](#the-response) — and a call that errors because verification could not give a verdict ([`ERR_LRS_MERCHANT_021`](#errors)). Your details are still saved either way: fix the named code and re-send only that.
 
 ## Where each value goes
 
@@ -443,6 +491,13 @@ Most fields flow into the verification and settlement record. Two are collected 
 |---|---|
 | `buyer_name` | Held. The credit's own sender name on the order is authoritative — the LRS own-account check compares the verified PAN holder against *that*, so a submitted value must not overwrite it. |
 | `purpose_code` | Held. Read from the order, which is what the settlement file uses. |
+
+## Refunds
+
+You can refund a payment while its verification is still open — a refund is not held back by verification.
+
+- **A full refund closes the verification.** Sending and filing are both refused once refunds for the whole amount exist — including one that is still in progress — and the payment moves to `NOT_APPLICABLE`.
+- **The LRS limit comes back when the refund completes.** When completed refunds cover the whole amount, the TCS counter and the limit that payment counted against are released, so the buyer can use them again. A partial refund leaves them as they were, and a payment that has already settled keeps its posting.
 
 ## Related
 

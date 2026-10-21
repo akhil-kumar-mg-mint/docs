@@ -81,11 +81,19 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
       { "code": "buyer_email", "message": "Buyer email", "satisfied": false, "provided": false },
       { "code": "buyer_phone", "message": "Buyer phone", "satisfied": false, "provided": false },
       { "code": "invoice_number", "message": "Invoice number", "satisfied": false, "provided": false },
-      { "code": "invoice_date", "message": "Invoice date", "satisfied": false, "provided": false }
+      { "code": "invoice_date", "message": "Invoice date", "satisfied": false, "provided": false },
+      { "code": "invoice_amount", "message": "Invoice total in INR, as stated on the invoice", "satisfied": false, "provided": false },
+      { "code": "declaration", "message": "The declaration the merchant affirms: the service was received and the invoice is genuine", "satisfied": false, "provided": false }
     ],
     "documents": [
       { "code": "invoice", "message": "Commercial invoice", "satisfied": false, "provided": false }
-    ]
+    ],
+    "review": {
+      "review_state": "FRESH",
+      "rejection_reason": "",
+      "reviewed_at": null,
+      "documents": []
+    }
   }
 }
 ```
@@ -117,16 +125,9 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
   |---|---|
   | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
-  | `UNDER_REVIEW` | Filed and with EximPe Ops. **Sending is closed.** |
-  | `VERIFIED` · `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/submit-settlement) opens. |
-  | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
-  | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
-  | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
-  | `NOT_APPLICABLE` | **Ops rejected the verification**, or the payment carries no settlement workflow at all. Either way it will not settle and nothing you send reopens it. After a rejection a full refund is raised — follow that, not this endpoint. |
+  | `UNDER_REVIEW` and later | Sending is closed. `UNDER_REVIEW` does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
 
-  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows, and ends in `SETTLED` or `NOT_APPLICABLE`; the rest are here so an unexpected value is a value you can look up rather than a surprise.
-
-  Once the verification has been **filed**, staging closes: a `POST` to this path is refused rather than half-applied, because the staged rows are the record of what actually went to the gateway. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+  Once you have filed, sending is closed; a `POST` to this path is refused. Read this key before you send.
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -136,6 +137,36 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
 <ParamField path="purpose_code" type="string | null" required>
   The FEMA/FETERS purpose code the order settles under, or `null` while none is declared.
 </ParamField>
+
+### The review
+
+A classified payment also carries a `review` object — what EximPe decided about the verification, in words that do not depend on which flow the payment is in. It is the one place that tells an approved payment from one still waiting, because both keep `settlement_status: "UNDER_REVIEW"`.
+
+<ParamField path="review.review_state" type="string" required>
+  | Value | What it means |
+  |---|---|
+  | `FRESH` | Nothing has been filed. |
+  | `UNDER_REVIEW` | Filed and waiting for EximPe review. |
+  | `CHANGES_REQUESTED` | EximPe sent it back. The payment is open again. |
+  | `APPROVED` | EximPe approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
+  | `REJECTED` | EximPe rejected it. Terminal. |
+</ParamField>
+
+<ParamField path="review.rejection_reason" type="string">
+  The reviewer's overall comment on a send-back or rejection. An empty string when there is none.
+</ParamField>
+
+<ParamField path="review.reviewed_at" type="string | null">
+  When EximPe last decided, as an ISO timestamp, or `null`.
+</ParamField>
+
+<ParamField path="review.documents" type="array">
+  One entry per stored document: `doc_type`, `doc_status` (`PENDING` · `ACCEPTED` · `REJECTED`) and the reviewer's `rejection_comment` for that file. The [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) webhook reports `ACCEPTED` as `VERIFIED`.
+</ParamField>
+
+<Note>
+  An unclassified payment has no checklist and no review, so the `review` key is absent from that response.
+</Note>
 
 ### The items
 
@@ -160,7 +191,7 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 <ParamField path="satisfied" type="boolean" required>
   Whether this item still blocks completion. `false` is what "missing" means.
 
-  **It can go back to `false` on the `invoice`.** If Ops rejects the invoice during review, the item is owed again and the payment is sent back for it. Upload a replacement and cite the new `ref` — re-sending the rejected one changes nothing.
+  **It can go back to `false` on the `invoice`.** If EximPe rejects the invoice during review, the item is owed again and the payment is sent back for it. Upload a replacement and cite the new `ref` — re-sending the rejected one changes nothing.
 </ParamField>
 
 <ParamField path="provided" type="boolean" required>
@@ -171,9 +202,9 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
   **Keys you will not see on this flow.** `optional`, `condition`, `waivable` and `one_of` appear only when they apply, and no B2B services item is optional, conditional or waivable. Their absence is meaningful, not an omission.
 </Note>
 
-## No `status`, deliberately
+## No rolled-up `status`
 
-There is no rolled-up `complete` / `incomplete` on this response. "Every box is ticked" is not "the payment passed" — a complete set still goes to the gateway, and a gateway can refuse it. And the `POST` on this same URL already returns a `status` that means something else.
+There is no rolled-up `complete` / `incomplete` on this response. "Every box is ticked" is not "the payment passed": a complete set still goes through verification, which can refuse it. The `POST` on this URL also returns a `status`, with a different meaning.
 
 Fold your own roll-up when you want one:
 
@@ -208,7 +239,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 | Documents | `invoice` |
 
 <Note>
-  **No identity item at all.** Nothing in this set is checked against an external register — no PAN, no IEC, no registration number. `buyer_name` is a plain value you send, so there is no step to clear before you can submit.
+  **One check follows the payment.** On a payment EximPe collects, `buyer_pan` is added to `fields` once the payment is captured, and the payment stays in `ACTION_REQUIRED` until the buying business's PAN has been checked with the issuer. See [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details).
 </Note>
 
 <Warning>

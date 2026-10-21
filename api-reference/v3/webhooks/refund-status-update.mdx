@@ -17,24 +17,26 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
 
 ```json Example Payload
 {
+    "event_type": "REFUND_STATUS_UPDATE",
+    "event_time": "2026-05-27T14:30:01.359434",
+    "version": "3.0.0",
+    "sequence_number": "9e15c8b0-46d2-4af7-8130-72c5e9a4f6d8",
     "data": {
         "refunds": [
             {
-                "bank_arn": null,
-                "comments": "Refund is in progress",
-                "order_id": "OD2683049175",
                 "refund_id": "RF7405286913",
+                "refund_reference_id": "RF-2026-0043",
+                "order_id": "OD2683049175",
+                "order_reference_id": "S2SICR1QPK",
                 "payment_id": "PR1938472605",
                 "refund_amount": 1180,
                 "refund_status": "PROCESSING",
+                "comments": "Refund is in progress",
+                "bank_arn": null,
                 "refund_completed_at": null
             }
         ]
-    },
-    "version": "3.0.0",
-    "event_time": "2026-05-27T14:30:01.359434",
-    "event_type": "REFUND_STATUS_UPDATE",
-    "sequence_number": "9e15c8b0-46d2-4af7-8130-72c5e9a4f6d8"
+    }
 }
 ```
 
@@ -49,18 +51,16 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      Timestamp when the event occurred in ISO 8601 format
-      
-      **Example**: `"2026-05-27T14:30:01.359434"`
+      UTC, no timezone suffix, e.g. `"2026-05-27T14:30:01.359434"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Webhook payload version (currently "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for the event instance
-      
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
       **Example**: `"9e15c8b0-46d2-4af7-8130-72c5e9a4f6d8"`
     </ParamField>
 
@@ -80,10 +80,22 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
       **Example**: `"OD2683049175"`
     </ParamField>
 
+    <ParamField path="data.refunds[].order_reference_id" type="string">
+      Your reference ID for the order, as sent when it was created. `null` when the order has none.
+
+      **Example**: `"S2SICR1QPK"`
+    </ParamField>
+
     <ParamField path="data.refunds[].refund_id" type="string" required>
       Unique refund identifier
       
       **Example**: `"RF7405286913"`
+    </ParamField>
+
+    <ParamField path="data.refunds[].refund_reference_id" type="string">
+      Your reference for the refund — the `reference_id` sent when it was created, or the one we generated when none was sent. `null` when the refund has none.
+
+      **Example**: `"RF-2026-0043"`
     </ParamField>
 
     <ParamField path="data.refunds[].payment_id" type="string" required>
@@ -99,7 +111,7 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
     </ParamField>
 
     <ParamField path="data.refunds[].refund_status" type="string" required>
-      Current status of the refund
+      Current status of the refund. One of `PROCESSING`, `REVERSED`, `ON_HOLD` or `BANK_REJECTED_REFUND`. Interim status; the final outcome arrives as [`PAYMENT_REFUNDED`](/api-reference/v3/webhooks/payment-refunded) or [`REFUND_FAILED`](/api-reference/v3/webhooks/refund-failed).
       
       **Example**: `"PROCESSING"`
     </ParamField>

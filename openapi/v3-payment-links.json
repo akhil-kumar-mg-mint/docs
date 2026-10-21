@@ -1161,7 +1161,7 @@
         "type": "apiKey",
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
+        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
         "x-displayName": "API Version",
         "x-example": "3.0.0"
       }
@@ -1563,7 +1563,7 @@
           "mop_type": {
             "type": "string",
             "nullable": true,
-            "description": "The method the buyer paid with, in lowercase (e.g. upi, credit_card, net_banking). Can be null even after the link is paid."
+            "description": "The method the buyer paid with, in lowercase (e.g. upi, credit_card, net_banking). Null until the link is paid; after that, the method of the payment that paid the link, or null when none was recorded."
           },
           "status": {
             "type": "string",
@@ -1633,7 +1633,7 @@
           "mop_type": {
             "type": "string",
             "nullable": true,
-            "description": "The method the buyer paid with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING). Can be null even after the link is paid."
+            "description": "The method the buyer paid with, in uppercase (e.g. UPI, CREDIT_CARD, NET_BANKING). Null until the link is paid; after that, the method of the payment that paid the link, or null when none was recorded."
           },
           "settlement": {
             "$ref": "#/components/schemas/v3_PaymentLinkSettlement"

@@ -33,7 +33,7 @@ The payment is created as `ACTION_REQUIRED`, and a [`LRS_VERIFICATION_NEEDED`](/
 From there it's one loop, repeated until nothing is outstanding:
 
 1. Upload each document as it arrives via [Upload Document](/api-reference/v3/lrs/upload-document), and keep the `ref` it returns.
-2. Send what you have via [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — fields as a map, documents as `{code, ref}`. Partial sends are fine; later sends merge over earlier ones.
+2. Send what you have via [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) — fields as a map, documents as `{code, ref}`, and the people on the remittance as `persons`. Partial sends are fine; later sends merge over earlier ones.
 3. Read the response: `status` says where the payment stands, and `outstanding` names what's still owed.
 4. If nothing is outstanding, the set goes to our checks — PAN, sender match, tax — and the payment moves to `in_review`, then settles.
 
@@ -56,6 +56,7 @@ If you ever need the whole picture rather than just what changed — you missed 
 | The buyer paid too little | Have them transfer the shortfall and link it as a top-up, or declare a smaller amount for what actually arrived |
 | Something is still missing | Send just those fields or documents — what you already sent is kept |
 | A complete set failed our checks | Fix what the event names and send again — it's usually the PAN or the sender's name not matching |
+| The buyer is refunded in full | The payment moves to `NOT_APPLICABLE` and sending is closed. Any LRS limit it counted against is released once the refund completes |
 
 ## Four things that will bite you
 

@@ -11,11 +11,7 @@ description: "Technical reference for the VERIFICATION_NEEDED webhook event, inc
 **Category**: Payment Verification
 **Description**: A payment needs verification details before it can settle
 
-This webhook names what a payment still owes before it can be filed. It is the general verification ask — every rail raises it, and it carries one body wherever it comes from.
-
-<Note>
-  **One event, one body.** `VERIFICATION_NEEDED` used to mean two different payloads depending on which rail the money arrived through: one shape from the card and collect flows, another from Virtual Bank Account credits that also carried the credit's amount and account details. A partner needed two handlers for one event type. Every producer now builds the same seven keys, and the credit's own facts ride [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful), which is the event that exists to describe the money.
-</Note>
+This webhook names what a payment still owes before it can be filed. It is the general verification ask. Every payment rail sends the same seven `data` keys; the credit's own details (amount, account) are in [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful).
 
 <Note>
   **Not sent for LRS payments.** A payment settling under an LRS purpose code receives [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) instead, which names documents as well as fields. It never receives both.
@@ -26,22 +22,24 @@ This webhook names what a payment still owes before it can be filed. It is the g
 ### When the webhook is sent
 
 1. **A Virtual Bank Account credit became a payment** that is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
-2. **The verification gateway reported a change** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
+2. **The verification status changed** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
 3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix — **the single item that failed**, not everything the payment still owes. On a B2B services payment this covers the finalizing call's own checks: the purpose code, the invoice amount, the declaration, and the documents cited for the invoice.
-4. **Ops sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and staging reopens. `message` carries the Ops comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.
-5. **A B2B services submit passed.** The set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an Ops decision. `verification_status` is `"IN_REVIEW"` and the list is empty. It fires again on each resubmit after a send-back.
+4. **EximPe review sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and you can send again. `message` carries the reviewer's comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.
+5. **A B2B services submit passed.** The set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an EximPe review decision. `verification_status` is `"IN_REVIEW"` and the list is empty. It fires again on each resubmit after a send-back.
 
 A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
 <Note>
-  **Ops approving or rejecting a B2B services verification raises nothing.** Only the send-back does. Read those two from [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) — an approval leaves `settlement_status` at `UNDER_REVIEW`, a rejection moves it to `NOT_APPLICABLE` and raises a full refund.
+  **EximPe approving or rejecting a B2B services verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), not this event.** Only the send-back raises `VERIFICATION_NEEDED`. An approval leaves `settlement_status` at `UNDER_REVIEW`; a rejection moves it to `NOT_APPLICABLE` and raises a full refund — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) reports both.
 </Note>
 
-<Warning>
-  **Not every refused submit raises this event.** It is raised only where the refusal maps to a checklist item. A call refused for a reason that names no item — a body we could not read, or staging already closed because the set has been filed — answers in the response and raises nothing. Treat the response as authoritative on your own calls, and this event as how you learn about changes you did not make.
-</Warning>
+<Note>
+  **`IN_REVIEW` is how a B2B services payment says it is under review.** [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review) is sent for LRS payments only, so a filed B2B services set arrives here, with `verification_status: "IN_REVIEW"` and an empty list.
+</Note>
 
-The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has an active API credential with a non-empty webhook URL. Without one nothing reaches you — some producers skip recording the event at all, others record it and it is simply never sent, so an event you never received is not evidence of anything on our side either way.
+Not every refused submit raises this event. It is raised only where the refusal maps to a checklist item; a call refused for any other reason (an unreadable body, or a set that has already been filed) answers in the response and raises nothing. Treat the response as authoritative for your own calls, and this event as how you learn about changes you did not make.
+
+The webhook is **delivered only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured. Without one, nothing is sent to you.
 
 ---
 
@@ -50,11 +48,12 @@ The webhook is **delivered only if** your merchant account (or parent, for sub-m
 | Attribute | Value |
 |-----------|--------|
 | **HTTP method** | `POST` |
-| **URL** | The webhook URL configured on your merchant account's API credentials |
+| **URL** | The webhook URL configured for your merchant account |
 | **Content-Type** | `application/json` |
 | **Timeout** | 10 seconds |
 | **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
-| **Pacing** | Delivered on a per-merchant rate-capped queue, so a burst of payments arrives smoothly rather than all at once |
+
+Delivery: batched, up to about 2 minutes. See [Delivery and duplicates](/integration-guide/v3/web-integration/webhooks#delivery-and-duplicates).
 
 ### Headers
 
@@ -69,7 +68,7 @@ The webhook is **delivered only if** your merchant account (or parent, for sub-m
 
 **Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
 
-Prefer **V2**: the timestamp is inside the signed material, so a captured delivery cannot be replayed with a fresh one. V1 stays alongside it so nobody has to migrate on our schedule.
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -173,17 +172,15 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
-      ISO 8601 datetime when the webhook event was created, in UTC and without an offset suffix.
-
-      **Example**: `"2026-02-13T10:30:00.123456"`
+      UTC, no timezone suffix, e.g. `"2026-02-13T10:30:00.123456"`. Parse tolerantly — fractional seconds can be absent.
     </ParamField>
 
     <ParamField path="version" type="string" required>
-      Envelope version (e.g. "3.0.0")
+      API version of your account, e.g. `"3.0.0"`
     </ParamField>
 
     <ParamField path="sequence_number" type="string" required>
-      Unique identifier for this webhook event (UUID), useful for idempotency
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
 
       **Example**: `"550e8400-e29b-41d4-a716-446655440000"`
     </ParamField>
@@ -219,7 +216,7 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     <ParamField path="data.message" type="string" required>
       A human-readable summary, usually `"Payment verification action required"`. It varies with the state — the sandbox `ON_HOLD` event carries a different sentence — so it is safe to log but never to branch on.
 
-      **On a B2B services send-back it is the Ops comment**, written by a person, and it is the only place that says why the payment came back. Surface it; do not pattern-match it.
+      **On a B2B services send-back it is the reviewer's comment**, written by a person, and it is the only place that says why the payment came back. Surface it; do not pattern-match it.
     </ParamField>
 
     <ParamField path="data.action_required_fields" type="array of strings" required>
@@ -233,13 +230,11 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
     </ParamField>
 
     <ParamField path="data.payment_verification_expiry" type="string | null" required>
-      ISO 8601 datetime by which verification must be complete, or `null` when the gateway has not provided a deadline.
+      ISO 8601 datetime by which verification must be complete, or `null` when there is no deadline.
 
       Past this point the payment can no longer be verified: `verification_status` becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat each event's value as authoritative — it can move, and an event is sent when it does.
 
-      The value is whatever the verification gateway named, carried through unchanged. It is `null` where the gateway named nothing: on an `IN_REVIEW` event, where nothing is being asked of you, and on the Virtual Bank Account rails, which have no deadline of this kind at all.
-
-      **`null` is not "no clock".** A payment that never completes its verification is refunded to the buyer regardless; this key only reports the gateway's own stated deadline where one exists.
+      It is `null` when there is no deadline.
 
       **Example**: `"2026-02-20T23:59:59"`
     </ParamField>
@@ -254,7 +249,7 @@ The codes come from whichever check raised the event, and there are two vocabula
 
 ### Order fields
 
-Raised by the verification gateway's own report, and by the plain order-field check on a credit that has not been classified:
+Raised for card and collect payments, and for a credit that has not yet been classified:
 
 | Field | Description |
 |---|---|
@@ -267,7 +262,7 @@ Raised by the verification gateway's own report, and by the plain order-field ch
 | `hs_code` | Harmonized System code for goods |
 | `country_of_origin` | Country the goods ship from |
 
-Supply these with [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details) — with two exceptions. `invoice_file` is a file on the order, uploaded with `POST /pg/orders/{order_id}/documents/` and `document_type: INVOICE`. `country_of_origin` is not settable through the API today; raise it with support if the gateway asks for it.
+Supply these with [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details) — with two exceptions. `invoice_file` is a file on the order, uploaded with `POST /pg/orders/{order_id}/documents/` and `document_type: INVOICE`. `country_of_origin` is not settable through the API today; raise it with support if it is asked for.
 
 ### Classification
 
@@ -279,7 +274,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 | `business_model` | Nothing has *declared* whether the buyer is `B2C` or `B2B`. |
 
 <Warning>
-  **`business_model` is listed when nothing has declared it — not when it is empty.** It is never empty; it defaults to `B2C`. A default nobody stood behind is worth telling you about, and sending `"business_model": "B2C"` is a real answer rather than a no-op.
+  **`business_model` is listed until it is declared.** Send it with `purpose_code` through Submit Verification Details.
 </Warning>
 
 <Tip>
@@ -291,7 +286,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
 
 <Note>
-  **Declaring the classification does not raise a fresh event on a non-LRS payment.** The follow-up ask is only re-sent when the new checklist is an LRS one, where it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Otherwise, read the new checklist's codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
+  **Declaring the classification can raise a fresh ask.** If the new checklist is an LRS one, it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). If it is a B2B goods or B2B services one that still owes items, a new `VERIFICATION_NEEDED` names them. Any other checklist raises nothing: read its codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
 </Note>
 
 <Note>
