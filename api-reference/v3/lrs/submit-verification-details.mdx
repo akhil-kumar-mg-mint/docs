@@ -307,6 +307,8 @@ When the buyer was short, they can pay the rest as further payments. Link those 
 
 A link is refused, with a named error, when:
 
+- the short payment has no verification details on file yet (`ERR_LRS_MERCHANT_044`);
+- the short payment is itself a top-up of another payment (`ERR_LRS_MERCHANT_045`);
 - the short payment is not waiting for action, or is not short;
 - manual verification is not on for both the short payment and the top-up;
 - the short payment or the top-up was not collected by EximPe;
@@ -319,7 +321,15 @@ A link is refused, with a named error, when:
 A top-up made through hosted checkout must carry a PAN equal to the short payment's PAN and, if its order has a purpose code, the same purpose code. A top-up that arrived by bank transfer to the virtual account must have a sender name that matches the remitter.
 
 <Note>
-  **A top-up payment is created like any LRS order.** For a payment made through hosted checkout, create the order the way you create any LRS order, and the buyer verifies the PAN at checkout. There is no separate endpoint for top-ups.
+  **A top-up payment is created like any LRS order.** For a payment made through hosted checkout, create the order the way you create any LRS order, and the buyer verifies the PAN at checkout. The order must carry an LRS purpose code and business model. Otherwise there is no PAN check at checkout, and the link is refused for lack of a verified PAN (`ERR_LRS_MERCHANT_040`). There is no separate endpoint for top-ups.
+</Note>
+
+<Note>
+  **A linked top-up cannot be submitted on its own** (`ERR_LRS_MERCHANT_047`). Remove it from the short payment's `top_up` list first.
+</Note>
+
+<Note>
+  **A linked top-up shows its primary's status.** Reading it returns the primary's settlement status, plus `linked_primary_payment_id`. The verification webhooks (`LRS_VERIFICATION_NEEDED` and the payment-details-missing event) are sent for the primary only, not for its top-ups.
 </Note>
 
 <Note>
