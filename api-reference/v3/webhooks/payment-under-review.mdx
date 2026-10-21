@@ -26,7 +26,6 @@ This is the event that ends the verification conversation. Everything the paymen
 ### When the webhook is sent
 
 1. **An LRS submit passed.** A complete set was filed through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), verification checked the PAN, matched the sender to the account holder, reconciled TCS and confirmed the credit covers the amount. The synchronous response to that same call reads `"status": "in_review"`.
-2. **In sandbox**, when a simulated payment's settlement status is set to Under Review. Supplying the last outstanding verification field in sandbox also moves the payment to Under Review, but that path sends [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) carrying the payment's own body — not this event.
 
 The webhook is created **only if** your merchant account (or parent, for sub-merchants) has a webhook URL configured.
 
@@ -149,7 +148,7 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
 4. **Wait for settlement.** [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) is the next event in this payment's life.
 
 <Warning>
-  **Sending is closed from here.** A payment in `UNDER_REVIEW` refuses further verification details — a later edit would leave your saved details disagreeing with what was filed. `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are closed for the same reason.
+  **Sending is closed from here.** Once you have filed, sending is closed.
 
   If something genuinely has to change after this point, raise it with us rather than re-submitting.
 </Warning>

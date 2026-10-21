@@ -39,10 +39,6 @@ From there it's one loop, repeated until nothing is outstanding:
 
 If you ever need the whole picture rather than just what changed — you missed a webhook, or you're resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) returns the complete set, satisfied or not. It's idempotent; call it any time.
 
-<Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, a complete set saved ahead of the credit is filed for you when the payment is captured. If verification refuses it, the payment stays in `ACTION_REQUIRED` and you fix what the event names.
-</Note>
-
 <CardGroup cols={2}>
   <Card title="Submit Verification Details" icon="code" href="/api-reference/v3/lrs/submit-verification-details">
     The full request body for every purpose code, and every error.

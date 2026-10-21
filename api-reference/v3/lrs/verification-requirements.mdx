@@ -349,12 +349,11 @@ Example responses: an education payment with nothing supplied yet, a payment not
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
   | `UNDER_REVIEW` | Filed and with EximPe. **Sending is closed** — see below. This value does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
   | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
-  | `VERIFIED` | Legacy value; treat as approved. Sending is closed. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
 
   A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.
 
-  Once the verification has been **filed**, sending closes: a `POST` to this path is refused. `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` are the four states where that is true, and a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded refuses sends too. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+  Once the verification has been **filed**, sending closes: a `POST` to this path is refused. A rejected or fully refunded payment refuses sends too. Read this key before you send.
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -373,7 +372,6 @@ A classified payment also carries a `review` object — what EximPe decided abou
   | Value | What it means |
   |---|---|
   | `FRESH` | Nothing has been filed. |
-  | `DRAFT` | Saved but not submitted. An LRS payment never shows it. |
   | `UNDER_REVIEW` | Filed and waiting for EximPe review. |
   | `CHANGES_REQUESTED` | EximPe sent it back. The payment is open again. |
   | `APPROVED` | EximPe approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
@@ -389,7 +387,7 @@ A classified payment also carries a `review` object — what EximPe decided abou
 </ParamField>
 
 <ParamField path="review.documents" type="array">
-  One entry per stored document: `doc_type`, `doc_status` (`PENDING` · `VERIFIED` · `REJECTED`) and the reviewer's `rejection_comment` for that file. These keys differ from the `documents` array described [below](#what-was-sent-under-a-document-code), which calls them `code` and `rejection_reason`.
+  One entry per stored document: `doc_type`, `doc_status` (`PENDING` · `VERIFIED` · `REJECTED`) and the reviewer's `rejection_comment` for that file.
 </ParamField>
 
 <Note>
@@ -459,7 +457,7 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
 </ParamField>
 
 <ParamField path="waivable" type="boolean">
-  Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file. No LRS checklist marks a document waivable today.
+  Present, and always `true`, on documents you may discharge with a `waiver_reason` instead of a file.
 
   A waivable document stays `satisfied: false` until you either upload it or record a waiver. The waiver is yours to declare, not ours to assume.
 </ParamField>
@@ -541,8 +539,6 @@ Buyer and invoice basics, read straight off the order:
 
 On the LRS and B2C checklists `buyer_address_line_1`, `buyer_city` and `buyer_state` are `optional`: they are listed, they never block completion, and a blank value sent for one is ignored. `buyer_postal_code` stays required. The B2B checklists still require all of them.
 
-When a B2C payment is captured with no `invoice_date`, it is set to the UTC date of the capture, so that item is not owed for a payment that has not been given one.
-
 The light B2C set (`S0101`, `S0802`, `S0301`) asks for those nine fields and no remitter identity, then adds:
 
 | Code | Asks for |
@@ -561,16 +557,14 @@ The light B2C set (`S0101`, `S0802`, `S0301`) asks for those nine fields and no 
 | `remitter_pan` | Remitter PAN |
 | `remitter_dob` | Remitter date of birth, as per PAN |
 | `buyer_declaration` | One affirmation covering all three LRS claims — send `true` once the payer has affirmed the wording in `message` |
-| `amount_to_be_settled` | The amount to settle for this payment, in INR. Not on the list for a merchant whose amount is derived from the credit, see below |
+| `amount_to_be_settled` | The amount to settle for this payment, in INR |
 | `persons` | The people on the remittance. Education: exactly one, the student. Travel: every traveller, but only if your account collects traveller details. See [Persons](/api-reference/v3/lrs/submit-verification-details#persons) |
 
 <Note>
   **The remitter's name is not on this list, and neither is the TCS.** The name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan), which you call before you can quote or submit — it is already on file under the PAN you declare. The TCS is the figure we quote against the payer's year-to-date LRS usage; [Quote LRS Amount](/api-reference/v3/lrs/quote) tells you what to collect, and the credit is checked against it. Neither is yours to re-declare here.
 </Note>
 
-<Note>
-  **If `amount_to_be_settled` is not in `fields`, EximPe derives it — do not send it.** Sending it is refused with `ERR_LRS_MERCHANT_022`. The amount is worked out when a complete set is filed: the credit, less EximPe's MDR and GST on it, less the TCS on what remains. If the credit is too small to leave any amount to settle, the set is refused with `derived_amount_credit_too_small` in [`refusal.missing`](/api-reference/v3/lrs/submit-verification-details#the-response) and the buyer must send a larger amount. [Quote LRS Amount](/api-reference/v3/lrs/quote) is not available for such an account.
-</Note>
+If `amount_to_be_settled` is not on your checklist, do not send it.
 
 Documents, per purpose code:
 

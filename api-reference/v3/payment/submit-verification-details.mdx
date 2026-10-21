@@ -10,10 +10,6 @@ When a payment needs verification details before it can settle, this is where yo
 
 Use it when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook with `verification_status` of `ACTION_REQUIRED`.
 
-<Note>
-  **This replaces `POST /pg/payments/{uid}/upload-verification-details/`**, which is deprecated. Build new integrations here.
-</Note>
-
 ## When this applies
 
 Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing anything the payment needs before it can settle, the platform emits `VERIFICATION_NEEDED` naming exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
@@ -87,7 +83,7 @@ A goods payment is asked for the buyer's IEC, and it is **checked with the issue
 
 - **It passed.** The call succeeds and `iec` leaves `outstanding`.
 - **It was rejected.** The call is a `400` whose `details.iec` says why. The rest of the call is still saved.
-- **The check could not run.** The call is a `503` with `ERR_B2B_GOODS_IEC_002`. Nothing was charged against your attempts. Retry the same call after a short wait.
+- **The check could not run.** The call is a `503` with `ERR_B2B_GOODS_IEC_002`. Retry the same call.
 
 | `details.iec` | Cause |
 |---|---|
@@ -95,20 +91,13 @@ A goods payment is asked for the buyer's IEC, and it is **checked with the issue
 | `This IEC was not found. Check the number.` | The issuer has no such IEC. |
 | `The name on this IEC doesn't match the order's buyer name.` | The IEC belongs to a different name than the order's `buyer_name`. |
 | `This IEC could not be verified.` | The issuer would not confirm it. |
-| `Not a requirement of this payment.` | The payment is not a goods payment that EximPe collects. |
 
 <Warning>
   **An order gets 5 IEC checks.** Once they are used the call answers `ERR_B2B_GOODS_IEC_001` and the payment cannot be verified through this endpoint — contact EximPe support.
 </Warning>
 
-Neither the IEC nor the name on it is echoed back in a response or an error.
-
 <Warning>
-  **`business_model` and `purpose_code` must travel together, and only once.** They place the payment, and until both are set nothing else about it can be checked — so send them first, or in the same call as the rest. Send one without the other and the call is refused naming the one you left out; once set, sending either again is a `400`.
-
-  `business_model` is listed when nothing has declared it. It has no default — until you send it, or we can tell it from the merchant's categories, `GET` returns `null` for it. Many orders arrive already classified, so `GET` the payment first if you are unsure.
-
-  The two must also agree. A purpose code that belongs to one side cannot be filed under the other: `S0305` is a consumer purpose code, so `"business_model": "B2B", "purpose_code": "S0305"` is refused with `ERR_IMPORT_VERIFICATION_003`, `details.purpose_code` naming the pair.
+  **`business_model` and `purpose_code` must travel together, and only once.** Send one without the other and the call is refused naming the one you left out; once set, sending either again is a `400`. A purpose code that does not belong to the business model is refused with `ERR_IMPORT_VERIFICATION_003`, `details.purpose_code` naming the pair.
 </Warning>
 
 ## Send as much or as little as you have
@@ -116,19 +105,15 @@ Neither the IEC nor the name on it is echoed back in a response or an error.
 Send three fields today and two tomorrow and you have sent five. Nothing you sent earlier is wiped by a later call, and a field's newest value wins.
 
 <Note>
-  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` when you have sent everything but do not want the payment's verification completed yet, and the details are recorded without it.
+  **`finalize` defaults to `true`.** It applies only to a **complete** set and never forces an incomplete one through, so a partial send is accepted either way — you do not have to set it. Pass `finalize: false` only to save without filing.
 </Note>
 
 <Note>
   **The response `status` tells you the outcome:** `in_review`, `action_required` or `complete`. The shape of your call is the same for every payment.
 </Note>
 
-<Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, details saved ahead of the payment are read when it is captured: a complete set goes straight to review and is filed for you, an incomplete one leaves the payment in `ACTION_REQUIRED` with a settlement `message` saying what is missing — `A business model and purpose code are required to settle this payment`, `Verification details are required to settle the payment` or `A verified buyer PAN is required to settle this payment`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
-</Note>
-
 <Warning>
-  **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends, and so does a captured payment that was rejected or fully refunded — `GET` the payment and read `settlement_status` before you send.
+  Once you have filed, sending is closed.
 </Warning>
 
 ## The response
@@ -152,7 +137,7 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 | `outstanding` | The codes still owed **after** this write. Empty when nothing is. You do not need a second call to learn what is left. |
 
 <Note>
-  `in_review` and `action_required` appear when the set is handed to a verification step: LRS, B2B services and B2B goods payments, and payments collected through a partner rail. `in_review` means the set was complete and filed; `action_required` means it was complete and the payment was not passed. A checklist with no such step stops at `complete`. When the set was complete but not filed, the response also carries a `refusal` object; this applies to every flow, not only LRS.
+  `in_review` and `action_required` appear when the set is handed to a verification step: LRS, B2B services and B2B goods payments, and payments collected through a partner rail. `in_review` means the set was complete and filed; `action_required` means it was complete and the payment was not passed. A set with no review step stops at `complete`. When the set was complete but not filed, the response also carries a `refusal` object; this applies to every flow, not only LRS.
 </Note>
 
 ## Goods payments
@@ -165,9 +150,9 @@ Once it is filed, EximPe review decides:
 |---|---|---|
 | Approved | [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) with `verification_status` `APPROVED` and an empty `message`. | `settlement_status` stays `UNDER_REVIEW`; [`review.review_state`](/api-reference/v3/lrs/verification-requirements#the-review) reads `APPROVED`. |
 | Rejected | `VERIFICATION_STATUS` with `REJECTED`, the reviewer's comment in `message`, and each document's own `rejection_reason`. | Terminal. `settlement_status` becomes `NOT_APPLICABLE` and a full refund is raised. |
-| Sent back for changes | Nothing. A goods send-back raises no webhook. | `settlement_status` returns to `ACTION_REQUIRED` and sending reopens. `GET` the payment and read `review.review_state` (`CHANGES_REQUESTED`) to see it. |
+| Sent back for changes | Nothing. | `settlement_status` returns to `ACTION_REQUIRED` and sending reopens. `GET` the payment and read `review.review_state` (`CHANGES_REQUESTED`) to see it. |
 
-Document entries in the `VERIFICATION_STATUS` event carry `code`, `message`, `doc_status` (`PENDING`, `VERIFIED` or `REJECTED`) and, when the reviewer left one, `rejection_reason`. A goods document has no `ref`.
+Document entries in the `VERIFICATION_STATUS` event carry `code`, `message`, `doc_status` (`PENDING`, `VERIFIED` or `REJECTED`) and, when the reviewer left one, `rejection_reason`.
 
 ## Errors
 

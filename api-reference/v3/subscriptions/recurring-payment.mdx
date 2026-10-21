@@ -15,10 +15,7 @@ A `409` means the subscription's own state refused the charge — there is no ac
 </Info>
 
 <Info>
-**What applies depends on the subscription's payment method.**
-
-- **Methods that use a pre-debit notification**: `invoice_display_number` is required (use the value sent in the pre-debit notification); `transaction_id` is optional. The charge needs an active pre-debit notification for today, so the `409` for a missing pre-debit and the `400` for an amount above the pre-debit amount apply here only. The response `data` is `{ "order_id", "status", "message" }`. It can return `202` when the debit was accepted but the bank outcome is still pending, and a failed debit returns `400` with `{ "error": "<reason>" }` in `details`.
-- **Other methods**: `invoice_display_number` is not required and `amount` is ignored for the charge. A `409` is returned when a charge is already initiated for tomorrow, the day the debit happens.
+For methods that use a pre-debit notification, `invoice_display_number` is required (the value sent in the pre-debit notification) and the charge needs an active pre-debit notification for today.
 </Info>
 
 ### Path Parameters
@@ -30,7 +27,7 @@ A `409` means the subscription's own state refused the charge — there is no ac
 ### Request Body
 
 <ParamField body="amount" type="number">
-  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. For methods that use a pre-debit notification it must also not exceed the pre-debit notified amount; other methods ignore it.
+  Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. With a pre-debit notification it must also not exceed the notified amount.
 </ParamField>
 
 <ParamField body="invoice_display_number" type="string">

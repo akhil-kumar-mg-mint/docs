@@ -125,17 +125,9 @@ Two complete, unedited responses: a payment nothing has classified yet, and the 
   |---|---|
   | `ACTION_REQUIRED` | The payment is waiting on you. Send what is outstanding. |
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
-  | `UNDER_REVIEW` | Filed and with EximPe. **Sending is closed.** This value does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
-  | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. `SETTLED` is also when the [post-settlement document step](/api-reference/v3/b2b/submit-settlement) opens. |
-  | `VERIFIED` | Legacy value; treat as approved. Sending is closed. |
-  | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
-  | `PAYMENT_PENDING` · `PAYMENT_FAILED` | The money has not arrived, or did not arrive. There is nothing to verify yet; a services payment you can act on starts at the credit. |
-  | `SETTLEMENT_ERROR` | Settlement was attempted and failed. Verification is behind it; this is an EximPe-side state, not something you clear by sending. |
-  | `NOT_APPLICABLE` | **EximPe rejected the verification**, or the payment carries no settlement workflow at all. Either way it will not settle and nothing you send reopens it. After a rejection a full refund is raised — follow that, not this endpoint. |
+  | `UNDER_REVIEW` and later | Sending is closed. `UNDER_REVIEW` does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
 
-  The list is every value the key can hold, not every value you will see. A B2B-services payment you are verifying lives in the first three rows, and ends in `SETTLED` or `NOT_APPLICABLE`; the rest are here so an unexpected value is a value you can look up rather than a surprise.
-
-  Once the verification has been **filed**, sending closes: a `POST` to this path is refused. A captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded refuses sends too. Read this key before you send, and you will not collect a refusal you had no way to see coming.
+  Once you have filed, sending is closed; a `POST` to this path is refused. Read this key before you send.
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -154,7 +146,6 @@ A classified payment also carries a `review` object — what EximPe decided abou
   | Value | What it means |
   |---|---|
   | `FRESH` | Nothing has been filed. |
-  | `DRAFT` | Saved in the dashboard but not submitted. |
   | `UNDER_REVIEW` | Filed and waiting for EximPe review. |
   | `CHANGES_REQUESTED` | EximPe sent it back. The payment is open again. |
   | `APPROVED` | EximPe approved it. `settlement_status` stays `UNDER_REVIEW` until the payment settles. |
@@ -248,8 +239,6 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 | Documents | `invoice` |
 
 <Note>
-  **No identity item in the set itself.** Nothing in these eleven is checked against an external register — no IEC, no registration number. `buyer_name` is a plain value you send, so there is no step to clear before you can submit.
-
   **One check follows the payment.** On a payment EximPe collects, `buyer_pan` is added to `fields` once the payment is captured, and the payment stays in `ACTION_REQUIRED` until the buying business's PAN has been checked with the issuer. See [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details).
 </Note>
 

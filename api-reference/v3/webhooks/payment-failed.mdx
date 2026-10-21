@@ -11,7 +11,7 @@ description: "Technical reference for the PAYMENT_FAILED webhook event, includin
 **Category**: Payment  
 **Description**: Payment transaction has failed
 
-This webhook is triggered when a customer's payment attempt fails through EximPe. It is also sent when an attempt expires without an outcome, and when a hosted checkout ends with no payment attempted, in which case `extended_status` is `NOT_ATTEMPTED`.
+This webhook is triggered when a customer's payment attempt fails through EximPe. It is also sent when an attempt expires or a hosted checkout ends with no payment attempted.
 
 ---
 
@@ -114,7 +114,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.bank_ref_num" type="string">
-      Bank reference number. `null` when the attempt never reached the bank, such as an expiry or a checkout that ended with no attempt
+      Bank reference number. `null` when the attempt never reached the bank
       
       **Example**: `"OD3376378679-PR6938527534"`
     </ParamField>
@@ -126,7 +126,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.extended_status" type="string" required>
-      Detailed status code for the failure. One of `FAILED`, `USER_DROPPED`, `NOT_ATTEMPTED`, `EXPIRED`, `TERMINATED`, `CANCELLED`, `VOID`, `BOUNCED`, `AUTHORIZATION_FAILED`, `GATEWAY_DECLINED`, `GATEWAY_ERROR` or `AUTO_REFUNDED`. New values may be added, so handle an unknown one gracefully.
+      Detailed status code for the failure. For example `FAILED`, `USER_DROPPED`, `EXPIRED` or `GATEWAY_DECLINED`. Other values may be added, so handle an unknown one gracefully.
 
       **Example**: `"USER_DROPPED"`
     </ParamField>

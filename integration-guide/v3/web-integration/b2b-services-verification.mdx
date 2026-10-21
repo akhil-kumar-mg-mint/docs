@@ -17,7 +17,7 @@ Money has arrived, and the payment is sitting in `ACTION_REQUIRED` — we have t
 
 ## There is no identity step before the payment
 
-Worth saying before anything else, because it is what makes this flow short. **Nothing you send in the compliance details is verified against an external register** — no IEC, no registration number. The buyer name is a plain field you send, checked against nothing.
+Worth saying before anything else, because it is what makes this flow short. **Nothing you send in the compliance details is verified against an external register** — no IEC, no registration number.
 
 Nothing has to clear before you can proceed, and there is no pre-payment step at all — no PAN to verify, no amount to quote. Everything happens after the money lands.
 
@@ -48,10 +48,6 @@ From there it is one loop, repeated until nothing is outstanding:
   **The finalizing call also raises an event, either way it goes** — [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) both times, and `verification_status` is what separates them. A filed set sends `IN_REVIEW` with an empty `action_required_fields`. A finalizing call the checks refuse sends `ACTION_REQUIRED` naming the code that failed — the same code the response names.
 
   Both matter when the party holding the webhook URL is not the party making the call: a PSP filing on behalf of a sub-merchant gets the response, and whoever configured the merchant's webhook URL gets the event.
-</Note>
-
-<Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, a complete set saved ahead of the credit is filed for you when the payment is captured, and the payment goes straight to `UNDER_REVIEW`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
 </Note>
 
 If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent; call it any time.
@@ -149,7 +145,6 @@ Integrations go wrong here more often by sending something extra than by leaving
 
 | | |
 | :--- | :--- |
-| Identity verification | None in the details you send. On a payment EximPe collects, the buyer's PAN is checked after the payment — see `buyer_pan` above. |
 | HS code | Never. HS codes describe physical goods crossing a border. |
 | Tax | None. Nothing is collected on top of the credit. |
 | Settlement amount | None. `amount_to_be_settled` is an LRS key. What settles is the credit itself. |

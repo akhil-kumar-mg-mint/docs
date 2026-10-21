@@ -111,7 +111,7 @@ This webhook is triggered whenever a refund transitions to a new status (for exa
     </ParamField>
 
     <ParamField path="data.refunds[].refund_status" type="string" required>
-      Current status of the refund. One of `PROCESSING`, `REVERSED`, `ON_HOLD` or `BANK_REJECTED_REFUND`. A refund that has just been created (`INITIATED`) sends no webhook, and the final outcomes arrive as [`PAYMENT_REFUNDED`](/api-reference/v3/webhooks/payment-refunded) and [`REFUND_FAILED`](/api-reference/v3/webhooks/refund-failed) instead.
+      Current status of the refund. One of `PROCESSING`, `REVERSED`, `ON_HOLD` or `BANK_REJECTED_REFUND`. Interim status; the final outcome arrives as [`PAYMENT_REFUNDED`](/api-reference/v3/webhooks/payment-refunded) or [`REFUND_FAILED`](/api-reference/v3/webhooks/refund-failed).
       
       **Example**: `"PROCESSING"`
     </ParamField>

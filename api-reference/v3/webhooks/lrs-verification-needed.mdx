@@ -245,7 +245,7 @@ The last tab is the same payment as the first, later in its life. The buyer, inv
     </ParamField>
 
     <ParamField path="data.payment_verification_expiry" type="string | null" required>
-      **Always `null`** on LRS payments, which have no such deadline. The key is sent so the payload has the same shape as [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), which carries a real date here.
+      `null` when there is no deadline.
     </ParamField>
   </Tab>
 
@@ -398,10 +398,10 @@ Each refusal is reported under the code you collected it under, so a fix goes ba
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
 | `persons` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
-| `derived_amount_credit_too_small` | `amount_to_be_settled` is not collected from you (EximPe derives it from the credit), and the credit leaves nothing to settle after EximPe's charges and the TCS. | The buyer has to send a larger amount. There is nothing to re-send under this name. |
+| `derived_amount_credit_too_small` | The credit is too small to settle. | The buyer has to send a larger amount. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
-`outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. Either the buyer tops up (link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up)) or you declare a smaller `amount_to_be_settled`.
+`outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. The buyer tops up; link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up).
 
 ## When a review sends it back
 

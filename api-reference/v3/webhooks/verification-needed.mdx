@@ -30,7 +30,7 @@ This webhook names what a payment still owes before it can be filed. It is the g
 A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
 <Note>
-  **EximPe approving or rejecting a B2B services verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), not this event.** Only the send-back raises `VERIFICATION_NEEDED`. An approval leaves `settlement_status` at `UNDER_REVIEW`; a rejection moves it to `NOT_APPLICABLE` and raises a full refund — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) reports both. A B2B goods send-back raises no webhook at all.
+  **EximPe approving or rejecting a B2B services verification raises [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status), not this event.** Only the send-back raises `VERIFICATION_NEEDED`. An approval leaves `settlement_status` at `UNDER_REVIEW`; a rejection moves it to `NOT_APPLICABLE` and raises a full refund — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) reports both.
 </Note>
 
 <Note>
@@ -234,7 +234,7 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
 
       Past this point the payment can no longer be verified: `verification_status` becomes `EXPIRED` and the collected amount is refunded to the buyer. Treat each event's value as authoritative — it can move, and an event is sent when it does.
 
-      It is `null` on an `IN_REVIEW` event, where nothing is being asked of you, and on Virtual Bank Account payments, which have no deadline of this kind. `null` is not "no clock": a payment that never completes its verification is refunded to the buyer regardless.
+      It is `null` when there is no deadline.
 
       **Example**: `"2026-02-20T23:59:59"`
     </ParamField>
@@ -274,7 +274,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 | `business_model` | Nothing has *declared* whether the buyer is `B2C` or `B2B`. |
 
 <Warning>
-  **`business_model` is listed while it is undeclared.** It has no default: an order carries one only when you send it, or when the merchant's KYC names a single business model and fills it in. The two facts are asked for independently — a payment that has a purpose code and no business model lists `business_model` alone.
+  **`business_model` is listed until it is declared.** Send it with `purpose_code` through Submit Verification Details.
 </Warning>
 
 <Tip>
@@ -286,7 +286,7 @@ Two facts decide which checklist a payment answers to, and either one that has n
 Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
 
 <Note>
-  **Declaring the classification can raise a fresh ask.** If the new checklist is an LRS one, it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). If it is a B2B goods or B2B services one that still owes items, a new `VERIFICATION_NEEDED` names them — sent together with `PAYMENT_DETAILS_MISSING`, which carries the same list. Any other checklist raises nothing: read its codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
+  **Declaring the classification can raise a fresh ask.** If the new checklist is an LRS one, it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). If it is a B2B goods or B2B services one that still owes items, a new `VERIFICATION_NEEDED` names them. Any other checklist raises nothing: read its codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
 </Note>
 
 <Note>

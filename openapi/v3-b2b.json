@@ -250,7 +250,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. That ends once the verification has been filed \u2014 a payment in `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` or `SETTLED` refuses further sends.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "LRS"
         ],
@@ -462,7 +462,7 @@
                             "in_review",
                             "action_required"
                           ],
-                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and is not filed for verification). `in_review` \u2014 the set was complete, it was filed, and verification passed. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment. It never means your details were discarded.",
+                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and is not filed for verification). `in_review` \u2014 the set was complete, it was filed, and verification passed. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment.",
                           "example": "incomplete"
                         },
                         "outstanding": {
@@ -478,7 +478,7 @@
                         },
                         "refusal": {
                           "type": "object",
-                          "description": "Why verification refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what verification found. Verification only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED, translated into the checklist codes you send under.",
+                          "description": "Why verification refused a set the checklist called complete. Present **only** when `status` is `action_required`, and on any payment whose complete set went to a verification step and was not filed \u2014 absent on every other response, so read it as an optional key rather than one that is sometimes null. Where `outstanding` says what the checklist still wants, this says what verification found. Verification only runs once the checklist is satisfied, so a refusal always arrives with `outstanding` empty. The same verdict also arrives as LRS_VERIFICATION_NEEDED.",
                           "required": [
                             "reason",
                             "missing",
@@ -496,7 +496,7 @@
                                 "SENDER_NAME_MISMATCH",
                                 null
                               ],
-                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to; the first is the verification vendor's verdict, the second our own fuzzy match of the same pair, so one remediation covers both. `null` \u2014 no headline verdict; `missing` and `outstanding_cents` are the whole story.",
+                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `null` \u2014 no headline verdict; `missing` and `outstanding_cents` are the whole story.",
                               "example": "PURPOSE_CODE_NOT_ALLOWED"
                             },
                             "missing": {
@@ -504,7 +504,7 @@
                               "items": {
                                 "type": "string"
                               },
-                              "description": "What verification still wants \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit leaves nothing to settle after charges; if `amount_to_be_settled` is not in `fields`, EximPe derives it \u2014 do not send it), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
+                              "description": "What verification still wants \u2014 these are not checklist codes. One of `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit is too small to settle), or `documents.<type>` for a document still wanted, e.g. `documents.passport`. The purpose-code and PAN verdicts are reached before anything else is checked, so they carry exactly one entry; `SENDER_NAME_MISMATCH` and a null reason can carry several.",
                               "example": [
                                 "purpose_code"
                               ]
@@ -553,7 +553,7 @@
                   },
                   "action_required": {
                     "summary": "action_required \u2014 verification did not pass it",
-                    "description": "An empty `outstanding` with this status is not a contradiction: the checklist is satisfied, verification refused \u2014 which is why `outstanding` is always empty when `refusal` is present. The verdict arrives as an LRS_VERIFICATION_NEEDED event with the conclusion folded into the relevant entry's message. No event at all means verification gave no verdict \u2014 repeat the same request.",
+                    "description": "The checklist is satisfied; verification refused, so `outstanding` is always empty when `refusal` is present. The verdict also arrives as an LRS_VERIFICATION_NEEDED event. If verification cannot give a verdict the call errors and nothing is lost; send the same request again.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -838,7 +838,7 @@
               "EXPIRED",
               "REJECTED"
             ],
-            "description": "The payment's own state \u2014 not a roll-up of the checklist. Sending closes once the verification has been filed, so `UNDER_REVIEW`, `VERIFIED`, `READY_FOR_SETTLEMENT` and `SETTLED` refuse further sends, and so does a captured payment that was rejected (`NOT_APPLICABLE`) or has been fully refunded. `UNDER_REVIEW` does not change when EximPe approves \u2014 read `review.review_state` for the decision. Read it before you POST.",
+            "description": "The payment's own state \u2014 not a roll-up of the checklist. Sending closes once you have filed. `UNDER_REVIEW` does not change when EximPe approves \u2014 read `review.review_state` for the decision. Read it before you POST.",
             "example": "ACTION_REQUIRED"
           },
           "business_model": {
@@ -880,13 +880,12 @@
                 "type": "string",
                 "enum": [
                   "FRESH",
-                  "DRAFT",
                   "UNDER_REVIEW",
                   "CHANGES_REQUESTED",
                   "APPROVED",
                   "REJECTED"
                 ],
-                "description": "`FRESH` \u2014 nothing filed. `DRAFT` \u2014 saved, not submitted. `UNDER_REVIEW` \u2014 filed, waiting for EximPe review. `CHANGES_REQUESTED` \u2014 EximPe sent it back. `APPROVED` \u2014 EximPe approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
+                "description": "`FRESH` \u2014 nothing filed. `UNDER_REVIEW` \u2014 filed, waiting for EximPe review. `CHANGES_REQUESTED` \u2014 EximPe sent it back. `APPROVED` \u2014 EximPe approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
                 "example": "UNDER_REVIEW"
               },
               "rejection_reason": {

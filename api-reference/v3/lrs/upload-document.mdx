@@ -95,7 +95,7 @@ Uploads are immutable. To replace one, upload the file again — you get a new `
 
 ## Waiving instead of uploading
 
-Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit. **No LRS checklist marks a document waivable today**, so a waiver on an LRS document is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
+Some documents may be discharged with a reason instead of a file. Those carry `"waivable": true` in the requirements; for them you skip this endpoint entirely and send a `waiver_reason` on the submit. A waiver on a document that is not waivable is a `400`. See [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#documents).
 
 <Note>
   `POST /pg/lrs/documents/` predates this route and still works as an alias over the same implementation. New integrations should use the payment-scoped path.
