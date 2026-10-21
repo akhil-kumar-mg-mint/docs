@@ -206,8 +206,6 @@ Three keys, whatever you sent:
 
 A complete B2B services set goes to verification when it is filed, and `in_review` says it got there. That is also where your saved values are applied to the order and the two comparisons against what we hold are made — the invoice total against the credit, and the invoice number against your other payments.
 
-A set saved before the money lands is filed for you when the payment is captured, so a payment EximPe collects can arrive already in review. If the filing is refused, the payment returns to `ACTION_REQUIRED`.
-
 ## Errors
 
 Every refusal is a `400`, whatever the reason, except a PAN check that could not run, which is a `503` (`ERR_BUYER_PAN_002`). The code inside the envelope is what tells refusals apart, not the status.

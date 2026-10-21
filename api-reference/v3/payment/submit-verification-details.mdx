@@ -123,10 +123,6 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
   **The response `status` tells you the outcome:** `in_review`, `action_required` or `complete`. The shape of your call is the same for every payment.
 </Note>
 
-<Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, details saved ahead of the payment are read when it is captured: a complete set goes straight to review and is filed for you, an incomplete one leaves the payment in `ACTION_REQUIRED` with a settlement `message` saying what is missing — `A business model and purpose code are required to settle this payment`, `Verification details are required to settle the payment` or `A verified buyer PAN is required to settle this payment`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
-</Note>
-
 <Warning>
   **That tolerance ends once verification has been filed.** A payment that has moved past `ACTION_REQUIRED` refuses further sends, and so does a captured payment that was rejected or fully refunded — `GET` the payment and read `settlement_status` before you send.
 </Warning>

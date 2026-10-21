@@ -50,10 +50,6 @@ From there it is one loop, repeated until nothing is outstanding:
   Both matter when the party holding the webhook URL is not the party making the call: a PSP filing on behalf of a sub-merchant gets the response, and whoever configured the merchant's webhook URL gets the event.
 </Note>
 
-<Note>
-  **You can send the details before the money lands.** On a payment EximPe collects, a complete set saved ahead of the credit is filed for you when the payment is captured, and the payment goes straight to `UNDER_REVIEW`. If the filing is refused, the payment comes back to `ACTION_REQUIRED` and you fix what the event names.
-</Note>
-
 If you ever need the whole picture rather than just what changed — you missed a webhook, or you are resuming a payment someone else started — [Get Verification Requirements](/api-reference/v3/b2b/verification-requirements) returns the complete set, satisfied or not. It is idempotent; call it any time.
 
 <CardGroup cols={2}>

@@ -445,8 +445,6 @@ When a complete set is filed it goes through verification — PAN verification, 
 
 **A complete LRS set is always filed.** Sending the last outstanding item triggers verification on that same call, so the response answers `in_review` or `action_required` rather than `complete`. You only see `complete` here if you held the filing back with `finalize: false`.
 
-**A set saved before the money lands is filed for you.** When a payment that EximPe collects is captured with a complete LRS set already saved, we file it at that moment, so the first thing you see can be `in_review` rather than `ACTION_REQUIRED`. If verification refuses it, the payment stays in `ACTION_REQUIRED` and you fix what the [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) event names.
-
 ### When verification cannot give a verdict
 
 A complete set can fail to reach a verdict:
