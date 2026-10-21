@@ -80,6 +80,11 @@ When you omit `purpose_code`, it is filled in only if your account has exactly o
 | address | object | Yes | Address. | See Address |
 | ip_address | string | Conditional | The customer's IP address. | S2S UPI Intent: required. IPv4 or IPv6 |
 | user_agent | string | Conditional | The customer's browser user agent. | S2S UPI Intent: required |
+| pan_number | string | No | The buyer's PAN. For a B2B order, the buying business's PAN; for a B2C order, the buyer's personal PAN. | Format `ABCDE1234F`: 5 letters, 4 digits, 1 letter. Lowercase is accepted and stored uppercase. `null` or `""` is the same as leaving it out |
+
+<Note>
+  **Only the format of `pan_number` is checked when you create the order.** The PAN is verified with the issuer after the payment succeeds, and only for payments that need it. Sending it here saves you being asked for it later. See [Buyer PAN verification](/integration-guide/v3/web-integration/buyer-pan) for which payments need it and what passes.
+</Note>
 
 #### Address (buyer.address)
 
@@ -122,9 +127,10 @@ When you omit `purpose_code`, it is filled in only if your account has exactly o
   "return_url": "https://yourdomain.com/payment/callback/",
   "business_model": "B2C",
   "buyer": {
-    "name": "Alice Smith",
-    "email": "alice.smith@example.com",
+    "name": "Test Buyer",
+    "email": "test.buyer@example.com",
     "phone": "+919812345678",
+    "pan_number": "ABCDE1234F",
     "address": {
       "line_1": "221B Baker Street",
       "city": "Mumbai",
@@ -256,6 +262,7 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `400` | `ERR_ORDER_002` | A field is missing or invalid | Keyed by field and nested like the request, one message per field, e.g. `{"buyer": {"phone": "Enter a valid phone number."}}` |
+| `400` | `ERR_ORDER_002` | `buyer.pan_number` is not in the PAN format | `{"buyer": {"pan_number": "Enter a valid PAN in the format ABCDE1234F."}}`. The value you sent is never echoed back |
 | `400` | `ERR_ORDER_002` | `reference_id` has a character other than a letter, number or hyphen | `{"reference_id": "Invalid input: ORDER_123456"}` |
 | `400` | `ERR_ORDER_002` | `reference_id` is already used by one of your orders | `{"reference_id": "Reference ID already exists"}` |
 | `400` | `ERR_ORDER_002` | `invoice.number` is already used by one of your orders that has not failed | `{"invoice": {"number": "Invoice Number already exists"}}` |

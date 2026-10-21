@@ -1,0 +1,91 @@
+---
+title: "Buyer PAN Verification"
+description: "Which payments need a verified buyer PAN before they settle, what passes, and the ways to send it."
+---
+
+Some payments need the buyer's PAN, verified with the issuer, before they can settle. This page says which payments, what counts as a pass, and how to send the PAN so the payment is not held.
+
+## Which payments need it
+
+A payment needs a verified buyer PAN when **all** of these are true:
+
+- **It succeeded.** The money has arrived.
+- **EximPe collects it.** Payments collected through another payment gateway on your account do not need it.
+- **It is classified.** Its `business_model` and `purpose_code` have both been declared, either when you created the order or later through [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details).
+- **It is not an LRS payment.** LRS payments are unaffected: they have their own PAN step, described in [LRS Verification](/integration-guide/v3/web-integration/lrs-verification).
+
+You do not have to work this out yourself. A payment that needs a PAN lists `buyer_pan` in its verification asks and in [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements). A payment that doesn't need one never lists it.
+
+## What passes
+
+The PAN must be valid and active, and it must be the right kind for the payment's `business_model`:
+
+| `business_model` | The PAN must be | Name check |
+|---|---|---|
+| `B2C` | The buyer's **personal** PAN, with a date of birth on record | None |
+| `B2B` | The buying **business's** PAN: a company or other non-individual PAN | The name on the PAN must match the order's buyer name |
+
+<Warning>
+  **For `B2B`, the buyer name on the order matters.** The PAN is compared with the name you sent as `buyer.name` when you created the order. An order with no buyer name always fails this check. The name cannot be changed through the API after the order is created, so send the business's name as it appears on its PAN. If it is wrong, contact EximPe support.
+</Warning>
+
+## Send it up front
+
+Send the PAN as `buyer.pan_number` at [Create Order](/api-reference/v3/order/create) and you are not asked for it later.
+
+Payment links and EximPe payment forms don't take a PAN. For a payment made through one, you are asked for the PAN after the payment succeeds, as described below.
+
+Only the format (`ABCDE1234F`: 5 letters, 4 digits, a letter) is checked when the PAN is sent. The PAN is verified with the issuer after the payment succeeds.
+
+## What happens after the payment
+
+<Steps>
+  <Step title="The PAN is checked">
+    When the payment succeeds, the PAN on the order is verified with the issuer. A payment that is not classified yet waits: its PAN is checked once `business_model` and `purpose_code` are declared.
+  </Step>
+  <Step title="It passed">
+    Nothing more is needed for the PAN. The payment continues to settlement like any other.
+  </Step>
+  <Step title="It failed, or there was no PAN">
+    The payment stays in `ACTION_REQUIRED` and does not settle. You are asked for `buyer_pan` through [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing) and [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed), or `VERIFICATION_NEEDED` alone for a Virtual Bank Account credit.
+  </Step>
+  <Step title="Send the PAN">
+    Send `buyer_pan` to [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#sending-buyer_pan). It is checked during the call, and the response tells you whether it passed. On a pass, the payment is released for settlement.
+  </Step>
+</Steps>
+
+<Note>
+  **You are asked only once the check has an answer.** If the issuer's service is down when the payment succeeds, no ask is sent until the check can run. The one exception is a payment that is not classified yet and has no PAN at all: it is asked for `buyer_pan` up front, alongside `business_model` and `purpose_code`.
+</Note>
+
+## While the PAN is owed
+
+The payment's `settlement_status` is `ACTION_REQUIRED`, as [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) reports it. [Get Order Details](/api-reference/v3/order/get) also gives the reason, as the payment's `settlement.message`:
+
+> A verified buyer PAN is required to settle this payment
+
+If the order has no invoice number either, the message asks for the invoice instead: `Invoice Number is required to settle the payment`. Fix that too.
+
+In Get Verification Requirements the item is `buyer_pan`, labelled `Buyer PAN, verified with the issuer`. It is `satisfied` only once a PAN has passed; `provided: true` with `satisfied: false` means a PAN is on file but has not passed.
+
+Once a verified PAN is on file, a payment held only for its PAN moves to `UNDER_REVIEW` without anything more from you.
+
+## Limits
+
+- **5 checks per order.** Each new PAN checked uses one, including the automatic check after the payment. Sending a PAN that was already rejected gets the same answer without using a check. When all 5 are used, contact EximPe support.
+- **Retry on `503`.** If the issuer's service is down when you send `buyer_pan`, the call answers `503` with `ERR_BUYER_PAN_002`. No check is used, the PAN is kept, and it is retried in the background. Retrying the same call is safe.
+- **Payments made before this check existed** are checked only when you send a `buyer_pan` for them.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="Does this change anything for LRS payments?">
+    No. LRS payments keep their own PAN step, and are never asked for `buyer_pan`.
+  </Accordion>
+  <Accordion title="Is the PAN shown back to me?">
+    Order details return it as `buyer.pan_number`, and so do payment link details once you have sent it after the payment. Error messages never repeat a PAN or name its holder.
+  </Accordion>
+  <Accordion title="Why was a B2C payment rejected for a business PAN?">
+    A `B2C` payment needs the buyer's personal PAN. If the buyer is a business, the payment should have been classified as `B2B`. Classification cannot be changed after it is declared, so contact EximPe support.
+  </Accordion>
+</AccordionGroup>

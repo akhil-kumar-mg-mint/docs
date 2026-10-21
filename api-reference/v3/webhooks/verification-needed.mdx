@@ -26,10 +26,11 @@ This webhook names what a payment still owes before it can be filed. It is the g
 ### When the webhook is sent
 
 1. **A Virtual Bank Account credit became a payment** that is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
-2. **The verification gateway reported a change** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
-3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix — **the single item that failed**, not everything the payment still owes. On a B2B services payment this covers the finalizing call's own checks: the purpose code, the invoice amount, the declaration, and the documents cited for the invoice.
-4. **Ops sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and staging reopens. `message` carries the Ops comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.
-5. **A B2B services submit passed.** The set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an Ops decision. `verification_status` is `"IN_REVIEW"` and the list is empty. It fires again on each resubmit after a send-back.
+2. **A payment on any other rail succeeded** and is missing verification details. This event is sent together with [`PAYMENT_DETAILS_MISSING`](/api-reference/v3/webhooks/payment-details-missing), and both carry the same list.
+3. **The verification gateway reported a change** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
+4. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix — **the single item that failed**, not everything the payment still owes. On a B2B services payment this covers the finalizing call's own checks: the purpose code, the invoice amount, the declaration, and the documents cited for the invoice. A rejected `buyer_pan` is the exception; see [`buyer_pan`](#buyer_pan).
+5. **Ops sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and staging reopens. `message` carries the Ops comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.
+6. **A B2B services submit passed.** The set was filed — through [Submit Verification Details](/api-reference/v3/b2b/submit-verification-details) or by the merchant in the dashboard — and the payment moved to Under Review to wait for an Ops decision. `verification_status` is `"IN_REVIEW"` and the list is empty. It fires again on each resubmit after a send-back.
 
 A **verified** payment sends no webhook — `VERIFIED` means nothing is outstanding, so there is nothing to act on. Do not wait on it to confirm verification.
 
@@ -115,6 +116,24 @@ Prefer **V2**: the timestamp is inside the signed material, so a captured delive
       "invoice_number",
       "buyer_postal_code"
     ],
+    "payment_verification_expiry": null
+  }
+}
+```
+
+```json Buyer PAN owed
+{
+  "event_type": "VERIFICATION_NEEDED",
+  "event_time": "2026-02-13T10:32:05.417730",
+  "version": "3.0.0",
+  "sequence_number": "550e8400-e29b-41d4-a716-446655440004",
+  "data": {
+    "payment_id": "PR7712349901",
+    "order_id": "OD1122334456",
+    "link_id": null,
+    "verification_status": "ACTION_REQUIRED",
+    "message": "Payment verification action required",
+    "action_required_fields": ["buyer_pan"],
     "payment_verification_expiry": null
   }
 }
@@ -290,8 +309,20 @@ Two facts decide which checklist a payment answers to, and either one that has n
 
 Once a payment is classified and its checklist is **not** an LRS one, the list holds that checklist's outstanding codes — `buyer_city`, `buyer_state`, `buyer_email`, `iec`, `buyer_pan`, `invoice`, and so on. Send these back through [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), under the same codes.
 
+### `buyer_pan`
+
+`buyer_pan` asks for the buyer's PAN. It is named only on payments that EximPe collects and that are not LRS. See [Buyer PAN verification](/integration-guide/v3/web-integration/buyer-pan) for which payments need it and what passes. Until a verified PAN is on file the payment stays in `ACTION_REQUIRED` and does not settle.
+
+- **It is named only once the PAN has been checked.** After a payment succeeds, the PAN on the order (if there is one) is verified with the issuer first. `buyer_pan` is listed only when that check found no PAN, rejected it, or used up its attempts. If the check cannot run because the issuer's service is down, no ask is sent until it can.
+- **An unclassified payment** lists `buyer_pan` next to `business_model` and `purpose_code` only when the order has no PAN at all. A PAN already on the order waits for the classification, then is checked.
+- **Send it back as `buyer_pan`** through [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#sending-buyer_pan). That call checks it on the spot and tells you in its response whether it passed.
+- **A rejected PAN is asked for again** with the payment's full outstanding list, not the single failed item.
+- **The verification gateway's own reports never list `buyer_pan`.** Those are the `ACTION_REQUIRED`, `IN_REVIEW` and `EXPIRED` changes described above. The PAN is asked for only by the events that follow a payment's success.
+
 <Note>
   **Declaring the classification does not raise a fresh event on a non-LRS payment.** The follow-up ask is only re-sent when the new checklist is an LRS one, where it arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed). Otherwise, read the new checklist's codes from [Get Verification Requirements](/api-reference/v3/lrs/verification-requirements) after you classify.
+
+  A PAN already on the order is checked in the same call that classifies the payment, so that call's `outstanding` already says whether `buyer_pan` is still owed.
 </Note>
 
 <Note>

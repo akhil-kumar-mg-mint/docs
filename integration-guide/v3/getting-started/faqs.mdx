@@ -119,6 +119,10 @@ Once the money is on its way to you, the settlement APIs and the `PAYMENT_SETTLE
   The submit call answers with where the payment stands and nothing else — `IN_REVIEW` if the set was complete and passed, `ACTION_REQUIRED` if anything is still owed.
 </Note>
 
+### Why is a payment held for a buyer PAN?
+
+A non-LRS payment that EximPe collects needs the buyer's PAN, verified with the issuer, before it settles. Until then its `settlement_status` is `ACTION_REQUIRED` with the message `A verified buyer PAN is required to settle this payment`, and the verification asks name `buyer_pan`. Send it with [Submit Payment Verification Details](/api-reference/v3/payment/submit-verification-details#sending-buyer_pan), or send `buyer.pan_number` when you create the order so you are not asked. See [Buyer PAN Verification](/integration-guide/v3/web-integration/buyer-pan).
+
 ### The buyer paid less than the amount due. What now?
 
 The payment waits, and the `outstanding` entry on the `LRS_VERIFICATION_NEEDED` event names the shortfall in its `message`. Clear it either way: have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `amount_to_be_settled` — the amount that actually arrived — and submit again.

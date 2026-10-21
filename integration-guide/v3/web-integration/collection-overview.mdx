@@ -28,6 +28,8 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
 
     For a B2C payment, the `buyer`, `product`, and `invoice` fields you already sent at [Create Order](/api-reference/v3/order/create) are enough — there's nothing further to send.
 
+    A non-LRS payment that EximPe collects also needs a verified buyer PAN. Send `buyer.pan_number` at Create Order and you are not asked for it later. See [Buyer PAN Verification](/integration-guide/v3/web-integration/buyer-pan).
+
     A Virtual Account credit arrives with no Create Order call behind it, so those same basic facts get filled in afterward in the EximPe dashboard instead.
 
     For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step and no tax at all — see [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
