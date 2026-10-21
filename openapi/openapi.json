@@ -9543,7 +9543,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
@@ -12904,7 +12904,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
@@ -16161,7 +16161,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
