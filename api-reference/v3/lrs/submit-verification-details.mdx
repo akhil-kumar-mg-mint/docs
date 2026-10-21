@@ -287,24 +287,48 @@ The rules on a single entry answer under `40359`, with the message in `details`:
 
 ## Linking a top-up
 
-When a credit is a further payment against an earlier one — the buyer was short, or paid the TCS separately — say so on the call that files:
+When the buyer was short, they can pay the rest as further payments. Link those payments to the short one with `top_up`, sent on the **short payment's own** call:
 
 ```json
 {
-  "fields": { "…": "…" },
-  "linked_payment_id": "PR6938527534",
-  "reason": "REMAINING_AMOUNT"
+  "top_up": ["PR6938527534", "PR2799500942"]
 }
 ```
 
 | Key | |
 |---|---|
-| `linked_payment_id` | The earlier payment this one tops up. Resolved against your own payments; a link we cannot resolve is refused. |
-| `reason` | `REMAINING_AMOUNT` — covering a shortfall on the amount to be settled. `TCS_PAYMENT` — paying the TCS separately. An audit label on the link. |
+| `top_up` | A list of the ids of the payments that top up **this** payment. Each is resolved against your own payments. |
 
-**A `reason` without a `linked_payment_id` is a `400`.** The reverse is fine: a link with no reason is just an unlabelled link.
+- **Send the full list every time.** An id you leave out is unlinked, and `[]` removes every link.
+- **It can go alone.** Once the verification details are on file for this payment, `top_up` is all you need to send. Nothing else has to be repeated.
+- **The link is declared by the short payment.** A top-up never declares it on its own call.
+- **All or nothing.** If any one id is refused, the whole call is refused and nothing changes.
+- **Membership is frozen once the group clears.** After that, the list can no longer change.
 
-Like `finalize`, these describe **the send**, not the payment. They are read by the call that actually files, and a call that only saves carries them nowhere — so send them with the call that completes the set.
+A link is refused, with a named error, when:
+
+- the short payment is not waiting for action, or is not short;
+- manual verification is not on for both the short payment and the top-up;
+- the short payment or the top-up was not collected by EximPe;
+- your account derives the amount to be settled;
+- the top-up is not waiting for action, or its counter is already posted;
+- the top-up belongs to another merchant;
+- the top-up is already in another group, or has top-ups of its own;
+- the top-up is the short payment itself.
+
+A top-up made through hosted checkout must carry a PAN equal to the short payment's PAN and, if its order has a purpose code, the same purpose code. A top-up that arrived by bank transfer to the virtual account must have a sender name that matches the remitter.
+
+<Note>
+  **A top-up payment is created like any LRS order.** For a payment made through hosted checkout, create the order the way you create any LRS order, and the buyer verifies the PAN at checkout. There is no separate endpoint for top-ups.
+</Note>
+
+<Note>
+  **The old `linked_payment_id` and `reason` keys are gone.** They are no longer read. Sending them has no effect, so use `top_up` instead.
+</Note>
+
+<Note>
+  **The Rs 25,00,000 limit applies to the principal of one remittance.** It counts the principal of a single payment, or of a payment together with its top-ups. A call that would take it above is refused with a named error. The USD 250,000 yearly limit is not enforced by us; the bank is the backstop.
+</Note>
 
 ## Partial sends are merged
 

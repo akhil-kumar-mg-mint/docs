@@ -2654,7 +2654,7 @@
                         "refusal_reason": {
                           "type": "string",
                           "nullable": true,
-                          "description": "Machine-readable code when we will not quote. `null` on a valid quote.",
+                          "description": "Machine-readable code when we will not quote. `null` on a valid quote. `lrs_remittance_cap_exceeded` when the principal of the remittance (one payment, or a payment with its top-ups) is above Rs 25,00,000.",
                           "example": null
                         }
                       }
@@ -3239,21 +3239,15 @@
                     "default": true,
                     "description": "Whether to file a complete set for verification. Never forces an incomplete set through."
                   },
-                  "linked_payment_id": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "The earlier payment this one tops up — the buyer was short, or paid the TCS separately. Resolved against your own payments; a link that cannot be resolved is refused. Read by the call that files, so send it with the call that completes the set. LRS only: a B2B-services payment has no top-up concept and ignores this key rather than refusing it.",
-                    "example": "PR6938527534"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "nullable": true,
-                    "enum": [
-                      "REMAINING_AMOUNT",
-                      "TCS_PAYMENT"
-                    ],
-                    "description": "Why the two payments are linked; an audit label on the link. `REMAINING_AMOUNT` — covering a principal shortfall. `TCS_PAYMENT` — paying the TCS separately. Only valid together with `linked_payment_id`. LRS only, like `linked_payment_id`: ignored on a B2B-services payment.",
-                    "example": "REMAINING_AMOUNT"
+                  "top_up": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "LRS only. The ids of the payments that top up this one, sent on the short payment's own call. Send the full list every time: an id left out is unlinked and `[]` removes every link. Once the details are on file it can be sent alone. Any refused id refuses the whole call. A B2B-services payment has no top-ups and ignores this key.",
+                    "example": [
+                      "PR2799500942"
+                    ]
                   }
                 }
               },
@@ -6487,6 +6481,11 @@
                   "failed"
                 ]
               },
+              "linked_primary_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "For an LRS top-up, the id of the short payment it is linked to; `null` otherwise. The status shown is the primary's."
+              },
               "message": {
                 "type": "string",
                 "nullable": true,
@@ -7709,6 +7708,12 @@
             ],
             "description": "The payment's own state — not a roll-up of the checklist. Sending closes once you have filed. Read it before you POST.",
             "example": "ACTION_REQUIRED"
+          },
+          "linked_primary_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "For an LRS top-up, the id of the short payment it is linked to; `null` otherwise. A linked top-up shows its primary's status.",
+            "example": "PR6938527534"
           },
           "business_model": {
             "type": "string",
