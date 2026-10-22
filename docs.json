@@ -445,7 +445,8 @@
                   "api-reference/v3/subscriptions/mandate-status",
                   "api-reference/v3/subscriptions/cancel-mandate",
                   "api-reference/v3/subscriptions/recurring-payment",
-                  "api-reference/v3/subscriptions/payments"
+                  "api-reference/v3/subscriptions/payments",
+                  "api-reference/v3/subscriptions/simulate-recurring-payment"
                 ]
               },
               {

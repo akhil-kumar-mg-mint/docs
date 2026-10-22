@@ -98,6 +98,10 @@ Yes, and not just the transfer. In sandbox you can fire each stage on demand:
 
 The last two need your sandbox account on the **Simulator** gateway. None of the three exist in production.
 
+### Can I test subscriptions without a real mandate?
+
+Yes, if your sandbox account is on the **Simulator** gateway. Approve or decline the mandate on the sandbox page the create response points to, then run each recurring debit on demand with [Simulate Recurring Payment](/api-reference/v3/subscriptions/simulate-recurring-payment) — success, a specific decline, or cancellation. See [Testing in sandbox](/integration-guide/v3/web-integration/subscription-upi-intent#testing-in-sandbox). None of it exists in production.
+
 ---
 
 ## Payments, Settlements & Refunds
