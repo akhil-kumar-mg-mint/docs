@@ -23,7 +23,7 @@ Two calls, in order:
 2. **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — tells you the full amount to ask the buyer for, inclusive of TCS and our fee. Ask for that figure, and the payment covers itself.
 
 <Note>
-  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_cents` measures a shortfall against.
+  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_rupees` measures a shortfall against.
 </Note>
 
 ## Once the money lands
