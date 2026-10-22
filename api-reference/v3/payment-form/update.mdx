@@ -1,0 +1,64 @@
+---
+title: 'Update Payment Form'
+description: 'Change a live payment form in place — price, validity, branding, the fields it collects — without moving its public URL.'
+openapi: 'PATCH /pg/forms/{uid}/'
+---
+
+## Overview
+
+```bash
+curl -X PATCH 'https://api-pacb-uat.eximpe.com/pg/forms/PF4829301756/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0' -H 'Content-Type: application/json' \
+  -d '{ "amount_cents": 300000, "valid_until": "2027-03-31T23:59:59Z" }'
+```
+
+Send only what changes. Anything you leave out keeps its current value — it is not reset to the field's create-time default.
+
+<Warning>
+  **`PATCH` only.** `PUT` on this path answers `405`, with the standard envelope and `error.code` `METHOD_NOT_ALLOWED`.
+</Warning>
+
+<Warning>
+  **`url_slug` cannot be changed, and saying so is not an error.** It is not part of the update body: send it anyway and the call answers `200` with the form untouched and nothing to tell you it was ignored. The public URL a form is born with is the URL it dies with — if you need a different one, create a second form and [deactivate](/api-reference/v3/payment-form/deactivate) this one. The old slug stays taken.
+</Warning>
+
+## What you can change
+
+Every create field except `url_slug`: the amount and whether it is fixed, `payment_for`, `description`, `type_of_goods` and `hs_code`, the redirect URLs, the validity window, `collect_name` / `collect_email` / `collect_phone`, `auto_generate_invoice`, contact and social links, `allowed_payment_methods`, `preferred_mop_type`, and the branding — including a new `logo`, which again needs `multipart/form-data`.
+
+The same validation runs as on create: an HS code is checked against the master whenever you change it, `physical_goods` still needs one, `preferred_mop_type` is still upper-case, and a form that is fixed-amount still needs an amount.
+
+<Warning>
+  **`preferred_mop_type` accepts more than it can pay.** Only `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET` and `QR` work. Patching a form to any other method name succeeds, and from that moment every payer submission against the form fails.
+</Warning>
+
+<Note>
+  **`amount_cents` has no upper bound you can rely on.** Payment forms are meant for amounts up to `1000000000` paise (₹10,000,000), but that ceiling is not checked on update. Bound it yourself.
+</Note>
+
+<Note>
+  **Changes are live immediately.** Payers already holding the link see the new settings on their next visit — including a new price. Time-box a price instead with `valid_from` / `valid_until` on a second form if that matters to you.
+</Note>
+
+## Pausing a form with `valid_until`
+
+Moving `valid_until` into the past is the reversible way to close a form.
+
+<Note>
+  **An out-of-window form `404`s the payer, not you.** Before `valid_from` and after `valid_until` the page at `/pay/<url_slug>/` answers `404` — the payer sees a not-found page, not an "expired" one — while the form keeps `is_valid: false` and stays listable, retrievable and patchable here. Move the date again and the page comes back. [Deactivation](/api-reference/v3/payment-form/deactivate) has no such return path.
+</Note>
+
+<Note>
+  **A deactivated merchant account closes every page at once.** The public page is gated on the collecting account being active as well as on the form, so if that account is closed or suspended all of its forms `404` for payers, with nothing changed on the forms themselves.
+</Note>
+
+## `is_active` is a one-way door
+
+The body accepts `is_active`, but only active forms resolve here in the first place. Setting it to `false` deactivates the form — the same outcome as [Deactivate](/api-reference/v3/payment-form/deactivate) — and from that moment every call against the form, including the `is_active: true` that would undo it, answers `404 ERR_FORM_001`.
+
+That is structural rather than a rule applied per endpoint: every Payment Forms action looks the form up through a queryset filtered to active forms, so the revival request never reaches the field it would set. Use `valid_until` for a pause you intend to lift.
+
+<Note>
+  **`X-Merchant-ID` is not read on this endpoint.** The form is reached by its `form_id`, scoped to the account your credentials identify. It is required only on [create](/api-reference/v3/payment-form/create) and optional on [list](/api-reference/v3/payment-form/list).
+</Note>
