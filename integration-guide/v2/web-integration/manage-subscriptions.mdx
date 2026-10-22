@@ -191,7 +191,7 @@ This step applies only to **ADHOC** subscriptions. For standard billing cycle su
 
 1. **Initiate Payment** — Call the recurring payment API with an optional `amount` and `reference_id`
 2. **Asynchronous Processing** — Payments will Made one day after the api is called.
-3. **Webhook Delivery** — The payment outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) is delivered via webhook, at which point the order and payment records are created in the system
+3. **Webhook Delivery** — The payment outcome is delivered via the [Payment Successful](/api-reference/v2/webhooks/payment-successful) or [Payment Failed](/api-reference/v2/webhooks/payment-failed) webhook, at which point the order and payment records are created in the system
 
 ### Sample Request
 
@@ -225,7 +225,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 ```
 
 <Note>
-  A `success` response means the payment was **initiated**, not captured. The actual payment outcome arrives asynchronously via webhooks (`SUBSCRIPTION_PAYMENT_SUCCESS`, `SUBSCRIPTION_PAYMENT_FAILED`, or `SUBSCRIPTION_PAYMENT_CANCELLED`).
+  A `success` response means the payment was **initiated**, not captured. The actual payment outcome arrives asynchronously by webhook: [`PAYMENT_SUCCESSFUL`](/api-reference/v2/webhooks/payment-successful) when the debit is captured, or [`PAYMENT_FAILED`](/api-reference/v2/webhooks/payment-failed) when it fails or is cancelled.
 </Note>
 
 ### Constraints
