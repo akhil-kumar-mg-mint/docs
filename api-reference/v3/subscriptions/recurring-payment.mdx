@@ -15,7 +15,7 @@ A `409` means the subscription's own state refused the charge — there is no ac
 </Info>
 
 <Info>
-For methods that use a pre-debit notification, `invoice_display_number` is required (the value sent in the pre-debit notification) and the charge needs an active pre-debit notification for today.
+For methods that use a pre-debit notification, the charge needs an active pre-debit notification for today.
 </Info>
 
 ### Path Parameters
@@ -28,10 +28,6 @@ For methods that use a pre-debit notification, `invoice_display_number` is requi
 
 <ParamField body="amount" type="number">
   Amount to charge for this execution. Defaults to the subscription's `billing_amount`, and must not exceed it. With a pre-debit notification it must also not exceed the notified amount.
-</ParamField>
-
-<ParamField body="invoice_display_number" type="string">
-  Your display number for this charge. Required for methods that use a pre-debit notification; not needed otherwise.
 </ParamField>
 
 <ParamField body="reference_id" type="string">
