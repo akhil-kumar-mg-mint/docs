@@ -203,7 +203,8 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   -H "X-Merchant-ID: <your-merchant-id>" \
   -H "X-API-Version: 2.0.0" \
   -d '{
-    "amount": 500.00
+    "amount": 500.00,
+    "reference_id": "RENEWAL-2026-11-001"
   }'
 ```
 
@@ -215,7 +216,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
   "message": "Recurring payment triggered successfully",
   "data": {
     "subscription_id": "sub_abc123",
-    "payment_id": "REC-sub_abc123-a1b2c3d4",
+    "payment_id": "RENEWAL-2026-11-001",
     "payment_amount": 500.00,
     "status": "success",
     "message": "ADHOC recurring payment initiated successfully"

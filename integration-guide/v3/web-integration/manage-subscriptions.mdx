@@ -173,7 +173,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
   -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
   -H 'X-API-Version: 3.0.0' \
   -d '{
-  "amount": 500.00
+  "amount": 500.00,
+  "reference_id": "RENEWAL-2026-11-001"
 }'
 ```
 
@@ -183,7 +184,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
   "message": "Recurring payment triggered successfully",
   "data": {
     "subscription_id": "SUB7989707770",
-    "payment_id": "REC-SUB7989707770-a1b2c3d4",
+    "payment_id": "RENEWAL-2026-11-001",
     "payment_amount": 500.00,
     "status": "success",
     "message": "ADHOC recurring payment initiated successfully"
