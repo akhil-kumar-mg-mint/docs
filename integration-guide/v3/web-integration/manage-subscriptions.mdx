@@ -164,7 +164,7 @@ The subscription must have an active mandate first. Then:
 
 1. **Initiate** — call the API with an optional `amount` and `reference_id`
 2. **Wait** — the debit is processed asynchronously, typically the day after the call
-3. **Webhook** — the outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) arrives by webhook, and the order and payment records are created at that point
+3. **Webhook** — the outcome arrives by the [Payment Successful](/api-reference/v3/webhooks/payment-successful) or [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhook, and the order and payment records are created at that point
 
 ```bash cURL
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/recurring_payment/' \
@@ -173,7 +173,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
   -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
   -H 'X-API-Version: 3.0.0' \
   -d '{
-  "amount": 500.00
+  "amount": 500.00,
+  "reference_id": "RENEWAL-2026-11-001"
 }'
 ```
 
@@ -183,7 +184,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
   "message": "Recurring payment triggered successfully",
   "data": {
     "subscription_id": "SUB7989707770",
-    "payment_id": "REC-SUB7989707770-a1b2c3d4",
+    "payment_id": "RENEWAL-2026-11-001",
     "payment_amount": 500.00,
     "status": "success",
     "message": "ADHOC recurring payment initiated successfully"
@@ -192,7 +193,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
 ```
 
 <Warning>
-  **`success` means initiated, not captured.** The real outcome arrives later by webhook — `SUBSCRIPTION_PAYMENT_SUCCESS`, `SUBSCRIPTION_PAYMENT_FAILED`, or `SUBSCRIPTION_PAYMENT_CANCELLED`. Do not release goods on the API response.
+  **`success` means initiated, not captured.** The real outcome arrives later by webhook — [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) when the debit is captured, or [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) when it fails or is cancelled. Do not release goods on the API response.
 </Warning>
 
 If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged.
