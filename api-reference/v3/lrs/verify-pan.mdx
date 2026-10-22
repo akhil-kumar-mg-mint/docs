@@ -3,3 +3,68 @@ title: 'Verify PAN'
 description: "Verify a buyer's PAN against income-tax records. A verified PAN is the gateway to the LRS buyer flow."
 openapi: 'POST /pg/pan/verify/'
 ---
+
+## Overview
+
+Checks a PAN against income-tax records and records the verdict. [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) calls this inline for the remitter's PAN when it is not already verified, so most integrations never call it directly — it exists for verifying a PAN ahead of time, or re-checking one after fixing the buyer's details.
+
+A repeat check of an already-verified PAN with the same name and date of birth returns the stored verdict without re-checking. A new PAN, changed details, or a prior failure triggers a fresh check.
+
+## Sandbox testing
+
+<Warning>
+  **Simulator merchants only.** On a merchant whose payment gateway is **Simulator**, this call never runs a real PAN check — the PAN and name/dob you send select a canned outcome instead, both here and inside [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details#sandbox-testing)'s inline check. On every other gateway this endpoint always runs the real check, in every environment including UAT and staging — there is no other sandbox mode for it.
+</Warning>
+
+A PAN outside the table below always verifies clean, regardless of name or date of birth, so arbitrary test data works without dodging a magic value:
+
+| `pan` | Result |
+|---|---|
+| `SIMUL0000I` | Invalid PAN |
+| `SIMUL0000N` | Valid but not an individual PAN — LRS requires an individual |
+| `SIMUL0000O` | Valid individual PAN, but inoperative (PAN–Aadhaar not linked) |
+| `SIMUL0000E` | Verification service unreachable — the call fails the same way a genuine outage would |
+| anything else | Valid, operative, individual PAN — falls through to the name/dob check below |
+
+Once the PAN itself passes, `name` and `dob` decide the rest:
+
+| Value | Result |
+|---|---|
+| `name` is exactly `SIMULATE MISMATCH` | Name does not match |
+| `dob` is `1900-01-01` | Date of birth does not match |
+| anything else | Verified |
+
+These two checks are independent of each other and of the PAN table above — a magic PAN and a magic name/dob can combine, but a magic PAN always wins since PAN-level checks run first (matching the real evaluation order below).
+
+## What fails first
+
+Only the first failing check is ever reported:
+
+<Steps>
+  <Step title="Is the PAN itself valid">
+    Malformed, or not found in income-tax records.
+  </Step>
+  <Step title="Is it an individual PAN">
+    LRS is a resident-individual scheme — a company, trust, firm or other non-individual PAN never passes, however correct the details are.
+  </Step>
+  <Step title="Is it operative">
+    A PAN not linked to Aadhaar is inoperative, and a bank will reject it downstream regardless of what we report here.
+  </Step>
+  <Step title="Does the name match">
+    Compared against income-tax records.
+  </Step>
+  <Step title="Does the date of birth match">
+    Compared against income-tax records.
+  </Step>
+</Steps>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Submit Verification Details" icon="paper-plane" href="/api-reference/v3/lrs/submit-verification-details">
+    Calls this check inline for the remitter's PAN.
+  </Card>
+  <Card title="Get Verification Requirements" icon="list-check" href="/api-reference/v3/lrs/verification-requirements">
+    What a payment still needs before it can be submitted.
+  </Card>
+</CardGroup>
