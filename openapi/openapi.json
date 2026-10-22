@@ -9543,12 +9543,20 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
             "type": "string",
             "description": "Invoice display number for the recurring payment"
+          },
+          "reference_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "example": "ORDER-123456",
+            "description": "Your reference for this charge, used as the recurring order's reference_id. Letters, numbers and hyphens only. Must be unique across your orders, including failed ones. If omitted, one is generated."
           }
         }
       },
@@ -12896,12 +12904,20 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
             "type": "string",
             "description": "Invoice display number for the recurring payment"
+          },
+          "reference_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "example": "ORDER-123456",
+            "description": "Your reference for this charge, used as the debit's payment_id and its order's reference_id. Letters, numbers and hyphens only. Must be unique across your orders, including failed ones. If omitted, one is generated with a REC- prefix."
           }
         }
       },
@@ -16145,12 +16161,20 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "description": "Amount to charge for this execution, in decimal format (e.g., \"100.00\"). This is the amount debited. Defaults to the subscription's billing_amount and must not exceed it.",
             "pattern": "^\\d+\\.\\d{2}$"
           },
           "invoice_display_number": {
             "type": "string",
             "description": "Invoice display number for the recurring payment"
+          },
+          "reference_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[A-Za-z0-9-]+$",
+            "example": "ORDER-123456",
+            "description": "Your reference for this charge, used as the debit's payment_id and its order's reference_id. Letters, numbers and hyphens only. Must be unique across your orders, including failed ones. If omitted, one is generated with a REC- prefix."
           }
         }
       },

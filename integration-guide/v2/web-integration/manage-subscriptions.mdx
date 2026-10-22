@@ -189,7 +189,7 @@ This step applies only to **ADHOC** subscriptions. For standard billing cycle su
 
 ### How Adhoc Payments Work
 
-1. **Initiate Payment** — Call the recurring payment API with an optional `amount`
+1. **Initiate Payment** — Call the recurring payment API with an optional `amount` and `reference_id`
 2. **Asynchronous Processing** — Payments will Made one day after the api is called.
 3. **Webhook Delivery** — The payment outcome (`SUCCESS`, `FAILED`, or `CANCELLED`) is delivered via webhook, at which point the order and payment records are created in the system
 
@@ -231,6 +231,7 @@ curl -X POST "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/recurring_pay
 
 - Only **ADHOC** billing cycle subscriptions are supported
 - If `amount` is provided, it must not exceed the subscription's `billing_amount`
+- If `reference_id` is provided, it must be 1–50 letters, numbers and hyphens, unique across your orders. It is used as the debit's `payment_id`; omit it and one is generated with a `REC-` prefix
 
 For the full request and response schema, see the [**Trigger Recurring Payment**](https://docs.eximpe.com/api-reference/v2/subscriptions/recurring-payment) endpoint in the API Reference.
 
@@ -258,7 +259,7 @@ curl -X GET "https://api-pacb.eximpe.com/pg/subscriptions/SUB_xxx/payments/" \
     {
       "payment_id": "dpr_abc123",
       "order_id": "ord_xyz789",
-      "reference_id": "SUBPAY-sub123-cf456",
+      "reference_id": "REC-SUB7989707770-a1b2c3d4",
       "amount": 1000.00,
       "currency": "INR",
       "status": "CAPTURED",
