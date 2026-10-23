@@ -159,7 +159,7 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
 | `400` | `ERR_ORDER_002` | `preferred_payment_method` is not a payment method | `{"preferred_payment_method": "Invalid preferred payment method"}` |
 | `400` | `ERR_ORDER_002` | Your account's payment links cannot collect `preferred_payment_method` | `{"preferred_payment_method": "Credit card is not supported for payment links on this account"}` |
 | `400` | `ERR_ORDER_002` | The payment method is not enabled on your account | `{"mop_type": "CREDIT_CARD is not enabled for this account."}` |
-| `400` | `ERR_ORDER_002` | `purpose_code` is unknown or inactive, or not enabled on your account | A string, not an object: `"Invalid Purpose code given."` or `"Purpose code is not enabled for this merchant."` |
+| `400` | `ERR_ORDER_002` | `purpose_code` is unknown or inactive, or not enabled on your account | `{"purpose_code": "Invalid Purpose code given."}` or `{"purpose_code": "Purpose code is not enabled for this merchant."}` |
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | Credentials are missing or wrong, or a PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
 | `403` | — | Payment links are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit payment links | `{"collection_mode": "PAYMENT_LINKS is not enabled for this account."}` |
