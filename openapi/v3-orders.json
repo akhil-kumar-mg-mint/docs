@@ -210,7 +210,9 @@
                       "error": {
                         "code": "ERR_ORDER_002",
                         "message": "Validation error",
-                        "details": "Purpose code is not enabled for this merchant."
+                        "details": {
+                          "purpose_code": "Purpose code is not enabled for this merchant."
+                        }
                       }
                     }
                   },
