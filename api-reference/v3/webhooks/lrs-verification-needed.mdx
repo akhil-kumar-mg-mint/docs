@@ -401,7 +401,7 @@ Each refusal is reported under the code you collected it under, so a fix goes ba
 | `derived_amount_credit_too_small` | The credit is too small to settle. | The buyer has to send a larger amount. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
 
-`outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. The buyer tops up; link the top-up with [`linked_payment_id`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up).
+`outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. The buyer tops up; link the top-up with [`top_up`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up).
 
 ## When a review sends it back
 

@@ -105,7 +105,7 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 ## When things go wrong
 
-**The buyer paid too little.** The payment waits, and the `outstanding` entry on the event names the shortfall. Either have the buyer transfer the difference and link that credit as a top-up with `linked_payment_id`, or declare a smaller `amount_to_be_settled` for what actually arrived and submit again.
+**The buyer paid too little.** The payment waits, and the `outstanding` entry on the event names the shortfall. Either have the buyer pay the difference and link that payment as a top-up with `top_up`, or declare a smaller `amount_to_be_settled` for what actually arrived and submit again.
 
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 
