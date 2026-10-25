@@ -302,6 +302,7 @@ When the buyer was short, they can pay the rest as further payments. Link those 
 - **Send the full list every time.** An id you leave out is unlinked, and `[]` removes every link. Leave `top_up` out entirely and the links stay as they are. At most 20 ids per call.
 - **It can go alone.** Once the verification details are on file for this payment, `top_up` is all you need to send. Nothing else has to be repeated.
 - **The link is declared by the short payment.** A top-up never declares it on its own call.
+- **It is read when the call files.** With `finalize: false`, or while the set is still incomplete, `top_up` is not applied.
 - **All or nothing.** If any one id is refused, the whole call is refused and nothing changes.
 - **The group clears on the call that covers what is owed** — principal, our fee, the GST on it and the TCS, counting the short payment and every top-up. Nothing else needs to be sent. A credit that overpays does not block it; the excess is refunded, newest top-up first.
 - **Membership is frozen once the group clears** (`ERR_LRS_MERCHANT_043`). After that, the list can no longer change.
@@ -334,11 +335,7 @@ A top-up made through hosted checkout must carry a PAN equal to the short paymen
 </Note>
 
 <Note>
-  **The old `linked_payment_id` and `reason` keys are gone.** They are no longer read. Sending them has no effect, so use `top_up` instead.
-</Note>
-
-<Note>
-  **The Rs 25,00,000 limit applies to the principal of one remittance** — the principal declared on the short payment's call. Top-ups pay toward it and do not add to it. A principal above it is refused with `ERR_LRS_MERCHANT_052`, and [Quote LRS Amount](/api-reference/v3/lrs/quote) returns `refusal_reason: "lrs_remittance_cap_exceeded"`. The USD 250,000 yearly limit is not enforced by us; the bank is the backstop.
+  **The Rs 25,00,000 limit applies to the principal of one remittance** — the principal declared on the short payment's call. Top-ups pay toward it and do not add to it. A principal above it is refused with `ERR_LRS_MERCHANT_052`, and [Quote LRS Amount](/api-reference/v3/lrs/quote) returns `refusal_reason: "lrs_remittance_cap_exceeded"`.
 </Note>
 
 ### Refunding payments in a top-up group
