@@ -3,3 +3,34 @@ title: 'Quote LRS Amount'
 description: 'Quote the TCS due and the all-in total a buyer pays for a proposed LRS remittance. Requires a verified PAN.'
 openapi: 'POST /pg/lrs/quote/'
 ---
+
+## Errors
+
+Every refusal uses the standard envelope and carries `40359` `Invalid LRS request.` — a malformed body and a refused quote alike. `details` is keyed by the request field the refusal is about, the same way [Create Order](/api-reference/v3/order/create) keys a bad field, so read the key and fix that field before retrying.
+
+| `details` | When |
+|---|---|
+| `{"purpose_code": "Invalid Purpose code given."}` | `purpose_code` is unknown or inactive. |
+| `{"purpose_code": "Purpose code is not enabled for this merchant."}` | `purpose_code` is valid but not enabled on your account. |
+| `{"purpose_code": "This purpose code is not enabled for LRS on this account."}` | `purpose_code` is enabled, but not for LRS. |
+| `{"purpose_code": "The S0306 travel type (tour package or other travel) is not configured for this account, ..."}` | `S0306` is priced by your account's travel type, and none is set. Contact EximPe. |
+| `{"pan": "PAN is not verified. Verify the PAN before making an LRS request."}` | Call [Verify PAN](/api-reference/v3/lrs/verify-pan) first. |
+| `{"payment_id": "Payment is not in a state that accepts verification details. Payment not found."}` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. |
+| A string: `"The amount to be settled is derived from the credit for this merchant, so there is no amount to quote."` | Your account settles an amount derived from the credit, so there is nothing to quote. This is about the account, not a field. |
+
+```json Purpose code not enabled
+{
+  "success": false,
+  "error": {
+    "code": 40359,
+    "message": "Invalid LRS request.",
+    "details": {
+      "purpose_code": "Purpose code is not enabled for this merchant."
+    }
+  }
+}
+```
+
+<Note>
+  **Branch on the `details` key, not on `code`.** `code` is `40359` for every refusal; the key names the field to fix.
+</Note>
