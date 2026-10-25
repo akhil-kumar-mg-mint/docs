@@ -137,7 +137,7 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
 </Note>
 
 <Note>
-  **`linked_payment_id` and `reason` are ignored here.** The shared request body accepts them, but they mark a payment as a top-up of an earlier one — an LRS concept. B2B services has none, so both are read and discarded rather than refused. Do not send them expecting a link.
+  **`top_up` is ignored here.** The shared request body accepts it, but it links further payments to a short one — an LRS concept. B2B services has none, so the field is read and discarded rather than refused. Do not send it expecting a link.
 </Note>
 
 ## Partial sends are merged

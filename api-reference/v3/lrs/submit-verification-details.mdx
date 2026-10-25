@@ -287,24 +287,66 @@ The rules on a single entry answer under `40359`, with the message in `details`:
 
 ## Linking a top-up
 
-When a credit is a further payment against an earlier one — the buyer was short, or paid the TCS separately — say so on the call that files:
+When the buyer was short, they can pay the rest as further payments. Link those payments to the short one with `top_up`, sent on the **short payment's own** call:
 
 ```json
 {
-  "fields": { "…": "…" },
-  "linked_payment_id": "PR6938527534",
-  "reason": "REMAINING_AMOUNT"
+  "top_up": ["PR6938527534", "PR2799500942"]
 }
 ```
 
 | Key | |
 |---|---|
-| `linked_payment_id` | The earlier payment this one tops up. Resolved against your own payments; a link we cannot resolve is refused. |
-| `reason` | `REMAINING_AMOUNT` — covering a shortfall on the amount to be settled. `TCS_PAYMENT` — paying the TCS separately. An audit label on the link. |
+| `top_up` | A list of the ids of the payments that top up **this** payment. Each is resolved against your own payments. |
 
-**A `reason` without a `linked_payment_id` is a `400`.** The reverse is fine: a link with no reason is just an unlabelled link.
+- **Send the full list every time.** An id you leave out is unlinked, and `[]` removes every link. Leave `top_up` out entirely and the links stay as they are. At most 20 ids per call.
+- **It can go alone.** Once the verification details are on file for this payment, `top_up` is all you need to send. Nothing else has to be repeated.
+- **The link is declared by the short payment.** A top-up never declares it on its own call.
+- **It is read when the call files.** With `finalize: false`, or while the set is still incomplete, `top_up` is not applied.
+- **All or nothing.** If any one id is refused, the whole call is refused and nothing changes.
+- **The group clears on the call that covers what is owed** — principal, our fee, the GST on it and the TCS, counting the short payment and every top-up. Nothing else needs to be sent. A credit that overpays does not block it; the excess is refunded, newest top-up first.
+- **Membership is frozen once the group clears** (`ERR_LRS_MERCHANT_043`). After that, the list can no longer change.
 
-Like `finalize`, these describe **the send**, not the payment. They are read by the call that actually files, and a call that only saves carries them nowhere — so send them with the call that completes the set.
+A link is refused, with a named error, when:
+
+- the short payment has no verification details on file yet (`ERR_LRS_MERCHANT_044`);
+- the short payment is itself a top-up of another payment (`ERR_LRS_MERCHANT_045`);
+- the short payment is not waiting for action, or is not short;
+- manual verification is not on for both the short payment and the top-up;
+- the short payment or the top-up was not collected by EximPe;
+- your account derives the amount to be settled;
+- the top-up is not waiting for action, or its counter is already posted;
+- the top-up belongs to another merchant;
+- the top-up is already in another group, or has top-ups of its own (`ERR_LRS_MERCHANT_037`, `ERR_LRS_MERCHANT_038`);
+- the top-up is the short payment itself.
+
+A top-up made through hosted checkout must carry a PAN equal to the short payment's PAN and, if its order has a purpose code, the same purpose code. A top-up that arrived by bank transfer to the virtual account must have a sender name that matches the remitter, otherwise the link is refused with `40361`. A hosted-checkout top-up with a different PAN or purpose code is refused with `ERR_LRS_MERCHANT_041` or `ERR_LRS_MERCHANT_042`.
+
+<Note>
+  **A top-up payment is created like any LRS order.** For a payment made through hosted checkout, create the order the way you create any LRS order, and the buyer verifies the PAN at checkout. The order must carry an LRS purpose code and business model. Otherwise there is no PAN check at checkout, and the link is refused for lack of a verified PAN (`ERR_LRS_MERCHANT_040`). There is no separate endpoint for top-ups.
+</Note>
+
+<Note>
+  **A linked top-up cannot be submitted on its own** (`ERR_LRS_MERCHANT_047`). Remove it from the short payment's `top_up` list first.
+</Note>
+
+<Note>
+  **A linked top-up shows its primary's status.** Reading it returns the primary's settlement status and message, plus `linked_primary_payment_id`. The verification webhooks (`LRS_VERIFICATION_NEEDED` and the payment-details-missing event) are sent for the primary only, not for its top-ups.
+</Note>
+
+<Note>
+  **The Rs 25,00,000 limit applies to the principal of one remittance** — the principal declared on the short payment's call. Top-ups pay toward it and do not add to it. A principal above it is refused with `ERR_LRS_MERCHANT_052`, and [Quote LRS Amount](/api-reference/v3/lrs/quote) returns `refusal_reason: "lrs_remittance_cap_exceeded"`.
+</Note>
+
+### Refunding payments in a top-up group
+
+Refunds follow the group's state. A refusal comes back as a `400` with code `ERR_REFUND_002` and the reason in `details`.
+
+- **Before the group clears**, refunding a top-up refunds it and unlinks it from the short payment.
+- **After the group clears**, a top-up cannot be refunded on its own (`ERR_LRS_MERCHANT_049`).
+- **A short payment with top-ups can only be refunded in full** (`ERR_LRS_MERCHANT_050`). A full refund also refunds every top-up, each to its own source.
+- **Once the group has settled**, none of its payments can be refunded (`ERR_LRS_MERCHANT_051`).
+- **If the group is rejected**, every credit in it is refunded.
 
 ## Partial sends are merged
 
@@ -357,7 +399,7 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
     "refusal": {
       "reason": null,
       "missing": ["outstanding"],
-      "outstanding_cents": 73750
+      "outstanding_rupees": "737.50"
     }
   }
 }
@@ -391,7 +433,7 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
   |---|---|
   | `reason` | The headline verdict, upper-case — or `null` when there is no verdict beyond the items in `missing`. |
   | `missing` | What verification still wants, under the tokens listed below. These are not checklist codes. |
-  | `outstanding_cents` | The shortfall still owed — principal plus MDR, GST and TCS, less what was received — in **paise**. `0` when the refusal is not about money. The amount received is the bank credit for a payment made into a virtual account, and the order amount otherwise. |
+  | `outstanding_rupees` | The shortfall still owed — principal plus MDR, GST and TCS, less what was received — as a rupee string with 2 decimals, e.g. `"737.50"`. `"0.00"` when the refusal is not about money. The amount received is the bank credit for a payment made into a virtual account, and the order amount otherwise. |
 
   `reason` is one of:
 
@@ -402,13 +444,13 @@ Three keys, whatever you sent — and a fourth, `refusal`, on the one response t
   | `PAN_NOT_VERIFIED` | The remitter's PAN is unverified, and could not be verified now. |
   | `PAN_NAME_MISMATCH` | The buyer named on the order is not the PAN's registered holder — the verification vendor's verdict. |
   | `SENDER_NAME_MISMATCH` | The same two names, judged by our own fuzzy match rather than the vendor's. |
-  | `null` | No headline verdict — `missing` and `outstanding_cents` are the whole story. |
+  | `null` | No headline verdict — `missing` and `outstanding_rupees` are the whole story. |
 
   Both name mismatches mean the buyer name and the PAN name disagree; correct whichever is wrong and send again.
 
   `missing` uses these tokens: `purpose_code`, `remitter.pan`, `declarations`, `primary_person`, `tcs`, `outstanding` (a shortfall), `derived_amount_credit_too_small` (the credit is too small to settle), and `documents.<type>` for each document still wanted — `documents.passport`, `documents.offer_letter`, and so on.
 
-  The purpose-code and PAN verdicts are reached before anything else is looked at, so each carries exactly one entry in `missing` and `outstanding_cents: 0`. Only `SENDER_NAME_MISMATCH` and a `null` reason can carry a shortfall, or more than one entry.
+  The purpose-code and PAN verdicts are reached before anything else is looked at, so each carries exactly one entry in `missing`, and `outstanding_rupees` is `"0.00"`. Only `SENDER_NAME_MISMATCH` and a `null` reason can carry a shortfall, or more than one entry.
 
   The same verdict also arrives as [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed#after-a-submit-that-did-not-pass).
 </ParamField>

@@ -2654,7 +2654,7 @@
                         "refusal_reason": {
                           "type": "string",
                           "nullable": true,
-                          "description": "Machine-readable code when we will not quote. `null` on a valid quote.",
+                          "description": "Machine-readable code when we will not quote. `null` on a valid quote. `lrs_remittance_cap_exceeded` when the principal of the remittance declared for one remittance is above Rs 25,00,000. Top-ups pay toward it and do not add to it.",
                           "example": null
                         }
                       }
@@ -3113,7 +3113,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in paise (`outstanding_cents`). It is absent on every other response, and it arises on any payment whose complete set went to a verification step and was not filed.\n\n**The settling merchant is derived from the payment**, not from the calling credential — the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) · [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs — PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** — the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in rupees (`outstanding_rupees`). It is absent on every other response, and it arises on any payment whose complete set went to a verification step and was not filed.\n\n**The settling merchant is derived from the payment**, not from the calling credential — the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "LRS"
         ],
@@ -3239,21 +3239,15 @@
                     "default": true,
                     "description": "Whether to file a complete set for verification. Never forces an incomplete set through."
                   },
-                  "linked_payment_id": {
-                    "type": "string",
-                    "nullable": true,
-                    "description": "The earlier payment this one tops up — the buyer was short, or paid the TCS separately. Resolved against your own payments; a link that cannot be resolved is refused. Read by the call that files, so send it with the call that completes the set. LRS only: a B2B-services payment has no top-up concept and ignores this key rather than refusing it.",
-                    "example": "PR6938527534"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "nullable": true,
-                    "enum": [
-                      "REMAINING_AMOUNT",
-                      "TCS_PAYMENT"
-                    ],
-                    "description": "Why the two payments are linked; an audit label on the link. `REMAINING_AMOUNT` — covering a principal shortfall. `TCS_PAYMENT` — paying the TCS separately. Only valid together with `linked_payment_id`. LRS only, like `linked_payment_id`: ignored on a B2B-services payment.",
-                    "example": "REMAINING_AMOUNT"
+                  "top_up": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "LRS only. The ids of the payments that top up this one, sent on the short payment's own call. Send the full list every time: an id left out is unlinked and `[]` removes every link. Once the details are on file it can be sent alone. Any refused id refuses the whole call. A B2B-services payment has no top-ups and ignores this key.",
+                    "example": [
+                      "PR2799500942"
+                    ]
                   }
                 }
               },
@@ -3332,7 +3326,7 @@
                           "required": [
                             "reason",
                             "missing",
-                            "outstanding_cents"
+                            "outstanding_rupees"
                           ],
                           "properties": {
                             "reason": {
@@ -3346,7 +3340,7 @@
                                 "SENDER_NAME_MISMATCH",
                                 null
                               ],
-                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` — the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` — it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` — the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` — the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `null` — no headline verdict; `missing` and `outstanding_cents` are the whole story.",
+                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` — the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` — it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` — the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` — the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `null` — no headline verdict; `missing` and `outstanding_rupees` are the whole story.",
                               "example": "PURPOSE_CODE_NOT_ALLOWED"
                             },
                             "missing": {
@@ -3359,10 +3353,10 @@
                                 "purpose_code"
                               ]
                             },
-                            "outstanding_cents": {
-                              "type": "integer",
-                              "description": "The shortfall still owed on the payment — principal plus MDR, GST and TCS, less what was received — in paise. The fees come from the account the payment settles to, so a PSP's payments are quoted at the sub-merchant's rate. `0` when the refusal is not about money, which is every verdict except `SENDER_NAME_MISMATCH` and a null reason.",
-                              "example": 0
+                            "outstanding_rupees": {
+                              "type": "string",
+                              "description": "The shortfall still owed on the payment — principal plus MDR, GST and TCS, less what was received — as a rupee string with 2 decimals, e.g. `737.50`. The fees come from the account the payment settles to, so a PSP's payments are quoted at the sub-merchant's rate. `0.00` when the refusal is not about money, which is every verdict except `SENDER_NAME_MISMATCH` and a null reason.",
+                              "example": "0.00"
                             }
                           }
                         }
@@ -3416,7 +3410,7 @@
                           "missing": [
                             "outstanding"
                           ],
-                          "outstanding_cents": 73750
+                          "outstanding_rupees": "737.50"
                         }
                       }
                     }
@@ -6487,6 +6481,11 @@
                   "failed"
                 ]
               },
+              "linked_primary_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "For an LRS top-up, the id of the short payment it is linked to; `null` otherwise. The status shown is the primary's."
+              },
               "message": {
                 "type": "string",
                 "nullable": true,
@@ -7709,6 +7708,12 @@
             ],
             "description": "The payment's own state — not a roll-up of the checklist. Sending closes once you have filed. Read it before you POST.",
             "example": "ACTION_REQUIRED"
+          },
+          "linked_primary_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "For an LRS top-up, the id of the short payment it is linked to; `null` otherwise. A linked top-up shows its primary's status.",
+            "example": "PR6938527534"
           },
           "business_model": {
             "type": "string",

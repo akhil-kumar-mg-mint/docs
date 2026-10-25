@@ -23,7 +23,7 @@ Two calls, in order:
 2. **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — tells you the full amount to ask the buyer for, inclusive of TCS and our fee. Ask for that figure, and the payment covers itself.
 
 <Note>
-  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_cents` measures a shortfall against.
+  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_rupees` measures a shortfall against.
 </Note>
 
 ## Once the money lands
@@ -53,7 +53,7 @@ If you ever need the whole picture rather than just what changed — you missed 
 | What happened | What to do |
 | :--- | :--- |
 | The PAN won't verify | Resolve it with the buyer before you quote — nothing downstream works until it passes |
-| The buyer paid too little | Have them transfer the shortfall and link it as a top-up, or declare a smaller amount for what actually arrived |
+| The buyer paid too little | Have them pay the shortfall and link it with `top_up` on the short payment's verification call, or declare a smaller amount for what actually arrived |
 | Something is still missing | Send just those fields or documents — what you already sent is kept |
 | A complete set failed our checks | Fix what the event names and send again — it's usually the PAN or the sender's name not matching |
 | The buyer is refunded in full | The payment moves to `NOT_APPLICABLE` and sending is closed. Any LRS limit it counted against is released once the refund completes |
