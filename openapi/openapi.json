@@ -6856,7 +6856,14 @@
                 ],
                 "properties": {
                   "action": {
-                    "$ref": "#/components/schemas/v2_ChargebackActionType"
+                    "type": "string",
+                    "enum": [
+                      "accept",
+                      "contest",
+                      "partial_accept"
+                    ],
+                    "example": "contest",
+                    "description": "`accept`: accept the chargeback in full. `contest`: dispute it with evidence. `partial_accept`: accept part of the disputed amount."
                   },
                   "condition": {
                     "type": "string",
@@ -6865,26 +6872,37 @@
                   },
                   "amount": {
                     "type": "string",
-                    "description": "`partial_accept` only, and required there: the amount you accept, less than the disputed amount. Two decimals.",
-                    "example": "1000.00"
-                  },
-                  "fields[product_details]": {
-                    "type": "string",
-                    "description": "One part per field of the chosen condition, named `fields[<name>]` with the names from Get Chargeback Actions: text for a text field, `true`/`false` for a true/false field, a file for a document. (example of a text field)",
-                    "example": "1 x Blue widget, order ORDER-10422"
-                  },
-                  "fields[customer_tried_to_cancel]": {
-                    "type": "string",
-                    "enum": [
-                      "true",
-                      "false"
-                    ],
-                    "description": "Example of a true/false field."
-                  },
-                  "fields[proof_of_delivery]": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Example of a document."
+                    "description": "`partial_accept` only, and required there: the amount you accept, less than the disputed amount. Two decimals."
+                  }
+                },
+                "description": "Plus one `fields[<name>]` part per field of the chosen condition, with the names from Get Chargeback Actions: the text for a text field, `true` or `false` for a true/false field, and the file for a document. See the request examples."
+              },
+              "examples": {
+                "contest": {
+                  "summary": "Contest with evidence",
+                  "value": {
+                    "action": "contest",
+                    "condition": "product_delivered",
+                    "fields[product_details]": "1 x Blue widget, order ORDER-10422",
+                    "fields[customer_tried_to_cancel]": "false",
+                    "fields[proof_of_delivery]": "@signed-pod.pdf"
+                  }
+                },
+                "partial_accept": {
+                  "summary": "Partially accept",
+                  "value": {
+                    "action": "partial_accept",
+                    "condition": "partially_delivered",
+                    "amount": "1000.00",
+                    "fields[remarks]": "2 of 3 items delivered",
+                    "fields[supporting_document]": "@delivery-note.pdf"
+                  }
+                },
+                "accept": {
+                  "summary": "Accept",
+                  "value": {
+                    "action": "accept",
+                    "condition": "customer_cancelled"
                   }
                 }
               }
