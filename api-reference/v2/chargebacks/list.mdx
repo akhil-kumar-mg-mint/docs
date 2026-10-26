@@ -1,0 +1,7 @@
+---
+title: 'List Chargebacks'
+description: 'List chargebacks raised on your payments, filtered by status, payment, order or date.'
+openapi: 'openapi/openapi.json GET /pg/chargebacks/'
+---
+
+Use `status=NEW` (and `PENDING_RESPONSE`, `INSUFFICIENT_DOCUMENT`) to find chargebacks still waiting on you, or rely on the [`DISPUTE_UPDATED`](/api-reference/v2/webhooks/dispute-updated) webhook to hear about each one as it is raised.

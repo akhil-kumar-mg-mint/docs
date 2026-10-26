@@ -1,12 +1,12 @@
 ---
 title: 'Respond to Chargeback'
 description: 'Accept, contest or partially accept a chargeback, with the evidence its condition takes.'
-openapi: 'POST /pg/chargebacks/{chargeback_id}/respond/'
+openapi: 'openapi/openapi.json POST /pg/chargebacks/{chargeback_id}/respond/'
 ---
 
 ## Sending an answer
 
-Send the `action` and `condition` you picked from [Get Chargeback Actions](/api-reference/v3/chargebacks/actions), plus one `fields[<name>]` part per field of that condition:
+Send the `action` and `condition` you picked from [Get Chargeback Actions](/api-reference/v2/chargebacks/actions), plus one `fields[<name>]` part per field of that condition:
 
 - **Text fields:** the text.
 - **True/false fields:** `true` or `false`.
@@ -17,7 +17,7 @@ Send the `action` and `condition` you picked from [Get Chargeback Actions](/api-
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/chargebacks/CB6358819770/respond/' \
   -H 'X-Client-ID: <client_id>' \
   -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0' \
+  -H 'X-API-Version: 2.0.0' \
   -F 'action=contest' \
   -F 'condition=product_delivered' \
   -F 'fields[product_details]=1 x Blue widget, order ORDER-10422' \
@@ -30,7 +30,7 @@ A field the condition doesn't take, a missing required field, or a value or file
 
 ## After you answer
 
-The chargeback moves to `PENDING_DOC_REVIEW` and takes no further answers (`409`). Its status changes from there are sent in the [`DISPUTE_UPDATED`](/api-reference/v3/webhooks/dispute-updated) webhook.
+The chargeback moves to `PENDING_DOC_REVIEW` and takes no further answers (`409`). Its status changes from there are sent in the [`DISPUTE_UPDATED`](/api-reference/v2/webhooks/dispute-updated) webhook.
 
 <Warning>
   **`502` with code `40670`: do not resubmit.** The gateway accepted some of your documents and then failed. Your contest **is registered** and the chargeback is `PENDING_DOC_REVIEW`. `details.delivered` and `details.failed` name the documents by your field names; send the failed ones to EximPe support.

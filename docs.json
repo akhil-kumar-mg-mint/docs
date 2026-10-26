@@ -275,6 +275,15 @@
                 ]
               },
               {
+                "group": "Chargeback",
+                "pages": [
+                  "api-reference/v2/chargebacks/list",
+                  "api-reference/v2/chargebacks/get",
+                  "api-reference/v2/chargebacks/actions",
+                  "api-reference/v2/chargebacks/respond"
+                ]
+              },
+              {
                 "group": "Subscriptions",
                 "pages": [
                   "api-reference/v2/subscriptions/create-intent",
@@ -433,15 +442,6 @@
                   "api-reference/v3/refunds/list",
                   "api-reference/v3/refunds/get",
                   "api-reference/v3/refunds/simulate-status"
-                ]
-              },
-              {
-                "group": "Chargeback",
-                "pages": [
-                  "api-reference/v3/chargebacks/list",
-                  "api-reference/v3/chargebacks/get",
-                  "api-reference/v3/chargebacks/actions",
-                  "api-reference/v3/chargebacks/respond"
                 ]
               },
               {
