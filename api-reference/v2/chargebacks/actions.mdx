@@ -1,0 +1,19 @@
+---
+title: 'Get Chargeback Actions'
+description: 'The ways a chargeback can be answered, and the fields and documents each one takes.'
+openapi: 'openapi/openapi.json GET /pg/chargebacks/{chargeback_id}/actions/'
+---
+
+## How answering works
+
+1. Call this endpoint for the chargeback.
+2. Pick an **action** (`accept`, `contest` or `partial_accept`) and one of its **conditions**: the situation that applies, such as `product_delivered`.
+3. Send that condition's fields to [Respond to Chargeback](/api-reference/v2/chargebacks/respond), each as `fields[<name>]`.
+
+The same response shape is used for every payment, but the conditions on offer depend on what the payment's gateway supports. Some payments offer no `partial_accept`, and the fields of a condition can differ between payments. Read the conditions from here for each chargeback instead of hard-coding them.
+
+`actions` is empty, and `can_respond` is `false`, once the chargeback has been answered or closed.
+
+<Note>
+  `403` means the chargeback can't be answered through EximPe yet because its gateway credentials are not set up for your account. Contact EximPe support; retrying won't change it.
+</Note>

@@ -275,6 +275,15 @@
                 ]
               },
               {
+                "group": "Chargeback",
+                "pages": [
+                  "api-reference/v2/chargebacks/list",
+                  "api-reference/v2/chargebacks/get",
+                  "api-reference/v2/chargebacks/actions",
+                  "api-reference/v2/chargebacks/respond"
+                ]
+              },
+              {
                 "group": "Subscriptions",
                 "pages": [
                   "api-reference/v2/subscriptions/create-intent",
