@@ -4264,6 +4264,788 @@
           }
         }
       }
+    },
+    "/pg/chargebacks/": {
+      "get": {
+        "summary": "List Chargebacks",
+        "description": "Chargebacks raised on your payments and, for a PSP, on your sub-merchants' payments, newest first.",
+        "tags": [
+          "Chargebacks"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Only chargebacks in this status, e.g. `NEW` or `PENDING_DOC_REVIEW`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "query",
+            "description": "Only chargebacks on this payment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_id",
+            "in": "query",
+            "description": "Only chargebacks on this EximPe order.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order_reference_id",
+            "in": "query",
+            "description": "Only chargebacks on the order with this reference of yours.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "description": "Created on or after this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "description": "Created up to and including this date. Format: YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, from 1.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Results per page.",
+            "schema": {
+              "type": "integer",
+              "default": 250
+            }
+          },
+          {
+            "name": "X-Merchant-ID",
+            "in": "header",
+            "required": false,
+            "description": "PSPs only: list just this sub-merchant's chargebacks. Without it, a PSP sees its own and all its sub-merchants' chargebacks.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "count": {
+                          "type": "integer"
+                        },
+                        "page": {
+                          "type": "integer"
+                        },
+                        "page_size": {
+                          "type": "integer"
+                        },
+                        "next": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "previous": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/v3_Chargeback"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Chargebacks retrieved successfully",
+                  "data": {
+                    "count": 2,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "chargeback_id": "CB6358819770",
+                        "payment_id": "PR1400935863",
+                        "order_id": "OD8950153797",
+                        "order_reference_id": "ORDER-10422",
+                        "amount": "2500.00",
+                        "status": "PENDING_DOC_REVIEW",
+                        "action": "contest",
+                        "chargeback_type": "Chargeback",
+                        "reason_description": "Goods or Services Not Provided / Not Received",
+                        "raised_on": "2026-10-26T03:47:59Z",
+                        "respond_by": "2026-11-02T03:47:59Z",
+                        "can_respond": false,
+                        "created_at": "2026-10-26T03:47:59Z"
+                      },
+                      {
+                        "chargeback_id": "CB4073011797",
+                        "payment_id": "PR5447061737",
+                        "order_id": "OD8949028750",
+                        "order_reference_id": "ORDER-10419",
+                        "amount": "999.00",
+                        "status": "NEW",
+                        "action": null,
+                        "chargeback_type": "Chargeback",
+                        "reason_description": "Goods or Services Not Provided / Not Received",
+                        "raised_on": "2026-10-26T03:47:59Z",
+                        "respond_by": "2026-11-02T03:47:59Z",
+                        "can_respond": true,
+                        "created_at": "2026-10-26T03:47:59Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_list_chargebacks"
+      }
+    },
+    "/pg/chargebacks/{chargeback_id}/": {
+      "get": {
+        "summary": "Get Chargeback",
+        "description": "One chargeback, with your latest answer to it.",
+        "tags": [
+          "Chargebacks"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chargeback_id",
+            "in": "path",
+            "required": true,
+            "description": "EximPe chargeback ID, e.g. `CB6358819770`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/v3_ChargebackDetail"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Chargeback details retrieved successfully",
+                  "data": {
+                    "chargeback_id": "CB6358819770",
+                    "payment_id": "PR1400935863",
+                    "order_id": "OD8950153797",
+                    "order_reference_id": "ORDER-10422",
+                    "amount": "2500.00",
+                    "status": "PENDING_DOC_REVIEW",
+                    "action": "contest",
+                    "chargeback_type": "Chargeback",
+                    "reason_description": "Goods or Services Not Provided / Not Received",
+                    "raised_on": "2026-10-26T03:47:59Z",
+                    "respond_by": "2026-11-02T03:47:59Z",
+                    "can_respond": false,
+                    "created_at": "2026-10-26T03:47:59Z",
+                    "response": {
+                      "action": "contest",
+                      "condition": "product_delivered",
+                      "submitted_at": "2026-10-26T03:48:13Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No chargeback with this ID on your payments (or your sub-merchants' payments).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40669,
+                    "message": "Chargeback not found",
+                    "details": {
+                      "chargeback_id": "Chargeback not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_chargeback"
+      }
+    },
+    "/pg/chargebacks/{chargeback_id}/actions/": {
+      "get": {
+        "summary": "Get Chargeback Actions",
+        "description": "The ways this chargeback can be answered, by action. Each condition lists the text fields, true/false fields and documents it takes, with the required ones marked. Only what the payment's gateway supports is listed, so the conditions can differ from one payment to the next: always read them from here rather than hard-coding them.",
+        "tags": [
+          "Chargebacks"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chargeback_id",
+            "in": "path",
+            "required": true,
+            "description": "EximPe chargeback ID, e.g. `CB6358819770`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/v3_ChargebackActions"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Chargeback actions retrieved successfully",
+                  "data": {
+                    "chargeback_id": "CB6358819770",
+                    "status": "NEW",
+                    "amount": "2500.00",
+                    "respond_by": "2026-11-02T03:47:59Z",
+                    "can_respond": true,
+                    "actions": {
+                      "accept": [
+                        {
+                          "condition": "customer_cancelled",
+                          "text_fields": [],
+                          "boolean_fields": [],
+                          "documents": []
+                        },
+                        {
+                          "condition": "other",
+                          "text_fields": [
+                            {
+                              "name": "reason",
+                              "required": true
+                            }
+                          ],
+                          "boolean_fields": [],
+                          "documents": []
+                        }
+                      ],
+                      "contest": [
+                        {
+                          "condition": "product_delivered",
+                          "text_fields": [
+                            {
+                              "name": "product_details",
+                              "required": true
+                            },
+                            {
+                              "name": "courier_name",
+                              "required": false
+                            },
+                            {
+                              "name": "awb_number",
+                              "required": false
+                            }
+                          ],
+                          "boolean_fields": [
+                            {
+                              "name": "customer_tried_to_cancel",
+                              "required": false
+                            }
+                          ],
+                          "documents": [
+                            {
+                              "name": "proof_of_delivery",
+                              "required": false
+                            },
+                            {
+                              "name": "invoice",
+                              "required": false
+                            }
+                          ]
+                        },
+                        {
+                          "condition": "already_refunded",
+                          "text_fields": [
+                            {
+                              "name": "refund_details",
+                              "required": false
+                            }
+                          ],
+                          "boolean_fields": [],
+                          "documents": [
+                            {
+                              "name": "refund_proof",
+                              "required": false
+                            }
+                          ]
+                        }
+                      ],
+                      "partial_accept": [
+                        {
+                          "condition": "partially_delivered",
+                          "text_fields": [
+                            {
+                              "name": "remarks",
+                              "required": false
+                            }
+                          ],
+                          "boolean_fields": [],
+                          "documents": [
+                            {
+                              "name": "supporting_document",
+                              "required": true
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The chargeback can't be answered yet because the payment's chargeback credentials are not configured for this merchant. Contact EximPe support; retrying will not help.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "chargeback": "Chargebacks on this payment cannot be answered yet: the PayU chargeback credentials are not configured for this merchant. Please contact support."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No chargeback with this ID on your payments (or your sub-merchants' payments).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40669,
+                    "message": "Chargeback not found",
+                    "details": {
+                      "chargeback_id": "Chargeback not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The gateway couldn't be reached or didn't give a usable response. Nothing was recorded; retry after a few minutes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_003",
+                    "message": "API error",
+                    "details": {
+                      "chargeback": "PayU's chargeback reasons are unavailable right now; please try again in a few minutes."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_chargeback_actions"
+      }
+    },
+    "/pg/chargebacks/{chargeback_id}/respond/": {
+      "post": {
+        "summary": "Respond to Chargeback",
+        "description": "Answer a chargeback with an action and one of its conditions. Send `multipart/form-data` (needed for documents); an answer with no documents may be sent as JSON instead. A chargeback takes one answer: once it is in, the chargeback moves to `PENDING_DOC_REVIEW` and a second answer is refused with `409`.",
+        "tags": [
+          "Chargebacks"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chargeback_id",
+            "in": "path",
+            "required": true,
+            "description": "EximPe chargeback ID, e.g. `CB6358819770`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action",
+                  "condition"
+                ],
+                "properties": {
+                  "action": {
+                    "$ref": "#/components/schemas/v3_ChargebackActionType"
+                  },
+                  "condition": {
+                    "type": "string",
+                    "description": "A condition listed under `action` by Get Chargeback Actions.",
+                    "example": "product_delivered"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "description": "`partial_accept` only, and required there: the amount you accept, less than the disputed amount. Two decimals.",
+                    "example": "1000.00"
+                  },
+                  "fields[product_details]": {
+                    "type": "string",
+                    "description": "One part per field of the chosen condition, named `fields[<name>]` with the names from Get Chargeback Actions: text for a text field, `true`/`false` for a true/false field, a file for a document. (example of a text field)",
+                    "example": "1 x Blue widget, order ORDER-10422"
+                  },
+                  "fields[customer_tried_to_cancel]": {
+                    "type": "string",
+                    "enum": [
+                      "true",
+                      "false"
+                    ],
+                    "description": "Example of a true/false field."
+                  },
+                  "fields[proof_of_delivery]": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Example of a document."
+                  }
+                }
+              }
+            },
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action",
+                  "condition"
+                ],
+                "properties": {
+                  "action": {
+                    "$ref": "#/components/schemas/v3_ChargebackActionType"
+                  },
+                  "condition": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string",
+                    "description": "`partial_accept` only."
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "description": "Text and true/false values by field name. Documents need multipart."
+                  }
+                }
+              },
+              "example": {
+                "action": "accept",
+                "condition": "other",
+                "fields": {
+                  "reason": "Duplicate charge confirmed with the customer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Answer recorded and sent to the gateway. Returns the chargeback, now `PENDING_DOC_REVIEW`, with your answer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/v3_ChargebackDetail"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Response submitted for chargeback CB6358819770",
+                  "data": {
+                    "chargeback_id": "CB6358819770",
+                    "payment_id": "PR1400935863",
+                    "order_id": "OD8950153797",
+                    "order_reference_id": "ORDER-10422",
+                    "amount": "2500.00",
+                    "status": "PENDING_DOC_REVIEW",
+                    "action": "contest",
+                    "chargeback_type": "Chargeback",
+                    "reason_description": "Goods or Services Not Provided / Not Received",
+                    "raised_on": "2026-10-26T03:47:59Z",
+                    "respond_by": "2026-11-02T03:47:59Z",
+                    "can_respond": false,
+                    "created_at": "2026-10-26T03:47:59Z",
+                    "response": {
+                      "action": "contest",
+                      "condition": "product_delivered",
+                      "submitted_at": "2026-10-26T03:48:13Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The answer is invalid. `details` is keyed by the field at fault: `action`, `condition`, `amount` or a field name of the condition. Nothing was recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40668,
+                    "message": "The chargeback response is invalid.",
+                    "details": {
+                      "courier_name": "Text field 'courier_name' must not contain any of < > [ ] { }",
+                      "tracking": "Not a field of this condition.",
+                      "product_details": "Required for product_delivered."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The chargeback can't be answered yet because the payment's chargeback credentials are not configured for this merchant. Contact EximPe support; retrying will not help.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "chargeback": "Chargebacks on this payment cannot be answered yet: the PayU chargeback credentials are not configured for this merchant. Please contact support."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No chargeback with this ID on your payments (or your sub-merchants' payments).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40669,
+                    "message": "Chargeback not found",
+                    "details": {
+                      "chargeback_id": "Chargeback not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The chargeback can no longer be answered: it has an answer already, is closed, or another answer to it is in progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": 40666,
+                    "message": "This chargeback can no longer be responded to.",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Either the gateway failed and nothing was recorded (`ERR_PAYMENT_003`; retry), or the gateway accepted some of your documents and then failed (`40670`). For `40670` the contest **is registered** and the chargeback is `PENDING_DOC_REVIEW`: do not resubmit. `details.failed` names the documents that did not arrive; send them to EximPe support.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "partially_delivered": {
+                    "summary": "Some documents did not reach the gateway",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40670,
+                        "message": "The contest is registered, but some evidence documents did not reach the gateway. Do not resubmit; the failed documents are listed.",
+                        "details": {
+                          "chargeback": "The gateway accepted some evidence documents and then failed; the contest is registered without the rest.",
+                          "delivered": [
+                            "proof_of_delivery"
+                          ],
+                          "failed": [
+                            "shipping_proof"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "gateway_error": {
+                    "summary": "Gateway failed; nothing recorded",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_003",
+                        "message": "API error",
+                        "details": {
+                          "chargeback": "PayU's chargeback reasons are unavailable right now; please try again in a few minutes."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_respond_to_chargeback"
+      }
     }
   },
   "components": {
@@ -7798,6 +8580,228 @@
             }
           }
         }
+      },
+      "v3_ChargebackStatus": {
+        "type": "string",
+        "enum": [
+          "NEW",
+          "PENDING_RESPONSE",
+          "PENDING_DOC_REVIEW",
+          "SUBMITTED_TO_BANK",
+          "INSUFFICIENT_DOCUMENT",
+          "CLOSED_CUSTOMER_FAVOUR",
+          "CLOSED_IN_MERCHANT_FAVOUR",
+          "CLOSED_UNDER_FRAUD_LIABILITY"
+        ],
+        "description": "Where the chargeback is in its lifecycle. It can be answered only while `NEW`, `PENDING_RESPONSE` or `INSUFFICIENT_DOCUMENT` (see `can_respond`). `PENDING_DOC_REVIEW`: your answer is in. `SUBMITTED_TO_BANK`: your answer has gone to the bank. `CLOSED_*`: decided."
+      },
+      "v3_ChargebackActionType": {
+        "type": "string",
+        "enum": [
+          "accept",
+          "contest",
+          "partial_accept"
+        ],
+        "description": "`accept`: accept the chargeback in full. `contest`: dispute it with evidence. `partial_accept`: accept part of the disputed amount."
+      },
+      "v3_Chargeback": {
+        "type": "object",
+        "properties": {
+          "chargeback_id": {
+            "type": "string",
+            "description": "EximPe chargeback ID.",
+            "example": "CB6358819770"
+          },
+          "payment_id": {
+            "type": "string",
+            "description": "The disputed payment.",
+            "example": "PR1400935863"
+          },
+          "order_id": {
+            "type": "string",
+            "description": "EximPe order ID of the disputed payment.",
+            "example": "OD8950153797"
+          },
+          "order_reference_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Your own reference for the order.",
+            "example": "ORDER-10422"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Disputed amount, two decimals, in the payment's currency.",
+            "example": "2500.00"
+          },
+          "status": {
+            "$ref": "#/components/schemas/v3_ChargebackStatus"
+          },
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/v3_ChargebackActionType"
+              }
+            ],
+            "nullable": true,
+            "description": "How the chargeback was answered; `null` until it is."
+          },
+          "chargeback_type": {
+            "type": "string",
+            "description": "Kind of dispute raised by the customer's bank.",
+            "example": "Chargeback"
+          },
+          "reason_description": {
+            "type": "string",
+            "description": "Why the customer disputed the payment.",
+            "example": "Goods or Services Not Provided / Not Received"
+          },
+          "raised_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the dispute was raised."
+          },
+          "respond_by": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Answer before this time. With no answer by then, the dispute is closed in the customer's favour."
+          },
+          "can_respond": {
+            "type": "boolean",
+            "description": "Whether the chargeback can be answered now."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "v3_ChargebackAnswer": {
+        "type": "object",
+        "nullable": true,
+        "description": "Your latest answer, or `null` if there is none.",
+        "properties": {
+          "action": {
+            "$ref": "#/components/schemas/v3_ChargebackActionType"
+          },
+          "condition": {
+            "type": "string",
+            "nullable": true,
+            "description": "The condition you answered with. `null` for an answer given from the merchant dashboard.",
+            "example": "product_delivered"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "v3_ChargebackDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/v3_Chargeback"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "response": {
+                "$ref": "#/components/schemas/v3_ChargebackAnswer"
+              }
+            }
+          }
+        ]
+      },
+      "v3_ChargebackField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Send the value as `fields[<name>]`.",
+            "example": "proof_of_delivery"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "v3_ChargebackCondition": {
+        "type": "object",
+        "description": "One way to answer the chargeback, and what it takes.",
+        "properties": {
+          "condition": {
+            "type": "string",
+            "description": "Send as `condition`.",
+            "example": "product_delivered"
+          },
+          "text_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_ChargebackField"
+            },
+            "description": "Free-text values."
+          },
+          "boolean_fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_ChargebackField"
+            },
+            "description": "`true` or `false` values."
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_ChargebackField"
+            },
+            "description": "Evidence files, one per name."
+          }
+        }
+      },
+      "v3_ChargebackActions": {
+        "type": "object",
+        "properties": {
+          "chargeback_id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/v3_ChargebackStatus"
+          },
+          "amount": {
+            "type": "string",
+            "example": "2500.00"
+          },
+          "respond_by": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "can_respond": {
+            "type": "boolean"
+          },
+          "actions": {
+            "type": "object",
+            "description": "Conditions by action. Only the actions and conditions the payment can be answered with are present; empty once the chargeback can no longer be answered.",
+            "properties": {
+              "accept": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_ChargebackCondition"
+                }
+              },
+              "contest": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_ChargebackCondition"
+                }
+              },
+              "partial_accept": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_ChargebackCondition"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -7853,6 +8857,10 @@
     },
     {
       "name": "Refunds"
+    },
+    {
+      "name": "Chargebacks",
+      "description": "Chargebacks on your payments, and your answer to them. The same request and response shape works whichever gateway the payment was made on."
     },
     {
       "name": "Settlements"

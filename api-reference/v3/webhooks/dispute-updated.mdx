@@ -17,12 +17,19 @@ This webhook is triggered whenever a dispute or chargeback is raised against a p
 
 ## Merchant Action Required
 
-When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
+When you receive a `PAYMENT_DISPUTED` event, respond **before the `reply_before` time**, either through the API or from the dashboard.
+
+**Through the API:**
+
+1. Call [Get Chargeback Actions](/api-reference/v3/chargebacks/actions) with the `chargeback_id` from the payload to see how it can be answered.
+2. Send your answer and evidence to [Respond to Chargeback](/api-reference/v3/chargebacks/respond).
+
+**From the dashboard:**
 
 1. Log in to the [EximPe Dashboard](https://merchant.eximpe.com).
 2. Open the **Chargebacks** section.
 3. Locate the dispute using the `chargeback_id` from the payload.
-4. Upload your supporting documents and submit your response **before the `reply_before` time**.
+4. Upload your supporting documents and submit your response.
 
 <Warning>
   If no response is provided before `reply_before`, the dispute is automatically **closed in the customer's favour** (`chargeback_status` → `CLOSED_CUSTOMER_FAVOUR`) and the disputed amount is debited from the merchant.
