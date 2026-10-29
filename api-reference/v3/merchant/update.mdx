@@ -1,233 +1,242 @@
 ---
 title: 'Update Merchant'
-description: 'Update specific fields of an existing merchant.'
+description: 'Edit a sub-merchant before it is approved. A complete edit to a sub-merchant sent back for changes resubmits it for review.'
 openapi: 'PATCH /partners/merchants/{merchant_id}/'
 ---
 
 ## Overview
 
-The Update Merchant endpoint allows Payment Aggregators (PSPs) to update an existing sub-merchant's company details, settlement information, contact details, and business information.
+Changes the details of a sub-merchant that is still `PENDING` or `CHANGES_REQUESTED`. Send only the fields you want to change; everything you leave out keeps its stored value.
 
-This is a **partial update** (PATCH) — only include the fields you want to change. Fields not included in the request will remain unchanged.
+```bash
+curl -X PATCH 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
+  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0' \
+  -H 'Content-Type: application/json' \
+  -d '{ "global_company": { "registration_number": "U72200MH2020PTC654321" } }'
+```
 
-**Important**: Updates are only allowed when the sub-merchant is in `PENDING` or `CHANGES_REQUESTED` status. Merchants in other statuses (APPROVED, IN_REVIEW, REJECTED) cannot be edited.
+## When you can edit
 
-## Request Parameters
+| Status | Edit allowed? | What the edit does |
+|---|---|---|
+| `PENDING` | Yes | Saves the change. The application stays `PENDING`; EximPe is not notified again. |
+| `CHANGES_REQUESTED` | Yes | Saves the change, then resubmits if the application is complete. See [Resubmitting](#resubmitting). |
+| `IN_REVIEW`, `APPROVED`, `REJECTED` | No | Refused with a `409`. |
 
-The request structure mirrors the [Create Merchant](/api-reference/v3/merchant/create) endpoint. All fields are optional for partial updates.
+<Note>
+  **In sandbox a new sub-merchant is approved at once,** so it can no longer be edited. To try the edit flow, use a sub-merchant that is `PENDING` or `CHANGES_REQUESTED`.
+</Note>
 
-### Parameter Definitions
+## The request
 
-#### Top-level
+The fields and rules are the same as [Create Merchant](/api-reference/v3/merchant/create#the-request). On an edit every field is optional:
 
-| Name | Type | Required | Description |
-|---|---|---|---|
-| company_details | object | No | Company and contact details to update. See Company Details |
-| settlement_details | object | No | Bank account details to update. See Settlement Details |
+- **Top-level fields** (`legal_name`, `brand_name`, `email`, `phone_number`): send any of them on their own.
+- **`global_company` and `settlement_details`:** send only the fields inside them that you want to change.
+- **Changing `bank_swift_code`:** bank fields you leave out (`bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode`, `bank_country`) are filled from the new code, replacing the stored values. Values you send are kept as sent. If the code is unchanged or left out, nothing is filled. The same refusals apply as on [Create Merchant](/api-reference/v3/merchant/create#settlement).
+- **`beneficial_owners`:** the list is replaced whole.
+- **Communication address:** while `same_as_registered_address` is `true`, whether sent in this edit or already stored, the communication fields follow the registered address. When it is `false`, every communication field must have a value, sent in this edit or already stored.
 
-#### Company Details
+### Beneficial owners
 
-All fields from the [Create Merchant](/api-reference/v3/merchant/create#company-details) are accepted, but none are required. Only include fields you want to change.
+| You send | Result |
+|---|---|
+| No `beneficial_owners` key | The stored owners are kept. |
+| A list of owners | The stored owners are replaced with exactly this list. Send every owner you want to keep, not only the new ones. |
+| `[]` | Under EximPe's own PA-CB licence: refused with a `400`, because at least one owner must remain. Under a partner's licence: accepted; the sub-merchant has no owners. |
 
-Key fields:
-| Name | Type | Description | Constraints |
-|---|---|---|---|
-| email | string | Contact email. | RFC 5322 email format |
-| phone_number | string | Contact phone number. | E.164 format (e.g., `+919876543210`) |
-| legal_name | string | Legal name of the company. | Max 255 chars |
-| brand_name | string | Brand/trade name. | Max 255 chars |
-| website | string | Company website URL. | Must include `https://` prefix |
-| international_org_type | string | Type of organization. | Same enum as Create |
-| monthly_avg_transaction_volume | string | Transaction volume range. | Same enum as Create |
-| business_category | string | Business category. | Same values as Create; PSPs send category slugs from their approved verticals, see [Business Category](/api-reference/v3/merchant/create#business-category) |
-| business_category_other | string | Required when category includes "Other". | |
-| business_mode | string | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
-| mcc | string | Merchant Category Codes. | Comma-separated 4-digit codes |
+The same limits apply as on create: at least one owner under EximPe's own PA-CB licence, at least 10% per owner and at most 100% in total. Owners are accepted only when your account collects under EximPe's own PA-CB licence.
 
-For the complete field reference, see [Create Merchant — Company Details](/api-reference/v3/merchant/create#company-details).
+### Fields you cannot send
 
-#### Settlement Details
+`sub_merchant_status` and `is_active` are refused with a `400` and the code `ERR_MERCHANT_005`. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited.
 
-All fields from the [Create Merchant](/api-reference/v3/merchant/create#settlement-details) are accepted. Only include fields you want to change.
+## Resubmitting
+
+There is no separate resubmit call. When you edit a `CHANGES_REQUESTED` sub-merchant, EximPe checks the whole application as it stands after your edit:
+
+- **Complete:** the status moves to `PENDING` and EximPe is notified once to review it again. The reasons EximPe gave are cleared from `changes_requested_reason` and `section_reasons`.
+- **Not yet complete:** your edit is saved and the status stays `CHANGES_REQUESTED`. Send the missing fields in another edit; the one that completes the application resubmits it.
+
+An application is complete when:
+
+- Every field marked required on [Create Merchant](/api-reference/v3/merchant/create#the-request) has a value.
+- At least one HS code is stored, if a goods category is selected.
+- At least one beneficial owner is stored, if your account collects under EximPe's own licence.
+
+<Tip>
+  Read `changes_requested_reason` and `section_reasons` from [Get Merchant](/api-reference/v3/merchant/get) to see what to fix. Then send everything in one edit, so the sub-merchant goes back for review in one step.
+</Tip>
 
 ## Examples
 
 <CodeGroup>
 
-```json Update Company Details
+```json Fix one field
 {
-  "company_details": {
-    "brand_name": "AcmeTech Global",
-    "website": "https://acmetech-global.com",
-    "business_category": "Digital goods / software / downloads,SaaS / subscriptions / recurring billing",
-    "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
-    "description_of_products_and_services": "Updated: Enterprise SaaS platform for supply chain management"
+  "global_company": {
+    "registration_number": "U72200MH2020PTC654321"
   }
 }
 ```
 
-```json Update Contact Details
+```json Change contact and bank
 {
-  "company_details": {
-    "email": "new-contact@acmetech.com",
-    "phone_number": "+919876500000"
-  }
-}
-```
-
-```json Update Settlement Details
-{
+  "email": "finance@acmeexports.com",
+  "phone_number": "+919876500000",
   "settlement_details": {
     "bank_account_number": "9876543210123456",
-    "bank_account_name": "AcmeTech Global Pvt Ltd",
-    "bank_swift_code": "ABORINBB",
-    "bank_name": "RBL Bank",
-    "bank_branch_name": "BKC Branch",
-    "bank_address": "One BKC, Bandra Kurla Complex",
-    "bank_city": "Mumbai",
-    "bank_state": "Maharashtra",
-    "bank_country": "India",
-    "bank_pincode": "400051",
-    "routing_number": "RATN0000001"
+    "bank_swift_code": "RATNINBB",
+    "bank_state": "Maharashtra"
   }
 }
 ```
 
-```json Update Address
+```json Replace beneficial owners
 {
-  "company_details": {
-    "registered_address": "New Tower B, IT Park",
-    "registered_city": "Pune",
-    "registered_state": "Maharashtra",
-    "registered_country": "India",
-    "registered_pincode": "411057",
-    "same_as_registered_address": true,
-    "communication_address": "New Tower B, IT Park",
-    "communication_city": "Pune",
-    "communication_state": "Maharashtra",
-    "communication_country": "India",
-    "communication_pincode": "411057"
-  }
+  "beneficial_owners": [
+    {
+      "type": "INDIVIDUAL",
+      "first_name": "Priya",
+      "last_name": "Sharma",
+      "email": "priya.sharma@acmeexports.com",
+      "nationality": "Indian",
+      "date_of_birth": "1985-06-20",
+      "ownership_percentage": 70
+    },
+    {
+      "type": "INDIVIDUAL",
+      "first_name": "Rahul",
+      "last_name": "Mehta",
+      "email": "rahul.mehta@acmeexports.com",
+      "nationality": "Indian",
+      "date_of_birth": "1982-11-02",
+      "ownership_percentage": 30
+    }
+  ]
 }
 ```
 
 </CodeGroup>
 
-## Response Examples
+## The response
+
+`200 OK`, with the sub-merchant as it stands after the edit, in the same shape as [Get Merchant](/api-reference/v3/merchant/get#the-response). Read `status` to see whether the edit resubmitted it.
 
 <CodeGroup>
 
-```json Success
+```json 200 Resubmitted
 {
   "success": true,
   "message": "Sub-merchant updated successfully",
   "data": {
     "id": "6182929449",
-    "company_details": {
-      "legal_name": "Acme Technologies Pvt Ltd",
-      "brand_name": "AcmeTech Global",
-      "email": "new-contact@acmetech.com",
-      "phone_number": "+919876500000",
-      "registration_number": "U72200MH2020PTC123456",
-      "international_org_type": "Private Limited Company",
+    "status": "PENDING",
+    "legal_name": "Acme Exports Private Limited",
+    "brand_name": "Acme Exports",
+    "email": "contact@acmeexports.com",
+    "phone_number": "+919876543210",
+    "global_company": {
+      "registration_number": "U72200MH2020PTC654321",
       "tax_id": "AACCA1234A",
-      "website": "https://acmetech-global.com",
-      "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
-      "communication_address": "Tower A, Techpark, Whitefield",
-      "communication_city": "Bangalore",
-      "communication_state": "Karnataka",
-      "communication_country": "India",
-      "communication_pincode": "560066",
-      "same_as_registered_address": true,
+      "international_org_type": "Private Limited Company",
+      "website": "https://acmeexports.com",
+      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+      "monthly_avg_transaction_value": null,
+      "business_category": "GOODS",
+      "business_category_other": null,
+      "hs_codes": [
+        "84713010"
+      ],
+      "category": null,
+      "mcc": "5045",
+      "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+      "agreement_details": "Master services agreement signed on 2026-03-15",
       "registered_address": "Tower A, Techpark, Whitefield",
       "registered_city": "Bangalore",
       "registered_state": "Karnataka",
       "registered_country": "India",
       "registered_pincode": "560066",
-      "business_category": "Digital goods / software / downloads,SaaS / subscriptions / recurring billing",
-      "business_category_other": null,
-      "business_mode": "b2b",
-      "hs_codes": [],
-      "description_of_products_and_services": "Updated: Enterprise SaaS platform for supply chain management",
-      "agreement_details": null
+      "same_as_registered_address": true,
+      "communication_address": "Tower A, Techpark, Whitefield",
+      "communication_city": "Bangalore",
+      "communication_state": "Karnataka",
+      "communication_country": "India",
+      "communication_pincode": "560066"
     },
     "settlement_details": {
-      "bank_account_number": "9876543210123456",
-      "bank_account_name": "AcmeTech Global Pvt Ltd",
-      "bank_swift_code": "ABORINBB",
-      "bank_name": "RBL Bank",
-      "bank_branch_name": "BKC Branch",
-      "bank_address": "One BKC, Bandra Kurla Complex",
-      "bank_city": "Mumbai",
-      "bank_state": "Maharashtra",
+      "bank_account_number": "1234567890123456",
+      "bank_account_name": "Acme Exports Private Limited",
+      "bank_swift_code": "HDFCINBB",
+      "bank_name": "HDFC Bank",
+      "bank_branch_name": "Whitefield Branch",
+      "bank_address": "100 Feet Road, Whitefield, Bangalore",
+      "bank_city": "Bangalore",
+      "bank_state": "Karnataka",
       "bank_country": "India",
-      "bank_pincode": "400051",
-      "routing_number": "RATN0000001",
-      "settlement_currency": "USD"
+      "bank_pincode": "560066",
+      "routing_number": "HDFC0001234"
     },
-    "kyc_status": "PENDING",
-    "created_at": "2026-04-28T06:30:00.000000Z",
-    "last_updated_at": "2026-04-28T09:15:00.000000Z"
-  }
-}
-```
-
-```json Status Not Editable
-{
-  "success": false,
-  "error": {
-    "code": "ERR_MERCHANT_001",
-    "message": "Validation error",
-    "details": {
-      "kyc_status": "Sub-merchant can only be edited in PENDING or CHANGES_REQUESTED status, current status is APPROVED"
-    }
-  }
-}
-```
-
-```json Validation Error
-{
-  "success": false,
-  "error": {
-    "code": "ERR_MERCHANT_001",
-    "message": "Validation error",
-    "details": {
-      "company_details": {
-        "website": "Enter a valid URL.",
-        "business_mode": "\"invalid\" is not a valid choice."
+    "settlement_currency": "USD",
+    "beneficial_owners": [
+      {
+        "id": "4417203391",
+        "type": "INDIVIDUAL",
+        "first_name": "Priya",
+        "last_name": "Sharma",
+        "email": "priya.sharma@acmeexports.com",
+        "authorized_user_name": "Priya Sharma",
+        "ownership_percentage": 100.0,
+        "nationality": "Indian",
+        "date_of_birth": "1985-06-20",
+        "country_of_incorporation": null,
+        "date_of_incorporation": null
       }
-    }
+    ],
+    "changes_requested_reason": null,
+    "section_reasons": [],
+    "reject_reason": null,
+    "created_at": "2026-04-28T06:30:00",
+    "updated_at": "2026-04-30T09:15:00"
+  }
+}
+```
+
+```json 409 Not editable
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_003",
+    "message": "Sub-Merchant can only be edited while Pending or Changes Requested",
+    "details": {}
+  }
+}
+```
+
+```json 400 Status field sent
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_005",
+    "message": "sub_merchant_status and is_active cannot be set",
+    "details": "sub_merchant_status and is_active cannot be set"
   }
 }
 ```
 
 </CodeGroup>
 
-## Error Codes
+## Errors
 
-| Code | Message | Description |
-|---|---|---|
-| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors |
-
-## Implementation Notes
-
-### Editable Statuses
-Only sub-merchants in these statuses can be updated:
-- **PENDING** — Initial state after creation
-- **CHANGES_REQUESTED** — After review, when additional information is needed
-
-Sub-merchants in APPROVED, IN_REVIEW, or REJECTED status will return a validation error.
-
-### Partial Updates
-This endpoint supports partial updates — only send the fields you want to change. Omitted fields retain their current values.
-
-### Address Handling
-When `same_as_registered_address` is set to `true`, communication address fields are automatically copied from registered address fields. If you update registered address fields and want communication to match, include `same_as_registered_address: true`.
-
-### Validation
-All the same validations from the [Create Merchant](/api-reference/v3/merchant/create) endpoint apply:
-- `website` must include the `https://` prefix
-- `phone_number` must be in E.164 format
-- `business_category`, `business_mode`, `international_org_type`, `monthly_avg_transaction_volume` must use valid enum values; PSPs send `business_category` as category slugs from their approved verticals
-- `mcc` must be comma-separated 4-digit codes
-- `business_category_other` is required when category includes "Other"
+| HTTP | Cause | `code` | What to do |
+|---|---|---|---|
+| `400` | A field fails a rule from [Create Merchant](/api-reference/v3/merchant/create#errors) | `ERR_MERCHANT_001` | `details` names each field with the reason. Nothing is saved; fix the fields and send the edit again. |
+| `400` | `beneficial_owners` is `[]` under EximPe's own PA-CB licence | `ERR_MERCHANT_001` | `details.beneficial_owners` says `"At least one beneficial owner is required"`. Send the full list of owners to keep. |
+| `400` | `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
+| `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code | `ERR_MERCHANT_019` | The message names the missing fields. Send them, or check the code. |
+| `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | Send `bank_country`. |
+| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. |
+| `409` | The sub-merchant is `IN_REVIEW`, `APPROVED` or `REJECTED` | `ERR_MERCHANT_003` | It can no longer be edited. |
+| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
+| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |

@@ -45,7 +45,44 @@ In sandbox the sub-merchant is activated within seconds and you can start collec
 
 Once activated you get a **merchant ID**. Send it as `X-Merchant-ID` on the calls that name a sub-merchant before there is a payment to read one from — `POST /pg/orders/`, `POST /pg/vba/`, `POST /pg/lrs/*`, `POST /pg/payment-links/` and the other create routes. The `/pg/payments/<id>/…` routes derive the sub-merchant from the payment itself.
 
-You can also do all of this over the API rather than the dashboard:
+## Or add them over the API
+
+The API takes the same details as the dashboard form, checked against the same rules. A sub-merchant you create over the API opens in the dashboard with every field filled in, and you can manage it from either place.
+
+<Note>
+  **Import PSPs only.** Managing sub-merchants over the API is open to PSPs set up for import collections. Other accounts get a `403`.
+</Note>
+
+1. **Fetch the allowed values.** Country, organisation type, volume band and business category accept only listed values, and nationality takes the listed nationalities. [Get Merchant Options](/api-reference/v3/merchant/options) returns them, including the business categories you are approved for. Goods categories also need HS codes, which you find with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Bank details can be filled from the SWIFT code; see [Look Up SWIFT Code](/api-reference/v3/merchant/swift).
+2. **Create the sub-merchant** with [Create Merchant](/api-reference/v3/merchant/create). In sandbox it is approved at once. In production it starts `PENDING` and EximPe reviews it.
+3. **Wait for the decision.** EximPe sends one of three webhooks to your webhook URL:
+
+| Webhook | Status after | What to do |
+|---|---|---|
+| [Merchant Approved](/api-reference/v3/webhooks/merchant-approved) | `APPROVED` | Start collecting with its merchant ID. |
+| [Merchant Changes Requested](/api-reference/v3/webhooks/merchant-changes-requested) | `CHANGES_REQUESTED` | Fix what the reasons point to with [Update Merchant](/api-reference/v3/merchant/update). |
+| [Merchant Rejected](/api-reference/v3/webhooks/merchant-rejected) | `REJECTED` | The application is declined. The reason is in the webhook and in `reject_reason` from [Get Merchant](/api-reference/v3/merchant/get). You can delete it with [Delete Merchant](/api-reference/v3/merchant/delete). |
+
+### Fixing an application
+
+When EximPe asks for changes, the webhook carries an overall reason and a reason for each part of the application to fix. [Get Merchant](/api-reference/v3/merchant/get) returns the same reasons.
+
+Send the fixes with [Update Merchant](/api-reference/v3/merchant/update). There is no separate resubmit step:
+
+- **The edit completes the application:** the sub-merchant goes back to `PENDING` and EximPe reviews it again.
+- **Required details are still missing:** the edit is saved and the status stays `CHANGES_REQUESTED`.
+
+If EximPe asks for changes again, you get another Merchant Changes Requested webhook.
+
+### What you can change, and when
+
+| Status | Edit | Delete |
+|---|---|---|
+| `PENDING` | Yes | Yes |
+| `CHANGES_REQUESTED` | Yes. A complete edit resubmits it. | No |
+| `IN_REVIEW` | No | No |
+| `APPROVED` | No | No |
+| `REJECTED` | No | Yes |
 
 <CardGroup cols={2}>
   <Card title="Create Merchant" icon="plus" href="/api-reference/v3/merchant/create">
@@ -53,6 +90,12 @@ You can also do all of this over the API rather than the dashboard:
   </Card>
   <Card title="List & Get Merchant" icon="list" href="/api-reference/v3/merchant/list">
     Fetch the sub-merchants you have onboarded, and their status.
+  </Card>
+  <Card title="Update Merchant" icon="pen" href="/api-reference/v3/merchant/update">
+    Edit a sub-merchant before approval, and resubmit it after changes are requested.
+  </Card>
+  <Card title="Delete Merchant" icon="trash" href="/api-reference/v3/merchant/delete">
+    Remove a sub-merchant that is pending or rejected.
   </Card>
 </CardGroup>
 

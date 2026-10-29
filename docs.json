@@ -423,7 +423,11 @@
                   "api-reference/v3/merchant/create",
                   "api-reference/v3/merchant/list",
                   "api-reference/v3/merchant/get",
-                  "api-reference/v3/merchant/update"
+                  "api-reference/v3/merchant/update",
+                  "api-reference/v3/merchant/delete",
+                  "api-reference/v3/merchant/options",
+                  "api-reference/v3/merchant/hs-codes",
+                  "api-reference/v3/merchant/swift"
                 ]
               },
               {
@@ -501,6 +505,8 @@
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
+                  "api-reference/v3/webhooks/merchant-changes-requested",
+                  "api-reference/v3/webhooks/merchant-rejected",
                   "api-reference/v3/webhooks/payment-successful",
                   "api-reference/v3/webhooks/verification-needed",
                   "api-reference/v3/webhooks/lrs-verification-needed",

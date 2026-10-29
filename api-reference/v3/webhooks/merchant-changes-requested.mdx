@@ -1,0 +1,121 @@
+---
+title: "MERCHANT CHANGES REQUESTED"
+description: "Technical reference for the MERCHANT_CHANGES_REQUESTED webhook event, including payload schema, field specifications, and implementation details."
+---
+
+---
+
+## Event Overview
+
+**Event Type**: `MERCHANT_CHANGES_REQUESTED`  
+**Category**: Onboarding  
+**Description**: EximPe needs changes to a sub-merchant's application before it can be approved
+
+This webhook is sent each time EximPe sends a sub-merchant's application back for changes. It is delivered to the parent merchant's webhook URL, and carries EximPe's reason and the parts of the application to fix. The sub-merchant's status is then `CHANGES_REQUESTED`.
+
+It is sent every time EximPe asks for changes, including when the sub-merchant is already `CHANGES_REQUESTED` and EximPe asks again. Each delivery carries the latest reasons.
+
+To act on it, fix the fields with [Update Merchant](/api-reference/v3/merchant/update). Once the application is complete again, that edit resubmits it for review automatically; there is no separate resubmit call.
+
+---
+
+## Payload Schema
+
+<CodeGroup>
+
+```json Example Payload
+{
+    "event_type": "MERCHANT_CHANGES_REQUESTED",
+    "event_time": "2026-12-15T14:32:18.456789",
+    "version": "3.0.0",
+    "sequence_number": "5f0c2b1e-9a43-4d7e-8b61-2c7d9e4f1a90",
+    "data": {
+        "merchant_id": "1380229823",
+        "legal_name": "TechStore Solutions Private Limited",
+        "trade_name": "TechStore Online",
+        "timestamp": "2026-12-15T14:32:18.456789",
+        "reason": "The registration number does not match the incorporation certificate.",
+        "section_reasons": [
+            {
+                "section": "company_details",
+                "reason": "Registration number does not match the certificate."
+            },
+            {
+                "section": "settlement_account",
+                "reason": "Bank account name must match the legal name."
+            }
+        ]
+    }
+}
+```
+
+</CodeGroup>
+
+---
+
+## Field Specifications
+
+<Tabs>
+  <Tab title="Root Level Fields">
+    <ParamField path="event_type" type="string" required>
+      Always `"MERCHANT_CHANGES_REQUESTED"` for this webhook event
+    </ParamField>
+
+    <ParamField path="event_time" type="string" required>
+      UTC, no timezone suffix, e.g. `"2026-12-15T14:32:18.456789"`. Parse tolerantly — fractional seconds can be absent.
+    </ParamField>
+
+    <ParamField path="version" type="string" required>
+      API version of your account, e.g. `"3.0.0"`
+    </ParamField>
+
+    <ParamField path="sequence_number" type="string" required>
+      Unique ID of this event (a UUID, not an ordering counter). A retry resends the same value; use it to de-duplicate.
+
+      **Example**: `"5f0c2b1e-9a43-4d7e-8b61-2c7d9e4f1a90"`
+    </ParamField>
+
+    <ParamField path="data" type="object" required>
+      Event-specific data payload containing the requested changes
+    </ParamField>
+  </Tab>
+
+  <Tab title="Data Object Fields">
+    <ParamField path="data.merchant_id" type="string" required>
+      Unique identifier of the sub-merchant
+
+      **Example**: `"1380229823"`
+    </ParamField>
+
+    <ParamField path="data.legal_name" type="string" required>
+      Legal business name of the sub-merchant as registered with authorities
+
+      **Example**: `"TechStore Solutions Private Limited"`
+    </ParamField>
+
+    <ParamField path="data.trade_name" type="string" required>
+      Trading or brand name of the sub-merchant
+
+      **Example**: `"TechStore Online"`
+    </ParamField>
+
+    <ParamField path="data.timestamp" type="string" required>
+      ISO 8601 timestamp when EximPe asked for the changes
+
+      **Example**: `"2026-12-15T14:32:18.456789"`
+    </ParamField>
+
+    <ParamField path="data.reason" type="string" required>
+      EximPe's overall reason for sending the application back. Can be an empty string when no reason was recorded. The same text is returned as `changes_requested_reason` by [Get Merchant](/api-reference/v3/merchant/get).
+    </ParamField>
+
+    <ParamField path="data.section_reasons" type="array" required>
+      One entry per part of the application that needs changes. Can be empty.
+
+      - `section` — the part of the application, e.g. `"company_details"`. See [Sections](/api-reference/v3/merchant/options#sections) for every value.
+      - `reason` — what needs to change in that part.
+    </ParamField>
+  </Tab>
+</Tabs>
+
+---

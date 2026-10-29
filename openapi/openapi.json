@@ -2011,7 +2011,7 @@
     "/partners/merchants/": {
       "get": {
         "summary": "List Merchants",
-        "description": "Retrieve a list of merchants with pagination.",
+        "description": "Retrieve your sub-merchants, a page at a time.",
         "tags": [
           "Merchants"
         ],
@@ -2022,47 +2022,138 @@
             "apiVersionHeader": []
           }
         ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number. Default `1`.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Results per page. Default `250`, maximum `1000`.",
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Matches legal name, brand name, registration number or tax ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "required": false,
+            "description": "`created_at` or `-created_at`. Default `-created_at`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "-created_at"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "A paginated list of merchants.",
+            "description": "A page of sub-merchants.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListMerchantsResponse"
+                  "$ref": "#/components/schemas/v3_ListMerchantsResponse"
                 },
                 "example": {
                   "success": true,
                   "message": "Sub-merchants retrieved successfully",
                   "data": {
-                    "count": 4,
+                    "count": 1,
                     "page": 1,
                     "page_size": 250,
                     "next": null,
                     "previous": null,
                     "results": [
                       {
-                        "id": "3604346598",
-                        "brand_name": "InnovateTech Solutions",
-                        "kyc_status": "APPROVED",
-                        "created_date": "2024-11-19T18:06:05.523720Z"
-                      },
-                      {
-                        "id": "8319446548",
-                        "brand_name": "DigitalCraft Enterprises",
-                        "kyc_status": "PENDING",
-                        "created_date": "2024-11-19T17:43:25.467834Z"
-                      },
-                      {
-                        "id": "2343915596",
-                        "brand_name": "CloudSync Technologies",
-                        "kyc_status": "APPROVED",
-                        "created_date": "2024-11-19T16:43:53.317062Z"
-                      },
-                      {
-                        "id": "4455704961",
-                        "brand_name": "NextGen Software Ltd",
-                        "kyc_status": "PENDING",
-                        "created_date": "2024-11-19T08:53:22.411374Z"
+                        "id": "6182929449",
+                        "status": "PENDING",
+                        "legal_name": "Acme Exports Private Limited",
+                        "brand_name": "Acme Exports",
+                        "email": "contact@acmeexports.com",
+                        "phone_number": "+919876543210",
+                        "global_company": {
+                          "registration_number": "U72200MH2020PTC123456",
+                          "tax_id": "AACCA1234A",
+                          "international_org_type": "Private Limited Company",
+                          "website": "https://acmeexports.com",
+                          "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+                          "monthly_avg_transaction_value": null,
+                          "business_category": "GOODS",
+                          "business_category_other": null,
+                          "hs_codes": [
+                            "84713010"
+                          ],
+                          "category": null,
+                          "mcc": "5045",
+                          "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+                          "agreement_details": "Master services agreement signed on 2026-03-15",
+                          "registered_address": "Tower A, Techpark, Whitefield",
+                          "registered_city": "Bangalore",
+                          "registered_state": "Karnataka",
+                          "registered_country": "India",
+                          "registered_pincode": "560066",
+                          "same_as_registered_address": true,
+                          "communication_address": "Tower A, Techpark, Whitefield",
+                          "communication_city": "Bangalore",
+                          "communication_state": "Karnataka",
+                          "communication_country": "India",
+                          "communication_pincode": "560066"
+                        },
+                        "settlement_details": {
+                          "bank_account_number": "1234567890123456",
+                          "bank_account_name": "Acme Exports Private Limited",
+                          "bank_swift_code": "HDFCINBB",
+                          "bank_name": "HDFC Bank",
+                          "bank_branch_name": "Whitefield Branch",
+                          "bank_address": "100 Feet Road, Whitefield, Bangalore",
+                          "bank_city": "Bangalore",
+                          "bank_state": "Karnataka",
+                          "bank_country": "India",
+                          "bank_pincode": "560066",
+                          "routing_number": "HDFC0001234"
+                        },
+                        "settlement_currency": "USD",
+                        "beneficial_owners": [
+                          {
+                            "id": "4417203391",
+                            "type": "INDIVIDUAL",
+                            "first_name": "Priya",
+                            "last_name": "Sharma",
+                            "email": "priya.sharma@acmeexports.com",
+                            "authorized_user_name": "Priya Sharma",
+                            "ownership_percentage": 100.0,
+                            "nationality": "Indian",
+                            "date_of_birth": "1985-06-20",
+                            "country_of_incorporation": null,
+                            "date_of_incorporation": null
+                          }
+                        ],
+                        "changes_requested_reason": null,
+                        "section_reasons": [],
+                        "reject_reason": null,
+                        "created_at": "2026-04-28T06:30:00",
+                        "updated_at": "2026-04-28T06:30:00"
                       }
                     ]
                   }
@@ -2071,11 +2162,11 @@
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid credentials.",
+            "description": "Missing or invalid credentials.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -2089,13 +2180,31 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
           }
         },
-        "operationId": "v1_get_partners_merchants_"
+        "operationId": "v3_get_partners_merchants_"
       },
       "post": {
         "summary": "Create Merchant",
-        "description": "Create a new merchant with settlement and company details.",
+        "description": "Onboard a sub-merchant with its company, settlement and ownership details.",
         "tags": [
           "Merchants"
         ],
@@ -2107,142 +2216,170 @@
           }
         ],
         "requestBody": {
-          "description": "Merchant details to create",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/v1_CreateMerchantRequest"
+                "$ref": "#/components/schemas/v3_CreateMerchantRequest"
               },
               "example": {
-                "settlement_details": {
-                  "bank_account_number": "6789123450987654",
-                  "bank_account_name": "InnovateTech Solutions Private Limited",
-                  "bank_swift_code": "CHASINUS33XXX",
-                  "bank_name": "JPMorgan Chase Bank",
-                  "bank_branch_name": "Financial District Branch",
-                  "bank_address": "270 Park Avenue, New York",
-                  "bank_city": "New York",
-                  "bank_state": "NY",
-                  "bank_country": "United States",
-                  "bank_pincode": "10017",
-                  "routing_number": "021000021"
-                },
-                "company_details": {
-                  "legal_name": "InnovateTech Solutions Private Limited",
-                  "brand_name": "InnovateTech",
-                  "registration_number": "US-CORP-2024-IT789456",
+                "legal_name": "Acme Exports Private Limited",
+                "brand_name": "Acme Exports",
+                "email": "contact@acmeexports.com",
+                "phone_number": "+919876543210",
+                "global_company": {
+                  "registration_number": "U72200MH2020PTC123456",
+                  "tax_id": "AACCA1234A",
                   "international_org_type": "Private Limited Company",
-                  "tax_id": "94-8765432",
-                  "website": "https://www.innovatetech.com",
+                  "website": "https://acmeexports.com",
                   "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                  "communication_address": "Suite 1200, 101 California Street",
-                  "communication_city": "San Francisco",
-                  "communication_state": "CA",
-                  "communication_country": "United States",
-                  "communication_pincode": "94111",
-                  "same_as_registered_address": false,
-                  "registered_address": "1455 Market Street, Suite 1600",
-                  "registered_city": "San Francisco",
-                  "registered_state": "CA",
-                  "registered_country": "United States",
-                  "registered_pincode": "94103",
-                  "business_category": "E-commerce (physical goods & cross-border shipping)",
-                  "business_mode": "b2b",
+                  "business_category": "GOODS",
                   "hs_codes": [
-                    "85234910",
-                    "84715000"
+                    "84713010"
                   ],
-                  "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
-                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
-                  "email": "merchant@example.com",
-                  "phone_number": "+919876543210"
-                }
+                  "mcc": "5045",
+                  "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+                  "agreement_details": "Master services agreement signed on 2026-03-15",
+                  "registered_address": "Tower A, Techpark, Whitefield",
+                  "registered_city": "Bangalore",
+                  "registered_state": "Karnataka",
+                  "registered_country": "India",
+                  "registered_pincode": "560066",
+                  "same_as_registered_address": true,
+                  "communication_address": "Tower A, Techpark, Whitefield",
+                  "communication_city": "Bangalore",
+                  "communication_state": "Karnataka",
+                  "communication_country": "India",
+                  "communication_pincode": "560066"
+                },
+                "settlement_details": {
+                  "bank_account_number": "1234567890123456",
+                  "bank_account_name": "Acme Exports Private Limited",
+                  "bank_swift_code": "HDFCINBB",
+                  "bank_name": "HDFC Bank",
+                  "bank_branch_name": "Whitefield Branch",
+                  "bank_address": "100 Feet Road, Whitefield, Bangalore",
+                  "bank_city": "Bangalore",
+                  "bank_state": "Karnataka",
+                  "bank_country": "India",
+                  "bank_pincode": "560066",
+                  "routing_number": "HDFC0001234"
+                },
+                "beneficial_owners": [
+                  {
+                    "type": "INDIVIDUAL",
+                    "first_name": "Priya",
+                    "last_name": "Sharma",
+                    "email": "priya.sharma@acmeexports.com",
+                    "nationality": "Indian",
+                    "date_of_birth": "1985-06-20",
+                    "ownership_percentage": 100
+                  }
+                ]
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
-            "description": "Merchant created successfully.",
+            "description": "Sub-merchant created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_CreateMerchantResponse"
+                  "$ref": "#/components/schemas/v3_CreateMerchantResponse"
                 },
                 "example": {
                   "success": true,
                   "message": "Sub-merchant created successfully",
                   "data": {
                     "id": "6182929449",
-                    "settlement_details": {
-                      "bank_account_number": "9876543210",
-                      "bank_account_name": "GlobalTech Solutions Inc.",
-                      "bank_swift_code": "CHASUS33XXX",
-                      "bank_name": "JPMorgan Chase Bank",
-                      "bank_branch_name": "Corporate Banking Division",
-                      "bank_address": "270 Park Avenue",
-                      "bank_city": "New York",
-                      "bank_state": "NY",
-                      "bank_country": "United States",
-                      "bank_pincode": "10017",
-                      "routing_number": "021000021",
-                      "settlement_currency": "USD"
-                    },
-                    "created_at": "2025-01-15T10:30:00.000000Z",
-                    "company_details": {
-                      "legal_name": "GlobalTech Solutions Inc.",
-                      "brand_name": "GlobalTech",
-                      "registration_number": "US-CORP-99887766",
+                    "status": "PENDING",
+                    "legal_name": "Acme Exports Private Limited",
+                    "brand_name": "Acme Exports",
+                    "email": "contact@acmeexports.com",
+                    "phone_number": "+919876543210",
+                    "global_company": {
+                      "registration_number": "U72200MH2020PTC123456",
+                      "tax_id": "AACCA1234A",
                       "international_org_type": "Private Limited Company",
-                      "tax_id": "94-1234567",
-                      "website": "https://www.globaltech.io",
+                      "website": "https://acmeexports.com",
                       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "communication_address": "500 Mission Street, Suite 2400",
-                      "communication_city": "San Francisco",
-                      "communication_state": "CA",
-                      "communication_country": "United States",
-                      "communication_pincode": "94105",
-                      "same_as_registered_address": false,
-                      "registered_address": "1600 Amphitheatre Parkway",
-                      "registered_city": "Mountain View",
-                      "registered_state": "CA",
-                      "registered_country": "United States",
-                      "registered_pincode": "94043",
-                      "business_category": "E-commerce (physical goods & cross-border shipping)",
-                      "business_mode": "b2b",
+                      "monthly_avg_transaction_value": null,
+                      "business_category": "GOODS",
+                      "business_category_other": null,
                       "hs_codes": [
-                        "85234910",
-                        "84715000"
+                        "84713010"
                       ],
-                      "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
-                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
-                      "email": "contact@example.com",
-                      "phone_number": "+919876543210",
-                      "business_category_other": null
+                      "category": null,
+                      "mcc": "5045",
+                      "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+                      "agreement_details": "Master services agreement signed on 2026-03-15",
+                      "registered_address": "Tower A, Techpark, Whitefield",
+                      "registered_city": "Bangalore",
+                      "registered_state": "Karnataka",
+                      "registered_country": "India",
+                      "registered_pincode": "560066",
+                      "same_as_registered_address": true,
+                      "communication_address": "Tower A, Techpark, Whitefield",
+                      "communication_city": "Bangalore",
+                      "communication_state": "Karnataka",
+                      "communication_country": "India",
+                      "communication_pincode": "560066"
                     },
-                    "last_updated_at": "2025-01-15T10:30:00.000000Z",
-                    "kyc_status": "PENDING"
+                    "settlement_details": {
+                      "bank_account_number": "1234567890123456",
+                      "bank_account_name": "Acme Exports Private Limited",
+                      "bank_swift_code": "HDFCINBB",
+                      "bank_name": "HDFC Bank",
+                      "bank_branch_name": "Whitefield Branch",
+                      "bank_address": "100 Feet Road, Whitefield, Bangalore",
+                      "bank_city": "Bangalore",
+                      "bank_state": "Karnataka",
+                      "bank_country": "India",
+                      "bank_pincode": "560066",
+                      "routing_number": "HDFC0001234"
+                    },
+                    "settlement_currency": "USD",
+                    "beneficial_owners": [
+                      {
+                        "id": "4417203391",
+                        "type": "INDIVIDUAL",
+                        "first_name": "Priya",
+                        "last_name": "Sharma",
+                        "email": "priya.sharma@acmeexports.com",
+                        "authorized_user_name": "Priya Sharma",
+                        "ownership_percentage": 100.0,
+                        "nationality": "Indian",
+                        "date_of_birth": "1985-06-20",
+                        "country_of_incorporation": null,
+                        "date_of_incorporation": null
+                      }
+                    ],
+                    "changes_requested_reason": null,
+                    "section_reasons": [],
+                    "reject_reason": null,
+                    "created_at": "2026-04-28T06:30:00",
+                    "updated_at": "2026-04-28T06:30:00"
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request.",
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
                   "error": {
-                    "code": 40000,
-                    "message": "Invalid request",
+                    "code": "ERR_MERCHANT_001",
+                    "message": "Validation error",
                     "details": {
-                      "settlement_details": {
-                        "bank_account_number": "This field is required."
+                      "global_company": {
+                        "registered_country": "Country is not in the supported country list"
                       }
                     }
                   }
@@ -2250,137 +2387,52 @@
               }
             }
           },
-          "403": {
-            "description": "Forbidden.",
+          "401": {
+            "description": "Missing or invalid credentials.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "ERR_AUTH_003",
-                    "message": "This endpoint is only accessible to PSP merchants",
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
                     "details": {
-                      "authentication": "This endpoint is only accessible to PSP merchants."
+                      "authentication": "Missing credentials."
                     }
                   }
                 }
               }
             }
-          }
-        },
-        "operationId": "v1_post_partners_merchants_"
-      }
-    },
-    "/partners/merchants/{merchant_id}/": {
-      "get": {
-        "summary": "Get Merchant",
-        "description": "Retrieve the details of a specific merchant by its ID.",
-        "tags": [
-          "Merchants"
-        ],
-        "security": [
-          {
-            "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "merchant_id",
-            "in": "path",
-            "description": "The ID of the merchant to retrieve.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Merchant details retrieved successfully.",
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetMerchantResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
-                  "success": true,
-                  "message": "Sub-merchant details retrieved successfully",
-                  "data": {
-                    "id": "3604346598",
-                    "settlement_details": {
-                      "bank_account_number": "9876543210123456",
-                      "bank_account_name": "InnovateTech Solutions Private Limited",
-                      "bank_swift_code": "CHASUS33XXX",
-                      "bank_name": "JPMorgan Chase Bank",
-                      "bank_branch_name": "Corporate Banking Division",
-                      "bank_address": "270 Park Avenue",
-                      "bank_city": "New York",
-                      "bank_state": "NY",
-                      "bank_country": "United States",
-                      "bank_pincode": "10017",
-                      "routing_number": "021000021",
-                      "settlement_currency": "USD"
-                    },
-                    "created_at": "2025-06-19T18:06:05.523720Z",
-                    "company_details": {
-                      "legal_name": "InnovateTech Solutions Private Limited",
-                      "brand_name": "InnovateTech Solutions",
-                      "registration_number": "US-CORP-2024-IT789456",
-                      "international_org_type": "Private Limited Company",
-                      "tax_id": "94-8765432",
-                      "website": "https://www.innovatetech.com",
-                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "communication_address": "123 Tech Street",
-                      "communication_city": "San Francisco",
-                      "communication_state": "CA",
-                      "communication_country": "United States",
-                      "communication_pincode": "94105",
-                      "same_as_registered_address": true,
-                      "registered_address": "123 Tech Street",
-                      "registered_city": "San Francisco",
-                      "registered_state": "CA",
-                      "registered_country": "United States",
-                      "registered_pincode": "94105",
-                      "business_category": "E-commerce (physical goods & cross-border shipping)",
-                      "business_mode": "b2b",
-                      "hs_codes": [
-                        "84713010",
-                        "85423100"
-                      ],
-                      "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                      "agreement_details": "global_company aggrement",
-                      "email": "contact@example.com",
-                      "phone_number": "+919876543210",
-                      "business_category_other": null
-                    },
-                    "last_updated_at": "2025-06-19T18:06:05.523752Z",
-                    "kyc_status": "PENDING"
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
                   }
                 }
               }
             }
-          },
-          "404": {
-            "description": "Merchant not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                }
-              }
-            }
           }
         },
-        "operationId": "v1_get_partners_merchants_merchant_id_"
-      },
-      "patch": {
-        "summary": "Update Merchant",
-        "description": "Update specific fields of an existing merchant.",
+        "operationId": "v3_post_partners_merchants_"
+      }
+    },
+    "/partners/merchants/options/": {
+      "get": {
+        "summary": "Get Merchant Options",
+        "description": "The values every dropdown field on a sub-merchant accepts, including the business categories you are approved for.",
         "tags": [
           "Merchants"
         ],
@@ -2391,115 +2443,847 @@
             "apiVersionHeader": []
           }
         ],
-        "parameters": [
-          {
-            "name": "merchant_id",
-            "in": "path",
-            "description": "The ID of the merchant to update.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Merchant update request - only include fields to update",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/v1_UpdateMerchantRequest"
-              },
-              "example": {
-                "company_details": {
-                  "legal_name": "Shakti Logistics & Exports Pvt Ltd",
-                  "brand_name": "ShaktiXpress",
-                  "registration_number": "IN09DEL2021PTC987654",
-                  "international_org_type": "Private Limited Company",
-                  "tax_id": "29AABCT1234D1Z9",
-                  "website": "https://www.shaktiexpress.in",
-                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                  "business_category": "E-commerce (physical goods & cross-border shipping)",
-                  "business_mode": "b2b",
-                  "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
-                  "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
-                  "communication_address": "Plot No. 56, Electronic City Phase 1",
-                  "communication_city": "Bengaluru",
-                  "communication_state": "Karnataka",
-                  "communication_country": "India",
-                  "communication_pincode": "560100",
-                  "same_as_registered_address": false,
-                  "registered_address": "7th Floor, Sagar Tech Plaza, Andheri-Kurla Road",
-                  "registered_city": "Mumbai",
-                  "registered_state": "Maharashtra",
-                  "registered_country": "India",
-                  "registered_pincode": "400072",
-                  "hs_codes": [
-                    "85234910",
-                    "84715000"
-                  ]
-                },
-                "settlement_details": {
-                  "bank_account_number": "5087654321123456",
-                  "bank_account_name": "Shakti Logistics & Exports Pvt Ltd",
-                  "bank_swift_code": "HDFCINBBXXX",
-                  "bank_name": "HDFC Bank Ltd.",
-                  "bank_branch_name": "Andheri East Branch",
-                  "bank_address": "Unit 3A, Ground Floor, Hiranandani Business Park, Powai",
-                  "bank_city": "Mumbai",
-                  "bank_state": "Maharashtra",
-                  "bank_country": "India",
-                  "bank_pincode": "400076",
-                  "routing_number": "HDFC0000001"
-                }
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Merchant updated successfully.",
+            "description": "Supported values.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_UpdateMerchantResponse"
+                  "$ref": "#/components/schemas/v3_MerchantOptionsResponse"
                 },
                 "example": {
                   "success": true,
-                  "message": "Merchant updated successfully",
+                  "message": "Sub-merchant options retrieved successfully",
                   "data": {
-                    "merchant_id": "3604346598",
-                    "updated_fields": [
-                      "company_details",
-                      "settlement_details"
+                    "countries": [
+                      "Afghanistan",
+                      "Albania",
+                      "India",
+                      "United States of America"
+                    ],
+                    "nationalities": [
+                      "Afghan",
+                      "Albanian",
+                      "Indian",
+                      "American"
+                    ],
+                    "international_org_types": [
+                      "Private Limited Company",
+                      "Public Limited Company",
+                      "Limited Liability Company",
+                      "Joint Stock Company",
+                      "Free Zone Company / Entity",
+                      "Partnership / LLP",
+                      "Sole Proprietorship",
+                      "Other"
+                    ],
+                    "monthly_avg_transaction_volumes": [
+                      {
+                        "value": "LESS_THAN_5_K",
+                        "label": "Less than $5,000"
+                      },
+                      {
+                        "value": "ABOVE_500_K",
+                        "label": "$500,000 & above"
+                      }
+                    ],
+                    "business_categories": [
+                      {
+                        "value": "GOODS",
+                        "label": "Goods (physical products shipped cross-border)",
+                        "requires_hs_codes": true
+                      },
+                      {
+                        "value": "SOFTWARE_CONSULTING",
+                        "label": "Software consulting & implementation",
+                        "requires_hs_codes": false
+                      }
                     ]
                   }
                 }
               }
             }
           },
-          "400": {
-            "description": "Bad request - Invalid parameters.",
+          "401": {
+            "description": "Missing or invalid credentials.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
                 }
               }
             }
           },
-          "404": {
-            "description": "Merchant not found.",
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
                 }
               }
             }
           }
         },
-        "operationId": "v1_patch_partners_merchants_merchant_id_"
+        "operationId": "v3_get_partners_merchants_options_"
+      }
+    },
+    "/partners/merchants/hs-codes/": {
+      "get": {
+        "summary": "Search HS Codes",
+        "description": "Find the HS codes a goods sub-merchant can declare, by code or description.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Text to match against the code and its description.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number. Default `1`.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Results per page. Default `250`, maximum `1000`.",
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of HS codes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_HSCodeSearchResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "HS codes retrieved successfully",
+                  "data": {
+                    "count": 1,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "id": 10421,
+                        "value": "84713010",
+                        "description": "Personal computer, portable, laptop",
+                        "policy": "Free"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_partners_merchants_hs_codes_"
+      }
+    },
+    "/partners/merchants/swift/": {
+      "get": {
+        "summary": "Look Up SWIFT Code",
+        "description": "Bank details for a SWIFT/BIC code, in the field names of `settlement_details`.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "description": "SWIFT/BIC code, 8 or 11 uppercase letters and digits, e.g. `DBSSSGSG`.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bank details for the code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_SwiftLookupResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Bank details retrieved successfully",
+                  "data": {
+                    "bank_name": "DBS Bank Ltd",
+                    "bank_branch_name": "Head Office",
+                    "bank_address": "12 Marina Boulevard, Marina Bay",
+                    "bank_city": "Singapore",
+                    "bank_pincode": "018982",
+                    "bank_country": "Singapore",
+                    "bank_swift_code": "DBSSSGSG"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The code is missing or malformed, or no bank details were found for it (`ERR_MERCHANT_019`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_019",
+                    "message": "Bank details could not be found for bank_swift_code",
+                    "details": "Bank details could not be found for bank_swift_code"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_partners_merchants_swift_"
+      }
+    },
+    "/partners/merchants/{merchant_id}/": {
+      "get": {
+        "summary": "Get Merchant",
+        "description": "Retrieve one sub-merchant by its ID, with its status and any changes EximPe has asked for.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "required": true,
+            "description": "The sub-merchant's ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sub-merchant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_GetMerchantResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchant details retrieved successfully",
+                  "data": {
+                    "id": "6182929449",
+                    "status": "PENDING",
+                    "legal_name": "Acme Exports Private Limited",
+                    "brand_name": "Acme Exports",
+                    "email": "contact@acmeexports.com",
+                    "phone_number": "+919876543210",
+                    "global_company": {
+                      "registration_number": "U72200MH2020PTC123456",
+                      "tax_id": "AACCA1234A",
+                      "international_org_type": "Private Limited Company",
+                      "website": "https://acmeexports.com",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+                      "monthly_avg_transaction_value": null,
+                      "business_category": "GOODS",
+                      "business_category_other": null,
+                      "hs_codes": [
+                        "84713010"
+                      ],
+                      "category": null,
+                      "mcc": "5045",
+                      "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+                      "agreement_details": "Master services agreement signed on 2026-03-15",
+                      "registered_address": "Tower A, Techpark, Whitefield",
+                      "registered_city": "Bangalore",
+                      "registered_state": "Karnataka",
+                      "registered_country": "India",
+                      "registered_pincode": "560066",
+                      "same_as_registered_address": true,
+                      "communication_address": "Tower A, Techpark, Whitefield",
+                      "communication_city": "Bangalore",
+                      "communication_state": "Karnataka",
+                      "communication_country": "India",
+                      "communication_pincode": "560066"
+                    },
+                    "settlement_details": {
+                      "bank_account_number": "1234567890123456",
+                      "bank_account_name": "Acme Exports Private Limited",
+                      "bank_swift_code": "HDFCINBB",
+                      "bank_name": "HDFC Bank",
+                      "bank_branch_name": "Whitefield Branch",
+                      "bank_address": "100 Feet Road, Whitefield, Bangalore",
+                      "bank_city": "Bangalore",
+                      "bank_state": "Karnataka",
+                      "bank_country": "India",
+                      "bank_pincode": "560066",
+                      "routing_number": "HDFC0001234"
+                    },
+                    "settlement_currency": "USD",
+                    "beneficial_owners": [
+                      {
+                        "id": "4417203391",
+                        "type": "INDIVIDUAL",
+                        "first_name": "Priya",
+                        "last_name": "Sharma",
+                        "email": "priya.sharma@acmeexports.com",
+                        "authorized_user_name": "Priya Sharma",
+                        "ownership_percentage": 100.0,
+                        "nationality": "Indian",
+                        "date_of_birth": "1985-06-20",
+                        "country_of_incorporation": null,
+                        "date_of_incorporation": null
+                      }
+                    ],
+                    "changes_requested_reason": null,
+                    "section_reasons": [],
+                    "reject_reason": null,
+                    "created_at": "2026-04-28T06:30:00",
+                    "updated_at": "2026-04-28T06:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sub-merchant with this ID belongs to you, or it has been deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_016",
+                    "message": "Sub-Merchant not found",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_partners_merchants_merchant_id_"
+      },
+      "patch": {
+        "summary": "Update Merchant",
+        "description": "Edit a sub-merchant that is PENDING or CHANGES_REQUESTED. A complete edit to a CHANGES_REQUESTED sub-merchant resubmits it for review.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "required": true,
+            "description": "The sub-merchant's ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/v3_UpdateMerchantRequest"
+              },
+              "example": {
+                "global_company": {
+                  "registration_number": "U72200MH2020PTC654321"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The sub-merchant after the edit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_UpdateMerchantResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchant updated successfully",
+                  "data": {
+                    "id": "6182929449",
+                    "status": "PENDING",
+                    "legal_name": "Acme Exports Private Limited",
+                    "brand_name": "Acme Exports",
+                    "email": "contact@acmeexports.com",
+                    "phone_number": "+919876543210",
+                    "global_company": {
+                      "registration_number": "U72200MH2020PTC654321",
+                      "tax_id": "AACCA1234A",
+                      "international_org_type": "Private Limited Company",
+                      "website": "https://acmeexports.com",
+                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
+                      "monthly_avg_transaction_value": null,
+                      "business_category": "GOODS",
+                      "business_category_other": null,
+                      "hs_codes": [
+                        "84713010"
+                      ],
+                      "category": null,
+                      "mcc": "5045",
+                      "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+                      "agreement_details": "Master services agreement signed on 2026-03-15",
+                      "registered_address": "Tower A, Techpark, Whitefield",
+                      "registered_city": "Bangalore",
+                      "registered_state": "Karnataka",
+                      "registered_country": "India",
+                      "registered_pincode": "560066",
+                      "same_as_registered_address": true,
+                      "communication_address": "Tower A, Techpark, Whitefield",
+                      "communication_city": "Bangalore",
+                      "communication_state": "Karnataka",
+                      "communication_country": "India",
+                      "communication_pincode": "560066"
+                    },
+                    "settlement_details": {
+                      "bank_account_number": "1234567890123456",
+                      "bank_account_name": "Acme Exports Private Limited",
+                      "bank_swift_code": "HDFCINBB",
+                      "bank_name": "HDFC Bank",
+                      "bank_branch_name": "Whitefield Branch",
+                      "bank_address": "100 Feet Road, Whitefield, Bangalore",
+                      "bank_city": "Bangalore",
+                      "bank_state": "Karnataka",
+                      "bank_country": "India",
+                      "bank_pincode": "560066",
+                      "routing_number": "HDFC0001234"
+                    },
+                    "settlement_currency": "USD",
+                    "beneficial_owners": [
+                      {
+                        "id": "4417203391",
+                        "type": "INDIVIDUAL",
+                        "first_name": "Priya",
+                        "last_name": "Sharma",
+                        "email": "priya.sharma@acmeexports.com",
+                        "authorized_user_name": "Priya Sharma",
+                        "ownership_percentage": 100.0,
+                        "nationality": "Indian",
+                        "date_of_birth": "1985-06-20",
+                        "country_of_incorporation": null,
+                        "date_of_incorporation": null
+                      }
+                    ],
+                    "changes_requested_reason": null,
+                    "section_reasons": [],
+                    "reject_reason": null,
+                    "created_at": "2026-04-28T06:30:00",
+                    "updated_at": "2026-04-30T09:15:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "global_company": {
+                        "registered_country": "Country is not in the supported country list"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sub-merchant with this ID belongs to you, or it has been deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_016",
+                    "message": "Sub-Merchant not found",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The sub-merchant is IN_REVIEW, APPROVED or REJECTED and can no longer be edited.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_003",
+                    "message": "Sub-Merchant can only be edited while Pending or Changes Requested",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_patch_partners_merchants_merchant_id_"
+      },
+      "delete": {
+        "summary": "Delete Merchant",
+        "description": "Remove a sub-merchant that is PENDING or REJECTED.",
+        "tags": [
+          "Merchants"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "merchant_id",
+            "in": "path",
+            "required": true,
+            "description": "The sub-merchant's ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sub-merchant deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_DeleteMerchantResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Sub-merchant deleted successfully",
+                  "data": {
+                    "id": "6182929449"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sub-merchant with this ID belongs to you, or it has been deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_016",
+                    "message": "Sub-Merchant not found",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The sub-merchant is IN_REVIEW, CHANGES_REQUESTED or APPROVED and cannot be deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_004",
+                    "message": "Sub-Merchant can only be deleted while Pending or Rejected",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_delete_partners_merchants_merchant_id_"
       }
     },
     "/partners/merchants/{merchant_id}/documents/": {
@@ -15607,15 +16391,47 @@
       "v3_CreateMerchantRequest": {
         "type": "object",
         "required": [
-          "settlement_details",
-          "company_details"
+          "legal_name",
+          "brand_name",
+          "email",
+          "phone_number",
+          "global_company",
+          "settlement_details"
         ],
         "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "Registered company name.",
+            "maxLength": 255,
+            "minLength": 2
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand or trading name.",
+            "maxLength": 200
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email for the sub-merchant.",
+            "format": "email",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format, e.g. `+919876543210`."
+          },
+          "global_company": {
+            "$ref": "#/components/schemas/v3_CompanyDetails"
+          },
           "settlement_details": {
             "$ref": "#/components/schemas/v3_SettlementDetails"
           },
-          "company_details": {
-            "$ref": "#/components/schemas/v3_CompanyDetails"
+          "beneficial_owners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_BeneficialOwner"
+            },
+            "description": "Required, with at least one owner, when your account collects under EximPe's own PA-CB licence. Otherwise leave it out or send an empty list."
           }
         }
       },
@@ -15625,122 +16441,126 @@
           "bank_account_number",
           "bank_account_name",
           "bank_swift_code",
-          "bank_name",
-          "bank_branch_name",
-          "bank_address",
-          "bank_city",
-          "bank_state",
-          "bank_country",
-          "bank_pincode",
-          "routing_number"
+          "bank_state"
         ],
         "properties": {
           "bank_account_number": {
             "type": "string",
-            "description": "Bank account number"
+            "description": "Account number or IBAN.",
+            "pattern": "^[A-Z0-9]{10,34}$"
           },
           "bank_account_name": {
             "type": "string",
-            "description": "Name on the bank account"
+            "description": "Name on the account.",
+            "minLength": 2,
+            "maxLength": 80
           },
           "bank_swift_code": {
             "type": "string",
-            "description": "Bank SWIFT/BIC code"
+            "description": "SWIFT/BIC code, 8 or 11 characters. Bank fields you leave out are filled from this code; values you send are kept.",
+            "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
           },
           "bank_name": {
             "type": "string",
-            "description": "Name of the bank"
+            "description": "Name of the bank. Optional: when left out, filled from `bank_swift_code`.",
+            "minLength": 2,
+            "maxLength": 150
           },
           "bank_branch_name": {
             "type": "string",
-            "description": "Bank branch name"
+            "description": "Branch name. Optional: when left out, filled from `bank_swift_code`.",
+            "minLength": 2,
+            "maxLength": 150
           },
           "bank_address": {
             "type": "string",
-            "description": "Bank address"
+            "description": "Branch address. Optional: when left out, filled from `bank_swift_code`.",
+            "minLength": 20,
+            "maxLength": 150
           },
           "bank_city": {
             "type": "string",
-            "description": "Bank city"
+            "description": "Branch city. Optional: when left out, filled from `bank_swift_code`.",
+            "minLength": 2,
+            "maxLength": 150
           },
           "bank_state": {
             "type": "string",
-            "description": "Bank state"
+            "description": "Branch state or province.",
+            "minLength": 2,
+            "maxLength": 150
           },
           "bank_country": {
             "type": "string",
-            "description": "Bank country"
+            "description": "Branch country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling. Optional: when left out, filled from `bank_swift_code`."
           },
           "bank_pincode": {
             "type": "string",
-            "description": "Bank pincode/postal code"
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+            "description": "Branch postal code. Optional: when left out, filled from `bank_swift_code`."
           },
           "routing_number": {
             "type": "string",
-            "description": "Bank routing number"
+            "description": "Routing number, sort code or IFSC. Optional.",
+            "pattern": "^[A-Z0-9]{6,12}$"
           }
         }
       },
       "v3_CompanyDetails": {
         "type": "object",
         "required": [
-          "legal_name",
-          "brand_name",
           "registration_number",
-          "international_org_type",
           "tax_id",
+          "international_org_type",
           "website",
           "monthly_avg_transaction_volume",
+          "business_category",
+          "mcc",
+          "description_of_products_and_services",
+          "agreement_details",
           "registered_address",
           "registered_city",
           "registered_state",
           "registered_country",
           "registered_pincode",
-          "business_category",
-          "business_mode",
-          "description_of_products_and_services",
-          "agreement_details",
-          "email",
-          "phone_number"
+          "same_as_registered_address"
         ],
         "properties": {
-          "legal_name": {
-            "type": "string",
-            "description": "Legal name of the company"
-          },
-          "brand_name": {
-            "type": "string",
-            "description": "Brand/trading name of the company"
-          },
           "registration_number": {
             "type": "string",
-            "description": "Company registration number"
+            "description": "Company registration number.",
+            "minLength": 5,
+            "maxLength": 25
+          },
+          "tax_id": {
+            "type": "string",
+            "description": "Tax identification number.",
+            "minLength": 5,
+            "maxLength": 20
           },
           "international_org_type": {
             "type": "string",
-            "description": "Type of international organization",
+            "description": "Type of organisation.",
             "enum": [
               "Private Limited Company",
               "Public Limited Company",
               "Limited Liability Company",
+              "Joint Stock Company",
               "Free Zone Company / Entity",
               "Partnership / LLP",
               "Sole Proprietorship",
               "Other"
             ]
           },
-          "tax_id": {
-            "type": "string",
-            "description": "Tax identification number"
-          },
           "website": {
             "type": "string",
-            "format": "uri",
-            "description": "Company website URL"
+            "description": "Company website. Must start with `https://` (`http://` is refused) and include a domain, e.g. `https://example.com`.",
+            "minLength": 12,
+            "maxLength": 508
           },
           "monthly_avg_transaction_volume": {
             "type": "string",
-            "description": "Average monthly transaction volume",
+            "description": "Expected monthly transaction volume, in US dollars.",
             "enum": [
               "LESS_THAN_5_K",
               "BETWEEN_5_K_AND_20_K",
@@ -15751,97 +16571,91 @@
               "ABOVE_500_K"
             ]
           },
-          "registered_address": {
-            "type": "string",
-            "description": "Registered address"
-          },
-          "registered_city": {
-            "type": "string",
-            "description": "Registered city"
-          },
-          "registered_state": {
-            "type": "string",
-            "description": "Registered state"
-          },
-          "registered_country": {
-            "type": "string",
-            "description": "Registered country"
-          },
-          "registered_pincode": {
-            "type": "string",
-            "description": "Registered pincode/postal code"
-          },
-          "same_as_registered_address": {
-            "type": "boolean",
-            "description": "Whether communication address is same as registered address, if provided communication address will be ignored"
-          },
-          "communication_address": {
-            "type": "string",
-            "description": "Communication address, required if same_as_registered_address is false or not provided"
-          },
-          "communication_city": {
-            "type": "string",
-            "description": "Communication city, required if same_as_registered_address is false or not provided"
-          },
-          "communication_state": {
-            "type": "string",
-            "description": "Communication state, required if same_as_registered_address is false or not provided"
-          },
-          "communication_country": {
-            "type": "string",
-            "description": "Communication country, required if same_as_registered_address is false or not provided"
-          },
-          "communication_pincode": {
-            "type": "string",
-            "description": "Communication pincode/postal code, required if same_as_registered_address is false or not provided"
-          },
           "business_category": {
             "type": "string",
-            "description": "Business category",
-            "enum": [
-              "E-commerce (physical goods & cross-border shipping)",
-              "Digital goods / software / downloads",
-              "SaaS / subscriptions / recurring billing",
-              "Services (delivered cross-border)",
-              "Marketplace / platform (multiple sellers)",
-              "Other"
-            ]
-          },
-          "business_mode": {
-            "type": "string",
-            "description": "Business mode",
-            "enum": [
-              "b2b",
-              "b2c"
-            ]
+            "description": "One or more category slugs from your approved categories, comma-separated, e.g. `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See Get Merchant Options."
           },
           "hs_codes": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Harmonized System codes for products/services, required for physical goods"
+            "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes."
+          },
+          "mcc": {
+            "type": "string",
+            "description": "Merchant Category Codes, comma-separated 4-digit codes, e.g. `5411,5812`.",
+            "pattern": "^\\d{4}(,\\d{4})*$"
           },
           "description_of_products_and_services": {
             "type": "string",
-            "description": "Detailed description of products and services"
+            "description": "What the sub-merchant sells.",
+            "minLength": 20,
+            "maxLength": 300
           },
           "agreement_details": {
             "type": "string",
-            "description": "Agreement details"
+            "description": "The agreement you hold with the sub-merchant.",
+            "minLength": 20,
+            "maxLength": 300
           },
-          "business_category_other": {
+          "registered_address": {
             "type": "string",
-            "description": "Required when business_category includes Other"
+            "description": "Registered office address.",
+            "minLength": 2,
+            "maxLength": 250
           },
-          "email": {
+          "registered_city": {
             "type": "string",
-            "format": "email",
-            "description": "Contact email for the sub-merchant"
+            "description": "Registered office city.",
+            "minLength": 2,
+            "maxLength": 150
           },
-          "phone_number": {
+          "registered_state": {
             "type": "string",
-            "description": "Contact phone number in E.164 format"
+            "description": "Registered office state or province.",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "registered_country": {
+            "type": "string",
+            "description": "Registered office country, and the sub-merchant's country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling."
+          },
+          "registered_pincode": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+            "description": "Registered office postal code."
+          },
+          "same_as_registered_address": {
+            "type": "boolean",
+            "description": "Whether the communication address is the registered address. When `true`, the registered address is copied into the communication fields and any communication values you send are replaced. When `false`, every communication field is required."
+          },
+          "communication_address": {
+            "type": "string",
+            "description": "Communication address. Required when `same_as_registered_address` is `false`.",
+            "minLength": 2,
+            "maxLength": 250
+          },
+          "communication_city": {
+            "type": "string",
+            "description": "Communication city. Required when `same_as_registered_address` is `false`.",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "communication_state": {
+            "type": "string",
+            "description": "Communication state or province. Required when `same_as_registered_address` is `false`.",
+            "minLength": 2,
+            "maxLength": 150
+          },
+          "communication_country": {
+            "type": "string",
+            "description": "Communication country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling. Required when `same_as_registered_address` is `false`."
+          },
+          "communication_pincode": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+            "description": "Communication postal code. Required when `same_as_registered_address` is `false`."
           }
         }
       },
@@ -15854,12 +16668,10 @@
         ],
         "properties": {
           "success": {
-            "type": "boolean",
-            "description": "Indicates if the request was successful"
+            "type": "boolean"
           },
           "message": {
-            "type": "string",
-            "description": "Response message"
+            "type": "string"
           },
           "data": {
             "$ref": "#/components/schemas/v3_MerchantDetails"
@@ -15868,6 +16680,11 @@
       },
       "v3_ListMerchantsResponse": {
         "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
         "properties": {
           "success": {
             "type": "boolean"
@@ -15898,39 +16715,10 @@
               "results": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/v3_MerchantInList"
+                  "$ref": "#/components/schemas/v3_MerchantDetails"
                 }
               }
             }
-          }
-        }
-      },
-      "v3_MerchantInList": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique merchant identifier"
-          },
-          "brand_name": {
-            "type": "string",
-            "description": "Brand/trading name of the merchant"
-          },
-          "kyc_status": {
-            "type": "string",
-            "description": "KYC verification status",
-            "enum": [
-              "PENDING",
-              "IN_REVIEW",
-              "CHANGES_REQUESTED",
-              "APPROVED",
-              "REJECTED"
-            ]
-          },
-          "created_date": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Merchant creation timestamp"
           }
         }
       },
@@ -15955,224 +16743,535 @@
       },
       "v3_MerchantDetails": {
         "type": "object",
-        "required": [
-          "id",
-          "settlement_details",
-          "created_at",
-          "company_details",
-          "last_updated_at",
-          "kyc_status"
-        ],
         "properties": {
           "id": {
             "type": "string",
-            "description": "Unique merchant identifier"
+            "description": "The sub-merchant's merchant ID."
           },
-          "settlement_details": {
-            "$ref": "#/components/schemas/v3_SettlementDetails"
-          },
-          "created_at": {
+          "status": {
             "type": "string",
-            "format": "date-time",
-            "description": "Merchant creation timestamp"
-          },
-          "company_details": {
-            "$ref": "#/components/schemas/v3_CompanyDetails"
-          },
-          "last_updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Last updated timestamp"
-          },
-          "kyc_status": {
-            "type": "string",
+            "description": "Current status.",
             "enum": [
               "PENDING",
               "IN_REVIEW",
               "CHANGES_REQUESTED",
               "APPROVED",
               "REJECTED"
-            ],
-            "description": "Current KYC/onboarding status"
-          }
-        }
-      },
-      "v3_UpdateMerchantRequest": {
-        "type": "object",
-        "description": "Request body for updating merchant - only include fields to update",
-        "properties": {
-          "company_details": {
+            ]
+          },
+          "legal_name": {
+            "type": "string",
+            "description": "Registered company name.",
+            "maxLength": 255,
+            "minLength": 2
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand or trading name.",
+            "maxLength": 200,
+            "minLength": 2
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email for the sub-merchant.",
+            "format": "email",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format, e.g. `+919876543210`."
+          },
+          "global_company": {
             "type": "object",
-            "description": "Company details to update",
             "properties": {
-              "legal_name": {
-                "type": "string",
-                "description": "Updated legal name of the company"
-              },
-              "brand_name": {
-                "type": "string",
-                "description": "Updated brand/trading name of the company"
-              },
               "registration_number": {
                 "type": "string",
-                "description": "Updated company registration number"
+                "description": "Company registration number.",
+                "minLength": 5,
+                "maxLength": 25
+              },
+              "tax_id": {
+                "type": "string",
+                "description": "Tax identification number.",
+                "minLength": 5,
+                "maxLength": 20
               },
               "international_org_type": {
                 "type": "string",
-                "description": "Updated type of international organization",
+                "description": "Type of organisation.",
                 "enum": [
                   "Private Limited Company",
                   "Public Limited Company",
                   "Limited Liability Company",
+                  "Joint Stock Company",
                   "Free Zone Company / Entity",
                   "Partnership / LLP",
                   "Sole Proprietorship",
                   "Other"
                 ]
               },
-              "tax_id": {
-                "type": "string",
-                "description": "Updated tax identification number"
-              },
               "website": {
                 "type": "string",
-                "format": "uri",
-                "description": "Updated company website URL"
+                "description": "Company website. Must start with `https://` (`http://` is refused) and include a domain, e.g. `https://example.com`.",
+                "minLength": 12,
+                "maxLength": 508
               },
               "monthly_avg_transaction_volume": {
                 "type": "string",
-                "description": "Updated average monthly transaction volume"
+                "description": "Expected monthly transaction volume, in US dollars.",
+                "enum": [
+                  "LESS_THAN_5_K",
+                  "BETWEEN_5_K_AND_20_K",
+                  "BETWEEN_20_K_AND_50_K",
+                  "BETWEEN_50_K_AND_100_K",
+                  "BETWEEN_100_K_AND_250_K",
+                  "BETWEEN_250_K_AND_500_K",
+                  "ABOVE_500_K"
+                ]
               },
-              "communication_address": {
+              "monthly_avg_transaction_value": {
                 "type": "string",
-                "description": "Updated communication address"
-              },
-              "communication_city": {
-                "type": "string",
-                "description": "Updated communication city"
-              },
-              "communication_state": {
-                "type": "string",
-                "description": "Updated communication state"
-              },
-              "communication_country": {
-                "type": "string",
-                "description": "Updated communication country"
-              },
-              "communication_pincode": {
-                "type": "string",
-                "description": "Updated communication pincode/postal code"
-              },
-              "same_as_registered_address": {
-                "type": "boolean",
-                "description": "Updated flag for same as registered address"
-              },
-              "registered_address": {
-                "type": "string",
-                "description": "Updated registered address"
-              },
-              "registered_city": {
-                "type": "string",
-                "description": "Updated registered city"
-              },
-              "registered_state": {
-                "type": "string",
-                "description": "Updated registered state"
-              },
-              "registered_country": {
-                "type": "string",
-                "description": "Updated registered country"
-              },
-              "registered_pincode": {
-                "type": "string",
-                "description": "Updated registered pincode/postal code"
+                "nullable": true,
+                "description": "Expected monthly transaction value, when recorded."
               },
               "business_category": {
                 "type": "string",
-                "description": "Updated business category",
-                "enum": [
-                  "E-commerce (physical goods & cross-border shipping)",
-                  "Digital goods / software / downloads",
-                  "SaaS / subscriptions / recurring billing",
-                  "Services (delivered cross-border)",
-                  "Marketplace / platform (multiple sellers)",
-                  "Other"
-                ]
+                "description": "One or more category slugs from your approved categories, comma-separated, e.g. `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See Get Merchant Options."
               },
-              "business_mode": {
+              "business_category_other": {
                 "type": "string",
-                "description": "Updated business mode",
-                "enum": [
-                  "b2b",
-                  "b2c"
-                ]
+                "nullable": true,
+                "description": "Description of an \"Other\" category, taken from your own account."
               },
               "hs_codes": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 },
-                "description": "Updated Harmonized System codes for products/services, required for physical goods"
+                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes.",
+                "nullable": true
+              },
+              "category": {
+                "type": "string",
+                "nullable": true,
+                "description": "Category label, when recorded."
+              },
+              "mcc": {
+                "type": "string",
+                "description": "Merchant Category Codes, comma-separated 4-digit codes, e.g. `5411,5812`.",
+                "pattern": "^\\d{4}(,\\d{4})*$"
               },
               "description_of_products_and_services": {
                 "type": "string",
-                "description": "Updated description of products and services"
+                "description": "What the sub-merchant sells.",
+                "minLength": 20,
+                "maxLength": 300
               },
               "agreement_details": {
                 "type": "string",
-                "description": "Updated agreement details"
+                "description": "The agreement you hold with the sub-merchant.",
+                "minLength": 20,
+                "maxLength": 300
+              },
+              "registered_address": {
+                "type": "string",
+                "description": "Registered office address.",
+                "minLength": 2,
+                "maxLength": 250
+              },
+              "registered_city": {
+                "type": "string",
+                "description": "Registered office city.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "registered_state": {
+                "type": "string",
+                "description": "Registered office state or province.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "registered_country": {
+                "type": "string",
+                "description": "Registered office country, and the sub-merchant's country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling."
+              },
+              "registered_pincode": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Registered office postal code."
+              },
+              "same_as_registered_address": {
+                "type": "boolean",
+                "description": "Whether the communication address is the registered address. When `true`, the registered address is copied into the communication fields and any communication values you send are replaced. When `false`, every communication field is required."
+              },
+              "communication_address": {
+                "type": "string",
+                "description": "Communication address. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 250
+              },
+              "communication_city": {
+                "type": "string",
+                "description": "Communication city. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "communication_state": {
+                "type": "string",
+                "description": "Communication state or province. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "communication_country": {
+                "type": "string",
+                "description": "Communication country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling. Required when `same_as_registered_address` is `false`."
+              },
+              "communication_pincode": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Communication postal code. Required when `same_as_registered_address` is `false`."
               }
             }
           },
           "settlement_details": {
             "type": "object",
-            "description": "Settlement details to update",
             "properties": {
               "bank_account_number": {
                 "type": "string",
-                "description": "Updated bank account number"
+                "description": "Account number or IBAN, returned in full.",
+                "pattern": "^[A-Z0-9]{10,34}$"
               },
               "bank_account_name": {
                 "type": "string",
-                "description": "Updated bank account name"
+                "description": "Name on the account.",
+                "minLength": 2,
+                "maxLength": 80
               },
               "bank_swift_code": {
                 "type": "string",
-                "description": "Updated bank SWIFT/BIC code"
+                "description": "SWIFT/BIC code, 8 or 11 characters.",
+                "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
               },
               "bank_name": {
                 "type": "string",
-                "description": "Updated name of the bank"
+                "description": "Name of the bank.",
+                "minLength": 2,
+                "maxLength": 150
               },
               "bank_branch_name": {
                 "type": "string",
-                "description": "Updated bank branch name"
+                "description": "Branch name.",
+                "minLength": 2,
+                "maxLength": 150
               },
               "bank_address": {
                 "type": "string",
-                "description": "Updated bank address"
+                "description": "Branch address.",
+                "minLength": 20,
+                "maxLength": 150
               },
               "bank_city": {
                 "type": "string",
-                "description": "Updated bank city"
+                "description": "Branch city.",
+                "minLength": 2,
+                "maxLength": 150
               },
               "bank_state": {
                 "type": "string",
-                "description": "Updated bank state"
+                "description": "Branch state or province.",
+                "minLength": 2,
+                "maxLength": 150
               },
               "bank_country": {
                 "type": "string",
-                "description": "Updated bank country"
+                "description": "Branch country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling."
               },
               "bank_pincode": {
                 "type": "string",
-                "description": "Updated bank pincode/postal code"
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Branch postal code."
               },
               "routing_number": {
                 "type": "string",
-                "description": "Updated bank routing number"
+                "description": "Routing number, sort code or IFSC. Optional.",
+                "pattern": "^[A-Z0-9]{6,12}$"
               }
             }
+          },
+          "settlement_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO code of the currency the sub-merchant is paid out in. Follows your own settlement account."
+          },
+          "beneficial_owners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_BeneficialOwnerResponse"
+            }
+          },
+          "changes_requested_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`."
+          },
+          "section_reasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_SectionReason"
+            },
+            "description": "Per-section reasons when the status is `CHANGES_REQUESTED`; otherwise empty."
+          },
+          "reject_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "EximPe's reason when the status is `REJECTED`; otherwise `null`."
+          },
+          "created_at": {
+            "type": "string",
+            "description": "Creation time, UTC, ISO 8601 without a timezone suffix.",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "description": "Time of the last change, UTC, ISO 8601 without a timezone suffix.",
+            "format": "date-time"
+          }
+        }
+      },
+      "v3_UpdateMerchantRequest": {
+        "type": "object",
+        "description": "Every field is optional. Send only what you want to change.",
+        "properties": {
+          "legal_name": {
+            "type": "string",
+            "description": "Registered company name.",
+            "maxLength": 255,
+            "minLength": 2
+          },
+          "brand_name": {
+            "type": "string",
+            "description": "Brand or trading name.",
+            "maxLength": 200
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email for the sub-merchant.",
+            "format": "email",
+            "maxLength": 254
+          },
+          "phone_number": {
+            "type": "string",
+            "description": "Contact phone number in E.164 format, e.g. `+919876543210`."
+          },
+          "global_company": {
+            "type": "object",
+            "description": "Any fields of the company object.",
+            "properties": {
+              "registration_number": {
+                "type": "string",
+                "description": "Company registration number.",
+                "minLength": 5,
+                "maxLength": 25
+              },
+              "tax_id": {
+                "type": "string",
+                "description": "Tax identification number.",
+                "minLength": 5,
+                "maxLength": 20
+              },
+              "international_org_type": {
+                "type": "string",
+                "description": "Type of organisation.",
+                "enum": [
+                  "Private Limited Company",
+                  "Public Limited Company",
+                  "Limited Liability Company",
+                  "Joint Stock Company",
+                  "Free Zone Company / Entity",
+                  "Partnership / LLP",
+                  "Sole Proprietorship",
+                  "Other"
+                ]
+              },
+              "website": {
+                "type": "string",
+                "description": "Company website. Must start with `https://` (`http://` is refused) and include a domain, e.g. `https://example.com`.",
+                "minLength": 12,
+                "maxLength": 508
+              },
+              "monthly_avg_transaction_volume": {
+                "type": "string",
+                "description": "Expected monthly transaction volume, in US dollars.",
+                "enum": [
+                  "LESS_THAN_5_K",
+                  "BETWEEN_5_K_AND_20_K",
+                  "BETWEEN_20_K_AND_50_K",
+                  "BETWEEN_50_K_AND_100_K",
+                  "BETWEEN_100_K_AND_250_K",
+                  "BETWEEN_250_K_AND_500_K",
+                  "ABOVE_500_K"
+                ]
+              },
+              "business_category": {
+                "type": "string",
+                "description": "One or more category slugs from your approved categories, comma-separated, e.g. `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See Get Merchant Options."
+              },
+              "hs_codes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes."
+              },
+              "mcc": {
+                "type": "string",
+                "description": "Merchant Category Codes, comma-separated 4-digit codes, e.g. `5411,5812`.",
+                "pattern": "^\\d{4}(,\\d{4})*$"
+              },
+              "description_of_products_and_services": {
+                "type": "string",
+                "description": "What the sub-merchant sells.",
+                "minLength": 20,
+                "maxLength": 300
+              },
+              "agreement_details": {
+                "type": "string",
+                "description": "The agreement you hold with the sub-merchant.",
+                "minLength": 20,
+                "maxLength": 300
+              },
+              "registered_address": {
+                "type": "string",
+                "description": "Registered office address.",
+                "minLength": 2,
+                "maxLength": 250
+              },
+              "registered_city": {
+                "type": "string",
+                "description": "Registered office city.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "registered_state": {
+                "type": "string",
+                "description": "Registered office state or province.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "registered_country": {
+                "type": "string",
+                "description": "Registered office country, and the sub-merchant's country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling."
+              },
+              "registered_pincode": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Registered office postal code."
+              },
+              "same_as_registered_address": {
+                "type": "boolean",
+                "description": "Whether the communication address is the registered address. When `true`, the registered address is copied into the communication fields and any communication values you send are replaced. When `false`, every communication field is required."
+              },
+              "communication_address": {
+                "type": "string",
+                "description": "Communication address. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 250
+              },
+              "communication_city": {
+                "type": "string",
+                "description": "Communication city. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "communication_state": {
+                "type": "string",
+                "description": "Communication state or province. Required when `same_as_registered_address` is `false`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "communication_country": {
+                "type": "string",
+                "description": "Communication country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling. Required when `same_as_registered_address` is `false`."
+              },
+              "communication_pincode": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Communication postal code. Required when `same_as_registered_address` is `false`."
+              }
+            }
+          },
+          "settlement_details": {
+            "type": "object",
+            "description": "Any fields of the settlement object. When `bank_swift_code` changes, bank fields you leave out are filled from the new code.",
+            "properties": {
+              "bank_account_number": {
+                "type": "string",
+                "description": "Account number or IBAN.",
+                "pattern": "^[A-Z0-9]{10,34}$"
+              },
+              "bank_account_name": {
+                "type": "string",
+                "description": "Name on the account.",
+                "minLength": 2,
+                "maxLength": 80
+              },
+              "bank_swift_code": {
+                "type": "string",
+                "description": "SWIFT/BIC code, 8 or 11 characters. Bank fields you leave out are filled from this code; values you send are kept.",
+                "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
+              },
+              "bank_name": {
+                "type": "string",
+                "description": "Name of the bank. Optional: when left out, filled from `bank_swift_code`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "bank_branch_name": {
+                "type": "string",
+                "description": "Branch name. Optional: when left out, filled from `bank_swift_code`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "bank_address": {
+                "type": "string",
+                "description": "Branch address. Optional: when left out, filled from `bank_swift_code`.",
+                "minLength": 20,
+                "maxLength": 150
+              },
+              "bank_city": {
+                "type": "string",
+                "description": "Branch city. Optional: when left out, filled from `bank_swift_code`.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "bank_state": {
+                "type": "string",
+                "description": "Branch state or province.",
+                "minLength": 2,
+                "maxLength": 150
+              },
+              "bank_country": {
+                "type": "string",
+                "description": "Branch country. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling. Optional: when left out, filled from `bank_swift_code`."
+              },
+              "bank_pincode": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,8}[A-Za-z0-9])?$",
+                "description": "Branch postal code. Optional: when left out, filled from `bank_swift_code`."
+              },
+              "routing_number": {
+                "type": "string",
+                "description": "Routing number, sort code or IFSC. Optional.",
+                "pattern": "^[A-Z0-9]{6,12}$"
+              }
+            }
+          },
+          "beneficial_owners": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_BeneficialOwner"
+            },
+            "description": "Replaces the stored owners whole. Leave the key out to keep them. Under EximPe's own PA-CB licence at least one owner must remain, so `[]` is refused."
           }
         }
       },
@@ -16185,28 +17284,13 @@
         ],
         "properties": {
           "success": {
-            "type": "boolean",
-            "description": "Indicates if the request was successful"
+            "type": "boolean"
           },
           "message": {
-            "type": "string",
-            "description": "Response message"
+            "type": "string"
           },
           "data": {
-            "type": "object",
-            "description": "Contains the updated merchant fields",
-            "properties": {
-              "merchant_id": {
-                "type": "string",
-                "description": "The ID of the updated merchant"
-              },
-              "updated_fields": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/v3_MerchantDetails"
           }
         }
       },
@@ -17766,6 +18850,389 @@
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/v2_ChargebackCondition"
+                }
+              }
+            }
+          }
+        }
+      },
+      "v3_BeneficialOwner": {
+        "type": "object",
+        "required": [
+          "type",
+          "ownership_percentage"
+        ],
+        "description": "An ultimate beneficial owner. Accepted only when your account collects under EximPe's own PA-CB licence.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "`INDIVIDUAL` for a person, `INSTITUTIONAL` for a company.",
+            "enum": [
+              "INDIVIDUAL",
+              "INSTITUTIONAL"
+            ]
+          },
+          "ownership_percentage": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 100,
+            "description": "Share owned, 10–100. The total across all owners cannot exceed 100."
+          },
+          "first_name": {
+            "type": "string",
+            "description": "INDIVIDUAL only. First name.",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "last_name": {
+            "type": "string",
+            "description": "INDIVIDUAL only. Last name.",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "email": {
+            "type": "string",
+            "description": "INDIVIDUAL only. Email address.",
+            "format": "email"
+          },
+          "nationality": {
+            "type": "string",
+            "description": "INDIVIDUAL only. A nationality from Get Merchant Options, e.g. `Indian`. Letters only."
+          },
+          "date_of_birth": {
+            "type": "string",
+            "description": "INDIVIDUAL only. The owner must be 18–80 years old.",
+            "format": "date"
+          },
+          "authorized_user_name": {
+            "type": "string",
+            "description": "INSTITUTIONAL only. The company's name.",
+            "minLength": 2,
+            "maxLength": 50
+          },
+          "country_of_incorporation": {
+            "type": "string",
+            "description": "INSTITUTIONAL only. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling."
+          },
+          "date_of_incorporation": {
+            "type": "string",
+            "description": "INSTITUTIONAL only.",
+            "format": "date"
+          }
+        }
+      },
+      "v3_BeneficialOwnerResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID of the beneficial owner."
+          },
+          "type": {
+            "type": "string",
+            "description": "`INDIVIDUAL` for a person, `INSTITUTIONAL` for a company.",
+            "enum": [
+              "INDIVIDUAL",
+              "INSTITUTIONAL"
+            ]
+          },
+          "ownership_percentage": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 100,
+            "description": "Share owned, 10–100. The total across all owners cannot exceed 100."
+          },
+          "first_name": {
+            "type": "string",
+            "description": "INDIVIDUAL only. First name.",
+            "minLength": 2,
+            "maxLength": 50,
+            "nullable": true
+          },
+          "last_name": {
+            "type": "string",
+            "description": "INDIVIDUAL only. Last name.",
+            "minLength": 2,
+            "maxLength": 50,
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "description": "INDIVIDUAL only. Email address.",
+            "format": "email",
+            "nullable": true
+          },
+          "nationality": {
+            "type": "string",
+            "description": "INDIVIDUAL only. A nationality from Get Merchant Options, e.g. `Indian`.",
+            "nullable": true
+          },
+          "date_of_birth": {
+            "type": "string",
+            "description": "INDIVIDUAL only. The owner must be 18–80 years old.",
+            "format": "date",
+            "nullable": true
+          },
+          "authorized_user_name": {
+            "type": "string",
+            "description": "For INSTITUTIONAL owners, the company's name. For INDIVIDUAL owners, the first and last name joined.",
+            "minLength": 2,
+            "maxLength": 50,
+            "nullable": true
+          },
+          "country_of_incorporation": {
+            "type": "string",
+            "description": "INSTITUTIONAL only. A country name from Get Merchant Options, e.g. `India`. Matched case-insensitively; returned in the listed spelling.",
+            "nullable": true
+          },
+          "date_of_incorporation": {
+            "type": "string",
+            "description": "INSTITUTIONAL only.",
+            "format": "date",
+            "nullable": true
+          }
+        },
+        "description": "Every key is present on every owner; keys that do not apply to the owner's type are `null`."
+      },
+      "v3_SectionReason": {
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string",
+            "description": "The part of the application that needs changes.",
+            "enum": [
+              "company_details",
+              "company_address",
+              "business_details",
+              "settlement_account",
+              "beneficial_owners",
+              "authorized_persons",
+              "security_assessment"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "What needs to change."
+          }
+        }
+      },
+      "v3_DeleteMerchantResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "ID of the deleted sub-merchant."
+              }
+            }
+          }
+        }
+      },
+      "v3_BusinessCategory": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Send this in `business_category`."
+          },
+          "label": {
+            "type": "string",
+            "description": "Display name."
+          },
+          "requires_hs_codes": {
+            "type": "boolean",
+            "description": "`true` for goods categories, which need at least one HS code."
+          }
+        }
+      },
+      "v3_MerchantOptionsResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "countries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "For every country field."
+              },
+              "nationalities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "For `beneficial_owners[].nationality`."
+              },
+              "international_org_types": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "monthly_avg_transaction_volumes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "business_categories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_BusinessCategory"
+                },
+                "description": "Only the categories your account is approved for."
+              }
+            }
+          }
+        }
+      },
+      "v3_SwiftLookupResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "bank_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Name of the bank."
+              },
+              "bank_branch_name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Branch name."
+              },
+              "bank_address": {
+                "type": "string",
+                "nullable": true,
+                "description": "Branch address."
+              },
+              "bank_city": {
+                "type": "string",
+                "nullable": true,
+                "description": "Branch city."
+              },
+              "bank_pincode": {
+                "type": "string",
+                "nullable": true,
+                "description": "Branch postal code."
+              },
+              "bank_country": {
+                "type": "string",
+                "nullable": true,
+                "description": "Branch country, in the spelling listed by Get Merchant Options. `null` when the bank's country is not one of the supported countries."
+              },
+              "bank_swift_code": {
+                "type": "string",
+                "description": "The code you looked up."
+              }
+            }
+          }
+        }
+      },
+      "v3_HSCode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string",
+            "description": "The HS code. Send this in `hs_codes`."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the code covers."
+          },
+          "policy": {
+            "type": "string",
+            "description": "The import policy that applies to the code. Empty when none is recorded."
+          }
+        }
+      },
+      "v3_HSCodeSearchResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_HSCode"
                 }
               }
             }
