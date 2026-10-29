@@ -423,31 +423,6 @@
               }
             }
           },
-          "400": {
-            "description": "No refund with this ID for your account",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                },
-                "examples": {
-                  "Refund not found": {
-                    "summary": "Refund not found",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_REFUND_003",
-                        "message": "Refund not found",
-                        "details": {
-                          "refund_id": "Refund not found"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
           "401": {
             "description": "Missing or invalid credentials",
             "content": {
@@ -465,6 +440,31 @@
                         "message": "Missing credentials",
                         "details": {
                           "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No refund with this ID for your account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "examples": {
+                  "Refund not found": {
+                    "summary": "Refund not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_003",
+                        "message": "Refund not found",
+                        "details": {
+                          "refund_id": "Refund not found"
                         }
                       }
                     }
