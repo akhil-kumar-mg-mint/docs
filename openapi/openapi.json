@@ -1508,6 +1508,110 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "examples": {
+                  "Payment not found": {
+                    "summary": "Payment not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_002",
+                        "message": "Validation error",
+                        "details": {
+                          "payment_id": "Payment request not found"
+                        }
+                      }
+                    }
+                  },
+                  "Payment not captured": {
+                    "summary": "Payment not captured",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_002",
+                        "message": "Validation error",
+                        "details": {
+                          "payment_id": "Cannot refund a transaction that is not captured"
+                        }
+                      }
+                    }
+                  },
+                  "Payment on hold": {
+                    "summary": "Payment on hold",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_002",
+                        "message": "Validation error",
+                        "details": "Cannot refund payment when it is on hold"
+                      }
+                    }
+                  },
+                  "Refunds exceed payment amount": {
+                    "summary": "Refunds exceed payment amount",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_002",
+                        "message": "Validation error",
+                        "details": {
+                          "refund_amount": "Total refund amount would exceed payment amount"
+                        }
+                      }
+                    }
+                  },
+                  "Reference ID reused with a different amount": {
+                    "summary": "Reference ID reused with a different amount",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_002",
+                        "message": "Validation error",
+                        "details": {
+                          "reference_id": "Reference ID reused with different refund amount"
+                        }
+                      }
+                    }
+                  },
+                  "Insufficient refund balance": {
+                    "summary": "Insufficient refund balance",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_004",
+                        "message": "Insufficient balance for this refund",
+                        "details": {
+                          "available_balance": "10.50",
+                          "requested_amount": "40"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -1611,6 +1715,31 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "operationId": "v1_get_pg_refunds_"
@@ -1667,20 +1796,50 @@
               }
             }
           },
-          "404": {
-            "description": "Refund not found.",
+          "401": {
+            "description": "Missing or invalid credentials",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v1_ErrorResponse"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_REFUND_003",
-                    "message": "Refund not found",
-                    "details": {
-                      "refund_id": "Refund not found"
+                "examples": {
+                  "Missing credentials": {
+                    "summary": "Missing credentials",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_000",
+                        "message": "Missing credentials",
+                        "details": {
+                          "authentication": "Missing credentials."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No refund with this ID for your account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                },
+                "examples": {
+                  "Refund not found": {
+                    "summary": "Refund not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_REFUND_003",
+                        "message": "Refund not found",
+                        "details": {
+                          "refund_id": "Refund not found"
+                        }
+                      }
                     }
                   }
                 }
