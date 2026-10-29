@@ -52,7 +52,7 @@ The upload is accepted in any status. The invoice is not returned by [Get Mercha
     "code": "ERR_MERCHANT_001",
     "message": "Validation error",
     "details": {
-      "document_type": "\"RECEIPT\" is not a valid choice."
+      "document_type": ["\"RECEIPT\" is not a valid choice."]
     }
   }
 }
@@ -62,7 +62,7 @@ The upload is accepted in any status. The invoice is not returned by [Get Mercha
 
 ## Errors
 
-Errors use the standard envelope. `details` is an object keyed by field, a string, or an empty object; see [Create Merchant](/api-reference/v3/merchant/create#errors).
+Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages; otherwise it is an empty object. See [Create Merchant](/api-reference/v3/merchant/create#errors).
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|

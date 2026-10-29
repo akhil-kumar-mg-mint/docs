@@ -34,7 +34,7 @@ The fields and rules are the same as [Create Merchant](/api-reference/v3/merchan
 
 - **Top-level fields** (`legal_name`, `brand_name`, `email`, `phone_number`): send any of them on their own.
 - **`global_company` and `settlement_details`:** send only the fields inside them that you want to change.
-- **Changing `bank_swift_code`:** bank fields you leave out (`bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode`, `bank_country`) are filled from the new code, replacing the stored values. Values you send are kept as sent. If the code is unchanged or left out, nothing is filled. The same refusals apply as on [Create Merchant](/api-reference/v3/merchant/create#settlement): a field the lookup leaves empty is refused with `ERR_MERCHANT_019`, and a filled value that fails its field rule is refused with `ERR_MERCHANT_001`.
+- **Changing `bank_swift_code`:** bank fields you leave out (`bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode`, `bank_country`) are filled from the new code, replacing the stored values. Values you send are kept as sent. If the code is unchanged or left out, nothing is filled. The same refusals apply as on [Create Merchant](/api-reference/v3/merchant/create#settlement): each field the lookup leaves empty is listed in `details.settlement_details`, and a filled value that fails its field rule is listed under its field.
 - **`beneficial_owners`:** the list is replaced whole.
 - **Communication address:** while `same_as_registered_address` is `true`, whether sent in this edit or already stored, the communication fields follow the registered address. When it is `false`, every communication field must have a value, sent in this edit or already stored.
 
@@ -50,9 +50,9 @@ Each owner takes the same fields as on create, including the optional `identify_
 
 ### Fields you cannot send
 
-Send only the fields listed on [Create Merchant](/api-reference/v3/merchant/create#the-request). Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a `400` and the code `ERR_MERCHANT_001`, and nothing is saved. The message names each refused field, e.g. `"global_company.category is not accepted"`. Owner `id`s from a response are not accepted either; send each owner without its `id`.
+Send only the fields listed on [Create Merchant](/api-reference/v3/merchant/create#the-request). Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a `400`, and nothing is saved. Each refused field is listed in `details` where you sent it, e.g. `details.global_company.category` says `["category is not accepted"]`. Owner `id`s from a response are not accepted either; send each owner without its `id`.
 
-`status`, `sub_merchant_status` and `is_active` are refused at the top level with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited; a `settlement_currency` you send is refused like any other unlisted field.
+`status`, `sub_merchant_status` and `is_active` are refused at the top level with a `400`, and nothing is saved; `details` lists each one, e.g. `details.status` says `["status cannot be set"]`. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited; a `settlement_currency` you send is refused like any other unlisted field.
 
 ## Resubmitting
 
@@ -224,7 +224,9 @@ Beneficial owners are optional and do not affect completeness.
   "error": {
     "code": "ERR_MERCHANT_005",
     "message": "status, sub_merchant_status and is_active cannot be set",
-    "details": "status, sub_merchant_status and is_active cannot be set"
+    "details": {
+      "status": ["status cannot be set"]
+    }
   }
 }
 ```
@@ -233,15 +235,15 @@ Beneficial owners are optional and do not affect completeness.
 
 ## Errors
 
-Errors use the standard envelope. `details` is an object keyed by field, a string, or an empty object; see [Create Merchant](/api-reference/v3/merchant/create#errors).
+Errors use the standard envelope. For a `400`, `details` lists every problem in the edit, each field mapped to a list of messages; fields that are not accepted, status fields and bank fields the SWIFT lookup could not fill appear alongside the other field errors. Rules across fields, such as the HS code rule and the ownership total, are reported once the other fields in their section are valid. Otherwise `details` is an empty object. For the shapes and which code you get, see [Create Merchant](/api-reference/v3/merchant/create#errors).
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
 | `400` | A field fails a rule from [Create Merchant](/api-reference/v3/merchant/create#errors) | `ERR_MERCHANT_001` | `details` names each field with the reason. Nothing is saved; fix the fields and send the edit again. |
-| `400` | A field not listed on [Create Merchant](/api-reference/v3/merchant/create#the-request) is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | `ERR_MERCHANT_001` | The message names each field, e.g. `"settlement_currency is not accepted"`. Nothing is saved; remove it. |
-| `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
-| `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing. Send them, or check the code. |
-| `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | Send `bank_country`. |
+| `400` | A field not listed on [Create Merchant](/api-reference/v3/merchant/create#the-request) is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | `ERR_MERCHANT_001` | `details` lists each field where you sent it, e.g. `"settlement_currency": ["settlement_currency is not accepted"]`. Nothing is saved; remove it. |
+| `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` when it is the only problem, otherwise `ERR_MERCHANT_001` | Remove the field. |
+| `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code, or the bank details found have no value for some of them | `ERR_MERCHANT_019` when it is the only problem, otherwise `ERR_MERCHANT_001` | `details.settlement_details` lists the fields still missing. Send them, or check the code. |
+| `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` when it is the only problem, otherwise `ERR_MERCHANT_001` | Send `bank_country`. |
 | `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |

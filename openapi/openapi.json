@@ -2362,11 +2362,11 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), a field that is not listed was sent (`ERR_MERCHANT_001`; the message names it, e.g. `global_company.category is not accepted`), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Every problem in the request, in one response; `details` maps each field to a list of messages. Covers field rules, fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill. When the only problems are of one kind the code is that kind's: `ERR_MERCHANT_001` with a message naming each field that is not accepted, `ERR_MERCHANT_005` for status fields, `ERR_MERCHANT_019` for bank fields the lookup could not fill, `ERR_MERCHANT_006` for a bank country it could not match. Any other mix is `ERR_MERCHANT_001` with the message `Validation error`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_SubMerchantErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -2374,9 +2374,37 @@
                     "code": "ERR_MERCHANT_001",
                     "message": "Validation error",
                     "details": {
+                      "nickname": [
+                        "nickname is not accepted"
+                      ],
+                      "status": [
+                        "status cannot be set"
+                      ],
                       "global_company": {
-                        "registered_country": "Country is not in the supported country list"
-                      }
+                        "tax_id": [
+                          "Invalid input: @@",
+                          "Ensure this field has at least 5 characters."
+                        ],
+                        "category": [
+                          "category is not accepted"
+                        ]
+                      },
+                      "settlement_details": {
+                        "bank_swift_code": [
+                          "Bank details could not be found for bank_swift_code"
+                        ],
+                        "bank_city": [
+                          "bank_city could not be found from bank_swift_code; send bank_city"
+                        ]
+                      },
+                      "beneficial_owners": [
+                        {},
+                        {
+                          "nationality": [
+                            "Nationality is not in the supported nationality list"
+                          ]
+                        }
+                      ]
                     }
                   }
                 }
@@ -3060,11 +3088,11 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), a field that is not listed was sent (`ERR_MERCHANT_001`; the message names it, e.g. `global_company.category is not accepted`), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Every problem in the request, in one response; `details` maps each field to a list of messages. Covers field rules, fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill. When the only problems are of one kind the code is that kind's: `ERR_MERCHANT_001` with a message naming each field that is not accepted, `ERR_MERCHANT_005` for status fields, `ERR_MERCHANT_019` for bank fields the lookup could not fill, `ERR_MERCHANT_006` for a bank country it could not match. Any other mix is `ERR_MERCHANT_001` with the message `Validation error`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_SubMerchantErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -3072,9 +3100,37 @@
                     "code": "ERR_MERCHANT_001",
                     "message": "Validation error",
                     "details": {
+                      "nickname": [
+                        "nickname is not accepted"
+                      ],
+                      "status": [
+                        "status cannot be set"
+                      ],
                       "global_company": {
-                        "registered_country": "Country is not in the supported country list"
-                      }
+                        "tax_id": [
+                          "Invalid input: @@",
+                          "Ensure this field has at least 5 characters."
+                        ],
+                        "category": [
+                          "category is not accepted"
+                        ]
+                      },
+                      "settlement_details": {
+                        "bank_swift_code": [
+                          "Bank details could not be found for bank_swift_code"
+                        ],
+                        "bank_city": [
+                          "bank_city could not be found from bank_swift_code; send bank_city"
+                        ]
+                      },
+                      "beneficial_owners": [
+                        {},
+                        {
+                          "nationality": [
+                            "Nationality is not in the supported nationality list"
+                          ]
+                        }
+                      ]
                     }
                   }
                 }
@@ -3371,11 +3427,11 @@
             }
           },
           "400": {
-            "description": "`document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule (`ERR_MERCHANT_001`; `details` names the field).",
+            "description": "`document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule (`ERR_MERCHANT_001`; `details` maps each field to a list of messages).",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_SubMerchantErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -3383,7 +3439,9 @@
                     "code": "ERR_MERCHANT_001",
                     "message": "Validation error",
                     "details": {
-                      "document_type": "\"RECEIPT\" is not a valid choice."
+                      "document_type": [
+                        "\"RECEIPT\" is not a valid choice."
+                      ]
                     }
                   }
                 }
@@ -15687,6 +15745,47 @@
                 "type": "string"
               }
             ]
+          }
+        }
+      },
+      "v3_SubMerchantErrorResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Indicates if the request was successful. Always false for error responses."
+          },
+          "error": {
+            "$ref": "#/components/schemas/v3_SubMerchantErrorDetails"
+          }
+        }
+      },
+      "v3_SubMerchantErrorDetails": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code. When the only problems are of one kind it is that kind's code (`ERR_MERCHANT_005`, `ERR_MERCHANT_006`, `ERR_MERCHANT_019`, or `ERR_MERCHANT_001` for fields that are not accepted); any other mix is `ERR_MERCHANT_001`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message. `Validation error` for a mix of problems; otherwise the message of the one kind of problem, e.g. `global_company.category is not accepted`."
+          },
+          "details": {
+            "description": "Every problem found in the request. Each field maps to a list of messages, with nested objects for `global_company` and `settlement_details` and one entry per owner in `beneficial_owners` (`{}` for an owner with no errors). Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill are listed alongside the other field errors. Rules across fields (the HS code rule, the communication address, the ownership total) are reported once the other fields in their section are valid. An empty object when there is nothing to add.",
+            "type": "object",
+            "additionalProperties": true
           }
         }
       },

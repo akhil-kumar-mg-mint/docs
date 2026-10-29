@@ -40,8 +40,8 @@ A field is `null` when EximPe holds no value for it. `bank_state` is not returne
 
 The values are returned as EximPe holds them and are not checked against the rules on [Create Merchant](/api-reference/v3/merchant/create#settlement). When you use them in a sub-merchant:
 
-- Send any field that is `null` here yourself. If you leave it out, Create Merchant and Update Merchant refuse the request with a `400` and the code `ERR_MERCHANT_019`, naming the field, or `ERR_MERCHANT_006` when the field is `bank_country`.
-- Check each value against its rule, e.g. `bank_address` must be 20–150 characters. A value that fails is refused with a `400` and the code `ERR_MERCHANT_001`, naming the field. Send your own value for it instead.
+- Send any field that is `null` here yourself. If you leave it out, Create Merchant and Update Merchant refuse the request with a `400` that lists the field in `details.settlement_details`, alongside any other problems in the request. When it is the only problem, the code is `ERR_MERCHANT_019`, or `ERR_MERCHANT_006` when the field is `bank_country`.
+- Check each value against its rule, e.g. `bank_address` must be 20–150 characters. A value that fails is refused with a `400` that lists the field in `details.settlement_details`. Send your own value for it instead.
 
 <CodeGroup>
 
