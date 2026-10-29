@@ -24,6 +24,10 @@ The status a new sub-merchant starts in depends on the environment:
 | Production | `PENDING` | EximPe reviews the application. You receive a webhook when it is approved, rejected, or sent back for changes. |
 
 <Note>
+  **Edit, resubmit and delete cannot be tried on sandbox sub-merchants you create.** A sub-merchant created through the API in sandbox is approved immediately, so it is never `PENDING`, `CHANGES_REQUESTED` or `REJECTED` there. [Update Merchant](/api-reference/v3/merchant/update) and [Delete Merchant](/api-reference/v3/merchant/delete) refuse it with a `409`, and it can never be resubmitted. The API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
+</Note>
+
+<Note>
   **Who can call this.** Only PSPs set up for import collections can manage sub-merchants. Any other account gets a `403`.
 </Note>
 
@@ -85,7 +89,7 @@ All fields sit inside `settlement_details`.
 |---|---|---|---|---|
 | bank_account_number | string | Yes | Account number or IBAN. | 10–34 uppercase letters and digits |
 | bank_account_name | string | Yes | Name on the account. | 2–80 characters. Same characters as `legal_name` |
-| bank_swift_code | string | Yes | SWIFT/BIC code. | 8 or 11 uppercase letters and digits, e.g. `HDFCINBB` |
+| bank_swift_code | string | Yes | SWIFT/BIC code. | 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `HDFCINBB` or `HDFCINBB123` |
 | bank_state | string | Yes | Branch state or province. | 2–150 characters |
 | bank_name | string | No, filled from `bank_swift_code` | Name of the bank. | 2–150 characters |
 | bank_branch_name | string | No, filled from `bank_swift_code` | Branch name. | 2–150 characters |
@@ -98,11 +102,13 @@ All fields sit inside `settlement_details`.
 **Bank details from the SWIFT code.** Send `bank_swift_code` and EximPe fills in any of `bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode` and `bank_country` you leave out. Values you send are kept as sent. To see what will be filled, call [Look Up SWIFT Code](/api-reference/v3/merchant/swift).
 
 - If bank details cannot be found for the code and any of these fields is missing, the request is refused with a `400` and the code `ERR_MERCHANT_019`. The message names the fields to send.
+- If bank details are found but have no value for a field you left out, the request is refused in the same way: a `400` with the code `ERR_MERCHANT_019`, and the message names only the fields still empty, e.g. `"Bank details could not be found for bank_swift_code; send bank_pincode"`. Send those fields yourself.
 - If the bank's country is not one of the supported countries and you left out `bank_country`, the request is refused with a `400` and the code `ERR_MERCHANT_006`. Send `bank_country` yourself.
+- Filled values must meet the same rules as values you send. For example, a looked-up `bank_address` shorter than 20 characters is refused with a `400` and the code `ERR_MERCHANT_001`, with `details.settlement_details.bank_address` giving the reason. Send that field yourself to replace the looked-up value.
 - If you send every bank field, no lookup is made.
 
 <Note>
-  **Settlement currency is not sent.** A sub-merchant is paid out in the same currency as your own settlement account. The response returns it as an ISO code in `settlement_currency`, at the top level of the sub-merchant.
+  **Settlement currency is not sent.** A sub-merchant is paid out in the same currency as your own settlement account. The response returns it as an ISO code in `settlement_currency`, at the top level of the sub-merchant. If you send `settlement_currency`, at the top level or inside `settlement_details`, it is ignored: the request is not refused and the currency still follows your own settlement account.
 </Note>
 
 ### Beneficial owners
@@ -111,6 +117,11 @@ All fields sit inside `settlement_details`.
 
 - **EximPe's licence:** required on create, with at least one owner. An edit cannot remove the last owner.
 - **A partner's licence:** leave it out, or send an empty list. Sending any owner returns a `400`.
+
+**Which licence applies to you.** The licence is part of your account setup with EximPe; no API field returns it. Confirm it with EximPe before you build this part of your integration. If you get it wrong, the request is refused with a `400` and the code `ERR_MERCHANT_001`, and `details` says which case applies:
+
+- `"At least one beneficial owner is required"`: your account uses EximPe's licence. Send at least one owner.
+- `"Beneficial owners are only supported for EXIMPE CB sub-merchants"`: your account uses a partner's licence. Leave `beneficial_owners` out.
 
 Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
 
@@ -129,7 +140,7 @@ Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
 
 ### Fields you cannot send
 
-The status and the active flag are set by EximPe alone. A request that includes `sub_merchant_status` or `is_active` is refused with a `400` and the code `ERR_MERCHANT_005`. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete).
+The status and the active flag are set by EximPe alone. A request that includes `status`, `sub_merchant_status` or `is_active` at the top level is refused with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete).
 
 ## Examples
 
@@ -255,6 +266,7 @@ The status and the active flag are set by EximPe alone. A request that includes 
 | changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
 | section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
+| global_company.hs_codes | string[] \| null | The HS codes stored for the sub-merchant. `null` or an empty list when it has none. |
 | settlement_currency | string \| null | ISO currency code the sub-merchant is paid out in. |
 | beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, and an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name. Empty list when your account does not collect under EximPe's licence. |
 | created_at | string | Time of creation, UTC, ISO 8601 without a timezone suffix. |
@@ -383,18 +395,23 @@ The status and the active flag are set by EximPe alone. A request that includes 
 
 ## Errors
 
-Every error uses the standard envelope: `{ "success": false, "error": { "code", "message", "details" } }`.
+Every error uses the standard envelope: `{ "success": false, "error": { "code", "message", "details" } }`. `details` takes one of three shapes:
+
+- **An object keyed by field,** when one or more fields fail a rule. Fields inside `global_company` and `settlement_details` are nested under those keys. `beneficial_owners` holds either a single reason or a list with one entry per owner you sent, each an object keyed by the owner's fields (`{}` for an owner with no errors). A rule that spans several fields, such as the communication address or the HS code rule, is reported under `non_field_errors` inside the object it belongs to, e.g. `details.global_company.non_field_errors`.
+- **A string,** when the error is about the request as a whole, such as `ERR_MERCHANT_005` or `ERR_MERCHANT_019`. It repeats `message`.
+- **An empty object** `{}`, when there is nothing to add to `message`, such as a `403` or `404`.
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
 | `400` | A field is missing, too short or long, in the wrong format, or not one of the listed values | `ERR_MERCHANT_001` | `details` names each field with the reason, e.g. `"Country is not in the supported country list"`. Fix them and send the request again. |
 | `400` | `business_category` is not a known category slug, is a purpose code, or includes a slug outside your approved categories | `ERR_MERCHANT_001` | `details.global_company.business_category` names the refused slugs and, for unapproved ones, the slugs you can use. Send slugs from [Get Merchant Options](/api-reference/v3/merchant/options). |
-| `400` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `ERR_MERCHANT_001` | `details.global_company` says `"Add at least one HSN code for a goods business category."` or `"HSN codes apply only to a goods business category."` |
+| `400` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `ERR_MERCHANT_001` | `details.global_company.non_field_errors` says `"Add at least one HSN code for a goods business category."` or `"HSN codes apply only to a goods business category."` |
 | `400` | An HS code EximPe does not recognise | `ERR_MERCHANT_001` | `details.global_company.hs_codes` lists the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/merchant/hs-codes). |
-| `400` | No beneficial owner on an EximPe-licence account, owners sent on a partner-licence account, or owners totalling over 100% | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"At least one beneficial owner is required"`. |
+| `400` | No beneficial owner on an EximPe-licence account, owners sent on a partner-licence account, or owners totalling over 100% | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"At least one beneficial owner is required"`. When `beneficial_owners` is left out entirely, the reason is under `details.non_field_errors` instead. See [Which licence applies to you](#beneficial-owners). |
 | `400` | A beneficial owner's name is too short or long, or has characters that are not allowed | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"authorized_user_name must be 2-50 characters"`. |
-| `400` | `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
-| `400` | Bank fields were left out and no bank details were found for `bank_swift_code` | `ERR_MERCHANT_019` | The message names the missing fields, e.g. `"Bank details could not be found for bank_swift_code; send bank_name, bank_city"`. Send them, or check the code. |
+| `400` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `ERR_MERCHANT_001` | `details.settlement_details` names the field. Send that field yourself. |
+| `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
+| `400` | Bank fields were left out and no bank details were found for `bank_swift_code`, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing, e.g. `"Bank details could not be found for bank_swift_code; send bank_name, bank_city"`. Send them, or check the code. |
 | `400` | `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | The message is `"bank_country could not be matched from bank_swift_code; send bank_country"`. Send `bank_country`. |
 | `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can onboard sub-merchants. |

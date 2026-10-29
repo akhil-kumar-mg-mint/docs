@@ -2366,7 +2366,7 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -2683,7 +2683,7 @@
             "name": "code",
             "in": "query",
             "required": true,
-            "description": "SWIFT/BIC code, 8 or 11 uppercase letters and digits, e.g. `DBSSSGSG`.",
+            "description": "SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `DBSSSGSG`.",
             "schema": {
               "type": "string",
               "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
@@ -3068,7 +3068,7 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -3288,8 +3288,8 @@
     },
     "/partners/merchants/{merchant_id}/documents/": {
       "patch": {
-        "summary": "Upload Merchant Document",
-        "description": "Upload a document for a merchant.",
+        "summary": "Upload Merchant Invoice",
+        "description": "Attach an invoice file to one of your sub-merchants. The request is multipart/form-data. Uploading again replaces the stored invoice.",
         "tags": [
           "Merchants"
         ],
@@ -3304,7 +3304,7 @@
           {
             "name": "merchant_id",
             "in": "path",
-            "description": "The ID of the merchant to upload the document for.",
+            "description": "The sub-merchant's ID.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3312,7 +3312,7 @@
           }
         ],
         "requestBody": {
-          "description": "Document upload request. The body must be multipart/form-data.",
+          "description": "multipart/form-data with the document type and the file.",
           "required": true,
           "content": {
             "multipart/form-data": {
@@ -3322,11 +3322,14 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "The file to upload."
+                    "description": "The invoice file: pdf, jpg, jpeg, png, csv, xlsx or docx, up to 10 MB, with a file name of up to 100 characters. The content must match the extension. A PDF must not be password-protected and must pass EximPe's security check."
                   },
                   "document_type": {
                     "type": "string",
-                    "description": "Type of document (INVOICE). Only invoice is supported currently."
+                    "enum": [
+                      "INVOICE"
+                    ],
+                    "description": "Always `INVOICE`. No other document type is accepted."
                   }
                 },
                 "required": [
@@ -3336,14 +3339,14 @@
               },
               "example": {
                 "document_type": "INVOICE",
-                "file": "merchant_invoice_innovatetech_2024.pdf"
+                "file": "invoice.pdf"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Document uploaded successfully.",
+            "description": "Invoice uploaded.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3370,6 +3373,82 @@
                   "message": "Invoice uploaded successfully",
                   "data": {
                     "detail": "Invoice uploaded successfully"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule (`ERR_MERCHANT_001`; `details` names the field).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "document_type": "\"RECEIPT\" is not a valid choice."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your account is not a PSP (`ERR_AUTH_003`), or is a PSP not set up for import collections (`ERR_MERCHANT_017`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_017",
+                    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No sub-merchant with this ID belongs to you, or it has been deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_016",
+                    "message": "Sub-Merchant not found",
+                    "details": {}
                   }
                 }
               }
@@ -15606,12 +15685,16 @@
             "description": "Error message"
           },
           "details": {
-            "type": "object",
-            "description": "Detailed validation error information with field-specific errors",
-            "additionalProperties": {
-              "type": "string",
-              "description": "Error message for the specific field"
-            }
+            "description": "More about the error. An object keyed by field name when fields fail validation, with nested objects for nested fields; a string when the error is about the request as a whole; or an empty object when there is nothing to add.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       },
@@ -16457,7 +16540,7 @@
           },
           "bank_swift_code": {
             "type": "string",
-            "description": "SWIFT/BIC code, 8 or 11 characters. Bank fields you leave out are filled from this code; values you send are kept.",
+            "description": "SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits. Bank fields you leave out are filled from this code; values you send are kept.",
             "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
           },
           "bank_name": {
@@ -16580,7 +16663,8 @@
             "items": {
               "type": "string"
             },
-            "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes."
+            "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes. `null` or an empty list when there are none.",
+            "nullable": true
           },
           "mcc": {
             "type": "string",
@@ -16848,7 +16932,7 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes.",
+                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes. `null` or an empty list when there are none.",
                 "nullable": true
               },
               "category": {
@@ -16949,7 +17033,7 @@
               },
               "bank_swift_code": {
                 "type": "string",
-                "description": "SWIFT/BIC code, 8 or 11 characters.",
+                "description": "SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits.",
                 "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
               },
               "bank_name": {
@@ -17121,7 +17205,8 @@
                 "items": {
                   "type": "string"
                 },
-                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes."
+                "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes. `null` or an empty list when there are none.",
+                "nullable": true
               },
               "mcc": {
                 "type": "string",
@@ -17217,7 +17302,7 @@
               },
               "bank_swift_code": {
                 "type": "string",
-                "description": "SWIFT/BIC code, 8 or 11 characters. Bank fields you leave out are filled from this code; values you send are kept.",
+                "description": "SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits. Bank fields you leave out are filled from this code; values you send are kept.",
                 "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
               },
               "bank_name": {

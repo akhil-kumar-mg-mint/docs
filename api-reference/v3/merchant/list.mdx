@@ -129,5 +129,6 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/?page=1&page_size=50&se
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
+| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |

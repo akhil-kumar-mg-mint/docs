@@ -140,6 +140,7 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
-| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. The same answer is given whether the ID does not exist or belongs to someone else. |
+| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. The same answer is given whether the ID does not exist or belongs to someone else. |

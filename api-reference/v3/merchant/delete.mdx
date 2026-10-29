@@ -22,7 +22,7 @@ curl -X DELETE 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' 
 | `REJECTED` | Yes |
 | `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED` | No. Refused with a `409`. |
 
-A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Merchant](/api-reference/v3/merchant/update) instead. In sandbox a new sub-merchant is approved at once, so it cannot be deleted.
+A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Merchant](/api-reference/v3/merchant/update) instead. A sub-merchant created through the API in sandbox is approved immediately, so it can never be deleted; the API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
 
 ## Path parameters
 
@@ -61,7 +61,8 @@ A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Mercha
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
-| `404` | No sub-merchant with this ID belongs to you, or it is already deleted | `ERR_MERCHANT_016` | Check the ID. |
-| `409` | The sub-merchant is `IN_REVIEW`, `CHANGES_REQUESTED` or `APPROVED` | `ERR_MERCHANT_004` | It cannot be deleted in this status. |
+| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `404` | No sub-merchant with this ID belongs to you, or it is already deleted | `ERR_MERCHANT_016` | Check the ID. |
+| `409` | The sub-merchant is `IN_REVIEW`, `CHANGES_REQUESTED` or `APPROVED` | `ERR_MERCHANT_004` | It cannot be deleted in this status. |

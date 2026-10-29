@@ -22,7 +22,7 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/swift/?code=DBSSSGSG' \
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| code | string | Yes | SWIFT/BIC code. 8 or 11 uppercase letters and digits, e.g. `DBSSSGSG`. |
+| code | string | Yes | SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `DBSSSGSG`. |
 
 ## The response
 
@@ -37,6 +37,11 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/swift/?code=DBSSSGSG' \
 | bank_swift_code | string | The code you looked up. |
 
 A field is `null` when EximPe holds no value for it. `bank_state` is not returned; you always send it yourself.
+
+The values are returned as EximPe holds them and are not checked against the rules on [Create Merchant](/api-reference/v3/merchant/create#settlement). When you use them in a sub-merchant:
+
+- Send any field that is `null` here yourself. If you leave it out, Create Merchant and Update Merchant refuse the request with a `400` and the code `ERR_MERCHANT_019`, naming the field, or `ERR_MERCHANT_006` when the field is `bank_country`.
+- Check each value against its rule, e.g. `bank_address` must be 20–150 characters. A value that fails is refused with a `400` and the code `ERR_MERCHANT_001`, naming the field. Send your own value for it instead.
 
 <CodeGroup>
 

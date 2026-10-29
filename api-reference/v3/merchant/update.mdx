@@ -25,7 +25,7 @@ curl -X PATCH 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
 | `IN_REVIEW`, `APPROVED`, `REJECTED` | No | Refused with a `409`. |
 
 <Note>
-  **In sandbox a new sub-merchant is approved at once,** so it can no longer be edited. To try the edit flow, use a sub-merchant that is `PENDING` or `CHANGES_REQUESTED`.
+  **Sandbox sub-merchants you create cannot be edited.** A sub-merchant created through the API in sandbox is approved immediately, so it is never `PENDING` or `CHANGES_REQUESTED` there: edits are refused with a `409`, and resubmitting cannot be tried. The API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
 </Note>
 
 ## The request
@@ -34,7 +34,7 @@ The fields and rules are the same as [Create Merchant](/api-reference/v3/merchan
 
 - **Top-level fields** (`legal_name`, `brand_name`, `email`, `phone_number`): send any of them on their own.
 - **`global_company` and `settlement_details`:** send only the fields inside them that you want to change.
-- **Changing `bank_swift_code`:** bank fields you leave out (`bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode`, `bank_country`) are filled from the new code, replacing the stored values. Values you send are kept as sent. If the code is unchanged or left out, nothing is filled. The same refusals apply as on [Create Merchant](/api-reference/v3/merchant/create#settlement).
+- **Changing `bank_swift_code`:** bank fields you leave out (`bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode`, `bank_country`) are filled from the new code, replacing the stored values. Values you send are kept as sent. If the code is unchanged or left out, nothing is filled. The same refusals apply as on [Create Merchant](/api-reference/v3/merchant/create#settlement): a field the lookup leaves empty is refused with `ERR_MERCHANT_019`, and a filled value that fails its field rule is refused with `ERR_MERCHANT_001`.
 - **`beneficial_owners`:** the list is replaced whole.
 - **Communication address:** while `same_as_registered_address` is `true`, whether sent in this edit or already stored, the communication fields follow the registered address. When it is `false`, every communication field must have a value, sent in this edit or already stored.
 
@@ -46,11 +46,11 @@ The fields and rules are the same as [Create Merchant](/api-reference/v3/merchan
 | A list of owners | The stored owners are replaced with exactly this list. Send every owner you want to keep, not only the new ones. |
 | `[]` | Under EximPe's own PA-CB licence: refused with a `400`, because at least one owner must remain. Under a partner's licence: accepted; the sub-merchant has no owners. |
 
-The same limits apply as on create: at least one owner under EximPe's own PA-CB licence, at least 10% per owner and at most 100% in total. Owners are accepted only when your account collects under EximPe's own PA-CB licence.
+The same limits apply as on create: at least one owner under EximPe's own PA-CB licence, at least 10% per owner and at most 100% in total. Owners are accepted only when your account collects under EximPe's own PA-CB licence. No API field returns which licence your account uses; see [Which licence applies to you](/api-reference/v3/merchant/create#beneficial-owners).
 
 ### Fields you cannot send
 
-`sub_merchant_status` and `is_active` are refused with a `400` and the code `ERR_MERCHANT_005`. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited.
+`status`, `sub_merchant_status` and `is_active` are refused at the top level with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited; a `settlement_currency` you send is ignored.
 
 ## Resubmitting
 
@@ -64,6 +64,10 @@ An application is complete when:
 - Every field marked required on [Create Merchant](/api-reference/v3/merchant/create#the-request) has a value.
 - At least one HS code is stored, if a goods category is selected.
 - At least one beneficial owner is stored, if your account collects under EximPe's own licence.
+
+<Note>
+  **Some sections cannot be fixed through the API.** When `section_reasons` names `authorized_persons` or `security_assessment`, no field on this endpoint changes that part of the application. Contact EximPe to resolve it.
+</Note>
 
 <Tip>
   Read `changes_requested_reason` and `section_reasons` from [Get Merchant](/api-reference/v3/merchant/get) to see what to fix. Then send everything in one edit, so the sub-merchant goes back for review in one step.
@@ -219,8 +223,8 @@ An application is complete when:
   "success": false,
   "error": {
     "code": "ERR_MERCHANT_005",
-    "message": "sub_merchant_status and is_active cannot be set",
-    "details": "sub_merchant_status and is_active cannot be set"
+    "message": "status, sub_merchant_status and is_active cannot be set",
+    "details": "status, sub_merchant_status and is_active cannot be set"
   }
 }
 ```
@@ -229,14 +233,17 @@ An application is complete when:
 
 ## Errors
 
+Errors use the standard envelope. `details` is an object keyed by field, a string, or an empty object; see [Create Merchant](/api-reference/v3/merchant/create#errors).
+
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
 | `400` | A field fails a rule from [Create Merchant](/api-reference/v3/merchant/create#errors) | `ERR_MERCHANT_001` | `details` names each field with the reason. Nothing is saved; fix the fields and send the edit again. |
 | `400` | `beneficial_owners` is `[]` under EximPe's own PA-CB licence | `ERR_MERCHANT_001` | `details.beneficial_owners` says `"At least one beneficial owner is required"`. Send the full list of owners to keep. |
-| `400` | `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
-| `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code | `ERR_MERCHANT_019` | The message names the missing fields. Send them, or check the code. |
+| `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
+| `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing. Send them, or check the code. |
 | `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | Send `bank_country`. |
-| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. |
-| `409` | The sub-merchant is `IN_REVIEW`, `APPROVED` or `REJECTED` | `ERR_MERCHANT_003` | It can no longer be edited. |
+| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. |
+| `409` | The sub-merchant is `IN_REVIEW`, `APPROVED` or `REJECTED` | `ERR_MERCHANT_003` | It can no longer be edited. |

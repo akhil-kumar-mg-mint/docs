@@ -425,6 +425,7 @@
                   "api-reference/v3/merchant/get",
                   "api-reference/v3/merchant/update",
                   "api-reference/v3/merchant/delete",
+                  "api-reference/v3/merchant/upload",
                   "api-reference/v3/merchant/options",
                   "api-reference/v3/merchant/hs-codes",
                   "api-reference/v3/merchant/swift"

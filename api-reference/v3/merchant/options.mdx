@@ -188,6 +188,8 @@ Returned in `section_reasons[].section` when EximPe asks for changes. Each value
 | `authorized_persons` | Authorised persons |
 | `security_assessment` | Security assessment |
 
+Every section except `authorized_persons` and `security_assessment` maps to fields you can change with [Update Merchant](/api-reference/v3/merchant/update). Those two cannot be fixed through the API; contact EximPe to resolve them.
+
 ### Countries
 
 For `registered_country`, `communication_country`, `bank_country` and `country_of_incorporation`. 250 values.
@@ -208,5 +210,6 @@ For `beneficial_owners[].nationality`. 244 values. Several countries can share o
 
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
+| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
 | `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
 | `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
