@@ -47,7 +47,7 @@ The status a new sub-merchant starts in depends on the environment:
 | phone_number | string | Yes | Contact phone number with country code. | E.164, e.g. `+919876543210` |
 | global_company | object | Yes | Company, business and address details. | See [Company](#company) |
 | settlement_details | object | Yes | The bank account the sub-merchant is paid out to. | See [Settlement](#settlement) |
-| beneficial_owners | array | Depends on your account | The sub-merchant's ultimate beneficial owners (UBOs). | See [Beneficial owners](#beneficial-owners) |
+| beneficial_owners | array | No | The sub-merchant's ultimate beneficial owners (UBOs). Accepted only on some accounts. | See [Beneficial owners](#beneficial-owners) |
 
 The sub-merchant's country is its `global_company.registered_country`.
 
@@ -115,13 +115,10 @@ All fields sit inside `settlement_details`.
 
 `beneficial_owners` applies only when your account collects under EximPe's own PA-CB licence:
 
-- **EximPe's licence:** required on create, with at least one owner. An edit cannot remove the last owner.
+- **EximPe's licence:** optional. You can create a sub-merchant with no owners. Any owners you send are checked against the rules below.
 - **A partner's licence:** leave it out, or send an empty list. Sending any owner returns a `400`.
 
-**Which licence applies to you.** The licence is part of your account setup with EximPe; no API field returns it. Confirm it with EximPe before you build this part of your integration. If you get it wrong, the request is refused with a `400` and the code `ERR_MERCHANT_001`, and `details` says which case applies:
-
-- `"At least one beneficial owner is required"`: your account uses EximPe's licence. Send at least one owner.
-- `"Beneficial owners are only supported for EXIMPE CB sub-merchants"`: your account uses a partner's licence. Leave `beneficial_owners` out.
+**Which licence applies to you.** The licence is part of your account setup with EximPe; no API field returns it. Confirm it with EximPe before you send owners. If your account uses a partner's licence and you send owners, the request is refused with a `400` and the code `ERR_MERCHANT_001`, and `details.beneficial_owners` says `"Beneficial owners are only supported for EXIMPE CB sub-merchants"`. Leave `beneficial_owners` out.
 
 Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
 
@@ -407,7 +404,7 @@ Every error uses the standard envelope: `{ "success": false, "error": { "code", 
 | `400` | `business_category` is not a known category slug, is a purpose code, or includes a slug outside your approved categories | `ERR_MERCHANT_001` | `details.global_company.business_category` names the refused slugs and, for unapproved ones, the slugs you can use. Send slugs from [Get Merchant Options](/api-reference/v3/merchant/options). |
 | `400` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `ERR_MERCHANT_001` | `details.global_company.non_field_errors` says `"Add at least one HSN code for a goods business category."` or `"HSN codes apply only to a goods business category."` |
 | `400` | An HS code EximPe does not recognise | `ERR_MERCHANT_001` | `details.global_company.hs_codes` lists the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/merchant/hs-codes). |
-| `400` | No beneficial owner on an EximPe-licence account, owners sent on a partner-licence account, or owners totalling over 100% | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"At least one beneficial owner is required"`. When `beneficial_owners` is left out entirely, the reason is under `details.non_field_errors` instead. See [Which licence applies to you](#beneficial-owners). |
+| `400` | Owners sent on a partner-licence account, or owners totalling over 100% | `ERR_MERCHANT_001` | `details.beneficial_owners` carries the reason, e.g. `"Beneficial owners are only supported for EXIMPE CB sub-merchants"`. See [Which licence applies to you](#beneficial-owners). |
 | `400` | A beneficial owner's name is too short or long, or has characters that are not allowed | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"authorized_user_name must be 2-50 characters"`. |
 | `400` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `ERR_MERCHANT_001` | `details.settlement_details` names the field. Send that field yourself. |
 | `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |

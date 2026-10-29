@@ -44,9 +44,9 @@ The fields and rules are the same as [Create Merchant](/api-reference/v3/merchan
 |---|---|
 | No `beneficial_owners` key | The stored owners are kept. |
 | A list of owners | The stored owners are replaced with exactly this list. Send every owner you want to keep, not only the new ones. |
-| `[]` | Under EximPe's own PA-CB licence: refused with a `400`, because at least one owner must remain. Under a partner's licence: accepted; the sub-merchant has no owners. |
+| `[]` | The stored owners are removed; the sub-merchant has no owners. |
 
-The same limits apply as on create: at least one owner under EximPe's own PA-CB licence, at least 10% per owner and at most 100% in total. Owners are accepted only when your account collects under EximPe's own PA-CB licence. No API field returns which licence your account uses; see [Which licence applies to you](/api-reference/v3/merchant/create#beneficial-owners).
+The same limits apply as on create: owners are optional, each owner needs at least 10%, and the total is at most 100%. Owners are accepted only when your account collects under EximPe's own PA-CB licence. No API field returns which licence your account uses; see [Which licence applies to you](/api-reference/v3/merchant/create#beneficial-owners).
 
 ### Fields you cannot send
 
@@ -63,7 +63,8 @@ An application is complete when:
 
 - Every field marked required on [Create Merchant](/api-reference/v3/merchant/create#the-request) has a value.
 - At least one HS code is stored, if a goods category is selected.
-- At least one beneficial owner is stored, if your account collects under EximPe's own licence.
+
+Beneficial owners are optional and do not affect completeness.
 
 <Note>
   **Some sections cannot be fixed through the API.** When `section_reasons` names `authorized_persons` or `security_assessment`, no field on this endpoint changes that part of the application. Contact EximPe to resolve it.
@@ -238,7 +239,6 @@ Errors use the standard envelope. `details` is an object keyed by field, a strin
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
 | `400` | A field fails a rule from [Create Merchant](/api-reference/v3/merchant/create#errors) | `ERR_MERCHANT_001` | `details` names each field with the reason. Nothing is saved; fix the fields and send the edit again. |
-| `400` | `beneficial_owners` is `[]` under EximPe's own PA-CB licence | `ERR_MERCHANT_001` | `details.beneficial_owners` says `"At least one beneficial owner is required"`. Send the full list of owners to keep. |
 | `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
 | `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing. Send them, or check the code. |
 | `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | Send `bank_country`. |

@@ -16514,7 +16514,7 @@
             "items": {
               "$ref": "#/components/schemas/v3_BeneficialOwner"
             },
-            "description": "Required, with at least one owner, when your account collects under EximPe's own PA-CB licence. Otherwise leave it out or send an empty list."
+            "description": "Optional. Accepted only when your account collects under EximPe's own PA-CB licence; checked against the owner rules when sent. Otherwise leave it out or send an empty list."
           }
         }
       },
@@ -17356,7 +17356,7 @@
             "items": {
               "$ref": "#/components/schemas/v3_BeneficialOwner"
             },
-            "description": "Replaces the stored owners whole. Leave the key out to keep them. Under EximPe's own PA-CB licence at least one owner must remain, so `[]` is refused."
+            "description": "Replaces the stored owners whole. Leave the key out to keep them. Send `[]` to remove every owner."
           }
         }
       },

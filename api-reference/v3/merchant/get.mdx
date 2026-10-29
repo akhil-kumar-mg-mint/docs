@@ -32,7 +32,7 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
 | global_company | object | Company, business and address details, as sent. Dropdown values are returned in their listed spelling. Also carries `monthly_avg_transaction_value`, `business_category_other` and `category`, which are `null` unless EximPe holds a value for them. |
 | settlement_details | object | Bank details, as sent. The bank account number is returned in full. |
 | settlement_currency | string \| null | ISO code of the currency the sub-merchant is paid out in, which follows your own settlement account. |
-| beneficial_owners | array | Each owner, as sent, with its `id`. Every owner carries every owner field; fields that do not apply to its type are `null`. Empty when your account does not collect under EximPe's own licence. |
+| beneficial_owners | array | Each owner, as sent, with its `id`. Every owner carries every owner field; fields that do not apply to its type are `null`. Empty when no owners are stored, which is always the case when your account does not collect under EximPe's own licence. |
 | changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
 | section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
