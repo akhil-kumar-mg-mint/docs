@@ -1,13 +1,13 @@
 ---
-title: "MERCHANT CHANGES REQUESTED"
-description: "Technical reference for the MERCHANT_CHANGES_REQUESTED webhook event, including payload schema, field specifications, and implementation details."
+title: "MERCHANT CHANGES NEEDED"
+description: "Technical reference for the MERCHANT_CHANGES_NEEDED webhook event, including payload schema, field specifications, and implementation details."
 ---
 
 ---
 
 ## Event Overview
 
-**Event Type**: `MERCHANT_CHANGES_REQUESTED`  
+**Event Type**: `MERCHANT_CHANGES_NEEDED`  
 **Category**: Onboarding  
 **Description**: EximPe needs changes to a sub-merchant's application before it can be approved
 
@@ -25,7 +25,7 @@ To act on it, fix the fields with [Update Merchant](/api-reference/v3/merchant/u
 
 ```json Example Payload
 {
-    "event_type": "MERCHANT_CHANGES_REQUESTED",
+    "event_type": "MERCHANT_CHANGES_NEEDED",
     "event_time": "2026-12-15T14:32:18.456789",
     "version": "3.0.0",
     "sequence_number": "5f0c2b1e-9a43-4d7e-8b61-2c7d9e4f1a90",
@@ -58,7 +58,7 @@ To act on it, fix the fields with [Update Merchant](/api-reference/v3/merchant/u
 <Tabs>
   <Tab title="Root Level Fields">
     <ParamField path="event_type" type="string" required>
-      Always `"MERCHANT_CHANGES_REQUESTED"` for this webhook event
+      Always `"MERCHANT_CHANGES_NEEDED"` for this webhook event
     </ParamField>
 
     <ParamField path="event_time" type="string" required>
