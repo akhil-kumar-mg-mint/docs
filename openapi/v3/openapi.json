@@ -85,19 +85,6 @@
                   "$ref": "#/components/schemas/v1_ErrorResponse"
                 },
                 "examples": {
-                  "Payment ID missing": {
-                    "summary": "Payment ID missing",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": {
-                          "payment_id": "This field is required."
-                        }
-                      }
-                    }
-                  },
                   "Payment not found": {
                     "summary": "Payment not found",
                     "value": {
@@ -148,19 +135,6 @@
                       }
                     }
                   },
-                  "Invalid refund amount": {
-                    "summary": "Invalid refund amount",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": {
-                          "refund_amount": "Please enter a valid amount."
-                        }
-                      }
-                    }
-                  },
                   "Reference ID reused with a different amount": {
                     "summary": "Reference ID reused with a different amount",
                     "value": {
@@ -170,32 +144,6 @@
                         "message": "Validation error",
                         "details": {
                           "reference_id": "Reference ID reused with different refund amount"
-                        }
-                      }
-                    }
-                  },
-                  "Invalid reference ID": {
-                    "summary": "Invalid reference ID",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": {
-                          "reference_id": "This value does not match the required pattern."
-                        }
-                      }
-                    }
-                  },
-                  "Invalid callback URL": {
-                    "summary": "Invalid callback URL",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": {
-                          "callback_url": "Enter a valid URL."
                         }
                       }
                     }
