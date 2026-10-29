@@ -46,11 +46,13 @@ The fields and rules are the same as [Create Merchant](/api-reference/v3/merchan
 | A list of owners | The stored owners are replaced with exactly this list. Send every owner you want to keep, not only the new ones. |
 | `[]` | The stored owners are removed; the sub-merchant has no owners. |
 
-The same limits apply as on create: owners are optional, each owner needs at least 10%, and the total is at most 100%. Owners are accepted only when your account collects under EximPe's own PA-CB licence. No API field returns which licence your account uses; see [Which licence applies to you](/api-reference/v3/merchant/create#beneficial-owners).
+Each owner takes the same fields as on create, including the optional `identify_number` (registration number — company owners only, optional). The same limits apply as on create: owners are optional, each owner needs at least 10%, and the total is at most 100%. Owners are accepted only when your account collects under EximPe's own PA-CB licence. No API field returns which licence your account uses; see [Which licence applies to you](/api-reference/v3/merchant/create#beneficial-owners).
 
 ### Fields you cannot send
 
-`status`, `sub_merchant_status` and `is_active` are refused at the top level with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited; a `settlement_currency` you send is ignored.
+Send only the fields listed on [Create Merchant](/api-reference/v3/merchant/create#the-request). Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a `400` and the code `ERR_MERCHANT_001`, and nothing is saved. The message names each refused field, e.g. `"global_company.category is not accepted"`. Owner `id`s from a response are not accepted either; send each owner without its `id`.
+
+`status`, `sub_merchant_status` and `is_active` are refused at the top level with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. Status changes come from EximPe's review and from resubmitting. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete). Settlement currency always follows your own settlement account and cannot be edited; a `settlement_currency` you send is refused like any other unlisted field.
 
 ## Resubmitting
 
@@ -111,12 +113,11 @@ Beneficial owners are optional and do not affect completeness.
       "ownership_percentage": 70
     },
     {
-      "type": "INDIVIDUAL",
-      "first_name": "Rahul",
-      "last_name": "Mehta",
-      "email": "rahul.mehta@acmeexports.com",
-      "nationality": "Indian",
-      "date_of_birth": "1982-11-02",
+      "type": "INSTITUTIONAL",
+      "authorized_user_name": "Acme Holdings Limited",
+      "country_of_incorporation": "Singapore",
+      "date_of_incorporation": "2015-01-10",
+      "identify_number": "U20150110SG",
       "ownership_percentage": 30
     }
   ]
@@ -148,13 +149,10 @@ Beneficial owners are optional and do not affect completeness.
       "international_org_type": "Private Limited Company",
       "website": "https://acmeexports.com",
       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-      "monthly_avg_transaction_value": null,
       "business_category": "GOODS",
-      "business_category_other": null,
       "hs_codes": [
         "84713010"
       ],
-      "category": null,
       "mcc": "5045",
       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -196,7 +194,8 @@ Beneficial owners are optional and do not affect completeness.
         "nationality": "Indian",
         "date_of_birth": "1985-06-20",
         "country_of_incorporation": null,
-        "date_of_incorporation": null
+        "date_of_incorporation": null,
+        "identify_number": null
       }
     ],
     "changes_requested_reason": null,
@@ -239,6 +238,7 @@ Errors use the standard envelope. `details` is an object keyed by field, a strin
 | HTTP | Cause | `code` | What to do |
 |---|---|---|---|
 | `400` | A field fails a rule from [Create Merchant](/api-reference/v3/merchant/create#errors) | `ERR_MERCHANT_001` | `details` names each field with the reason. Nothing is saved; fix the fields and send the edit again. |
+| `400` | A field not listed on [Create Merchant](/api-reference/v3/merchant/create#the-request) is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | `ERR_MERCHANT_001` | The message names each field, e.g. `"settlement_currency is not accepted"`. Nothing is saved; remove it. |
 | `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
 | `400` | `bank_swift_code` changed, bank fields were left out and no bank details were found for the new code, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing. Send them, or check the code. |
 | `400` | `bank_swift_code` changed, `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | Send `bank_country`. |

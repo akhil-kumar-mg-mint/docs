@@ -29,10 +29,10 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
 | id | string | The sub-merchant's merchant ID. |
 | status | string | `PENDING`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED` or `REJECTED`. See [Statuses](/api-reference/v3/merchant/create#statuses). |
 | legal_name, brand_name, email, phone_number | string | As sent. |
-| global_company | object | Company, business and address details, as sent. Dropdown values are returned in their listed spelling. Also carries `monthly_avg_transaction_value`, `business_category_other` and `category`, which are `null` unless EximPe holds a value for them. |
+| global_company | object | Company, business and address details, as sent. Dropdown values are returned in their listed spelling. |
 | settlement_details | object | Bank details, as sent. The bank account number is returned in full. |
 | settlement_currency | string \| null | ISO code of the currency the sub-merchant is paid out in, which follows your own settlement account. |
-| beneficial_owners | array | Each owner, as sent, with its `id`. Every owner carries every owner field; fields that do not apply to its type are `null`. Empty when no owners are stored, which is always the case when your account does not collect under EximPe's own licence. |
+| beneficial_owners | array | Each owner, as sent, with its `id`. Every owner carries every owner field; fields that do not apply to its type are `null`, so `identify_number` (a company owner's registration number) is `null` for an `INDIVIDUAL` owner. Empty when no owners are stored, which is always the case when your account does not collect under EximPe's own licence. |
 | changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
 | section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
@@ -58,13 +58,10 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
       "international_org_type": "Private Limited Company",
       "website": "https://acmeexports.com",
       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-      "monthly_avg_transaction_value": null,
       "business_category": "GOODS",
-      "business_category_other": null,
       "hs_codes": [
         "84713010"
       ],
-      "category": null,
       "mcc": "5045",
       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -106,7 +103,8 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/' \
         "nationality": "Indian",
         "date_of_birth": "1985-06-20",
         "country_of_incorporation": null,
-        "date_of_incorporation": null
+        "date_of_incorporation": null,
+        "identify_number": null
       }
     ],
     "changes_requested_reason": "The registration number does not match the incorporation certificate.",

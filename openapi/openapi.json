@@ -2098,13 +2098,10 @@
                           "international_org_type": "Private Limited Company",
                           "website": "https://acmeexports.com",
                           "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                          "monthly_avg_transaction_value": null,
                           "business_category": "GOODS",
-                          "business_category_other": null,
                           "hs_codes": [
                             "84713010"
                           ],
-                          "category": null,
                           "mcc": "5045",
                           "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
                           "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -2146,7 +2143,8 @@
                             "nationality": "Indian",
                             "date_of_birth": "1985-06-20",
                             "country_of_incorporation": null,
-                            "date_of_incorporation": null
+                            "date_of_incorporation": null,
+                            "identify_number": null
                           }
                         ],
                         "changes_requested_reason": null,
@@ -2304,13 +2302,10 @@
                       "international_org_type": "Private Limited Company",
                       "website": "https://acmeexports.com",
                       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "monthly_avg_transaction_value": null,
                       "business_category": "GOODS",
-                      "business_category_other": null,
                       "hs_codes": [
                         "84713010"
                       ],
-                      "category": null,
                       "mcc": "5045",
                       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
                       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -2352,7 +2347,8 @@
                         "nationality": "Indian",
                         "date_of_birth": "1985-06-20",
                         "country_of_incorporation": null,
-                        "date_of_incorporation": null
+                        "date_of_incorporation": null,
+                        "identify_number": null
                       }
                     ],
                     "changes_requested_reason": null,
@@ -2366,7 +2362,7 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), a field that is not listed was sent (`ERR_MERCHANT_001`; the message names it, e.g. `global_company.category is not accepted`), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -2823,13 +2819,10 @@
                       "international_org_type": "Private Limited Company",
                       "website": "https://acmeexports.com",
                       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "monthly_avg_transaction_value": null,
                       "business_category": "GOODS",
-                      "business_category_other": null,
                       "hs_codes": [
                         "84713010"
                       ],
-                      "category": null,
                       "mcc": "5045",
                       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
                       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -2871,7 +2864,8 @@
                         "nationality": "Indian",
                         "date_of_birth": "1985-06-20",
                         "country_of_incorporation": null,
-                        "date_of_incorporation": null
+                        "date_of_incorporation": null,
+                        "identify_number": null
                       }
                     ],
                     "changes_requested_reason": null,
@@ -3006,13 +3000,10 @@
                       "international_org_type": "Private Limited Company",
                       "website": "https://acmeexports.com",
                       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "monthly_avg_transaction_value": null,
                       "business_category": "GOODS",
-                      "business_category_other": null,
                       "hs_codes": [
                         "84713010"
                       ],
-                      "category": null,
                       "mcc": "5045",
                       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
                       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -3054,7 +3045,8 @@
                         "nationality": "Indian",
                         "date_of_birth": "1985-06-20",
                         "country_of_incorporation": null,
-                        "date_of_incorporation": null
+                        "date_of_incorporation": null,
+                        "identify_number": null
                       }
                     ],
                     "changes_requested_reason": null,
@@ -3068,7 +3060,7 @@
             }
           },
           "400": {
-            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
+            "description": "Validation failed (`ERR_MERCHANT_001`; `details` names each field), a field that is not listed was sent (`ERR_MERCHANT_001`; the message names it, e.g. `global_company.category is not accepted`), `status`, `sub_merchant_status` or `is_active` was sent (`ERR_MERCHANT_005`), bank fields were left out and could not be found for `bank_swift_code` or came back empty from it (`ERR_MERCHANT_019`), or the bank country could not be matched from `bank_swift_code` (`ERR_MERCHANT_006`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -16473,6 +16465,7 @@
       },
       "v3_CreateMerchantRequest": {
         "type": "object",
+        "description": "Send only the fields listed here. Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a 400 naming the field.",
         "required": [
           "legal_name",
           "brand_name",
@@ -16913,19 +16906,9 @@
                   "ABOVE_500_K"
                 ]
               },
-              "monthly_avg_transaction_value": {
-                "type": "string",
-                "nullable": true,
-                "description": "Expected monthly transaction value, when recorded."
-              },
               "business_category": {
                 "type": "string",
                 "description": "One or more category slugs from your approved categories, comma-separated, e.g. `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See Get Merchant Options."
-              },
-              "business_category_other": {
-                "type": "string",
-                "nullable": true,
-                "description": "Description of an \"Other\" category, taken from your own account."
               },
               "hs_codes": {
                 "type": "array",
@@ -16934,11 +16917,6 @@
                 },
                 "description": "HS codes for the goods traded. Required when a goods category is selected; refused otherwise. Find codes with Search HS Codes. `null` or an empty list when there are none.",
                 "nullable": true
-              },
-              "category": {
-                "type": "string",
-                "nullable": true,
-                "description": "Category label, when recorded."
               },
               "mcc": {
                 "type": "string",
@@ -17124,7 +17102,7 @@
       },
       "v3_UpdateMerchantRequest": {
         "type": "object",
-        "description": "Every field is optional. Send only what you want to change.",
+        "description": "Every field is optional. Send only what you want to change. Any field not listed here, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a 400 naming the field.",
         "properties": {
           "legal_name": {
             "type": "string",
@@ -19003,6 +18981,10 @@
             "type": "string",
             "description": "INSTITUTIONAL only.",
             "format": "date"
+          },
+          "identify_number": {
+            "type": "string",
+            "description": "Registration number — company owners only, optional. Ignored for an INDIVIDUAL owner."
           }
         }
       },
@@ -19074,6 +19056,11 @@
             "type": "string",
             "description": "INSTITUTIONAL only.",
             "format": "date",
+            "nullable": true
+          },
+          "identify_number": {
+            "type": "string",
+            "description": "The company owner's registration number. `null` for an INDIVIDUAL owner or when not sent.",
             "nullable": true
           }
         },

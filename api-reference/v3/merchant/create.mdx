@@ -108,7 +108,7 @@ All fields sit inside `settlement_details`.
 - If you send every bank field, no lookup is made.
 
 <Note>
-  **Settlement currency is not sent.** A sub-merchant is paid out in the same currency as your own settlement account. The response returns it as an ISO code in `settlement_currency`, at the top level of the sub-merchant. If you send `settlement_currency`, at the top level or inside `settlement_details`, it is ignored: the request is not refused and the currency still follows your own settlement account.
+  **Settlement currency is not sent.** A sub-merchant is paid out in the same currency as your own settlement account. The response returns it as an ISO code in `settlement_currency`, at the top level of the sub-merchant. Do not send `settlement_currency`: like any field not listed here, it is refused with a `400`.
 </Note>
 
 ### Beneficial owners
@@ -134,8 +134,11 @@ Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
 | authorized_user_name | string | `INSTITUTIONAL` | Yes | The company's name. 2–50 letters, spaces, `.`, `-` or `'` |
 | country_of_incorporation | string | `INSTITUTIONAL` | Yes | One of the [countries](/api-reference/v3/merchant/options#countries) |
 | date_of_incorporation | string | `INSTITUTIONAL` | Yes | `YYYY-MM-DD` |
+| identify_number | string | `INSTITUTIONAL` | No | Registration number — company owners only, optional. Ignored for an `INDIVIDUAL` owner |
 
 ### Fields you cannot send
+
+Send only the fields listed on this page. Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a `400` and the code `ERR_MERCHANT_001`, and nothing is saved. The message names each refused field, e.g. `"global_company.category is not accepted"`, or `"beneficial_owners[0].pan_number is not accepted"` for the first owner.
 
 The status and the active flag are set by EximPe alone. A request that includes `status`, `sub_merchant_status` or `is_active` at the top level is refused with a `400` and the code `ERR_MERCHANT_005`, and nothing is saved. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete).
 
@@ -200,6 +203,7 @@ The status and the active flag are set by EximPe alone. A request that includes 
       "authorized_user_name": "Acme Holdings Limited",
       "country_of_incorporation": "Singapore",
       "date_of_incorporation": "2015-01-10",
+      "identify_number": "U20150110SG",
       "ownership_percentage": 40
     }
   ]
@@ -254,7 +258,7 @@ The status and the active flag are set by EximPe alone. A request that includes 
 
 ## The response
 
-`201 Created`, with the sub-merchant in `data`. It carries every field you sent, with dropdown values in their listed spelling and the bank account number in full. `global_company` also carries `monthly_avg_transaction_value`, `business_category_other` and `category`, which are `null` unless EximPe holds a value for them. On top of that:
+`201 Created`, with the sub-merchant in `data`. It carries every field you sent, with dropdown values in their listed spelling and the bank account number in full. On top of that:
 
 | Name | Type | Description |
 |---|---|---|
@@ -265,7 +269,7 @@ The status and the active flag are set by EximPe alone. A request that includes 
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
 | global_company.hs_codes | string[] \| null | The HS codes stored for the sub-merchant. `null` or an empty list when it has none. |
 | settlement_currency | string \| null | ISO currency code the sub-merchant is paid out in. |
-| beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, and an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name. Empty list when your account does not collect under EximPe's licence. |
+| beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name, and `identify_number` is `null` for an `INDIVIDUAL` owner. Empty list when your account does not collect under EximPe's licence. |
 | created_at | string | Time of creation, UTC, ISO 8601 without a timezone suffix. |
 | updated_at | string | Time of the last change, UTC, ISO 8601 without a timezone suffix. |
 
@@ -288,13 +292,10 @@ The status and the active flag are set by EximPe alone. A request that includes 
       "international_org_type": "Private Limited Company",
       "website": "https://acmeexports.com",
       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-      "monthly_avg_transaction_value": null,
       "business_category": "GOODS",
-      "business_category_other": null,
       "hs_codes": [
         "84713010"
       ],
-      "category": null,
       "mcc": "5045",
       "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
       "agreement_details": "Master services agreement signed on 2026-03-15",
@@ -336,7 +337,8 @@ The status and the active flag are set by EximPe alone. A request that includes 
         "nationality": "Indian",
         "date_of_birth": "1985-06-20",
         "country_of_incorporation": null,
-        "date_of_incorporation": null
+        "date_of_incorporation": null,
+        "identify_number": null
       },
       {
         "id": "4417203392",
@@ -349,7 +351,8 @@ The status and the active flag are set by EximPe alone. A request that includes 
         "nationality": null,
         "date_of_birth": null,
         "country_of_incorporation": "Singapore",
-        "date_of_incorporation": "2015-01-10"
+        "date_of_incorporation": "2015-01-10",
+        "identify_number": "U20150110SG"
       }
     ],
     "changes_requested_reason": null,
@@ -377,6 +380,17 @@ The status and the active flag are set by EximPe alone. A request that includes 
 }
 ```
 
+```json 400 Field not accepted
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "global_company.category is not accepted",
+    "details": "global_company.category is not accepted"
+  }
+}
+```
+
 ```json 403 Not an import PSP
 {
   "success": false,
@@ -395,7 +409,7 @@ The status and the active flag are set by EximPe alone. A request that includes 
 Every error uses the standard envelope: `{ "success": false, "error": { "code", "message", "details" } }`. `details` takes one of three shapes:
 
 - **An object keyed by field,** when one or more fields fail a rule. Fields inside `global_company` and `settlement_details` are nested under those keys. `beneficial_owners` holds either a single reason or a list with one entry per owner you sent, each an object keyed by the owner's fields (`{}` for an owner with no errors). A rule that spans several fields, such as the communication address or the HS code rule, is reported under `non_field_errors` inside the object it belongs to, e.g. `details.global_company.non_field_errors`.
-- **A string,** when the error is about the request as a whole, such as `ERR_MERCHANT_005` or `ERR_MERCHANT_019`. It repeats `message`.
+- **A string,** when the error is about the request as a whole, such as `ERR_MERCHANT_005`, `ERR_MERCHANT_019` or a field that is not accepted. It repeats `message`.
 - **An empty object** `{}`, when there is nothing to add to `message`, such as a `403` or `404`.
 
 | HTTP | Cause | `code` | What to do |
@@ -407,6 +421,7 @@ Every error uses the standard envelope: `{ "success": false, "error": { "code", 
 | `400` | Owners sent on a partner-licence account, or owners totalling over 100% | `ERR_MERCHANT_001` | `details.beneficial_owners` carries the reason, e.g. `"Beneficial owners are only supported for EXIMPE CB sub-merchants"`. See [Which licence applies to you](#beneficial-owners). |
 | `400` | A beneficial owner's name is too short or long, or has characters that are not allowed | `ERR_MERCHANT_001` | `details` carries the reason, e.g. `"authorized_user_name must be 2-50 characters"`. |
 | `400` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `ERR_MERCHANT_001` | `details.settlement_details` names the field. Send that field yourself. |
+| `400` | A field not listed on this page is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | `ERR_MERCHANT_001` | The message names each field, e.g. `"business_mode is not accepted"`. Remove it. |
 | `400` | `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | Remove the field. |
 | `400` | Bank fields were left out and no bank details were found for `bank_swift_code`, or the bank details found have no value for some of them | `ERR_MERCHANT_019` | The message names the fields still missing, e.g. `"Bank details could not be found for bank_swift_code; send bank_name, bank_city"`. Send them, or check the code. |
 | `400` | `bank_country` was left out and the bank's country is not one of the supported countries | `ERR_MERCHANT_006` | The message is `"bank_country could not be matched from bank_swift_code; send bank_country"`. Send `bank_country`. |
