@@ -5,7 +5,7 @@ openapi: 'POST /pg/refunds/{refund_id}/simulate-status/'
 ---
 
 <Warning>
-  **Sandbox only.** This endpoint returns `400` in production. It operates only on refunds created through the **Simulator** payment gateway — a refund on a real gateway is rejected.
+  **Sandbox only.** This endpoint returns `403` (`ERR_REFUND_012`) in production. It operates only on refunds created through the **Simulator** payment gateway — a refund on a real gateway is rejected.
 </Warning>
 
 ## Overview
@@ -83,22 +83,16 @@ Your endpoint receives `REFUND_FAILED` carrying your custom message.
 
 ## Errors
 
-`400` responses use `error.code` = `ERR_REFUND_002`:
+| Status | `error.code` | `details` | Cause |
+|---|---|---|---|
+| `400` | `ERR_REFUND_002` | `status: "…" is not a valid choice.` | Unknown status, or lowercase |
+| `400` | `ERR_REFUND_002` | `status: This field is required.` | `status` omitted |
+| `400` | `ERR_REFUND_009` | `refund_uid: RF… is not on the simulator gateway` | Refund created on a real gateway |
+| `403` | `ERR_REFUND_012` | `error: Refund status simulation is not available in production` | Called in production |
+| `404` | `ERR_REFUND_003` | `refund_id: Refund not found` | Refund does not exist, or belongs to another merchant |
+| `500` | `ERR_SERVICE_ERROR_000` | `error: An unexpected error occurred. Please try again later` | Unexpected failure |
 
-| `details` | Cause |
-|---|---|
-| `status: "…" is not a valid choice.` | Unknown status, or lowercase |
-| `status: This field is required.` | `status` omitted |
-| `refund_uid: RF… is not on the simulator gateway` | Refund created on a real gateway |
-| `error: Refund status simulation is not available in production` | Called in production |
-
-<Warning>
-  **`404` does not use the standard envelope.** A refund that does not exist — or belongs to another merchant — returns a bare `{"detail": "..."}` rather than the `success`/`error` shape. Handle that separately.
-
-  Note this is a `404`, not a `403`: refunds are scoped to your account and its sub-merchants, and someone else's refund is simply not found.
-</Warning>
-
-A `500` on this endpoint uses `ERR_SERVICE_ERROR_000`, unlike its `400`s.
+A refund that belongs to another merchant returns `404`, not `403`: refunds are scoped to your account and its sub-merchants, and someone else's refund is simply not found.
 
 ## Related
 
