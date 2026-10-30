@@ -1,0 +1,209 @@
+---
+title: 'Get Merchant Options'
+description: 'The values every dropdown field on a sub-merchant accepts, including the business categories you are approved for.'
+openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/options/'
+---
+
+## Overview
+
+Returns the values the sub-merchant dropdown fields accept: countries, nationalities, organisation types, monthly volume bands, and the business categories **your** account is approved for. Fetch it before you build a [Create Merchant](/api-reference/v3/merchant/create) request, and use the values exactly as listed.
+
+<Note>
+  **Matching is case-insensitive; storage is not.** `india` and `INDIA` are both accepted for `India`, and `goods` for `GOODS`. This applies to countries, nationalities, organisation types, volume bands and business categories. The sub-merchant always stores and returns the listed spelling, accents included (`Curaçao`, `Burkinabé`); business categories are returned in upper case.
+</Note>
+
+HS codes are not listed here. There are thousands of them, so look them up with [Search HS Codes](/api-reference/v3/merchant/hs-codes).
+
+## Response
+
+| Name | Type | Used by |
+|---|---|---|
+| countries | string[] | `global_company.registered_country`, `global_company.communication_country`, `settlement_details.bank_country`, `beneficial_owners[].country_of_incorporation` |
+| nationalities | string[] | `beneficial_owners[].nationality` |
+| international_org_types | string[] | `global_company.international_org_type` |
+| monthly_avg_transaction_volumes | object[] | `global_company.monthly_avg_transaction_volume`. Each entry has a `value` to send and a `label` to show. |
+| business_categories | object[] | `global_company.business_category`. Only the categories your account is approved for. Each entry has a `value` to send, a `label` to show, and `requires_hs_codes`, which is `true` for goods categories. |
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "success": true,
+  "message": "Sub-merchant options retrieved successfully",
+  "data": {
+    "countries": ["Afghanistan", "Albania", "Algeria", "…", "India", "…", "Zimbabwe", "Åland Islands"],
+    "nationalities": ["Afghan", "Albanian", "Algerian", "…", "Indian", "…", "Zimbabwean", "Åland Islander"],
+    "international_org_types": [
+      "Private Limited Company",
+      "Public Limited Company",
+      "Limited Liability Company",
+      "Joint Stock Company",
+      "Free Zone Company / Entity",
+      "Partnership / LLP",
+      "Sole Proprietorship",
+      "Other"
+    ],
+    "monthly_avg_transaction_volumes": [
+      { "value": "LESS_THAN_5_K", "label": "Less than $5,000" },
+      { "value": "BETWEEN_5_K_AND_20_K", "label": "$5,000 - $20,000" },
+      { "value": "BETWEEN_20_K_AND_50_K", "label": "$20,000 - $50,000" },
+      { "value": "BETWEEN_50_K_AND_100_K", "label": "$50,000 - $100,000" },
+      { "value": "BETWEEN_100_K_AND_250_K", "label": "$100,000 - $250,000" },
+      { "value": "BETWEEN_250_K_AND_500_K", "label": "$250,000 - $500,000" },
+      { "value": "ABOVE_500_K", "label": "$500,000 & above" }
+    ],
+    "business_categories": [
+      {
+        "value": "GOODS",
+        "label": "Goods (physical products shipped cross-border)",
+        "requires_hs_codes": true
+      },
+      {
+        "value": "SOFTWARE_CONSULTING",
+        "label": "Software consulting & implementation",
+        "requires_hs_codes": false
+      }
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+## Supported values
+
+The lists below are the full set EximPe supports. The Get Merchant Options endpoint is the source of truth for accepted values; values are matched ignoring letter case. It is also the only place that shows which business categories you are approved for.
+
+### Organisation types
+
+For `global_company.international_org_type`. Eight values:
+
+| Value |
+|---|
+| `Private Limited Company` |
+| `Public Limited Company` |
+| `Limited Liability Company` |
+| `Joint Stock Company` |
+| `Free Zone Company / Entity` |
+| `Partnership / LLP` |
+| `Sole Proprietorship` |
+| `Other` |
+
+### Monthly volume bands
+
+For `global_company.monthly_avg_transaction_volume`. Seven values, in US dollars:
+
+| Value | Meaning |
+|---|---|
+| `LESS_THAN_5_K` | Less than $5,000 |
+| `BETWEEN_5_K_AND_20_K` | $5,000 - $20,000 |
+| `BETWEEN_20_K_AND_50_K` | $20,000 - $50,000 |
+| `BETWEEN_50_K_AND_100_K` | $50,000 - $100,000 |
+| `BETWEEN_100_K_AND_250_K` | $100,000 - $250,000 |
+| `BETWEEN_250_K_AND_500_K` | $250,000 - $500,000 |
+| `ABOVE_500_K` | $500,000 & above |
+
+### Business categories
+
+For `global_company.business_category`. Send one or more slugs, comma-separated, e.g. `GOODS,SOFTWARE_CONSULTING`.
+
+<Warning>
+  **You can only use the categories your own account is approved for.** A sub-merchant's categories must come from the categories EximPe approved for you at onboarding. Any other slug is refused with a `400`, and so are labels and purpose codes. The `business_categories` list in the response above holds exactly your approved slugs. To add a category, contact EximPe.
+</Warning>
+
+A goods category (**HS codes required** below) needs at least one HS code in `global_company.hs_codes`. If no goods category is selected, leave `hs_codes` out.
+
+If you select `OTHER` or `OTHER_B2B_SERVICE`, the sub-merchant takes the description you gave EximPe for your own "Other" category. There is no description field to send.
+
+| Slug | Label | Business model | HS codes required |
+|---|---|---|---|
+| `GOODS` | Goods (physical products shipped cross-border) | B2B | Yes |
+| `SOFTWARE_CONSULTING` | Software consulting & implementation | B2B | No |
+| `DATA_PROCESSING` | Database & data processing | B2B | No |
+| `ACCOUNTING` | Accounting, auditing & bookkeeping | B2B | No |
+| `ARCHITECTURAL` | Architectural services | B2B | No |
+| `AGRICULTURE_FORESTRY` | Agriculture & forestry services | B2B | No |
+| `ENVIRONMENTAL` | Environmental services | B2B | No |
+| `TAX_CONSULTING` | Tax consulting | B2B | No |
+| `MARKET_RESEARCH` | Market research & opinion polling | B2B | No |
+| `PUBLISHING_PRINTING` | Publishing & printing | B2B | No |
+| `MUSEUM_LIBRARY` | Museum, library & archival services | B2B | No |
+| `RECREATION_SPORTING` | Recreation & sporting activities | B2B | No |
+| `OTHER_B2B_SERVICE` | Other | B2B | No |
+| `CROSS_BORDER_PHYSICAL_GOODS_ECOMMERCE` | Cross-border physical goods (e-commerce) | B2C | Yes |
+| `DIGITAL_GOODS_SAAS` | Digital goods / SaaS | B2C | No |
+| `SUBSCRIPTIONS_RECURRING_BILLING` | Subscriptions / recurring billing | B2C | No |
+| `MARKETPLACES_PLATFORMS` | Marketplaces / platforms | B2C | No |
+| `FINANCIAL_SERVICES_WALLETS_CRYPTO` | Financial services / wallets / crypto | B2C | No |
+| `GAMING_GAMBLING_FANTASY_SPORTS` | Gaming / gambling / fantasy sports | B2C | No |
+| `ADULT_DATING` | Adult / dating | B2C | No |
+| `OTHER` | Other | B2C | No |
+| `EDUCATION_ABROAD` | Tuition & fees for studying abroad | B2C | No |
+| `EDUCATION_DISTANCE` | Online / distance course fees | B2C | No |
+| `TRAVEL_HOLIDAY` | Holiday / tourism travel | B2C | No |
+| `TRAVEL_BUSINESS` | Business travel | B2C | No |
+| `TRAVEL_MEDICAL` | Medical treatment travel | B2C | No |
+| `TRAVEL_PILGRIMAGE` | Pilgrimage travel | B2C | No |
+
+Not every slug is open to every account, and EximPe can withdraw a category from new selections. The endpoint only returns the categories you can select today.
+
+### Beneficial owner types
+
+For `beneficial_owners[].type`:
+
+| Value | Meaning |
+|---|---|
+| `INDIVIDUAL` | A person. Send `first_name`, `last_name`, `email`, `nationality` and `date_of_birth`. |
+| `INSTITUTIONAL` | A company. Send `authorized_user_name` (the company's name), `country_of_incorporation` and `date_of_incorporation`. |
+
+### Statuses
+
+Returned in `status`. You cannot set it. EximPe's review sets it, and so does resubmitting through [Update Merchant](/api-reference/v3/merchant/update#resubmitting).
+
+| Value | Meaning |
+|---|---|
+| `PENDING` | Submitted and waiting for review. |
+| `IN_REVIEW` | EximPe is reviewing the application. |
+| `CHANGES_REQUESTED` | EximPe needs changes before it can approve. |
+| `APPROVED` | Active. You can collect for it. |
+| `REJECTED` | The application was declined. |
+
+### Sections
+
+Returned in `section_reasons[].section` when EximPe asks for changes. Each value names the part of the application that needs attention:
+
+| Value | Part of the application |
+|---|---|
+| `company_details` | Company details |
+| `company_address` | Registered and communication addresses |
+| `business_details` | Business details |
+| `settlement_account` | Settlement bank account |
+| `beneficial_owners` | Beneficial owners |
+| `authorized_persons` | Authorised persons |
+| `security_assessment` | Security assessment |
+
+Every section except `authorized_persons` and `security_assessment` maps to fields you can change with [Update Merchant](/api-reference/v3/merchant/update). Those two cannot be fixed through the API; contact EximPe to resolve them.
+
+### Countries
+
+For `registered_country`, `communication_country`, `bank_country` and `country_of_incorporation`. 249 values.
+
+<Accordion title="All supported countries">
+`Afghanistan`, `Albania`, `Algeria`, `American Samoa`, `Andorra`, `Angola`, `Anguilla`, `Antarctica`, `Antigua and Barbuda`, `Argentina`, `Armenia`, `Aruba`, `Australia`, `Austria`, `Azerbaijan`, `Bahamas`, `Bahrain`, `Bangladesh`, `Barbados`, `Belarus`, `Belgium`, `Belize`, `Benin`, `Bermuda`, `Bhutan`, `Bolivia - Plurinational State of`, `Bosnia and Herzegovina`, `Botswana`, `Bouvet Island`, `Brazil`, `British Indian Ocean Territory`, `Brunei Darussalam`, `Bulgaria`, `Burkina Faso`, `Burundi`, `Cambodia`, `Cameroon`, `Canada`, `Cape Verde`, `Caribbean Netherlands`, `Cayman Islands`, `Central African Republic`, `Chad`, `Chile`, `China`, `Christmas Island`, `Cocos (Keeling) Islands`, `Colombia`, `Comoros`, `Congo`, `Congo - Democratic Republic of the`, `Cook Islands`, `Costa Rica`, `Cote d'Ivoire`, `Croatia`, `Cuba`, `Curaçao`, `Cyprus`, `Czechia`, `Denmark`, `Djibouti`, `Dominica`, `Dominican Republic`, `Ecuador`, `Egypt`, `El Salvador`, `Equatorial Guinea`, `Eritrea`, `Estonia`, `Eswatini`, `Ethiopia`, `Falkland Islands (Malvinas)`, `Faroe Islands`, `Fiji`, `Finland`, `France`, `French Guiana`, `French Polynesia`, `French Southern Territories`, `Gabon`, `Gambia`, `Georgia`, `Germany`, `Ghana`, `Gibraltar`, `Greece`, `Greenland`, `Grenada`, `Guadeloupe`, `Guam`, `Guatemala`, `Guernsey`, `Guinea`, `Guinea-Bissau`, `Guyana`, `Haiti`, `Heard & McDonald Islands`, `Holy See (Vatican City State)`, `Honduras`, `Hong Kong`, `Hungary`, `Iceland`, `India`, `Indonesia`, `Iran - Islamic Republic of`, `Iraq`, `Ireland`, `Isle of Man`, `Israel`, `Italy`, `Jamaica`, `Japan`, `Jersey`, `Jordan`, `Kazakhstan`, `Kenya`, `Kiribati`, `Korea - Democratic People's Republic of`, `Korea - Republic of`, `Kuwait`, `Kyrgyzstan`, `Lao People's Democratic Republic`, `Latvia`, `Lebanon`, `Lesotho`, `Liberia`, `Libya`, `Liechtenstein`, `Lithuania`, `Luxembourg`, `Macao`, `Madagascar`, `Malawi`, `Malaysia`, `Maldives`, `Mali`, `Malta`, `Marshall Islands`, `Martinique`, `Mauritania`, `Mauritius`, `Mayotte`, `Mexico`, `Micronesia - Federated States of`, `Moldova - Republic of`, `Monaco`, `Mongolia`, `Montenegro`, `Montserrat`, `Morocco`, `Mozambique`, `Myanmar`, `Namibia`, `Nauru`, `Nepal`, `Netherlands`, `New Caledonia`, `New Zealand`, `Nicaragua`, `Niger`, `Nigeria`, `Niue`, `Norfolk Island`, `North Macedonia`, `Northern Mariana Islands`, `Norway`, `Oman`, `Pakistan`, `Palau`, `Palestine - State of`, `Panama`, `Papua New Guinea`, `Paraguay`, `Peru`, `Philippines`, `Pitcairn`, `Poland`, `Portugal`, `Puerto Rico`, `Qatar`, `Romania`, `Russia`, `Rwanda`, `Réunion`, `Saint Barthélemy`, `Saint Helena - Ascension and Tristan Da Cunha`, `Saint Kitts and Nevis`, `Saint Lucia`, `Saint Martin`, `Saint Pierre and Miquelon`, `Saint Vincent and the Grenadines`, `Samoa`, `San Marino`, `Sao Tome and Principe`, `Saudi Arabia`, `Senegal`, `Serbia`, `Seychelles`, `Sierra Leone`, `Singapore`, `Sint Maarten`, `Slovakia`, `Slovenia`, `Solomon Islands`, `Somalia`, `South Africa`, `South Georgia and the South Sandwich Islands`, `South Sudan`, `Spain`, `Sri Lanka`, `Sudan`, `Suriname`, `Svalbard and Jan Mayen`, `Sweden`, `Switzerland`, `Syrian Arab Republic`, `Taiwan - Province of China`, `Tajikistan`, `Tanzania - United Republic of`, `Thailand`, `Timor-Leste`, `Togo`, `Tokelau`, `Tonga`, `Trinidad and Tobago`, `Tunisia`, `Turkey`, `Turkmenistan`, `Turks and Caicos Islands`, `Tuvalu`, `Uganda`, `Ukraine`, `United Arab Emirates`, `United Kingdom`, `United States`, `United States Minor Outlying Islands`, `Uruguay`, `Uzbekistan`, `Vanuatu`, `Venezuela - Bolivarian Republic of`, `Vietnam`, `Virgin Islands - British`, `Virgin Islands - U.S.`, `Wallis and Futuna`, `Western Sahara`, `Yemen`, `Zambia`, `Zimbabwe`, `Åland Islands`
+</Accordion>
+
+### Nationalities
+
+For `beneficial_owners[].nationality`. 244 values. Several countries can share one nationality. Nationalities use letters only.
+
+<Accordion title="All supported nationalities">
+`Afghan`, `Albanian`, `Algerian`, `American`, `American Samoan`, `Andorran`, `Angolan`, `Anguillan`, `Antiguan or Barbudan`, `Argentine`, `Armenian`, `Aruban`, `Australian`, `Austrian`, `Azerbaijani`, `Bahamian`, `Bahraini`, `Bangladeshi`, `Barbadian`, `Barthélemois`, `Basotho`, `Belarusian`, `Belgian`, `Belizean`, `Beninese`, `Bermudian`, `Bhutanese`, `Bissau-Guinean`, `Bolivian`, `Bosnian or Herzegovinian`, `Brazilian`, `British`, `British Virgin Islander`, `Bruneian`, `Bulgarian`, `Burkinabé`, `Burmese`, `Burundian`, `Cambodian`, `Cameroonian`, `Canadian`, `Cape Verdean`, `Caribbean Dutch`, `Cayman Islander`, `Central African`, `Chadian`, `Chagossian`, `Chilean`, `Chinese`, `Christmas Islander`, `Cocos Islander`, `Colombian`, `Comoran`, `Congolese`, `Cook Islander`, `Costa Rican`, `Croatian`, `Cuban`, `Curaçaoan`, `Cypriot`, `Czech`, `Danish`, `Djiboutian`, `Dominican`, `Dominican (Dominica)`, `Dutch`, `Ecuadorian`, `Egyptian`, `Emirati`, `Equatorial Guinean`, `Eritrean`, `Estonian`, `Ethiopian`, `Falkland Islander`, `Faroese`, `Fijian`, `Filipino`, `Finnish`, `French`, `French Guianese`, `French Polynesian`, `Gabonese`, `Gambian`, `Georgian`, `German`, `Ghanaian`, `Gibraltarian`, `Greek`, `Greenlandic`, `Grenadian`, `Guadeloupean`, `Guamanian`, `Guatemalan`, `Guernsey`, `Guinean`, `Guyanese`, `Haitian`, `Heard Islander`, `Honduran`, `Hong Kong Chinese`, `Hungarian`, `I-Kiribati`, `Icelander`, `Indian`, `Indonesian`, `Iranian`, `Iraqi`, `Irish`, `Israeli`, `Italian`, `Ivorian`, `Jamaican`, `Japanese`, `Jersey`, `Jordanian`, `Kazakhstani`, `Kenyan`, `Kittitian or Nevisian`, `Kuwaiti`, `Kyrgyz`, `Lao`, `Latvian`, `Lebanese`, `Liberian`, `Libyan`, `Liechtensteiner`, `Lithuanian`, `Luxembourger`, `Macanese`, `Macedonian`, `Mahoran`, `Malagasy`, `Malawian`, `Malaysian`, `Maldivian`, `Malian`, `Maltese`, `Manx`, `Marshallese`, `Martiniquais`, `Mauritanian`, `Mauritian`, `Mexican`, `Micronesian`, `Moldovan`, `Mongolian`, `Montenegrin`, `Montserratian`, `Monégasque`, `Moroccan`, `Motswana`, `Mozambican`, `Namibian`, `Nauruan`, `Nepali`, `New Caledonian`, `New Zealander`, `Ni-Vanuatu`, `Nicaraguan`, `Nigerian`, `Nigerien`, `Niuean`, `Norfolk Islander`, `North Korean`, `Northern Marianan`, `Norwegian`, `Omani`, `Pakistani`, `Palauan`, `Palestinian`, `Panamanian`, `Papua New Guinean`, `Paraguayan`, `Peruvian`, `Pitcairn Islander`, `Polish`, `Portuguese`, `Puerto Rican`, `Qatari`, `Romanian`, `Russian`, `Rwandan`, `Réunionese`, `Sahrawi`, `Saint Helenian`, `Saint Lucian`, `Saint Vincentian`, `Saint-Martinois`, `Saint-Pierrais`, `Salvadoran`, `Sammarinese`, `Samoan`, `Saudi`, `Senegalese`, `Serbian`, `Seychellois`, `Sierra Leonean`, `Singaporean`, `Sint Maartener`, `Slovak`, `Slovenian`, `Solomon Islander`, `Somali`, `South African`, `South Georgian`, `South Korean`, `South Sudanese`, `Spanish`, `Sri Lankan`, `Sudanese`, `Surinamese`, `Svalbardian`, `Swazi`, `Swedish`, `Swiss`, `Syrian`, `São Toméan`, `Taiwanese`, `Tajikistani`, `Tanzanian`, `Thai`, `Timorese`, `Togolese`, `Tokelauan`, `Tongan`, `Trinidadian or Tobagonian`, `Tunisian`, `Turkish`, `Turkmen`, `Turks and Caicos Islander`, `Tuvaluan`, `U.S. Virgin Islander`, `Ugandan`, `Ukrainian`, `Uruguayan`, `Uzbek`, `Vatican`, `Venezuelan`, `Vietnamese`, `Wallisian and Futunan`, `Yemeni`, `Zambian`, `Zimbabwean`, `Åland Islander`
+</Accordion>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

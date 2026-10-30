@@ -1,0 +1,70 @@
+---
+title: 'Search HS Codes'
+description: 'Find the HS codes a goods sub-merchant can declare, by code or description.'
+openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/hs-codes/'
+---
+
+## Overview
+
+A sub-merchant with a goods category must declare at least one HS code in `global_company.hs_codes`, and each code must be one EximPe recognises. This endpoint searches that list by code or by description.
+
+Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-reference/v3/merchant/create) or [Update Merchant](/api-reference/v3/merchant/update).
+
+## Query Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| search | string | No | Text to match against the code and its description, e.g. `8471` or `laptop`. Leave it out to page through every code. |
+| page | integer | No | Page number. Default `1`. |
+| page_size | integer | No | Results per page. Default `250`, maximum `1000`. |
+
+## Response
+
+`data` is a page, with the same paging fields as [List Merchants](/api-reference/v3/merchant/list#response). Each result is one HS code:
+
+| Name | Type | Description |
+|---|---|---|
+| id | integer | EximPe's ID for the code. |
+| value | string | The HS code. Send this in `hs_codes`. |
+| description | string | What the code covers. |
+| policy | string | The import policy that applies to the code. Empty when none is recorded. |
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "success": true,
+  "message": "HS codes retrieved successfully",
+  "data": {
+    "count": 2,
+    "page": 1,
+    "page_size": 250,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "id": 10421,
+        "value": "84713010",
+        "description": "Personal computer, portable, laptop",
+        "policy": "Free"
+      },
+      {
+        "id": 10422,
+        "value": "84713090",
+        "description": "Other portable automatic data processing machines",
+        "policy": "Free"
+      }
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

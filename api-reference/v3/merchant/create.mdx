@@ -1,104 +1,167 @@
 ---
 title: 'Create Merchant'
-description: 'Create a new merchant with settlement and company details.'
-openapi: 'POST /partners/merchants/'
+description: 'Onboard a sub-merchant with its company, settlement and ownership details.'
+openapi: '/openapi/v3-partner-merchants.json POST /partners/merchants/'
 ---
 
 ## Overview
 
-The Create Merchant endpoint allows Payment Aggregators (PSPs) to programmatically onboard sub-merchants. It creates a new merchant account with company details, settlement bank information, and contact details.
+Onboards a business you collect for as a **sub-merchant**. The request carries the same details as the **Add Merchant** form in the merchant dashboard, and is checked against the same rules, so a sub-merchant you create here opens in the dashboard with every field filled in.
 
-After creation, the sub-merchant status depends on the environment:
-- **Production**: Status is set to `PENDING` (requires approval)
-- **Non-production**: Status is set to `APPROVED` (auto-approved for testing)
+The status a new sub-merchant starts in depends on the environment:
+
+| Environment | Starting status | What happens next |
+|---|---|---|
+| Sandbox | `APPROVED` | Activated at once. You receive the `MERCHANT_APPROVED` webhook and can collect for it straight away. |
+| Production | `PENDING` | EximPe reviews the application. You receive a webhook when it is approved, rejected, or sent back for changes. |
+
+<Note>
+  **Edit, resubmit and delete cannot be tried on sandbox sub-merchants you create.** A sub-merchant created through the API in sandbox is approved immediately, so it is never `PENDING`, `CHANGES_REQUESTED` or `REJECTED` there. [Update Merchant](/api-reference/v3/merchant/update) and [Delete Merchant](/api-reference/v3/merchant/delete) refuse it with a `409`, and it can never be resubmitted. The API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
+</Note>
+
+<Note>
+  **Who can call this.** Only PSPs set up for import collections can manage sub-merchants. Any other account gets a `403`.
+</Note>
+
+<Tip>
+  Dropdown fields take the values EximPe lists. Fetch them with [Get Merchant Options](/api-reference/v3/merchant/options), and look up HS codes with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Countries, nationalities, organisation types, volume bands and business categories are matched case-insensitively; a listed value is always stored and returned in its listed spelling.
+</Tip>
 
 ## Request Parameters
-
-### Required Parameters
-- `company_details`: Company registration, business information, and contact details
-- `settlement_details`: Bank account details for settlements
-
-### Parameter Definitions
 
 #### Top-level
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| company_details | object | Yes | Company, business, and contact details. | See Company Details |
-| settlement_details | object | Yes | Bank account details for settlements. | See Settlement Details |
+| legal_name | string | Yes | Registered company name. | 2–255 characters. Letters, digits, spaces and `. - , ' & / ( )` |
+| brand_name | string | Yes | Brand or trading name. | Up to 200 characters. Same characters as `legal_name` |
+| email | string | Yes | Contact email for the sub-merchant. | A valid email address, up to 254 characters |
+| phone_number | string | Yes | Contact phone number with country code. | E.164, e.g. `+919876543210` |
+| global_company | object | Yes | Company, business and address details. | See [Company](#company) |
+| settlement_details | object | Yes | The bank account the sub-merchant is paid out to. | See [Settlement](#settlement) |
+| beneficial_owners | array | No | The sub-merchant's ultimate beneficial owners (UBOs). Accepted only on some accounts. | See [Beneficial owners](#beneficial-owners) |
 
-#### Company Details
+The sub-merchant's country is its `global_company.registered_country`.
 
-| Name | Type | Required | Description | Constraints |
-|---|---|---|---|---|
-| email | string | Yes | Contact email for the sub-merchant. | RFC 5322 email format |
-| phone_number | string | Yes | Contact phone number with country code. | E.164 format (e.g., `+919876543210`) |
-| legal_name | string | Yes | Legal name of the company. | Max 255 chars |
-| brand_name | string | Yes | Brand/trade name. | Max 255 chars |
-| registration_number | string | Yes | Company registration number. | Alphanumeric with dashes |
-| international_org_type | string | Yes | Type of organization. | Enum: `Private Limited Company`, `Public Limited Company`, `Limited Liability Company`, `Joint Stock Company`, `Free Zone Company / Entity`, `Partnership / LLP`, `Sole Proprietorship`, `Other` |
-| tax_id | string | Yes | Tax identification number. | Alphanumeric with dashes |
-| website | string | Yes | Company website URL. | Must include `https://` prefix |
-| monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | Enum: `LESS_THAN_5_K`, `BETWEEN_5_K_AND_20_K`, `BETWEEN_20_K_AND_50_K`, `BETWEEN_50_K_AND_100_K`, `BETWEEN_100_K_AND_250_K`, `BETWEEN_250_K_AND_500_K`, `ABOVE_500_K` |
-| business_category | string | Yes | Business category (comma-separated for multiple). | Enum: `E-commerce (physical goods & cross-border shipping)`, `Digital goods / software / downloads`, `SaaS / subscriptions / recurring billing`, `Services (delivered cross-border)`, `Marketplace / platform (multiple sellers)`, `Other`. PSPs creating sub-merchants send category slugs instead; see [Business Category](#business-category) |
-| business_category_other | string | Conditionally | Description when category includes "Other". | Required if `business_category` includes `Other` |
-| business_mode | string | Yes | Mode of business. | Enum: `b2b`, `b2c`, `marketplace` |
-| description_of_products_and_services | string | Yes | Detailed description of products/services. | Max 1024 chars |
-| mcc | string | No | Merchant Category Codes. | Comma-separated 4-digit codes (e.g., `5411,5812`) |
-| hs_codes | array | No | HS codes for goods traded. | Array of HS code strings |
-| agreement_details | string | No | Agreement details with the merchant. | Max 1024 chars |
-| registered_address | string | Yes | Registered office address. | Max 255 chars |
-| registered_city | string | Yes | Registered office city. | Max 255 chars |
-| registered_state | string | Yes | Registered office state/province. | Max 255 chars |
-| registered_country | string | Yes | Registered office country. | Full country name (e.g., `India`, `United States`) |
-| registered_pincode | string | Yes | Registered office postal code. | Max 20 chars |
-| same_as_registered_address | boolean | Yes | Whether communication address matches registered. | `true` or `false` |
-| communication_address | string | Conditionally | Communication address. | Required if `same_as_registered_address` is `false` |
-| communication_city | string | Conditionally | Communication city. | Required if `same_as_registered_address` is `false` |
-| communication_state | string | Conditionally | Communication state. | Required if `same_as_registered_address` is `false` |
-| communication_country | string | Conditionally | Communication country. | Required if `same_as_registered_address` is `false` |
-| communication_pincode | string | Conditionally | Communication postal code. | Required if `same_as_registered_address` is `false` |
+#### Company
 
-Notes:
-- When `same_as_registered_address` is `true`, communication address fields are auto-populated from the registered address.
-- Multiple business categories can be comma-separated (e.g., `"E-commerce (physical goods & cross-border shipping),SaaS / subscriptions / recurring billing"`).
-
-#### Settlement Details
+All fields sit inside `global_company`.
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| bank_account_number | string | Yes | Bank account number. | Alphanumeric |
-| bank_account_name | string | Yes | Name on the bank account. | Max 255 chars |
-| bank_swift_code | string | Yes | SWIFT/BIC code. | Standard SWIFT format |
-| bank_name | string | Yes | Name of the bank. | Max 255 chars |
-| bank_branch_name | string | Yes | Branch name. | Max 255 chars |
-| bank_address | string | Yes | Bank branch address. | Max 255 chars |
-| bank_city | string | Yes | Bank city. | Max 255 chars |
-| bank_state | string | Yes | Bank state/province. | Max 255 chars |
-| bank_country | string | Yes | Bank country. | Full country name (e.g., `India`, `United States`) |
-| bank_pincode | string | Yes | Bank postal code. | Max 20 chars |
-| routing_number | string | Yes | Routing/IFSC number. | Alphanumeric |
+| registration_number | string | Yes | Company registration number. | 5–25 characters |
+| tax_id | string | Yes | Tax identification number. | 5–20 characters |
+| international_org_type | string | Yes | Type of organisation. | One of the [organisation types](/api-reference/v3/merchant/options#organisation-types) |
+| website | string | Yes | Company website. | 12–508 characters, starting with `https://` and including a domain, e.g. `https://example.com`. `http://` is refused |
+| monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | One of the [volume bands](/api-reference/v3/merchant/options#monthly-volume-bands) |
+| business_category | string | Yes | What the sub-merchant sells, as category slugs. | One or more slugs from your approved categories, comma-separated, e.g. `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See [Business categories](/api-reference/v3/merchant/options#business-categories) |
+| hs_codes | string[] | When a goods category is selected | HS codes for the goods traded. | Each code must exist; find them with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Refused when no goods category is selected |
+| mcc | string | Yes | Merchant Category Codes. | Comma-separated 4-digit codes, e.g. `5734` or `5411,5812` |
+| description_of_products_and_services | string | Yes | What the sub-merchant sells. | 20–300 characters |
+| agreement_details | string | Yes | The agreement you hold with the sub-merchant. | 20–300 characters |
+| registered_address | string | Yes | Registered office address. | 2–250 characters |
+| registered_city | string | Yes | Registered office city. | 2–150 characters |
+| registered_state | string | Yes | Registered office state or province. | 2–150 characters |
+| registered_country | string | Yes | Registered office country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
+| registered_pincode | string | Yes | Registered office postal code. | 1–10 letters, digits, spaces or hyphens, starting and ending with a letter or digit |
+| same_as_registered_address | boolean | Yes | Whether the communication address is the registered address. | `true` or `false` |
+| communication_address | string | When `same_as_registered_address` is `false` | Communication address. | 2–250 characters |
+| communication_city | string | When `same_as_registered_address` is `false` | Communication city. | 2–150 characters |
+| communication_state | string | When `same_as_registered_address` is `false` | Communication state or province. | 2–150 characters |
+| communication_country | string | When `same_as_registered_address` is `false` | Communication country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
+| communication_pincode | string | When `same_as_registered_address` is `false` | Communication postal code. | Same rule as `registered_pincode` |
+
+When `same_as_registered_address` is `true`, EximPe copies the registered address into the communication fields. You can leave them out; any you send are replaced by the registered address. When it is `false`, every communication field is required.
+
+#### Settlement
+
+All fields sit inside `settlement_details`.
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| bank_account_number | string | Yes | Account number or IBAN. | 10–34 uppercase letters and digits |
+| bank_account_name | string | Yes | Name on the account. | 2–80 characters. Same characters as `legal_name` |
+| bank_swift_code | string | Yes | SWIFT/BIC code. | 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `HDFCINBB` or `HDFCINBB123` |
+| bank_state | string | Yes | Branch state or province. | 2–150 characters |
+| bank_name | string | No, filled from `bank_swift_code` | Name of the bank. | 2–150 characters |
+| bank_branch_name | string | No, filled from `bank_swift_code` | Branch name. | 2–150 characters |
+| bank_address | string | No, filled from `bank_swift_code` | Branch address. | 20–150 characters |
+| bank_city | string | No, filled from `bank_swift_code` | Branch city. | 2–150 characters |
+| bank_country | string | No, filled from `bank_swift_code` | Branch country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
+| bank_pincode | string | No, filled from `bank_swift_code` | Branch postal code. | Same rule as `registered_pincode` |
+| routing_number | string | No | Routing number, sort code or IFSC. | 6–12 uppercase letters and digits |
+
+**Bank details from the SWIFT code.** Send `bank_swift_code` and EximPe fills in any of `bank_name`, `bank_branch_name`, `bank_address`, `bank_city`, `bank_pincode` and `bank_country` you leave out. Values you send are kept as sent. To see what will be filled, call [Look Up SWIFT Code](/api-reference/v3/merchant/swift).
+
+<Accordion title="When the SWIFT lookup cannot fill a field">
+
+- If bank details cannot be found for the code and any of these fields is missing, the request is refused with a `400`. `details.settlement_details.bank_swift_code` says `"Bank details could not be found for bank_swift_code"`, and each missing field gets its own message, e.g. `details.settlement_details.bank_city` says `"bank_city could not be found from bank_swift_code; send bank_city"`.
+- If bank details are found but have no value for a field you left out, the request is refused in the same way, and only the fields still empty get a message. Send those fields yourself.
+- If the bank's country is not one of the supported countries and you left out `bank_country`, the request is refused with a `400`, and `details.settlement_details.bank_country` says `"bank_country could not be matched from bank_swift_code; send bank_country"`. Send `bank_country` yourself.
+- These problems are listed in the same response as any other field errors. When they are the only problems, the code is `ERR_MERCHANT_019` (`ERR_MERCHANT_006` for `bank_country`) and the message names the fields to send, e.g. `"Bank details could not be found for bank_swift_code; send bank_pincode"`. See [Errors](#errors).
+- Filled values must meet the same rules as values you send. For example, a looked-up `bank_address` shorter than 20 characters is refused with a `400` and the code `ERR_MERCHANT_001`, with `details.settlement_details.bank_address` giving the reason. Send that field yourself to replace the looked-up value.
+- If you send every bank field, no lookup is made.
+
+</Accordion>
+
+<Note>
+  **Settlement currency is not sent.** A sub-merchant is paid out in the same currency as your own settlement account. The response returns it as an ISO code in `settlement_currency`, at the top level of the sub-merchant. Do not send `settlement_currency`: like any field not listed here, it is refused with a `400`.
+</Note>
+
+#### Beneficial owners
+
+`beneficial_owners` applies only when your account collects under EximPe's own [PA-CB licence](/integration-guide/v3/getting-started/glossary#regulation):
+
+- **EximPe's licence:** optional. You can create a sub-merchant with no owners. Any owners you send are checked against the rules below.
+- **A partner's licence:** leave it out, or send an empty list. Sending any owner returns a `400`.
+
+**Which licence applies to you.** The licence is part of your account setup with EximPe; no API field returns it. Confirm it with EximPe before you send owners. If your account uses a partner's licence and you send owners, the request is refused with a `400` and the code `ERR_MERCHANT_001`, and `details.beneficial_owners` says `["Beneficial owners are only supported for EXIMPE CB sub-merchants"]`. Leave `beneficial_owners` out.
+
+Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
+
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| type | string | Yes | Whether the owner is a person or a company. | `INDIVIDUAL` or `INSTITUTIONAL` |
+| ownership_percentage | number | Yes | The owner's share of the sub-merchant. | 10–100 per owner. The total across all owners cannot exceed 100 |
+| first_name | string | When `type` is `INDIVIDUAL` | The person's first name. | 2–50 letters, spaces, `.`, `-` or `'` |
+| last_name | string | When `type` is `INDIVIDUAL` | The person's last name. | Same rule as `first_name` |
+| email | string | When `type` is `INDIVIDUAL` | The person's email address. | A valid email address |
+| nationality | string | When `type` is `INDIVIDUAL` | The person's nationality. | A nationality, e.g. `Indian`. See the [supported values](/api-reference/v3/merchant/options#nationalities). Letters only |
+| date_of_birth | string | When `type` is `INDIVIDUAL` | The person's date of birth. | `YYYY-MM-DD`. The owner must be 18–80 years old |
+| authorized_user_name | string | When `type` is `INSTITUTIONAL` | The company's name. | 2–50 letters, spaces, `.`, `-` or `'` |
+| country_of_incorporation | string | When `type` is `INSTITUTIONAL` | Where the company is incorporated. | One of the [countries](/api-reference/v3/merchant/options#countries) |
+| date_of_incorporation | string | When `type` is `INSTITUTIONAL` | When the company was incorporated. | `YYYY-MM-DD` |
+| identify_number | string | No | The company's registration number. Company owners only. | Ignored for an `INDIVIDUAL` owner |
+
+#### Fields you cannot send
+
+Send only the fields listed on this page. Any other field, at the top level or inside `global_company`, `settlement_details` or a beneficial owner, is refused with a `400`, and nothing is saved. Each refused field is listed in `details` where you sent it, e.g. `details.global_company.category` says `["category is not accepted"]`, and `details.beneficial_owners[0].pan_number` says `["pan_number is not accepted"]` for the first owner. When refused fields are the only problem, the code is `ERR_MERCHANT_001` and the message names each one, e.g. `"global_company.category is not accepted"`.
+
+The status and the active flag are set by EximPe alone. A request that includes `status`, `sub_merchant_status` or `is_active` at the top level is refused with a `400`, and nothing is saved. `details` lists each one, e.g. `details.status` says `["status cannot be set"]`. When this is the only problem, the code is `ERR_MERCHANT_005`. To remove a sub-merchant, use [Delete Merchant](/api-reference/v3/merchant/delete).
+
+Refused fields are listed in the same response as any other problems in the request; see [Errors](#errors).
 
 ## Examples
 
 <CodeGroup>
 
-```json Software Company (B2B)
+```json Goods seller (EximPe licence)
 {
-  "company_details": {
-    "email": "contact@acmetech.com",
-    "phone_number": "+919876543210",
-    "legal_name": "Acme Technologies Pvt Ltd",
-    "brand_name": "AcmeTech",
+  "legal_name": "Acme Exports Private Limited",
+  "brand_name": "Acme Exports",
+  "email": "contact@acmeexports.com",
+  "phone_number": "+919876543210",
+  "global_company": {
     "registration_number": "U72200MH2020PTC123456",
-    "international_org_type": "Private Limited Company",
     "tax_id": "AACCA1234A",
-    "website": "https://acmetech.com",
+    "international_org_type": "Private Limited Company",
+    "website": "https://acmeexports.com",
     "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-    "business_category": "Digital goods / software / downloads",
-    "business_mode": "b2b",
-    "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
-    "mcc": "5734",
+    "business_category": "GOODS",
+    "hs_codes": ["84713010"],
+    "mcc": "5045",
+    "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+    "agreement_details": "Master services agreement signed on 2026-03-15",
     "registered_address": "Tower A, Techpark, Whitefield",
     "registered_city": "Bangalore",
     "registered_state": "Karnataka",
@@ -113,38 +176,55 @@ Notes:
   },
   "settlement_details": {
     "bank_account_number": "1234567890123456",
-    "bank_account_name": "Acme Technologies Pvt Ltd",
+    "bank_account_name": "Acme Exports Private Limited",
     "bank_swift_code": "HDFCINBB",
     "bank_name": "HDFC Bank",
     "bank_branch_name": "Whitefield Branch",
-    "bank_address": "100 Feet Road, Whitefield",
+    "bank_address": "100 Feet Road, Whitefield, Bangalore",
     "bank_city": "Bangalore",
     "bank_state": "Karnataka",
     "bank_country": "India",
     "bank_pincode": "560066",
     "routing_number": "HDFC0001234"
-  }
+  },
+  "beneficial_owners": [
+    {
+      "type": "INDIVIDUAL",
+      "first_name": "Priya",
+      "last_name": "Sharma",
+      "email": "priya.sharma@acmeexports.com",
+      "nationality": "Indian",
+      "date_of_birth": "1985-06-20",
+      "ownership_percentage": 60
+    },
+    {
+      "type": "INSTITUTIONAL",
+      "authorized_user_name": "Acme Holdings Limited",
+      "country_of_incorporation": "Singapore",
+      "date_of_incorporation": "2015-01-10",
+      "identify_number": "U20150110SG",
+      "ownership_percentage": 40
+    }
+  ]
 }
 ```
 
-```json E-commerce (B2C, US)
+```json Services company (partner licence)
 {
-  "company_details": {
-    "email": "ops@globalshop.com",
-    "phone_number": "+14155551234",
-    "legal_name": "GlobalShop Inc",
-    "brand_name": "GlobalShop",
-    "registration_number": "US-CORP-2024-GS789456",
-    "international_org_type": "Limited Liability Company",
+  "legal_name": "GlobalSoft Inc",
+  "brand_name": "GlobalSoft",
+  "email": "ops@globalsoft.com",
+  "phone_number": "+14155551234",
+  "global_company": {
+    "registration_number": "US-CORP-2024-778",
     "tax_id": "94-8765432",
-    "website": "https://globalshop.com",
+    "international_org_type": "Limited Liability Company",
+    "website": "https://globalsoft.com",
     "monthly_avg_transaction_volume": "BETWEEN_100_K_AND_250_K",
-    "business_category": "E-commerce (physical goods & cross-border shipping),SaaS / subscriptions / recurring billing",
-    "business_mode": "b2c",
-    "description_of_products_and_services": "Multi-category e-commerce platform selling electronics, apparel, and home goods with subscription box services",
-    "mcc": "5411,5812",
-    "hs_codes": ["85234910", "84715000"],
-    "agreement_details": "Master Service Agreement dated 2024-03-15",
+    "business_category": "SOFTWARE_CONSULTING,DATA_PROCESSING",
+    "mcc": "7372",
+    "description_of_products_and_services": "Software implementation and data processing services for Indian enterprises",
+    "agreement_details": "Reseller agreement signed on 2026-02-01",
     "registered_address": "Suite 1200, 101 California Street",
     "registered_city": "San Francisco",
     "registered_state": "CA",
@@ -159,8 +239,8 @@ Notes:
   },
   "settlement_details": {
     "bank_account_number": "6789123450987654",
-    "bank_account_name": "GlobalShop Inc",
-    "bank_swift_code": "CHASINUS33XXX",
+    "bank_account_name": "GlobalSoft Inc",
+    "bank_swift_code": "CHASUS33",
     "bank_name": "JPMorgan Chase Bank",
     "bank_branch_name": "Financial District Branch",
     "bank_address": "270 Park Avenue, New York",
@@ -173,154 +253,237 @@ Notes:
 }
 ```
 
-```json Other Category (UAE)
-{
-  "company_details": {
-    "email": "finance@innovate.io",
-    "phone_number": "+971501234567",
-    "legal_name": "Innovate FZE",
-    "brand_name": "Innovate",
-    "registration_number": "FZ-2024-INV-001",
-    "international_org_type": "Free Zone Company / Entity",
-    "tax_id": "TRN100123456",
-    "website": "https://innovate.io",
-    "monthly_avg_transaction_volume": "BETWEEN_50_K_AND_100_K",
-    "business_category": "Other",
-    "business_category_other": "AI-powered supply chain optimization and logistics analytics platform",
-    "business_mode": "b2b",
-    "description_of_products_and_services": "AI-driven logistics optimization platform that helps enterprises reduce shipping costs and delivery times",
-    "mcc": "7372",
-    "registered_address": "Office 1205, Business Bay Tower",
-    "registered_city": "Dubai",
-    "registered_state": "Dubai",
-    "registered_country": "United Arab Emirates",
-    "registered_pincode": "00000",
-    "same_as_registered_address": true,
-    "communication_address": "Office 1205, Business Bay Tower",
-    "communication_city": "Dubai",
-    "communication_state": "Dubai",
-    "communication_country": "United Arab Emirates",
-    "communication_pincode": "00000"
-  },
-  "settlement_details": {
-    "bank_account_number": "AE070331234567890123456",
-    "bank_account_name": "Innovate FZE",
-    "bank_swift_code": "ABORAEADXXX",
-    "bank_name": "Arab Bank",
-    "bank_branch_name": "Dubai Main Branch",
-    "bank_address": "Sheikh Zayed Road, Dubai",
-    "bank_city": "Dubai",
-    "bank_state": "Dubai",
-    "bank_country": "United Arab Emirates",
-    "bank_pincode": "00000",
-    "routing_number": "ABOR0000001"
-  }
-}
-```
-
 </CodeGroup>
 
-## Response Examples
+## Response
+
+`201 Created`, with the sub-merchant in `data`. It carries every field you sent, with dropdown values in their listed spelling and the bank account number in full. On top of that:
+
+| Name | Type | Description |
+|---|---|---|
+| id | string | The sub-merchant's merchant ID. Send it as `X-Merchant-ID` when you collect for it. |
+| status | string | `PENDING`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED` or `REJECTED`. See [Statuses](#statuses). |
+| changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
+| section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
+| reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
+| global_company.hs_codes | string[] \| null | The HS codes stored for the sub-merchant. `null` or an empty list when it has none. |
+| settlement_currency | string \| null | ISO currency code the sub-merchant is paid out in. |
+| beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name, and `identify_number` is `null` for an `INDIVIDUAL` owner. Empty list when your account does not collect under EximPe's licence. |
+| created_at | string | Time of creation, UTC, ISO 8601 without a timezone suffix. |
+| updated_at | string | Time of the last change, UTC, ISO 8601 without a timezone suffix. |
 
 <CodeGroup>
 
-```json Success
+```json 201 Created
 {
   "success": true,
   "message": "Sub-merchant created successfully",
   "data": {
     "id": "6182929449",
-    "company_details": {
-      "legal_name": "Acme Technologies Pvt Ltd",
-      "brand_name": "AcmeTech",
-      "email": "contact@acmetech.com",
-      "phone_number": "+919876543210",
+    "status": "PENDING",
+    "legal_name": "Acme Exports Private Limited",
+    "brand_name": "Acme Exports",
+    "email": "contact@acmeexports.com",
+    "phone_number": "+919876543210",
+    "global_company": {
       "registration_number": "U72200MH2020PTC123456",
-      "international_org_type": "Private Limited Company",
       "tax_id": "AACCA1234A",
-      "website": "https://acmetech.com",
+      "international_org_type": "Private Limited Company",
+      "website": "https://acmeexports.com",
       "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-      "communication_address": "Tower A, Techpark, Whitefield",
-      "communication_city": "Bangalore",
-      "communication_state": "Karnataka",
-      "communication_country": "India",
-      "communication_pincode": "560066",
-      "same_as_registered_address": true,
+      "business_category": "GOODS",
+      "hs_codes": [
+        "84713010"
+      ],
+      "mcc": "5045",
+      "description_of_products_and_services": "Laptops and computer peripherals shipped to buyers in India",
+      "agreement_details": "Master services agreement signed on 2026-03-15",
       "registered_address": "Tower A, Techpark, Whitefield",
       "registered_city": "Bangalore",
       "registered_state": "Karnataka",
       "registered_country": "India",
       "registered_pincode": "560066",
-      "business_category": "Digital goods / software / downloads",
-      "business_category_other": null,
-      "business_mode": "b2b",
-      "hs_codes": [],
-      "description_of_products_and_services": "Cloud-based enterprise resource planning software for mid-market companies",
-      "agreement_details": null
+      "same_as_registered_address": true,
+      "communication_address": "Tower A, Techpark, Whitefield",
+      "communication_city": "Bangalore",
+      "communication_state": "Karnataka",
+      "communication_country": "India",
+      "communication_pincode": "560066"
     },
     "settlement_details": {
       "bank_account_number": "1234567890123456",
-      "bank_account_name": "Acme Technologies Pvt Ltd",
+      "bank_account_name": "Acme Exports Private Limited",
       "bank_swift_code": "HDFCINBB",
       "bank_name": "HDFC Bank",
       "bank_branch_name": "Whitefield Branch",
-      "bank_address": "100 Feet Road, Whitefield",
+      "bank_address": "100 Feet Road, Whitefield, Bangalore",
       "bank_city": "Bangalore",
       "bank_state": "Karnataka",
       "bank_country": "India",
       "bank_pincode": "560066",
-      "routing_number": "HDFC0001234",
-      "settlement_currency": "USD"
+      "routing_number": "HDFC0001234"
     },
-    "kyc_status": "PENDING",
-    "created_at": "2026-04-28T06:30:00.000000Z",
-    "last_updated_at": "2026-04-28T06:30:00.000000Z"
+    "settlement_currency": "USD",
+    "beneficial_owners": [
+      {
+        "id": "4417203391",
+        "type": "INDIVIDUAL",
+        "first_name": "Priya",
+        "last_name": "Sharma",
+        "email": "priya.sharma@acmeexports.com",
+        "authorized_user_name": "Priya Sharma",
+        "ownership_percentage": 60.0,
+        "nationality": "Indian",
+        "date_of_birth": "1985-06-20",
+        "country_of_incorporation": null,
+        "date_of_incorporation": null,
+        "identify_number": null
+      },
+      {
+        "id": "4417203392",
+        "type": "INSTITUTIONAL",
+        "first_name": null,
+        "last_name": null,
+        "email": null,
+        "authorized_user_name": "Acme Holdings Limited",
+        "ownership_percentage": 40.0,
+        "nationality": null,
+        "date_of_birth": null,
+        "country_of_incorporation": "Singapore",
+        "date_of_incorporation": "2015-01-10",
+        "identify_number": "U20150110SG"
+      }
+    ],
+    "changes_requested_reason": null,
+    "section_reasons": [],
+    "reject_reason": null,
+    "created_at": "2026-04-28T06:30:00",
+    "updated_at": "2026-04-28T06:30:00"
   }
 }
 ```
 
-```json Validation Error
+```json 400 Validation error
 {
   "success": false,
   "error": {
     "code": "ERR_MERCHANT_001",
     "message": "Validation error",
     "details": {
-      "company_details": {
-        "monthly_avg_transaction_volume": "\"500\" is not a valid choice.",
-        "business_mode": "\"invalid\" is not a valid choice.",
-        "registered_country": "Invalid country name"
+      "nickname": ["nickname is not accepted"],
+      "status": ["status cannot be set"],
+      "global_company": {
+        "tax_id": [
+          "Invalid input: @@",
+          "Ensure this field has at least 5 characters."
+        ],
+        "registered_country": ["Country is not in the supported country list"],
+        "category": ["category is not accepted"]
+      },
+      "settlement_details": {
+        "bank_swift_code": ["Bank details could not be found for bank_swift_code"],
+        "bank_city": ["bank_city could not be found from bank_swift_code; send bank_city"]
+      },
+      "beneficial_owners": [
+        {},
+        {
+          "nationality": ["Nationality is not in the supported nationality list"],
+          "pan_number": ["pan_number is not accepted"]
+        }
+      ]
+    }
+  }
+}
+```
+
+```json 400 Field not accepted
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_001",
+    "message": "global_company.category is not accepted",
+    "details": {
+      "global_company": {
+        "category": ["category is not accepted"]
       }
     }
   }
 }
 ```
 
+```json 403 Not an import PSP
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_017",
+    "message": "Sub-Merchant endpoints are only available to IMPORT PSP accounts",
+    "details": {}
+  }
+}
+```
+
 </CodeGroup>
 
-## Error Codes
+## Errors
 
-| Code | Message | Description |
+Every error uses the standard envelope: `{ "success": false, "error": { "code", "message", "details" } }`.
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `400` | `ERR_MERCHANT_001` | A field is missing, too short or long, in the wrong format, or not one of the listed values | Keyed by field, each with a list of reasons, e.g. `{"global_company": {"registered_country": ["Country is not in the supported country list"]}}`. Fix them and send the request again |
+| `400` | `ERR_MERCHANT_001` | `business_category` is not a known category slug, is a purpose code, or includes a slug outside your approved categories | `{"global_company": {"business_category": [...]}}`, naming the refused slugs and, for unapproved ones, the slugs you can use. Send slugs from [Get Merchant Options](/api-reference/v3/merchant/options) |
+| `400` | `ERR_MERCHANT_001` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `{"global_company": {"non_field_errors": ["Add at least one HSN code for a goods business category."]}}` or `{"global_company": {"non_field_errors": ["HSN codes apply only to a goods business category."]}}` |
+| `400` | `ERR_MERCHANT_001` | An HS code EximPe does not recognise | `{"global_company": {"hs_codes": [...]}}`, listing the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/merchant/hs-codes) |
+| `400` | `ERR_MERCHANT_001` | Owners sent on a partner-licence account, or owners totalling over 100% | e.g. `{"beneficial_owners": ["Beneficial owners are only supported for EXIMPE CB sub-merchants"]}`. See [Which licence applies to you](#beneficial-owners) |
+| `400` | `ERR_MERCHANT_001` | A beneficial owner's name is too short or long, or has characters that are not allowed | One entry per owner, e.g. `{"beneficial_owners": [{"authorized_user_name": ["authorized_user_name must be 2-50 characters"]}]}` |
+| `400` | `ERR_MERCHANT_001` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `{"settlement_details": {"bank_address": [...]}}`, naming the field. Send that field yourself |
+| `400` | `ERR_MERCHANT_001` | A field not listed on this page is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | Each field where you sent it, e.g. `{"business_mode": ["business_mode is not accepted"]}`. Remove it |
+| `400` | `ERR_MERCHANT_005` when it is the only problem, otherwise `ERR_MERCHANT_001` | `status`, `sub_merchant_status` or `is_active` sent | Each one sent, e.g. `{"status": ["status cannot be set"]}`. Remove the field |
+| `400` | `ERR_MERCHANT_019` when it is the only problem, otherwise `ERR_MERCHANT_001` | Bank fields were left out and no bank details were found for `bank_swift_code`, or the bank details found have no value for some of them | Each field still missing, and `bank_swift_code` when no details were found, e.g. `{"settlement_details": {"bank_swift_code": ["Bank details could not be found for bank_swift_code"], "bank_city": ["bank_city could not be found from bank_swift_code; send bank_city"]}}`. Send them, or check the code |
+| `400` | `ERR_MERCHANT_006` when it is the only problem, otherwise `ERR_MERCHANT_001` | `bank_country` was left out and the bank's country is not one of the supported countries | `{"settlement_details": {"bank_country": ["bank_country could not be matched from bank_swift_code; send bank_country"]}}`. Send `bank_country` |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can onboard sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+
+<AccordionGroup>
+<Accordion title="How details is shaped">
+
+`details` takes one of two shapes:
+
+- **An object keyed by field,** for every `400`. Each field maps to a list of every problem found with it, e.g. `"tax_id": ["Invalid input: @@", "Ensure this field has at least 5 characters."]`. Fields inside `global_company` and `settlement_details` are nested under those keys. `beneficial_owners` holds either a list of reasons about the owners as a whole, or a list with one entry per owner you sent, each an object keyed by the owner's fields (`{}` for an owner with no errors). A rule that spans several fields, such as the communication address or the HS code rule, is reported under `non_field_errors` inside the object it belongs to, e.g. `details.global_company.non_field_errors`.
+- **An empty object** `{}`, when there is nothing to add to `message`, such as a `403`, `404` or `409`.
+
+</Accordion>
+<Accordion title="Every problem in one response">
+
+A `400` lists every problem EximPe finds in the request, so you can fix them all before you send it again. Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill appear in `details` alongside the other field errors.
+
+</Accordion>
+<Accordion title="Rules across fields are checked last">
+
+The HS code rule and the communication address rule are checked once the other fields in `global_company` are valid. The 100% ownership total, and the licence check on owners, are checked once every owner is valid and has no unlisted fields. If you fix the other fields and send the request again, these rules may then be reported.
+
+</Accordion>
+<Accordion title="Which code you get">
+
+When the only problems are of one kind below, the response carries that kind's code and message. Any other mix of problems returns `ERR_MERCHANT_001` with the message `"Validation error"`.
+
+| Only problem | `error.code` | `error.message` |
 |---|---|---|
-| ERR_MERCHANT_001 | Validation error | Request validation failed — check `details` for field-level errors. A PSP that sends a `business_category` that is not one of its approved category slugs gets this error |
+| Fields not listed on this page | `ERR_MERCHANT_001` | Names each field, e.g. `"global_company.category is not accepted"` |
+| `status`, `sub_merchant_status` or `is_active` sent | `ERR_MERCHANT_005` | `"status, sub_merchant_status and is_active cannot be set"` |
+| Bank fields the SWIFT lookup could not fill | `ERR_MERCHANT_019` | Names the fields to send, e.g. `"Bank details could not be found for bank_swift_code; send bank_name, bank_city"` |
+| `bank_country` the SWIFT lookup could not match | `ERR_MERCHANT_006` | `"bank_country could not be matched from bank_swift_code; send bank_country"` |
 
-## Implementation Notes
+</Accordion>
+</AccordionGroup>
 
-### Merchant Status Flow
-- **PENDING** → Created, awaiting approval
-- **IN_REVIEW** → Under compliance review
-- **APPROVED** → Active, can process payments
-- **CHANGES_REQUESTED** → Additional information required
-- **REJECTED** → Application rejected
+## Statuses
 
-### Country Names
-Country fields (`registered_country`, `communication_country`, `bank_country`) must use the full country name (e.g., `"India"`, `"United States"`, `"United Arab Emirates"`).
-
-### Phone Number Format
-Phone numbers must include the country code in E.164 format (e.g., `+919876543210`, `+14155551234`).
-
-### Business Category
-How you send `business_category` depends on who you are. Multiple categories can be comma-separated.
-
-- **PSPs creating sub-merchants** send one or more category slugs, for example `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Contact EximPe for your approved category slugs. Labels, purpose codes and any other slug are refused with a `400`. The sub-merchant's allowed purpose codes follow from the slugs, so you do not need `business_category_other`.
-- **Everyone else**, including PSPs set up for export collections, sends the labels in the table above. When `"Other"` is included, `business_category_other` must provide a description.
+| Status | Meaning | Can you edit it? | Can you delete it? |
+|---|---|---|---|
+| `PENDING` | Submitted and waiting for review. | Yes | Yes |
+| `IN_REVIEW` | EximPe is reviewing the application. | No | No |
+| `CHANGES_REQUESTED` | EximPe needs changes; the reasons are in `changes_requested_reason` and `section_reasons`. | Yes. A complete edit resubmits it for review. See [Update Merchant](/api-reference/v3/merchant/update). | No |
+| `APPROVED` | Active. You can collect for it. | No | No |
+| `REJECTED` | The application was declined. | No | Yes |
