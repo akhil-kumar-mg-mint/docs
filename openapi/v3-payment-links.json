@@ -1042,6 +1042,31 @@
               }
             }
           },
+          "404": {
+            "description": "No link with this link_id belongs to you",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Not found": {
+                    "summary": "Not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_005",
+                        "message": "Payment not found",
+                        "details": {
+                          "payment_id": "Payment not found"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "429": {
             "description": "The payment network is rate limiting requests",
             "headers": {
