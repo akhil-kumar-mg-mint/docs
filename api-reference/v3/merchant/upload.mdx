@@ -8,30 +8,22 @@ openapi: '/openapi/v3-partner-merchants.json PATCH /partners/merchants/{merchant
 
 Attaches an invoice to a sub-merchant you have onboarded. The request is `multipart/form-data`, not JSON. Uploading again replaces the stored invoice.
 
-```bash
-curl -X PATCH 'https://api-pacb-uat.eximpe.com/partners/merchants/6182929449/documents/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0' \
-  -F 'document_type=INVOICE' \
-  -F 'file=@invoice.pdf'
-```
-
 The upload is accepted in any status. The invoice is not returned by [Get Merchant](/api-reference/v3/merchant/get) or [List Merchants](/api-reference/v3/merchant/list).
 
-## Path parameters
+## Path Parameters
 
 | Name | Type | Required | Description |
 |---|---|---|---|
 | merchant_id | string | Yes | The sub-merchant's ID, as returned by [Create Merchant](/api-reference/v3/merchant/create), e.g. `6182929449`. |
 
-## The request
+## Request Parameters
 
-| Name | Type | Required | Rules |
-|---|---|---|---|
-| document_type | string | Yes | `INVOICE`. No other document type is accepted. |
-| file | file | Yes | One of `pdf`, `jpg`, `jpeg`, `png`, `csv`, `xlsx` or `docx`; the file's content must match its extension. Up to 10 MB, with a file name of up to 100 characters. A PDF must not be password-protected and must pass EximPe's security check. |
+| Name | Type | Required | Description | Constraints |
+|---|---|---|---|---|
+| document_type | string | Yes | The kind of document. | `INVOICE`. No other document type is accepted. |
+| file | file | Yes | The invoice file. | One of `pdf`, `jpg`, `jpeg`, `png`, `csv`, `xlsx` or `docx`; the file's content must match its extension. Up to 10 MB, with a file name of up to 100 characters. A PDF must not be password-protected and must pass EximPe's security check. |
 
-## The response
+## Response
 
 <CodeGroup>
 
@@ -64,10 +56,10 @@ The upload is accepted in any status. The invoice is not returned by [Get Mercha
 
 Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages; otherwise it is an empty object. See [Create Merchant](/api-reference/v3/merchant/create#errors).
 
-| HTTP | Cause | `code` | What to do |
+| Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `400` | `document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule above | `ERR_MERCHANT_001` | `details` names the field with the reason. Fix it and upload again. |
-| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
-| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
-| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
-| `404` | No sub-merchant with this ID belongs to you, or it has been deleted | `ERR_MERCHANT_016` | Check the ID. |
+| `400` | `ERR_MERCHANT_001` | `document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule above | Keyed by field, each with a list of reasons, e.g. `{"document_type": ["\"RECEIPT\" is not a valid choice."]}`. Fix it and upload again |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `404` | `ERR_MERCHANT_016` | No sub-merchant with this ID belongs to you, or it has been deleted | `{}`. Check the ID |

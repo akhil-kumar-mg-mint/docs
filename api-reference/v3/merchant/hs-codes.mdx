@@ -8,15 +8,9 @@ openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/hs-codes/'
 
 A sub-merchant with a goods category must declare at least one HS code in `global_company.hs_codes`, and each code must be one EximPe recognises. This endpoint searches that list by code or by description.
 
-```bash
-curl 'https://api-pacb-uat.eximpe.com/partners/merchants/hs-codes/?search=laptop' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0'
-```
-
 Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-reference/v3/merchant/create) or [Update Merchant](/api-reference/v3/merchant/update).
 
-## Query parameters
+## Query Parameters
 
 | Name | Type | Required | Description |
 |---|---|---|---|
@@ -24,9 +18,9 @@ Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-r
 | page | integer | No | Page number. Default `1`. |
 | page_size | integer | No | Results per page. Default `250`, maximum `1000`. |
 
-## The response
+## Response
 
-`data` is a page, with the same paging fields as [List Merchants](/api-reference/v3/merchant/list#the-response). Each result is one HS code:
+`data` is a page, with the same paging fields as [List Merchants](/api-reference/v3/merchant/list#response). Each result is one HS code:
 
 | Name | Type | Description |
 |---|---|---|
@@ -69,8 +63,8 @@ Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-r
 
 ## Errors
 
-| HTTP | Cause | `code` | What to do |
+| Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
-| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
-| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

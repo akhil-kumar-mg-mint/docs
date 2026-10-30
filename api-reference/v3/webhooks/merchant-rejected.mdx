@@ -103,6 +103,8 @@ A rejected sub-merchant can be removed with [Delete Merchant](/api-reference/v3/
 
     <ParamField path="data.reason" type="string" required>
       EximPe's reason for the rejection. Can be an empty string when no reason was recorded. The same text is returned as `reject_reason` by [Get Merchant](/api-reference/v3/merchant/get).
+
+      **Example**: `"The business operates in a category EximPe does not support."`
     </ParamField>
 
     <ParamField path="data.section_reasons" type="array" required>
@@ -110,6 +112,8 @@ A rejected sub-merchant can be removed with [Delete Merchant](/api-reference/v3/
 
       - `section` — the part of the application, e.g. `"business_details"`. See [Sections](/api-reference/v3/merchant/options#sections) for every value.
       - `reason` — what EximPe found in that part.
+
+      **Example**: `[{"section": "business_details", "reason": "Category is outside the supported list."}]`
     </ParamField>
   </Tab>
 </Tabs>

@@ -8,19 +8,13 @@ openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/options/'
 
 Returns the values the sub-merchant dropdown fields accept: countries, nationalities, organisation types, monthly volume bands, and the business categories **your** account is approved for. Fetch it before you build a [Create Merchant](/api-reference/v3/merchant/create) request, and use the values exactly as listed.
 
-```bash
-curl 'https://api-pacb-uat.eximpe.com/partners/merchants/options/' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0'
-```
-
 <Note>
   **Matching is case-insensitive; storage is not.** `india` and `INDIA` are both accepted for `India`, and `goods` for `GOODS`. This applies to countries, nationalities, organisation types, volume bands and business categories. The sub-merchant always stores and returns the listed spelling, accents included (`Curaçao`, `Burkinabé`); business categories are returned in upper case.
 </Note>
 
 HS codes are not listed here. There are thousands of them, so look them up with [Search HS Codes](/api-reference/v3/merchant/hs-codes).
 
-## The response
+## Response
 
 | Name | Type | Used by |
 |---|---|---|
@@ -208,8 +202,8 @@ For `beneficial_owners[].nationality`. 244 values. Several countries can share o
 
 ## Errors
 
-| HTTP | Cause | `code` | What to do |
+| Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
-| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
-| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

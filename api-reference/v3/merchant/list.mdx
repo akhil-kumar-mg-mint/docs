@@ -8,13 +8,7 @@ openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/'
 
 Returns the sub-merchants you have onboarded, newest first. Each entry has the same shape as [Get Merchant](/api-reference/v3/merchant/get). Deleted sub-merchants are not listed.
 
-```bash
-curl 'https://api-pacb-uat.eximpe.com/partners/merchants/?page=1&page_size=50&search=Acme' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0'
-```
-
-## Query parameters
+## Query Parameters
 
 | Name | Type | Required | Description |
 |---|---|---|---|
@@ -23,7 +17,7 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/?page=1&page_size=50&se
 | search | string | No | Matches legal name, brand name, registration number or tax ID. |
 | ordering | string | No | `created_at` or `-created_at`. Default `-created_at`. |
 
-## The response
+## Response
 
 `data` is a page:
 
@@ -34,7 +28,7 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/?page=1&page_size=50&se
 | page_size | integer | Results per page. |
 | next | string \| null | URL of the next page, or `null` on the last page. |
 | previous | string \| null | URL of the previous page, or `null` on the first page. |
-| results | array | The sub-merchants on this page. Each has every field described in [Get Merchant](/api-reference/v3/merchant/get#the-response). |
+| results | array | The sub-merchants on this page. Each has every field described in [Get Merchant](/api-reference/v3/merchant/get#response). |
 
 <CodeGroup>
 
@@ -139,8 +133,8 @@ curl 'https://api-pacb-uat.eximpe.com/partners/merchants/?page=1&page_size=50&se
 
 ## Errors
 
-| HTTP | Cause | `code` | What to do |
+| Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
-| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
-| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

@@ -107,6 +107,8 @@ To act on it, fix the fields with [Update Merchant](/api-reference/v3/merchant/u
 
     <ParamField path="data.reason" type="string" required>
       EximPe's overall reason for sending the application back. Can be an empty string when no reason was recorded. The same text is returned as `changes_requested_reason` by [Get Merchant](/api-reference/v3/merchant/get).
+
+      **Example**: `"The registration number does not match the incorporation certificate."`
     </ParamField>
 
     <ParamField path="data.section_reasons" type="array" required>
@@ -114,6 +116,8 @@ To act on it, fix the fields with [Update Merchant](/api-reference/v3/merchant/u
 
       - `section` — the part of the application, e.g. `"company_details"`. See [Sections](/api-reference/v3/merchant/options#sections) for every value.
       - `reason` — what needs to change in that part.
+
+      **Example**: `[{"section": "company_details", "reason": "Registration number does not match the certificate."}]`
     </ParamField>
   </Tab>
 </Tabs>

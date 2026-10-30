@@ -8,23 +8,17 @@ openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/swift/'
 
 Returns the bank details EximPe holds for a SWIFT/BIC code, in the same field names as `settlement_details` on [Create Merchant](/api-reference/v3/merchant/create#settlement). Use it to show the bank to your user before you submit, or to check a code.
 
-```bash
-curl 'https://api-pacb-uat.eximpe.com/partners/merchants/swift/?code=DBSSSGSG' \
-  -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
-  -H 'X-API-Version: 3.0.0'
-```
-
 <Tip>
   You do not have to call this first. On [Create Merchant](/api-reference/v3/merchant/create#settlement) and [Update Merchant](/api-reference/v3/merchant/update), bank fields you leave out are filled from `bank_swift_code` in the same way.
 </Tip>
 
-## Query parameters
+## Query Parameters
 
 | Name | Type | Required | Description |
 |---|---|---|---|
 | code | string | Yes | SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `DBSSSGSG`. |
 
-## The response
+## Response
 
 | Name | Type | Description |
 |---|---|---|
@@ -76,9 +70,9 @@ The values are returned as EximPe holds them and are not checked against the rul
 
 ## Errors
 
-| HTTP | Cause | `code` | What to do |
+| Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `400` | `code` is missing or malformed, or no bank details were found for it | `ERR_MERCHANT_019` | Check the code. If it is correct, send every bank field yourself on [Create Merchant](/api-reference/v3/merchant/create#settlement). |
-| `401` | Missing or invalid credentials | `ERR_AUTH_000`, `ERR_AUTH_001` | Check `X-Client-ID` and `X-Client-Secret`. |
-| `403` | Your account is not a PSP | `ERR_AUTH_003` | Only PSPs can manage sub-merchants. |
-| `403` | Your account is a PSP, but not set up for import collections | `ERR_MERCHANT_017` | Contact EximPe. |
+| `400` | `ERR_MERCHANT_019` | `code` is missing or malformed, or no bank details were found for it | A string, not an object: `"Bank details could not be found for bank_swift_code"`. Check the code. If it is correct, send every bank field yourself on [Create Merchant](/api-reference/v3/merchant/create#settlement) |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
