@@ -78,7 +78,7 @@
             }
           },
           "400": {
-            "description": "The refund was refused. Each case has its own `error.code`: `ERR_PAYMENT_005` payment not found, `ERR_REFUND_010` payment not captured, `ERR_REFUND_011` payment on hold, `ERR_REFUND_005` refunds would exceed the payment amount, `ERR_REFUND_006` `reference_id` reused with a different amount, `ERR_REFUND_004` refund balance does not cover the refund (`available_balance` and `requested_amount` in `details`), `ERR_REFUND_007` the gateway refused the refund. `ERR_REFUND_002` means a request field is missing or invalid; `details` names the field.",
+            "description": "The refund was refused. Each case has its own `error.code`: `ERR_REFUND_013` payment not found, `ERR_REFUND_010` payment not captured, `ERR_REFUND_011` payment on hold, `ERR_REFUND_005` refunds would exceed the payment amount, `ERR_REFUND_006` `reference_id` reused with a different amount, `ERR_REFUND_004` refund balance does not cover the refund (`available_balance` and `requested_amount` in `details`), `ERR_REFUND_007` the gateway refused the refund. For a payment in an LRS top-up group: `ERR_REFUND_014` the top-up's group has cleared, `ERR_REFUND_015` a payment with top-ups can only be refunded in full, `ERR_REFUND_016` the group has settled. `ERR_REFUND_002` means a request field is missing or invalid; `details` names the field.",
             "content": {
               "application/json": {
                 "schema": {
@@ -90,7 +90,7 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_PAYMENT_005",
+                        "code": "ERR_REFUND_013",
                         "message": "Payment not found",
                         "details": {
                           "payment_id": "Payment not found"
