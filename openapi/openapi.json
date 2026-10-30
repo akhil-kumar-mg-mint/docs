@@ -1543,7 +1543,9 @@
                       "error": {
                         "code": "ERR_REFUND_002",
                         "message": "Validation error",
-                        "details": "Cannot refund payment when it is on hold"
+                        "details": {
+                          "payment_id": "Cannot refund payment when it is on hold"
+                        }
                       }
                     }
                   },
