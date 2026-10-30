@@ -340,12 +340,12 @@ A top-up made through hosted checkout must carry a PAN equal to the short paymen
 
 ### Refunding payments in a top-up group
 
-Refunds follow the group's state. A refusal comes back as a `400` with code `ERR_REFUND_002` and the reason in `details`.
+Refunds follow the group's state. A refusal comes back as a `400` with its own code from [Create Refund](/api-reference/v3/refunds/create).
 
 - **Before the group clears**, refunding a top-up refunds it and unlinks it from the short payment.
-- **After the group clears**, a top-up cannot be refunded on its own (`ERR_LRS_MERCHANT_049`).
-- **A short payment with top-ups can only be refunded in full** (`ERR_LRS_MERCHANT_050`). A full refund also refunds every top-up, each to its own source.
-- **Once the group has settled**, none of its payments can be refunded (`ERR_LRS_MERCHANT_051`).
+- **After the group clears**, a top-up cannot be refunded on its own (`ERR_REFUND_014`).
+- **A short payment with top-ups can only be refunded in full** (`ERR_REFUND_015`). A full refund also refunds every top-up, each to its own source.
+- **Once the group has settled**, none of its payments can be refunded (`ERR_REFUND_016`).
 - **If the group is rejected**, every credit in it is refunded.
 
 ## Partial sends are merged

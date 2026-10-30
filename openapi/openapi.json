@@ -1503,7 +1503,7 @@
             }
           },
           "400": {
-            "description": "Validation error. The payment is not captured or is on hold, the total of refunds that have not failed would exceed the payment amount (`refund_amount`: \"Total refund amount would exceed payment amount\"), `reference_id` was reused with a different amount, or your refund balance does not cover the refund (`ERR_REFUND_004`, with `available_balance` and `requested_amount` in `details`).",
+            "description": "The refund was refused. Each case has its own `error.code`: `ERR_REFUND_013` payment not found, `ERR_REFUND_010` payment not captured, `ERR_REFUND_011` payment on hold, `ERR_REFUND_005` refunds would exceed the payment amount, `ERR_REFUND_006` `reference_id` reused with a different amount, `ERR_REFUND_004` refund balance does not cover the refund (`available_balance` and `requested_amount` in `details`), `ERR_REFUND_007` the gateway refused the refund. For a payment in an LRS top-up group: `ERR_REFUND_014` the top-up's group has cleared, `ERR_REFUND_015` a payment with top-ups can only be refunded in full, `ERR_REFUND_016` the group has settled. `ERR_REFUND_002` means a request field is missing or invalid; `details` names the field.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1515,10 +1515,10 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_013",
+                        "message": "Payment not found",
                         "details": {
-                          "payment_id": "Payment request not found"
+                          "payment_id": "Payment not found"
                         }
                       }
                     }
@@ -1528,10 +1528,10 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_010",
+                        "message": "Cannot refund a payment that is not captured",
                         "details": {
-                          "payment_id": "Cannot refund a transaction that is not captured"
+                          "payment_id": "Cannot refund a payment that is not captured"
                         }
                       }
                     }
@@ -1541,9 +1541,11 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": "Cannot refund payment when it is on hold"
+                        "code": "ERR_REFUND_011",
+                        "message": "Cannot refund a payment that is on hold",
+                        "details": {
+                          "payment_id": "Cannot refund a payment that is on hold"
+                        }
                       }
                     }
                   },
@@ -1552,8 +1554,8 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_005",
+                        "message": "Total refund amount would exceed payment amount",
                         "details": {
                           "refund_amount": "Total refund amount would exceed payment amount"
                         }
@@ -1565,8 +1567,8 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_006",
+                        "message": "Reference ID already used for a refund of a different amount",
                         "details": {
                           "reference_id": "Reference ID reused with different refund amount"
                         }
