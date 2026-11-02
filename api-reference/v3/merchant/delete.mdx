@@ -1,0 +1,62 @@
+---
+title: 'Delete Merchant'
+description: 'Remove a sub-merchant that is pending review or has been rejected.'
+openapi: '/openapi/v3-partner-merchants.json DELETE /partners/merchants/{merchant_id}/'
+---
+
+## Overview
+
+Removes a sub-merchant you no longer want onboarded. Once deleted it no longer appears in [List Merchants](/api-reference/v3/merchant/list), and [Get Merchant](/api-reference/v3/merchant/get) answers `404` for its ID. Deleting sends no webhook and no notification.
+
+## When you can delete
+
+| Status | Delete allowed? |
+|---|---|
+| `PENDING` | Yes |
+| `REJECTED` | Yes |
+| `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED` | No. Refused with a `409`. |
+
+A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Merchant](/api-reference/v3/merchant/update) instead. A sub-merchant created through the API in sandbox is approved immediately, so it can never be deleted; the API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
+
+## Path Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| merchant_id | string | Yes | The sub-merchant's ID, e.g. `6182929449`. |
+
+## Response
+
+<CodeGroup>
+
+```json 200 Deleted
+{
+  "success": true,
+  "message": "Sub-merchant deleted successfully",
+  "data": {
+    "id": "6182929449"
+  }
+}
+```
+
+```json 409 Not deletable
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_004",
+    "message": "Sub-Merchant can only be deleted while Pending or Rejected",
+    "details": {}
+  }
+}
+```
+
+</CodeGroup>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `404` | `ERR_MERCHANT_016` | No sub-merchant with this ID belongs to you, or it is already deleted | `{}`. Check the ID |
+| `409` | `ERR_MERCHANT_004` | The sub-merchant is `IN_REVIEW`, `CHANGES_REQUESTED` or `APPROVED` | `{}`. It cannot be deleted in this status |

@@ -1,0 +1,78 @@
+---
+title: 'Look Up SWIFT Code'
+description: 'Get the bank details for a SWIFT/BIC code, ready to use in a sub-merchant settlement account.'
+openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/swift/'
+---
+
+## Overview
+
+Returns the bank details EximPe holds for a SWIFT/BIC code, in the same field names as `settlement_details` on [Create Merchant](/api-reference/v3/merchant/create#settlement). Use it to show the bank to your user before you submit, or to check a code.
+
+<Tip>
+  You do not have to call this first. On [Create Merchant](/api-reference/v3/merchant/create#settlement) and [Update Merchant](/api-reference/v3/merchant/update), bank fields you leave out are filled from `bank_swift_code` in the same way.
+</Tip>
+
+## Query Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| code | string | Yes | SWIFT/BIC code. 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `DBSSSGSG`. |
+
+## Response
+
+| Name | Type | Description |
+|---|---|---|
+| bank_name | string \| null | Name of the bank. |
+| bank_branch_name | string \| null | Branch name. |
+| bank_address | string \| null | Branch address. |
+| bank_city | string \| null | Branch city. |
+| bank_pincode | string \| null | Branch postal code. |
+| bank_country | string \| null | Branch country, in the spelling listed by [Get Merchant Options](/api-reference/v3/merchant/options#countries). `null` when the bank's country is not one of the supported countries. |
+| bank_swift_code | string | The code you looked up. |
+
+A field is `null` when EximPe holds no value for it. `bank_state` is not returned; you always send it yourself.
+
+The values are returned as EximPe holds them and are not checked against the rules on [Create Merchant](/api-reference/v3/merchant/create#settlement). When you use them in a sub-merchant:
+
+- Send any field that is `null` here yourself. If you leave it out, Create Merchant and Update Merchant refuse the request with a `400` that lists the field in `details.settlement_details`, alongside any other problems in the request. When it is the only problem, the code is `ERR_MERCHANT_019`, or `ERR_MERCHANT_006` when the field is `bank_country`.
+- Check each value against its rule, e.g. `bank_address` must be 20–150 characters. A value that fails is refused with a `400` that lists the field in `details.settlement_details`. Send your own value for it instead.
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "success": true,
+  "message": "Bank details retrieved successfully",
+  "data": {
+    "bank_name": "DBS Bank Ltd",
+    "bank_branch_name": "Head Office",
+    "bank_address": "12 Marina Boulevard, Marina Bay",
+    "bank_city": "Singapore",
+    "bank_pincode": "018982",
+    "bank_country": "Singapore",
+    "bank_swift_code": "DBSSSGSG"
+  }
+}
+```
+
+```json 400 Not found
+{
+  "success": false,
+  "error": {
+    "code": "ERR_MERCHANT_019",
+    "message": "Bank details could not be found for bank_swift_code",
+    "details": "Bank details could not be found for bank_swift_code"
+  }
+}
+```
+
+</CodeGroup>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `400` | `ERR_MERCHANT_019` | `code` is missing or malformed, or no bank details were found for it | A string, not an object: `"Bank details could not be found for bank_swift_code"`. Check the code. If it is correct, send every bank field yourself on [Create Merchant](/api-reference/v3/merchant/create#settlement) |
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |

@@ -1,75 +1,123 @@
 ---
 title: 'List Merchants'
-description: 'Retrieve a list of merchants with pagination.'
-openapi: 'GET /partners/merchants/'
+description: 'Retrieve your sub-merchants, a page at a time.'
+openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/'
 ---
 
 ## Overview
 
-Retrieve a paginated list of all sub-merchants under the authenticated PSP account.
+Returns the sub-merchants you have onboarded, newest first. Each entry has the same shape as [Get Merchant](/api-reference/v3/merchant/get). Deleted sub-merchants are not listed.
 
-## Request Parameters
-
-#### Query Parameters
+## Query Parameters
 
 | Name | Type | Required | Description |
 |---|---|---|---|
-| page | integer | No | Page number (default: 1) |
-| page_size | integer | No | Number of results per page (default: 250, maximum: 1000) |
-| search | string | No | Search by brand name or legal name |
-| ordering | string | No | Sort field. Prefix with `-` for descending. Options: `created_at`, `last_updated_at` |
+| page | integer | No | Page number. Default `1`. |
+| page_size | integer | No | Results per page. Default `250`, maximum `1000`. |
+| search | string | No | Matches legal name, brand name, registration number or tax ID. |
+| ordering | string | No | `created_at` or `-created_at`. Default `-created_at`. |
 
 ## Response
 
+`data` is a page:
+
 | Name | Type | Description |
 |---|---|---|
-| id | string | Unique merchant identifier |
-| brand_name | string | Brand/trade name of the sub-merchant |
-| kyc_status | string | Current KYC status (`PENDING`, `IN_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`) |
-| created_at | string | ISO 8601 timestamp of creation |
-
-## Response Example
+| count | integer | Total number of matching sub-merchants. |
+| page | integer | This page's number. |
+| page_size | integer | Results per page. |
+| next | string \| null | URL of the next page, or `null` on the last page. |
+| previous | string \| null | URL of the previous page, or `null` on the first page. |
+| results | array | The sub-merchants on this page. Each has every field described in [Get Merchant](/api-reference/v3/merchant/get#response). |
 
 <CodeGroup>
 
-```json Success
+```json 200 OK
 {
   "success": true,
-  "message": "Request processed successfully.",
+  "message": "Sub-merchants retrieved successfully",
   "data": {
-    "count": 3,
+    "count": 1,
     "page": 1,
-    "page_size": 250,
+    "page_size": 50,
     "next": null,
     "previous": null,
     "results": [
       {
-        "id": "6692437779",
-        "brand_name": "Acme",
-        "kyc_status": "PENDING",
-        "created_at": "2026-04-28T07:54:33.468589Z"
-      },
-      {
         "id": "6182929449",
-        "brand_name": "GlobalShop",
-        "kyc_status": "APPROVED",
-        "created_at": "2026-04-27T10:30:00.000000Z"
-      },
-      {
-        "id": "5813168537",
-        "brand_name": "Innovate",
-        "kyc_status": "CHANGES_REQUESTED",
-        "created_at": "2026-04-26T14:20:00.000000Z"
+        "status": "APPROVED",
+        "legal_name": "GlobalSoft Inc",
+        "brand_name": "GlobalSoft",
+        "email": "ops@globalsoft.com",
+        "phone_number": "+14155551234",
+        "global_company": {
+          "registration_number": "US-CORP-2024-778",
+          "tax_id": "94-8765432",
+          "international_org_type": "Limited Liability Company",
+          "website": "https://globalsoft.com",
+          "monthly_avg_transaction_volume": "BETWEEN_100_K_AND_250_K",
+          "business_category": "SOFTWARE_CONSULTING,DATA_PROCESSING",
+          "hs_codes": null,
+          "mcc": "7372",
+          "description_of_products_and_services": "Software implementation and data processing services for Indian enterprises",
+          "agreement_details": "Reseller agreement signed on 2026-02-01",
+          "registered_address": "Suite 1200, 101 California Street",
+          "registered_city": "San Francisco",
+          "registered_state": "CA",
+          "registered_country": "United States",
+          "registered_pincode": "94111",
+          "same_as_registered_address": false,
+          "communication_address": "1455 Market Street, Suite 1600",
+          "communication_city": "San Francisco",
+          "communication_state": "CA",
+          "communication_country": "United States",
+          "communication_pincode": "94103"
+        },
+        "settlement_details": {
+          "bank_account_number": "6789123450987654",
+          "bank_account_name": "GlobalSoft Inc",
+          "bank_swift_code": "CHASUS33",
+          "bank_name": "JPMorgan Chase Bank",
+          "bank_branch_name": "Financial District Branch",
+          "bank_address": "270 Park Avenue, New York",
+          "bank_city": "New York",
+          "bank_state": "NY",
+          "bank_country": "United States",
+          "bank_pincode": "10017",
+          "routing_number": "021000021"
+        },
+        "settlement_currency": "USD",
+        "beneficial_owners": [
+          {
+            "id": "5520918874",
+            "type": "INDIVIDUAL",
+            "first_name": "Daniel",
+            "last_name": "Reed",
+            "email": "daniel.reed@globalsoft.com",
+            "authorized_user_name": "Daniel Reed",
+            "ownership_percentage": 100.0,
+            "nationality": "American",
+            "date_of_birth": "1982-03-14",
+            "country_of_incorporation": null,
+            "date_of_incorporation": null,
+            "identify_number": null
+          }
+        ],
+        "changes_requested_reason": null,
+        "section_reasons": [],
+        "reject_reason": null,
+        "created_at": "2026-04-27T10:30:00",
+        "updated_at": "2026-04-27T10:30:00"
       }
     ]
   }
 }
 ```
 
-```json Empty List
+```json 200 Empty
 {
   "success": true,
-  "message": "Request processed successfully.",
+  "message": "Sub-merchants retrieved successfully",
   "data": {
     "count": 0,
     "page": 1,
@@ -82,3 +130,11 @@ Retrieve a paginated list of all sub-merchants under the authenticated PSP accou
 ```
 
 </CodeGroup>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
