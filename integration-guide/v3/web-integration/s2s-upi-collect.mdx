@@ -1,0 +1,240 @@
+---
+title: "S2S UPI Collect"
+description: "Send a UPI payment request straight to the buyer's UPI app from your server, using their UPI ID"
+---
+
+# Introduction
+
+With S2S UPI Collect, the buyer types their UPI ID (VPA) on your page and your backend asks EximPe to send them a payment request. The request appears in the buyer's UPI app, they approve it with their UPI PIN, and EximPe tells you the outcome.
+
+<CardGroup cols={3}>
+  <Card title="No redirect, no QR" icon="arrow-right" href="#step-2-send-the-collect-request">
+    The buyer stays on your page. There is no intent to invoke and no QR code to show
+  </Card>
+  <Card title="Works on any device" icon="laptop" href="#step-1-ask-for-the-buyers-upi-id">
+    The request reaches the buyer's phone wherever they started, including on a desktop
+  </Card>
+  <Card title="Server-confirmed outcome" icon="server" href="#step-4-confirm-the-outcome">
+    Read the final status from the Order Status API or the webhook
+  </Card>
+</CardGroup>
+
+<Info>
+  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad. It is created in **Action Required**, and you must still send the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
+</Info>
+
+### Collect or Intent?
+
+| | S2S UPI Collect | [S2S UPI Intent](/integration-guide/v3/web-integration/s2s-upi-intent) |
+| :--- | :--- | :--- |
+| What the buyer gives you | Their UPI ID | Nothing; they pick an app or scan a QR code |
+| How the payment starts | A request arrives in the buyer's UPI app | Your page opens the UPI app or shows a QR code |
+| `upi_flow_type` | `collection` | `intent` |
+| You get back | `order_id` | `order_id`, `intent_uri`, `expires_at` |
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **S2S UPI enabled**: Server-to-server UPI must be enabled on your account. Without it, Create Order returns `403`
+- **Webhook URL**: A secure endpoint to receive payment status updates
+
+<Note>
+  PSP callers also send `X-Merchant-ID`, naming the sub-merchant the order belongs to.
+</Note>
+
+The flow:
+
+1. **The buyer enters their UPI ID** on your page.
+2. **Your backend creates the order** with `upi_flow_type: "collection"` and the buyer's `vpa`. EximPe sends the payment request.
+3. **The buyer approves the request** in their UPI app.
+4. **Your backend confirms the outcome** from the webhook or the Order Status API.
+
+## Step 1: Ask for the buyer's UPI ID
+
+Add a field for the buyer's UPI ID, such as `name@okaxis`, and tell them to open their UPI app once they submit.
+
+Check the format before you send it. EximPe lowercases the UPI ID, then accepts letters, numbers, dots and underscores before the `@`, and letters, numbers, dots and hyphens after it:
+
+```text
+^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$
+```
+
+<Note>
+  A UPI ID can pass this check and still not exist. EximPe does not look it up before sending the request. An unknown UPI ID shows up as a failed payment.
+</Note>
+
+## Step 2: Send the collect request
+
+Create the order from your **backend**. The request carries your Client Secret, so never send it from a browser or a mobile app.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0' \
+  -d '{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "ORDER-123458",
+  "collection_mode": "s2s",
+  "mop_type": "upi",
+  "upi_flow_type": "collection",
+  "vpa": "john.doe@okaxis",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "city": "Delhi",
+      "state": "Delhi",
+      "postal_code": "110001"
+    },
+    "ip_address": "203.0.113.10",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "product": {
+    "name": "Smartphone",
+    "description": "This is a sample product description",
+    "hs_code": "85171290",
+    "hs_code_description": "Telephones for cellular networks, other than smartphones",
+    "type_of_goods": "physical_goods"
+  },
+  "invoice": {
+    "number": "INV-2026-0003",
+    "date": "2026-11-10"
+  }
+}'
+```
+
+```json Response
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "order_id": "OD2000992104",
+    "message": "UPI Collection request sent"
+  }
+}
+```
+
+</CodeGroup>
+
+<Note>
+  Alongside `amount`, `currency`, `reference_id`, `buyer`, `product` and `invoice`, a collect request needs:
+
+  - `collection_mode`: `"s2s"`
+  - `mop_type`: `"upi"`. Leaving it out is refused with `{"mop_type": "Invalid MOP type"}`
+  - `upi_flow_type`: `"collection"`. It is not case-sensitive, and `"collect"` is refused
+  - `vpa`: the buyer's UPI ID
+  - `buyer.ip_address` and `buyer.user_agent`: the buyer's device IP address and browser or app user agent
+</Note>
+
+A `201` means the request reached the payment network, not that the buyer has paid. The order is now `payment_pending`. Tell the buyer to open their UPI app and approve the request, and keep your page waiting for the outcome.
+
+The response has no `intent_uri` and no `expires_at`. There is nothing to invoke on the buyer's device.
+
+### When the request is refused
+
+Field errors come back as `400` with `ERR_ORDER_002`, keyed by field. No order is created, so you can fix the field and retry with the same `reference_id`.
+
+| `details` | Cause |
+| :--- | :--- |
+| `{"vpa": "VPA is required for collection flow"}` | `vpa` was left out |
+| `{"vpa": "Invalid VPA"}` | `vpa` does not match the format in [Step 1](#step-1-ask-for-the-buyers-upi-id) |
+| `{"upi_flow_type": "UPI flow type must be one of: INTENT, COLLECTION"}` | Any value other than `intent` or `collection`, including `collect` |
+| `{"mop_type": "Invalid MOP type"}` | `mop_type` was left out or is not `upi` |
+
+If the payment network cannot be reached, Create Order returns `502` with `ERR_GATEWAY_UNAVAILABLE` or `ERR_PAYMENT_003`. Retry with a new `reference_id`.
+
+<Card title="Create Order API" icon="book-open" href="/api-reference/v3/order/create">
+  Every parameter, constraint, response field and error for this endpoint.
+</Card>
+
+## Step 3: The buyer approves in their UPI app
+
+The buyer sees the request in their UPI app, checks the amount and payee, and approves it with their UPI PIN. Your page has nothing to call in the meantime. Show a "waiting for approval" state and tell the buyer which app to open.
+
+The request expires if the buyer does not approve it in time. How long that is depends on how your account collects UPI, so don't build in a fixed countdown. When the request expires or the buyer declines it, the order fails and you receive `PAYMENT_FAILED`.
+
+<Tip>
+  If the buyer typed the wrong UPI ID, the request went to someone else's app or nowhere at all. Let them correct it and start a new order with a new `reference_id`.
+</Tip>
+
+## Step 4: Confirm the outcome
+
+Wait for the webhook, or poll the Order Status API from your backend:
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET 'https://api-pacb-uat.eximpe.com/pg/orders/OD2000992104/status/' \
+  -H 'X-Client-ID: YOUR_CLIENT_ID' \
+  -H 'X-Client-Secret: YOUR_CLIENT_SECRET' \
+  -H 'X-API-Version: 3.0.0'
+```
+
+```json Response
+{
+  "success": true,
+  "message": "Order status fetched successfully",
+  "data": {
+    "order_id": "OD2000992104",
+    "status": "payment_successful",
+    "status_message": "Payment captured successfully",
+    "created_at": "2026-11-10T10:12:41Z",
+    "last_updated_at": "2026-11-10T10:13:28Z"
+  }
+}
+```
+
+</CodeGroup>
+
+| Status | Meaning | What to do |
+| :--- | :--- | :--- |
+| `payment_pending` | The buyer has not approved yet | Keep waiting; check again or wait for the webhook |
+| `payment_successful` | Payment captured | Proceed, then send the compliance details ([Step 5](#step-5-assert-compliance)) |
+| `failed` | Declined or expired | Show a failure message and offer a retry with a new order |
+
+<Warning>
+  **Accept a success after a failure.** A late approval can still capture an order already reported as failed. You then receive `PAYMENT_SUCCESSFUL` after `PAYMENT_FAILED` for the same order. Treat the success as final.
+</Warning>
+
+The [Get Payment API](/api-reference/v3/payment/get) shows the payer's UPI ID masked, for example `jo****@okaxis`.
+
+<CardGroup cols={2}>
+  <Card title="Get Order Status API" icon="book-open" href="/api-reference/v3/order/get-status">
+    Full request and response reference.
+  </Card>
+  <Card title="Payment Successful webhook" icon="bell" href="/api-reference/v3/webhooks/payment-successful">
+    Get pushed the outcome instead of polling for it.
+  </Card>
+</CardGroup>
+
+## Step 5: Assert compliance
+
+A collected payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
+
+<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+  What a payment needs, and how to send it.
+</Card>
+
+## Testing in sandbox
+
+Sandbox sends collect requests to the payment network's test environment, so no real money moves. When your sandbox account is set up to simulate UPI, the Create Order response also carries a `test_simulator_url`. Open it in a browser to approve or decline the request without a UPI app. It is never returned in production.
+
+## Need Help?
+
+<CardGroup cols={2}>
+  <Card title="Contact Support" icon="mail" href="mailto:support@eximpe.com">
+    📩 support@eximpe.com — 24/7, response within 1 business day
+  </Card>
+  <Card title="API Reference" icon="book-open" href="/api-reference/v3/order/create">
+    📚 Create Order, Get Order Status, and the v3 webhook payloads
+  </Card>
+</CardGroup>
