@@ -62,7 +62,7 @@ Check the format before you send it. EximPe lowercases the UPI ID, then accepts 
 ```
 
 <Note>
-  A UPI ID can pass this check and still not exist. EximPe does not look it up before sending the request. An unknown UPI ID is reported by the payment network, either when you create the order or later as a failed payment.
+  A UPI ID can pass this check and still not exist. EximPe does not look it up before sending the request. An unknown UPI ID shows up as a failed payment.
 </Note>
 
 ## Step 2: Send the collect request
@@ -150,26 +150,7 @@ Field errors come back as `400` with `ERR_ORDER_002`, keyed by field. No order i
 | `{"upi_flow_type": "UPI flow type must be one of: INTENT, COLLECTION"}` | Any value other than `intent` or `collection`, including `collect` |
 | `{"mop_type": "Invalid MOP type"}` | `mop_type` was left out or is not `upi` |
 
-The payment network can also refuse the request after the fields pass, for example when the bank is unavailable. You then get `400` with `ERR_ORDER_002` and the reason under `payment`:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERR_ORDER_002",
-    "message": "Validation error",
-    "details": {
-      "payment": "Service unavailable, please try later (ICICI 5009)"
-    }
-  }
-}
-```
-
-<Warning>
-  **This refusal still creates the order.** The order is marked failed and its `reference_id` is used up, so retry with a new `reference_id`. The invoice number is released, because the order failed.
-</Warning>
-
-If the payment network cannot be reached at all, Create Order returns `502` with `ERR_GATEWAY_UNAVAILABLE` or `ERR_PAYMENT_003`. Treat it the same way: retry with a new `reference_id`.
+If the payment network cannot be reached, Create Order returns `502` with `ERR_GATEWAY_UNAVAILABLE` or `ERR_PAYMENT_003`. Retry with a new `reference_id`.
 
 <Card title="Create Order API" icon="book-open" href="/api-reference/v3/order/create">
   Every parameter, constraint, response field and error for this endpoint.
@@ -218,7 +199,7 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/orders/OD2000992104/status/' \
 | :--- | :--- | :--- |
 | `payment_pending` | The buyer has not approved yet | Keep waiting; check again or wait for the webhook |
 | `payment_successful` | Payment captured | Proceed, then send the compliance details ([Step 5](#step-5-assert-compliance)) |
-| `failed` | Declined, expired, or refused by the payment network | Show a failure message and offer a retry with a new order |
+| `failed` | Declined or expired | Show a failure message and offer a retry with a new order |
 
 <Warning>
   **Accept a success after a failure.** A late approval can still capture an order already reported as failed. You then receive `PAYMENT_SUCCESSFUL` after `PAYMENT_FAILED` for the same order. Treat the success as final.

@@ -200,7 +200,7 @@
             }
           },
           "400": {
-            "description": "The request was refused. Always `ERR_ORDER_002`; read `details`. For S2S UPI Collect, a `payment` refusal from the payment network still creates the order and marks it failed, so its `reference_id` is used up.",
+            "description": "The request was refused. Always `ERR_ORDER_002`; read `details`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -312,19 +312,6 @@
                         "message": "Validation error",
                         "details": {
                           "upi_flow_type": "UPI flow type must be one of: INTENT, COLLECTION"
-                        }
-                      }
-                    }
-                  },
-                  "Collect refused by the payment network": {
-                    "summary": "Payment network refused the collect request (order created and failed)",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_ORDER_002",
-                        "message": "Validation error",
-                        "details": {
-                          "payment": "Service unavailable, please try later (ICICI 5009)"
                         }
                       }
                     }
