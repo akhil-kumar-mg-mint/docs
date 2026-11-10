@@ -19,10 +19,6 @@ With S2S UPI Collect, the buyer types their UPI ID (VPA) on your page and your b
   </Card>
 </CardGroup>
 
-<Info>
-  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad. It is created in **Action Required**, and you must still send the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
-</Info>
-
 ### Collect or Intent?
 
 | | S2S UPI Collect | [S2S UPI Intent](/integration-guide/v3/web-integration/s2s-upi-intent) |
@@ -198,7 +194,7 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/orders/OD2000992104/status/' \
 | Status | Meaning | What to do |
 | :--- | :--- | :--- |
 | `payment_pending` | The buyer has not approved yet | Keep waiting; check again or wait for the webhook |
-| `payment_successful` | Payment captured | Proceed, then send the compliance details ([Step 5](#step-5-assert-compliance)) |
+| `payment_successful` | Payment captured | Proceed |
 | `failed` | Declined or expired | Show a failure message and offer a retry with a new order |
 
 <Warning>
@@ -215,14 +211,6 @@ The [Get Payment API](/api-reference/v3/payment/get) shows the payer's UPI ID ma
     Get pushed the outcome instead of polling for it.
   </Card>
 </CardGroup>
-
-## Step 5: Assert compliance
-
-A collected payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
-
-<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-  What a payment needs, and how to send it.
-</Card>
 
 ## Testing in sandbox
 
