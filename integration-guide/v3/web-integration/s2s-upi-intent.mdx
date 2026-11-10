@@ -23,6 +23,10 @@ The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by
   **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required**, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance) below.
 </Info>
 
+<Tip>
+  Want the buyer to type their UPI ID instead of opening an app or scanning a QR code? Use [S2S UPI Collect](/integration-guide/v3/web-integration/s2s-upi-collect).
+</Tip>
+
 ### Intent Invocation
 
 Intent invocation packages your UPI payment details — amount, payee VPA, reference — into a deep-link URI, then launches the buyer's UPI app directly from your front end. With a **specific intent**, you target a known app (e.g. Google Pay); a **generic intent** lets Android show an app picker (on iOS it falls back to the default handler).
