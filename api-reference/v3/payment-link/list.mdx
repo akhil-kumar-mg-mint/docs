@@ -37,20 +37,7 @@ Returns your payment links a page at a time, newest first. Each entry carries th
 | `previous` | Full URL of the previous page, or `null` on the first one |
 | `results` | The links on this page |
 
-Follow `next` until it is `null`. A page past the last one is not returned empty — it is refused with a `500`:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": 40350,
-    "message": "Failed to retrieve domestic payment requests",
-    "details": {
-      "error": "Invalid page."
-    }
-  }
-}
-```
+Stop paging when `next` is `null`.
 
 ## Link status
 

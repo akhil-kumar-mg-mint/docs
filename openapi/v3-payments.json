@@ -41,7 +41,7 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "description": "Page number, starting at 1. Stop when `next` is null: a page past the last one is refused with a 500.",
+            "description": "Page number, starting at 1. Stop paging when `next` is `null`.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -326,7 +326,7 @@
             }
           },
           "500": {
-            "description": "Invalid filter value, invalid date or a page past the last one",
+            "description": "Invalid filter value or invalid date",
             "content": {
               "application/json": {
                 "schema": {
@@ -342,19 +342,6 @@
                         "message": "Failed to retrieve domestic payment requests",
                         "details": {
                           "error": "{'status': ErrorDetail(string='Invalid value. Must be one of: PENDING, CAPTURED, FAILED, INVALID', code='invalid')}"
-                        }
-                      }
-                    }
-                  },
-                  "Page past the last one": {
-                    "summary": "Page past the last one",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": 40350,
-                        "message": "Failed to retrieve domestic payment requests",
-                        "details": {
-                          "error": "Invalid page."
                         }
                       }
                     }

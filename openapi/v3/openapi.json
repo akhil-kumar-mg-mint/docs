@@ -3275,7 +3275,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "The document file. Allowed extensions: pdf, png, jpg, jpeg, docx, xlsx, csv. Maximum 10 MB. Password-protected PDFs are rejected."
+                    "description": "The document file. Allowed extensions: pdf, png, jpg, jpeg, docx, xlsx, csv. Maximum 10 MB; file name up to 100 characters, extension included. Password-protected PDFs are rejected."
                   },
                   "type": {
                     "type": "string",

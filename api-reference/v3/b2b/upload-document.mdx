@@ -102,10 +102,6 @@ A refused file is a `400` reading `Uploaded file is not a supported type or exce
 |---|---|
 | The file's extension or content is not an accepted type, or the PDF is encrypted. | `ERR_B2B_SERVICES_007` for an `invoice`, `ERR_B2B_SETTLEMENT_006` for a `delivery_proof` |
 
-<Warning>
-  **A file name over 100 characters answers `500`, not `400`.** The envelope carries `40359`, and `details` is a stringified object holding the real reason — `File name must be less than 100 characters.`, code `40296`. It is your input that is wrong, not our service, so rename the file and upload it again rather than retrying. Truncate long names before uploading and you will never see it.
-</Warning>
-
 ## The response
 
 `201`, with the `ref`:
