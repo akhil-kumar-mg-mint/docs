@@ -135,7 +135,7 @@ For S2S UPI Intent mode, the response includes:
 <Tip>
   **Testing in sandbox:** the sandbox response includes an additional `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without needing a real UPI app or a mobile device — useful when developing the desktop QR path or testing on a machine with no UPI app installed.
 
-  Open `test_simulator_url` and choose the outcome there. On some sandbox accounts the outcome follows the test VPA instead: `testsuccess@gocash` succeeds, `testfailure@gocash` fails.
+  Open `test_simulator_url` and choose the outcome there. Where the page asks for a VPA, `testsuccess@gocash` succeeds and `testfailure@gocash` fails.
 
   This field is **not returned in production**.
 </Tip>

@@ -97,7 +97,7 @@ Thirteen fields and one document, plus `buyer_pan` when it is owed:
 </Note>
 
 <Note>
-  **Payments EximPe collects add one more field, `buyer_pan`.** Once the payment is captured, the buying business's PAN is checked with the issuer, and until it passes `buyer_pan` is listed among the outstanding items and the payment stays in `ACTION_REQUIRED`. Send it under `fields` like any other code, as a fourteenth entry — `"buyer_pan": "ABCDE1234F"`.
+  **Payments EximPe collects add one more field, `buyer_pan`.** Once the payment is captured, the buying business's PAN is checked with the issuer, and until it passes `buyer_pan` is listed among the outstanding items and the payment stays in `ACTION_REQUIRED`. Send it under `fields` like any other code, as a fourteenth entry — `"buyer_pan": "AABCE1234F"`.
 
   The PAN must belong to the business named in `buyer_name`. Change `buyer_name` later and `buyer_pan` is owed again; a mismatch reads `The name on this PAN doesn't match the order's buyer name.` A personal PAN reads `This is a personal PAN. A B2B payment needs the buying business's PAN.`
 
@@ -276,7 +276,7 @@ Value rules run on the call that carries the value. They answer under `40359` wi
 
 ### Raised only by the call that files
 
-Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own: `invoice_amount` against the credit, which is refused naming `invoice_amount` when the two are more than a paisa apart, and `invoice_number`, which must be unique across all your orders, including an invoice number set when the order was created. An amount refusal reads `Invoice amount must match the amount credited into the VBA (125000.00).`, with the credit in brackets. A collision does **not** answer under `40359` — it carries its own code:
+Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own. `invoice_amount` is checked against the credit, and is refused naming `invoice_amount` when the two are more than a paisa apart. `invoice_number` must be unique across all your orders, including an invoice number set when the order was created. An amount refusal reads `Invoice amount must match the amount credited into the VBA (125000.00).`, with the credit in brackets. A collision does **not** answer under `40359` — it carries its own code:
 
 ```json
 {

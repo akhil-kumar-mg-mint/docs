@@ -18,7 +18,7 @@ Uploads one file for a B2B services payment and answers with a **`ref`**. What y
 ```
 
 <Note>
-  **On B2B services the upload itself satisfies `invoice`.** Get Verification Requirements shows it satisfied as soon as an invoice is uploaded, unless EximPe rejected it. Still cite its `ref` on Submit Verification Details.
+  **Two calls, not one.** Uploading stores the file and returns its `ref`. Send that `ref` under `invoice` on Submit Verification Details. Get Verification Requirements shows `invoice` satisfied as soon as an invoice is uploaded, unless EximPe rejected it.
 </Note>
 
 ## Classify the payment first

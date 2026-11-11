@@ -342,7 +342,7 @@
             "name": "subscription_id",
             "in": "path",
             "required": true,
-            "description": "Subscription UID.",
+            "description": "The subscription's ID, e.g. `SUB7989707770`.",
             "schema": {
               "type": "string"
             }
@@ -522,7 +522,7 @@
             "name": "subscription_id",
             "in": "path",
             "required": true,
-            "description": "Subscription UID.",
+            "description": "The subscription's ID, e.g. `SUB7989707770`.",
             "schema": {
               "type": "string"
             }
@@ -587,7 +587,7 @@
             "name": "subscription_id",
             "in": "path",
             "required": true,
-            "description": "Subscription UID.",
+            "description": "The subscription's ID, e.g. `SUB7989707770`.",
             "schema": {
               "type": "string"
             }
@@ -682,7 +682,7 @@
             "name": "subscription_id",
             "in": "path",
             "required": true,
-            "description": "Subscription UID.",
+            "description": "The subscription's ID, e.g. `SUB7989707770`.",
             "schema": {
               "type": "string"
             }
@@ -785,7 +785,7 @@
             "name": "subscription_id",
             "in": "path",
             "required": true,
-            "description": "Subscription UID.",
+            "description": "The subscription's ID, e.g. `SUB7989707770`.",
             "schema": {
               "type": "string"
             }

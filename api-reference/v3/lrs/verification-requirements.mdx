@@ -352,7 +352,7 @@ Example responses: an education payment with nothing supplied yet, a payment not
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
   | `UNDER_REVIEW` | Filed and with EximPe. **Sending is closed** — see below. This value does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
   | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
-  | `VERIFIED` | Past verification. Sending is closed. Seen only on older payments; read [`review.review_state`](#the-review) for the decision. |
+  | `VERIFIED` | Past verification. Sending is closed. Read [`review.review_state`](#the-review) for the decision. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
 
   A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.

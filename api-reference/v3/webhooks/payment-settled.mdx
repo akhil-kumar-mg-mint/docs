@@ -13,6 +13,8 @@ This webhook is triggered when funds are successfully transferred to the merchan
 
 The payload carries settlement totals only, with no payment or order IDs. To see which payments a settlement covers, call [Settlement Reconciliation](/api-reference/v3/settlement/recon) with the `settlement_id`.
 
+---
+
 ## Delivery Details
 
 | Attribute | Value |
@@ -37,6 +39,8 @@ The payload carries settlement totals only, with no payment or order IDs. To see
 **Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
 
 Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
+
+---
 
 ## Payload Schema
 

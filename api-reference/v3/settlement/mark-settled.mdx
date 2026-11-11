@@ -35,7 +35,7 @@ The settlement totals are the sums across the batch:
 
 Refunds and chargebacks carry **no fee of their own**. They debit the total at their full amount, mirroring the real settlement pipeline.
 
-If refunds and chargebacks exceed the payment net, `settlement_amount` is still returned as a positive figure. Fees are rounded down to the nearest paisa.
+Fees are rounded down to the nearest paisa.
 
 <Accordion title="Worked example — ₹1,000 payment, ₹100 refund, ₹50 chargeback">
 ```

@@ -90,7 +90,7 @@ These are not the same number, and mixing them up is the most common way a payme
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
 <Note>
-  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credited amount minus the MDR and the GST on that MDR, read from the payment.
+  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credited amount minus the MDR and the GST on the MDR, read from the payment.
 </Note>
 
 ## What it costs you
@@ -112,7 +112,7 @@ On every other payment, including B2B services and B2B goods, the MDR and the GS
 | `verification_status` | What it means | What you do |
 | :--- | :--- | :--- |
 | `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
-| `UNDER_REVIEW` (LRS) · `IN_REVIEW` (B2B services) | Details accepted, bank is processing | Wait |
+| `UNDER_REVIEW` (LRS) · `IN_REVIEW` (B2B services) | Filed and with EximPe for review | Wait |
 | `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | Act on a rejection |
 | `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
 

@@ -252,7 +252,7 @@ All eleven services purpose codes share one set: `S0802`, `S0803`, `S1005`, `S10
 </Note>
 
 <Warning>
-  **`invoice_amount` is asked for, but it decides nothing.** Send it in rupees; it is cross-checked against the credit and refused if the two are more than a paisa apart. What settles is still the credited amount minus the MDR and the GST on that MDR, and no tax is collected on top — `amount_to_be_settled` remains an unknown key here, and sending it is a `400`.
+  **`invoice_amount` is asked for, but it decides nothing.** Send it in rupees; it is cross-checked against the credit and refused if the two are more than a paisa apart. What settles is still the credited amount minus the MDR and the GST on the MDR, and no tax is collected on top — `amount_to_be_settled` remains an unknown key here, and sending it is a `400`.
 </Warning>
 
 <Warning>

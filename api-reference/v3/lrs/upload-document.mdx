@@ -63,7 +63,7 @@ A refused upload is a `400`, and `details` is keyed by the part that was refused
 
 | Cause | `code` |
 |---|---|
-| The file is refused (type, content or encrypted PDF), is over 10 MB, or its name is over 100 characters. `details.file` says which. | `40359` |
+| The file's type or content is refused, or the PDF is encrypted. `details.file` says which. | `40359` |
 | `type` is not one of the [document types](#document-types). `details.type` reads `Unknown document type.` | `40359` |
 | Nothing has classified the payment yet. The message reads `Invalid verification request.` | `40359` |
 | No such payment for this merchant. | `40360` |

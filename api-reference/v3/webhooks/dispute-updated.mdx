@@ -28,6 +28,8 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
   If no response is provided before `reply_before`, the dispute is automatically **closed in the customer's favour** (`chargeback_status` → `CLOSED_CUSTOMER_FAVOUR`) and the disputed amount is debited from the merchant.
 </Warning>
 
+---
+
 ## Delivery Details
 
 | Attribute | Value |
@@ -52,6 +54,8 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
 **Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
 
 Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
+
+---
 
 ## Payload Schema
 

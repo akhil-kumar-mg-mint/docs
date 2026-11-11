@@ -900,7 +900,7 @@
     "/pg/payment-links/{link_id}/deactivate/": {
       "post": {
         "summary": "Deactivate Payment Link",
-        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links. Treat both as closed.",
+        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired` or `failed`. Treat both as closed.",
         "operationId": "v3_deactivatePaymentLink",
         "tags": [
           "Payment Links"
@@ -1600,7 +1600,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`."
           }
         }
       },
@@ -1800,7 +1800,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`."
           },
           "status_message": {
             "type": "string",

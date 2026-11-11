@@ -61,7 +61,7 @@ Follow `next` until it is `null`. A page past the last one is not returned empty
 | `expired` | Past its `expiry_date`, or deactivated. |
 | `failed` | Could not be created, or closed without being paid. |
 
-A deactivated link reads `expired` or `failed`, depending on how your account collects payment links. Treat both as closed. `expiry_date` may keep its original value.
+A deactivated link reads `expired` or `failed`. Treat both as closed. Do not read the deactivation time from `expiry_date`.
 
 <Note>
   List returns each link's status as last recorded. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) checks an active link for a payment before answering, so right after a payment it can read `paid` before List does.

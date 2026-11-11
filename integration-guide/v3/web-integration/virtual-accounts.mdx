@@ -14,7 +14,7 @@ You get a [Payment Successful](/api-reference/v3/webhooks/payment-successful) we
 ## Before you start
 
 - An approved merchant account with virtual accounts enabled
-- Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes the version used
 - A webhook URL on your account
 
 PSPs also send `X-Merchant-ID` naming the sub-merchant the account belongs to.

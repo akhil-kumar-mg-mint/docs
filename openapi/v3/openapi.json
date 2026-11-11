@@ -1176,7 +1176,7 @@
                           }
                         }
                       },
-                      "description": "One entry per virtual bank account created. Currently always a single entry."
+                      "description": "One entry per virtual bank account created. A create returns one entry."
                     }
                   }
                 },
@@ -2984,7 +2984,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN, a proposed remittance amount (INR) and the LRS purpose code, returns the TCS due and the all-in total the buyer pays. TCS depends on the purpose code. For `S0303`, `S0304`, `S0305` and `S1107` it is nil up to Rs.10,00,000 of cumulative LRS this financial year and 2% on the slice above it. `S0306` is priced by your account's travel type: a tour package is taxed 2% of the whole amount from the first rupee; other travel is nil up to Rs.10,00,000 and 20% on the slice above it. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN, a proposed remittance amount (INR) and the LRS purpose code, returns the TCS due and the all-in total the buyer pays. TCS depends on the purpose code. For `S0303`, `S0304`, `S0305` and `S1107` it is nil up to ₹10,00,000 of cumulative LRS this financial year and 2% on the slice above it. `S0306` is priced by your account's travel type: a tour package is taxed 2% of the whole amount from the first rupee; other travel is nil up to ₹10,00,000 and 20% on the slice above it. The ₹10,00,000 threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -3085,7 +3085,7 @@
                         },
                         "taxable_inr": {
                           "type": "string",
-                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it. `null` when `refusal_reason` is set.",
+                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the ₹10,00,000 threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it. `null` when `refusal_reason` is set.",
                           "example": "200000.00",
                           "nullable": true
                         },
@@ -3109,12 +3109,12 @@
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
-                          "description": "Whether EximPe's LRS counter had already crossed Rs.10L before this remittance.",
+                          "description": "Whether EximPe's LRS counter had already crossed ₹10,00,000 before this remittance.",
                           "example": false
                         },
                         "tcs_threshold_breached_after": {
                           "type": "boolean",
-                          "description": "Whether the counter is at or past Rs.10L once this remittance is counted. Also `true` when it was already past beforehand, and it flips at exactly Rs.10,00,000 — where `taxable_inr` is still `0.00`. Read `tcs_inr`, not this flag, to know whether tax is due.",
+                          "description": "Whether the counter is at or past ₹10,00,000 once this remittance is counted. Also `true` when it was already past beforehand, and it flips at exactly ₹10,00,000 — where `taxable_inr` is still `0.00`. Read `tcs_inr`, not this flag, to know whether tax is due.",
                           "example": true
                         },
                         "tcs_reason": {
@@ -3126,7 +3126,7 @@
                             "tour_package_flat_rate",
                             null
                           ],
-                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under Rs.10L; this remittance crosses the line and only the slice above it is taxed; the counter was already past and the whole remittance is taxable; or the remittance is an `S0306` tour package, taxed at a flat rate from the first rupee. `null` when `refusal_reason` is set.",
+                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under ₹10,00,000; this remittance crosses the line and only the slice above it is taxed; the counter was already past and the whole remittance is taxable; or the remittance is an `S0306` tour package, taxed at a flat rate from the first rupee. `null` when `refusal_reason` is set.",
                           "example": "partial_above_threshold",
                           "nullable": true
                         },
@@ -3154,7 +3154,7 @@
                 },
                 "examples": {
                   "quoted": {
-                    "summary": "Quoted: crosses the Rs.10,00,000 threshold",
+                    "summary": "Quoted: crosses the ₹10,00,000 threshold",
                     "value": {
                       "success": true,
                       "message": "LRS amount quoted",
@@ -4267,7 +4267,7 @@
     "/pg/settlements/{uid}/recon/": {
       "get": {
         "summary": "Settlement Reconciliation",
-        "description": "Returns a paginated list of the individual transactions that make up a single settlement batch: captures, refunds, chargebacks and chargeback reversals.\n\nUse this endpoint for reconciliation when a settlement contains too many transactions to fetch in one response. It returns a trimmed field set, and it differs from the settlement detail endpoint (`GET /pg/settlements/{settlement_id}/`) in two ways: only this endpoint lists `chargeback` rows, and a refund's `merchant_net_amount` is negative here but positive on the detail endpoint.\n\nTransactions of all types are merged into a single stream ordered by `created_at` descending. A PSP always gets its own and all its sub-merchants' rows in this settlement.",
+        "description": "Returns a paginated list of the individual transactions that make up a single settlement batch: captures, refunds, chargebacks and chargeback reversals.\n\nUse this endpoint for reconciliation when a settlement contains too many transactions to fetch in one response. It returns a trimmed field set, and it differs from the settlement detail endpoint (`GET /pg/settlements/{settlement_id}/`). The detail endpoint lists `capture`, `refund` and `chargeback_reversed` rows; this endpoint lists `chargeback` rows as well.\n\nTransactions of all types are merged into a single stream ordered by `created_at` descending. A PSP always gets its own and all its sub-merchants' rows in this settlement.",
         "tags": [
           "Settlements"
         ],
@@ -6241,7 +6241,8 @@
           "callback_url": {
             "type": "string",
             "format": "uri",
-            "description": "Accepted but not used. Refund status changes are sent to your account's webhook URL: `PAYMENT_REFUNDED` (refunded), `REFUND_FAILED` (failed), `REFUND_STATUS_UPDATE` (processing, reversed, on hold, bank rejected)."
+            "deprecated": true,
+            "description": "Deprecated and ignored. Refund status changes go to your webhook URL: `PAYMENT_REFUNDED` (refunded), `REFUND_FAILED` (failed), `REFUND_STATUS_UPDATE` (processing, reversed, on hold, bank rejected)."
           }
         }
       },

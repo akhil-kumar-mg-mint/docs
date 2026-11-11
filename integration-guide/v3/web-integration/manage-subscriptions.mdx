@@ -25,7 +25,7 @@ Create the subscription first — over [UPI Intent](/integration-guide/v3/web-in
   </Card>
 </CardGroup>
 
-Every call carries `X-Client-ID`, `X-Client-Secret`, and `X-API-Version: 3.0.0`. PSP callers add `X-Merchant-ID`. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
+Every call carries `X-Client-ID` and `X-Client-Secret`. PSP callers add `X-Merchant-ID`. `X-API-Version` is optional. Send `3.0.0`; the response echoes the version used. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
 
 ## Check mandate status
 

@@ -43,7 +43,7 @@ The following tables define the request parameters, including nested objects, ty
 | expiry_date | string | No | When the link stops accepting payment. | ISO 8601 date-time; in the future and at most 365 days away; defaults to 365 days from today |
 | preferred_payment_method | string | No | The payment method the buyer should pay with. | One of `UPI`, `CARD`, `CREDIT_CARD`, `DEBIT_CARD`, `NET_BANKING`, in any case; must be one your account's payment links can collect |
 | business_model | string | No | Whether the buyer is a business or a consumer. | Enum: `B2B`, `B2C`; derived from your KYC when omitted |
-| purpose_code | string | No | FEMA/FETERS purpose code this payment settles under. | Must be active and enabled on your account (e.g. `S0101`, `S0802`); derived from your KYC when omitted |
+| purpose_code | string | No | FEMA/FETERS purpose code this payment settles under. | Must be active and enabled on your account (e.g. `S0101`, `S0802`). When omitted, it is filled in only if your account has exactly one allowed purpose code |
 | buyer | object | Yes | The buyer. | See Buyer object |
 | product | object | Yes | Product or service being paid for. | See Product object |
 | invoice | object | Yes | Invoice metadata. | See Invoice object |

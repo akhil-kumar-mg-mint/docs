@@ -60,7 +60,7 @@ You do not have to wait for real money, or a real settlement date, to exercise y
 Set Refund Status is the useful one for coverage: force a single refund through `REFUNDED`, `FAILED`, `PROCESSING`, `REVERSED`, `ON_HOLD` and `BANK_REJECTED_REFUND` in turn, and one refund exercises every branch of your handler. `INITIATED` fires nothing — it is the starting state, not a transition.
 
 <Warning>
-  **Both need the Simulator gateway.** They only work on transactions created through it, and return `400` in production. If your sandbox account is not on the Simulator gateway, ask your EximPe integration manager to assign it.
+  **Both need the Simulator gateway.** They only work on transactions created through it. In production, Set Refund Status returns `403` and Mark as Settled returns `400`. If your sandbox account is not on the Simulator gateway, ask your EximPe integration manager to assign it.
 </Warning>
 
 <Note>
@@ -222,6 +222,8 @@ const crypto = require('crypto');
 const TOLERANCE_SECONDS = 300;
 
 function verifyWebhookSignatureV2(payload, header, encryptionKey) {
+  if (typeof header !== 'string') return false;
+
   // Header format: t=<timestamp>,v2=<hex>
   const parts = Object.fromEntries(
     header.split(',').map((part) => part.split('='))
@@ -253,6 +255,9 @@ import time
 TOLERANCE_SECONDS = 300
 
 def verify_webhook_signature_v2(payload, header, encryption_key):
+    if not header:
+        return False
+
     # Header format: t=<timestamp>,v2=<hex>
     parts = dict(part.split('=', 1) for part in header.split(',') if '=' in part)
     timestamp = parts.get('t', '')
@@ -264,9 +269,14 @@ def verify_webhook_signature_v2(payload, header, encryption_key):
     if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
         return False
 
+    # payload is the raw request body, as bytes
+    if isinstance(payload, str):
+        payload = payload.encode('utf-8')
+    message = timestamp.encode('utf-8') + b'.' + payload
+
     expected_signature = hmac.new(
         encryption_key.encode('utf-8'),
-        f'{timestamp}.{payload}'.encode('utf-8'),
+        message,
         hashlib.sha256
     ).hexdigest()
     return hmac.compare_digest(signature, expected_signature)

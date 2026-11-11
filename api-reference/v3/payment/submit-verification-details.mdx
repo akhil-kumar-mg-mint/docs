@@ -203,7 +203,7 @@ Some refusals carry a code of their own:
 | `Enter a valid PAN in the format ABCDE1234F.` | `remitter_pan` is not in PAN format. |
 | `This document cannot be waived.` | A `waiver_reason` was sent for a document that must be uploaded. |
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
-| `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
+| `Already set on the order; it cannot be changed here.` | A different `business_model` or `purpose_code` after classification has landed. Re-sending the same value is accepted. |
 
 The `message` wording varies by flow (`Invalid B2B services request.`, `Invalid LRS request.`, `Invalid verification request.`). Do not parse `message`; branch on `error.code`.
 
