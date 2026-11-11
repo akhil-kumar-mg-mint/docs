@@ -212,6 +212,24 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "`page` is past the last page. The body is `{\"detail\": \"Invalid page.\"}`, not the standard envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "detail": "Invalid page."
+                }
+              }
+            }
           }
         },
         "operationId": "v3_listMerchants"

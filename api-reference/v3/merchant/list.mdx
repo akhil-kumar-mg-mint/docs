@@ -140,3 +140,4 @@ Returns the sub-merchants you have onboarded, newest first. Each entry has the s
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
 | `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
 | `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
+| `404` | — | `page` is past the last page | The body is `{"detail": "Invalid page."}`, not the standard envelope. Request a lower page |
