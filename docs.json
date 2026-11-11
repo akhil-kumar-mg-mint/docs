@@ -508,7 +508,7 @@
                 "group": "Webhooks",
                 "pages": [
                   "api-reference/v3/webhooks/merchant-approved",
-                  "api-reference/v3/webhooks/merchant-changes-requested",
+                  "api-reference/v3/webhooks/merchant-changes-needed",
                   "api-reference/v3/webhooks/merchant-rejected",
                   "api-reference/v3/webhooks/payment-successful",
                   "api-reference/v3/webhooks/verification-needed",
@@ -564,6 +564,10 @@
     {
       "source": "/integration-guide/v3/getting-started/faqs",
       "destination": "/integration-guide/v3/getting-started/introduction"
+    },
+    {
+      "source": "/api-reference/v3/webhooks/merchant-changes-requested",
+      "destination": "/api-reference/v3/webhooks/merchant-changes-needed"
     }
   ]
 }

@@ -13,7 +13,7 @@ The status a new sub-merchant starts in depends on the environment:
 | Environment | Starting status | What happens next |
 |---|---|---|
 | Sandbox | `APPROVED` | Activated at once. You receive the `MERCHANT_APPROVED` webhook and can collect for it straight away. |
-| Production | `PENDING` | EximPe reviews the application. You receive the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved), [Merchant Rejected](/api-reference/v3/webhooks/merchant-rejected) or [Merchant Changes Needed](/api-reference/v3/webhooks/merchant-changes-requested) webhook with the decision. |
+| Production | `PENDING` | EximPe reviews the application. You receive the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved), [Merchant Rejected](/api-reference/v3/webhooks/merchant-rejected) or [Merchant Changes Needed](/api-reference/v3/webhooks/merchant-changes-needed) webhook with the decision. |
 
 <Note>
   **Edit, resubmit and delete cannot be tried on sandbox sub-merchants you create.** A sub-merchant created through the API in sandbox is approved immediately, so it is never `PENDING`, `CHANGES_REQUESTED` or `REJECTED` there. [Update Merchant](/api-reference/v3/merchant/update) and [Delete Merchant](/api-reference/v3/merchant/delete) refuse it with a `409`, and it can never be resubmitted. The API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.

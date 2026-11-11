@@ -21,7 +21,7 @@ This webhook names what a payment still owes before it can be filed. It is the g
 
 ### When the webhook is sent
 
-1. **A Virtual Bank Account credit became a payment** that is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
+1. **A payment was captured** (Virtual Bank Account credit, UPI or card) and is missing verification details. The event follows `PAYMENT_SUCCESSFUL` and names what is outstanding.
 2. **The verification status changed** — the payment moved to `ACTION_REQUIRED`, `IN_REVIEW` or `EXPIRED`.
 3. **A verification submit was refused** on a payment with no LRS checklist. The event names what to fix — **the single item that failed**, not everything the payment still owes. On a B2B services payment this covers the finalizing call's own checks: the purpose code, the invoice amount, the declaration, and the documents cited for the invoice.
 4. **EximPe review sent a B2B services verification back for changes.** The payment returns to `ACTION_REQUIRED` and you can send again. `message` carries the reviewer's comment rather than the standard sentence, and `action_required_fields` names what the checklist still owes.

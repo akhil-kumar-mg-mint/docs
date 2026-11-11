@@ -11,7 +11,34 @@ description: "Technical reference for the PAYMENT_FAILED webhook event, includin
 **Category**: Payment  
 **Description**: Payment transaction has failed
 
-This webhook is triggered when a customer's payment attempt fails through EximPe. It is also sent when an attempt expires or a hosted checkout ends with no payment attempted.
+This webhook is sent when a customer's payment attempt fails. On the hosted checkout, a declined attempt can instead return the buyer to the checkout to retry. In that case a single `PAYMENT_FAILED` is sent when the checkout ends without a successful payment: the buyer cancels, the time limit passes, or the attempt limit is reached. It is also sent when an attempt expires.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured for your merchant account |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_FAILED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -32,7 +59,7 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
         "order_id": "OD3376378679",
         "link_id": null,
         "payment_id": "PR6938527534",
-        "amount": 1000,
+        "amount": 1000.0,
         "bank_ref_num": "OD3376378679-PR6938527534",
         "extended_status": "USER_DROPPED",
         "payment_message": null,
@@ -120,13 +147,13 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
     </ParamField>
 
     <ParamField path="data.amount" type="number" required>
-      Payment amount
+      Order amount, sent as a decimal number.
 
-      **Example**: `1000`
+      **Example**: `1000.0`
     </ParamField>
 
-    <ParamField path="data.extended_status" type="string" required>
-      Detailed status code for the failure. For example `FAILED`, `USER_DROPPED`, `EXPIRED` or `GATEWAY_DECLINED`. Other values may be added, so handle an unknown one gracefully.
+    <ParamField path="data.extended_status" type="string">
+      Detailed status code for the failure. For example `FAILED`, `USER_DROPPED`, `EXPIRED` or `GATEWAY_DECLINED`. Other values may be added, so handle an unknown one gracefully. Can be `null`.
 
       **Example**: `"USER_DROPPED"`
     </ParamField>
@@ -135,8 +162,8 @@ This webhook is triggered when a customer's payment attempt fails through EximPe
       Additional processor-level message; may be null
     </ParamField>
 
-    <ParamField path="data.payment_completed_at" type="string" required>
-      ISO 8601 payment completion timestamp
+    <ParamField path="data.payment_completed_at" type="string">
+      ISO 8601 payment completion timestamp. Can be `null`.
       
       **Example**: `"2026-02-15T16:53:10.000000Z"`
     </ParamField>

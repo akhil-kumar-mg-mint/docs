@@ -28,6 +28,31 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
   If no response is provided before `reply_before`, the dispute is automatically **closed in the customer's favour** (`chargeback_status` → `CLOSED_CUSTOMER_FAVOUR`) and the disputed amount is debited from the merchant.
 </Warning>
 
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured for your merchant account |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `PAYMENT_DISPUTED` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
+
 ## Payload Schema
 
 <CodeGroup>
@@ -99,14 +124,14 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
   **Example**: `"CB9442851393"`
 </ParamField>
 
-<ParamField path="data.chargeback_type" type="string" required>
-  Type of dispute raised
+<ParamField path="data.chargeback_type" type="string">
+  Type of dispute raised. Can be `null`.
 
   **Example**: `"CHARGEBACK"`
 </ParamField>
 
-<ParamField path="data.chargeback_amount" type="number" required>
-  Amount under dispute, in the payment currency
+<ParamField path="data.chargeback_amount" type="number">
+  Amount under dispute, in the payment currency. Can be `null`.
 
   **Example**: `721`
 </ParamField>
@@ -128,8 +153,8 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
   **Example**: `"CLOSED_CUSTOMER_FAVOUR"`
 </ParamField>
 
-<ParamField path="data.raised_on" type="string" required>
-  Timestamp when the dispute was raised, in ISO 8601 format
+<ParamField path="data.raised_on" type="string">
+  Timestamp when the dispute was raised, in ISO 8601 format. Can be `null`.
 
   **Example**: `"2026-06-09T03:53:48+00:00"`
 </ParamField>
@@ -141,7 +166,7 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
 </ParamField>
 
 <ParamField path="data.reason_description" type="string">
-  Human-readable reason for the dispute
+  Human-readable reason for the dispute. Can be `null`.
 
   **Example**: `"Goods or Services Not Provided / Not Received"`
 </ParamField>

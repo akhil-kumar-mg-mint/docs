@@ -11,16 +11,21 @@ You need them. There is no polling endpoint that tells you a credit landed, so w
 
 | Event | We send it when | You do this |
 | :--- | :--- | :--- |
-| **Merchant Approved** | A sub-merchant is approved | Start creating accounts and collecting for them |
-| **Payment Successful** | Money arrives and we create a payment | Begin the compliance step |
-| **LRS Verification Needed** | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
-| **Verification Needed** | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
-| **Payment Under Review** | An LRS payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for Payment Settled |
-| **Verification Status** | A filed LRS, B2B services or B2B goods verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
-| **Payment Failed** | A credit could not be processed | Investigate and reconcile |
-| **Payment Settled** | Money is settled to you | Update your books |
-| **Payment Refunded** | A refund goes through | Update your ledger, tell the buyer |
-| **Refund / Dispute Updates** | A refund status changes or a dispute moves | Track it |
+| **Merchant Approved** (`MERCHANT_APPROVED`) | A sub-merchant is approved | Start creating accounts and collecting for them |
+| **Merchant Changes Needed** (`MERCHANT_CHANGES_NEEDED`) | EximPe sends a sub-merchant's application back for changes | Fix what it names with [Update Merchant](/api-reference/v3/merchant/update) |
+| **Merchant Rejected** (`MERCHANT_REJECTED`) | EximPe rejects a sub-merchant's application | Stop onboarding that sub-merchant; it cannot collect payments |
+| **Payment Successful** (`PAYMENT_SUCCESSFUL`) | Money arrives and we create a payment | Begin the compliance step |
+| **LRS Verification Needed** (`LRS_VERIFICATION_NEEDED`) | An LRS payment still needs something — named fields, named documents, or more money | Send what it names — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification) |
+| **Verification Needed** (`VERIFICATION_NEEDED`) | A non-LRS payment needs details, or its verification becomes `IN_REVIEW` or `EXPIRED`. A **verified** payment sends nothing — there is nothing to act on | Fix what `action_required_fields` names, or record the outcome |
+| **Payment Under Review** (`PAYMENT_UNDER_REVIEW`) | An LRS payment's verification was accepted and it needs nothing further from you | Stop chasing the payer; wait for the Verification Status verdict |
+| **Verification Status** (`VERIFICATION_STATUS`) | A filed LRS, B2B services or B2B goods verification is reviewed and approved or rejected | Record the verdict; on a rejection, show the payer what the documents name |
+| **Payment Failed** (`PAYMENT_FAILED`) | A payment attempt failed or expired, or a hosted checkout ended without a payment | Investigate and reconcile |
+| **Payment Settled** (`PAYMENT_SETTLED`) | Money is settled to you | Update your books |
+| **Payment Refunded** (`PAYMENT_REFUNDED`) | A refund goes through | Update your ledger, tell the buyer |
+| **Refund Failed** (`REFUND_FAILED`) | A refund fails, or its final status could not be confirmed | Investigate and reconcile |
+| **Refund Status Update** (`REFUND_STATUS_UPDATE`) | A refund moves to a new status | Track it |
+| **Payment Disputed** (`PAYMENT_DISPUTED`) | A dispute is raised against a payment, or its status changes | Track it; respond before `reply_before` |
+| **Subscription Status** (`SUBSCRIPTION_STATUS`) | A subscription's status changes | Update the subscription in your system |
 
 Payload for each is in the [API Reference](/api-reference/v3/webhooks/payment-successful).
 
@@ -36,7 +41,7 @@ Payload for each is in the [API Reference](/api-reference/v3/webhooks/payment-su
 
 **1. Build the endpoint.** A public HTTPS URL that accepts `POST` with `application/json` and returns `200 OK`.
 
-**2. Register it.** In your EximPe Dashboard, go to **Developer** and enter the URL. If you cannot use the dashboard, send the URL and your server IP to EximPe Support instead.
+**2. Register it.** In your EximPe Dashboard, go to **Developer** and enter the URL. If you cannot use the dashboard, send the URL and your server IP to EximPe Support instead. You can set the URL once. To change it later, contact EximPe Support. If you are a PSP, deliveries start only after EximPe approves your HTTPS URL.
 
 **3. Whitelist our IPs.** The ranges are in the same Developer section. Configure your firewall to accept webhooks only from those addresses.
 
@@ -74,7 +79,7 @@ There are two headers, and you get both on every delivery:
 | `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex |
 
 <Tip>
-  **Prefer V2.** Its timestamp is signed along with the body, so a captured delivery can't be replayed later with a fresh one. Split the header on `,`, take `t` and `v2`, rebuild the hash over `t + "." + raw_body`, and reject anything whose `t` is too old. Both headers are sent on every delivery, so you can verify either. The walk-through below covers V1.
+  **Prefer V2.** Its timestamp is signed along with the body, so a captured delivery can't be replayed later with a fresh one. Split the header on `,`, take `t` and `v2`, rebuild the hash over `t + "." + raw_body`, and reject anything whose `t` is more than 5 minutes old. `t` is set fresh on every delivery attempt, so a retry passes this check. Both headers are sent on every delivery, so you can verify either. The walk-through below covers V1; the [V2 code](#v2-code) follows it.
 </Tip>
 
 <Steps>
@@ -200,6 +205,94 @@ public function webhook(Request $request) {
     Log::info('Webhook verified:', $webhookData);
     
     return response('OK', 200);
+}
+```
+
+</CodeGroup>
+
+### V2 code
+
+Read `X-Webhook-Signature-V2` off the request and pass it as `header`, with the raw body as `payload`.
+
+<CodeGroup>
+
+```javascript Node.js
+const crypto = require('crypto');
+
+const TOLERANCE_SECONDS = 300;
+
+function verifyWebhookSignatureV2(payload, header, encryptionKey) {
+  // Header format: t=<timestamp>,v2=<hex>
+  const parts = Object.fromEntries(
+    header.split(',').map((part) => part.split('='))
+  );
+  const timestamp = parts.t;
+  const signature = parts.v2;
+  if (!timestamp || !signature) return false;
+
+  // Reject deliveries older than the tolerance window
+  const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
+  if (!(age <= TOLERANCE_SECONDS)) return false;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', encryptionKey)
+    .update(`${timestamp}.${payload}`, 'utf8')
+    .digest('hex');
+
+  const received = Buffer.from(signature, 'hex');
+  const expected = Buffer.from(expectedSignature, 'hex');
+  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+}
+```
+
+```python Python
+import hmac
+import hashlib
+import time
+
+TOLERANCE_SECONDS = 300
+
+def verify_webhook_signature_v2(payload, header, encryption_key):
+    # Header format: t=<timestamp>,v2=<hex>
+    parts = dict(part.split('=', 1) for part in header.split(',') if '=' in part)
+    timestamp = parts.get('t', '')
+    signature = parts.get('v2', '')
+    if not timestamp.isdigit() or not signature:
+        return False
+
+    # Reject deliveries older than the tolerance window
+    if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+        return False
+
+    expected_signature = hmac.new(
+        encryption_key.encode('utf-8'),
+        f'{timestamp}.{payload}'.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(signature, expected_signature)
+```
+
+```php PHP
+function verifyWebhookSignatureV2($payload, $header, $encryptionKey, $tolerance = 300) {
+    // Header format: t=<timestamp>,v2=<hex>
+    $parts = [];
+    foreach (explode(',', $header) as $part) {
+        $pair = explode('=', $part, 2);
+        if (count($pair) === 2) {
+            $parts[$pair[0]] = $pair[1];
+        }
+    }
+    if (!isset($parts['t'], $parts['v2']) || !ctype_digit($parts['t'])) {
+        return false;
+    }
+
+    // Reject deliveries older than the tolerance window
+    if (abs(time() - (int) $parts['t']) > $tolerance) {
+        return false;
+    }
+
+    $expectedSignature = hash_hmac('sha256', $parts['t'] . '.' . $payload, $encryptionKey);
+    return hash_equals($expectedSignature, $parts['v2']);
 }
 ```
 

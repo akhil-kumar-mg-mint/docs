@@ -60,7 +60,7 @@ The API takes the same details as the dashboard form, checked against the same r
 | Webhook | Status after | What to do |
 |---|---|---|
 | [Merchant Approved](/api-reference/v3/webhooks/merchant-approved) | `APPROVED` | Start collecting with its merchant ID. |
-| [Merchant Changes Needed](/api-reference/v3/webhooks/merchant-changes-requested) | `CHANGES_REQUESTED` | Fix what the reasons point to with [Update Merchant](/api-reference/v3/merchant/update). |
+| [Merchant Changes Needed](/api-reference/v3/webhooks/merchant-changes-needed) | `CHANGES_REQUESTED` | Fix what the reasons point to with [Update Merchant](/api-reference/v3/merchant/update). |
 | [Merchant Rejected](/api-reference/v3/webhooks/merchant-rejected) | `REJECTED` | The application is declined. The reason is in the webhook and in `reject_reason` from [Get Merchant](/api-reference/v3/merchant/get). You can delete it with [Delete Merchant](/api-reference/v3/merchant/delete). |
 
 ### Fixing an application

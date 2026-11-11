@@ -114,7 +114,19 @@ The payment, its state, and every item it still owes and why.
     "link_id": null,
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
-    "action_required_fields": ["… the same field entries as the first example …"],
+    "action_required_fields": [
+      { "code": "buyer_name", "message": "Buyer / remitter name" },
+      { "code": "buyer_postal_code", "message": "Buyer PIN code" },
+      { "code": "buyer_email", "message": "Buyer email" },
+      { "code": "buyer_phone", "message": "Buyer phone" },
+      { "code": "invoice_number", "message": "Invoice number" },
+      { "code": "invoice_date", "message": "Invoice date" },
+      { "code": "remitter_pan", "message": "Remitter PAN" },
+      { "code": "remitter_dob", "message": "Remitter date of birth (as per PAN)" },
+      { "code": "persons", "message": "The person this remittance is for" },
+      { "code": "buyer_declaration", "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose" },
+      { "code": "amount_to_be_settled", "message": "Amount to be settled for this payment, in INR" }
+    ],
     "payment_verification_expiry": null,
     "action_required_documents": [
       { "code": "offer_letter", "message": "Letter of admission from the institution" },
@@ -137,7 +149,14 @@ The payment, its state, and every item it still owes and why.
     "verification_status": "ACTION_REQUIRED",
     "message": "LRS payment: verification details are required before settlement.",
     "action_required_fields": [
-      "… the buyer, invoice and remitter entries shared with the education examples …",
+      { "code": "buyer_name", "message": "Buyer / remitter name" },
+      { "code": "buyer_postal_code", "message": "Buyer PIN code" },
+      { "code": "buyer_email", "message": "Buyer email" },
+      { "code": "buyer_phone", "message": "Buyer phone" },
+      { "code": "invoice_number", "message": "Invoice number" },
+      { "code": "invoice_date", "message": "Invoice date" },
+      { "code": "remitter_pan", "message": "Remitter PAN" },
+      { "code": "remitter_dob", "message": "Remitter date of birth (as per PAN)" },
       { "code": "persons", "message": "Travellers on this remittance", "condition": "PASSENGER_DETAILS_LEVEL" }
     ],
     "payment_verification_expiry": null,
@@ -396,10 +415,13 @@ Each refusal is reported under the code you collected it under, so a fix goes ba
 |---|---|---|
 | `remitter_pan` | Either the PAN did not verify, or the name on the credit received does not match its verified holder. | Verify the PAN with [Verify PAN](/api-reference/v3/lrs/verify-pan), and declare the PAN of whoever actually holds the account the credit came from. |
 | `buyer_declaration` | The declaration was not affirmed. | Re-send it once the payer has consented. |
-| `persons` | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
+| `persons`, `student_name` or `primary_person_name` (whichever item the purpose code's checklist has) | The remitter is not the person the remittance is for, so that person has to be named. | Send that person in the `persons` list, with their name, relation to the remitter and date of birth — and, where the purpose code asks for it, passport number. |
 | `purpose_code` | The code is not one this account may use, or not one we recognise. | Declared on the order — use an enabled, recognised code. |
 | `derived_amount_credit_too_small` | The credit is too small to settle. | The buyer has to send a larger amount. |
+| `tcs` | The TCS sent does not match what this remittance attracts. | Get it from [LRS Quote](/api-reference/v3/lrs/quote) and re-send. |
 | A document code | Appears in `action_required_documents`. | Upload the file again and re-submit its `ref`. |
+
+Any other checklist code can also appear, with that item's label as `message`.
 
 `outstanding` is a conclusion, not a code: there is nothing to re-send under that name. The credit is short by the amount its `message` states. The buyer tops up; link the top-up with [`top_up`](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up).
 

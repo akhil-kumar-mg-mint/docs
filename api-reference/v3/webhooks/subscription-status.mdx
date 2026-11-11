@@ -11,7 +11,34 @@ description: "Technical reference for the SUBSCRIPTION_STATUS webhook event, inc
 **Category**: Subscription  
 **Description**: Subscription status has been updated
 
-This webhook is triggered when a subscription status changes or subscription information is updated.
+This webhook is triggered when a subscription's status changes.
+
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured for your merchant account |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `SUBSCRIPTION_STATUS` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
 
 ---
 
@@ -28,13 +55,13 @@ This webhook is triggered when a subscription status changes or subscription inf
     "data": {
         "subscriptions": [
             {
-                "subscription_id": "SUB123456",
+                "subscription_id": "SUB4829301756",
                 "status": "ACTIVE",
                 "billing_amount": 1000.00,
                 "billing_currency": "INR",
                 "billing_cycle": "MONTHLY",
-                "payment_start_date": "2024-01-01",
-                "payment_end_date": "2024-12-31"
+                "payment_start_date": "2026-02-15",
+                "payment_end_date": "2027-02-14"
             }
         ]
     }
@@ -80,11 +107,11 @@ This webhook is triggered when a subscription status changes or subscription inf
     <ParamField path="data.subscriptions[].subscription_id" type="string" required>
       Unique subscription identifier
 
-      **Example**: `"SUB123456"`
+      **Example**: `"SUB4829301756"`
     </ParamField>
 
     <ParamField path="data.subscriptions[].status" type="string" required>
-      Current status of the subscription
+      Current status of the subscription: `ACTIVE`, `PAUSED`, `CANCELLED`, `EXPIRED` or `FAILED`
 
       **Example**: `"ACTIVE"`
     </ParamField>
@@ -102,7 +129,7 @@ This webhook is triggered when a subscription status changes or subscription inf
     </ParamField>
 
     <ParamField path="data.subscriptions[].billing_cycle" type="string" required>
-      Billing cycle frequency
+      Billing cycle frequency: `ONCE`, `ADHOC`, `DAILY`, `WEEKLY`, `MONTHLY` or `YEARLY`
 
       **Example**: `"MONTHLY"`
     </ParamField>
@@ -110,13 +137,13 @@ This webhook is triggered when a subscription status changes or subscription inf
     <ParamField path="data.subscriptions[].payment_start_date" type="string" required>
       Start date for subscription payments in YYYY-MM-DD format
 
-      **Example**: `"2024-01-01"`
+      **Example**: `"2026-02-15"`
     </ParamField>
 
     <ParamField path="data.subscriptions[].payment_end_date" type="string" required>
       End date for subscription payments in YYYY-MM-DD format
 
-      **Example**: `"2024-12-31"`
+      **Example**: `"2027-02-14"`
     </ParamField>
   </Tab>
 </Tabs>
