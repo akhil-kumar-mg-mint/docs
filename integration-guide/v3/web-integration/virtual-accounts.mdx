@@ -9,7 +9,7 @@ Shortened to **VBA** in field names and API responses.
 
 The account sits on EximPe's master account. You do not need a bank account in India, and there is nothing for you to open or maintain.
 
-You get a webhook the moment money lands.
+You get a [Payment Successful](/api-reference/v3/webhooks/payment-successful) webhook the moment money lands.
 
 ## Before you start
 
@@ -21,7 +21,7 @@ PSPs also send `X-Merchant-ID` naming the sub-merchant the account belongs to.
 
 ## Step 1: Create the account
 
-The name, email, and phone come from the merchant account, so the request body can be empty.
+The account name and email come from your merchant account, so the request body can be empty.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
@@ -46,7 +46,7 @@ Both are optional and independent. Leave them out and the account accepts anythi
 
 ## Step 2: Give the details to your buyer
 
-The response gives you `vba_account_number` and `vba_ifsc`. Send those two to your buyer. That is all they need.
+The response gives you `data[0].vba_account_number` and `data[0].vba_ifsc`. Send those two to your buyer. That is all they need.
 
 <Note>
   Account numbers follow a fixed pattern, and the IFSC is always the same for your client code. Take both from the response rather than constructing them yourself.
@@ -54,9 +54,9 @@ The response gives you `vba_account_number` and `vba_ifsc`. Send those two to yo
 
 ## Step 3: Handle the money arriving
 
-When a credit lands we record the amount, the sender's account and IFSC, their name, and the UTR. Then we create a payment and send you a webhook.
+When a credit lands we record the amount, the sender's account and IFSC, their name, and the UTR. Then we create a payment and send you [Payment Successful](/api-reference/v3/webhooks/payment-successful), followed by [Verification Needed](/api-reference/v3/webhooks/verification-needed) with what we still need. For LRS payments the second webhook is [LRS Verification Needed](/api-reference/v3/webhooks/lrs-verification-needed).
 
-The payment status is `ACTION_REQUIRED`. We have the money but not the paperwork.
+The payment `status` is `captured` and its `settlement_status` is `action_required`. We have the money but not the paperwork.
 
 <Warning>
   **The sender on the credit does not identify the payment.** You tell us who paid, and what for, in the next step.
@@ -105,7 +105,7 @@ A credit that breaks a rule on the account (the VBA is inactive, a remitter lock
 </Note>
 
 <Card title="Simulate VBA Transfer API" icon="code" href="/api-reference/v3/vba/simulate-transfer">
-  Every field, every `status_message`, and the full response shape.
+  Every request field and every error response.
 </Card>
 
 ## Finding payments

@@ -1,7 +1,7 @@
 ---
 title: 'Mark as Settled (Sandbox)'
 description: 'Batch captured payments — plus optional refunds and chargebacks — into one settlement and fire PAYMENT_SETTLED, without waiting for real money movement.'
-openapi: 'POST /pg/settlements/mark-settled/'
+openapi: '/openapi/v3/openapi.json POST /pg/settlements/mark-settled/'
 ---
 
 <Warning>
@@ -34,6 +34,8 @@ The settlement totals are the sums across the batch:
 - `settlement_gst` = Σ GST
 
 Refunds and chargebacks carry **no fee of their own**. They debit the total at their full amount, mirroring the real settlement pipeline.
+
+If refunds and chargebacks exceed the payment net, `settlement_amount` is still returned as a positive figure. Fees are rounded down to the nearest paisa.
 
 <Accordion title="Worked example — ₹1,000 payment, ₹100 refund, ₹50 chargeback">
 ```
@@ -137,7 +139,7 @@ To exercise a **net** settlement, create a refund and a chargeback against the p
     Refunds and chargebacks carry no fee. They only reduce `settlement_amount`.
   </Accordion>
   <Accordion title="It is a POST, despite reading like a bulk update">
-    Both simulator endpoints are `POST`.
+    All three sandbox endpoints are `POST`: Mark as Settled, Set Refund Status and Simulate VBA Transfer.
   </Accordion>
 </AccordionGroup>
 
