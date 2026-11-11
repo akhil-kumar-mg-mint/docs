@@ -38,7 +38,7 @@
           }
         ],
         "requestBody": {
-          "description": "Subscription creation request with INTENT flow. Requires preferred_upi_flow_type to be 'INTENT'.",
+          "description": "Subscription creation request for the intent flow. Send `upi_flow_type` as `intent`.",
           "required": true,
           "content": {
             "application/json": {
@@ -73,15 +73,15 @@
                 },
                 "invoice": {
                   "number": "INVPUZWBY",
-                  "date": "2025-12-15"
+                  "date": "2026-12-15"
                 },
                 "standing_instruction": {
                   "billing_amount": "1000.00",
                   "billing_currency": "INR",
                   "billing_cycle": "MONTHLY",
                   "billing_interval": 1,
-                  "payment_start_date": "2026-01-15",
-                  "payment_end_date": "2027-01-15",
+                  "payment_start_date": "2027-01-15",
+                  "payment_end_date": "2028-01-15",
                   "remarks": "Monthly subscription for premium services",
                   "auto_refund_mandate": false
                 },
@@ -93,7 +93,7 @@
         },
         "responses": {
           "201": {
-            "description": "UPI Subscription created successfully",
+            "description": "UPI Intent Subscription created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,10 +101,10 @@
                 },
                 "example": {
                   "success": true,
-                  "message": "UPI Subscription created successfully",
+                  "message": "UPI Intent Subscription created successfully",
                   "data": {
-                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
-                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "order_id": "OD2000992103",
+                    "subscription_id": "SUB7989707770",
                     "subscription_type": "UPI_RECURRING",
                     "intent_uri": "pa=merchant@examplebank&pn=Merchant%20Name&am=1000.00&cu=INR&tn=Order%20Description&tr=ORD-2024-001",
                     "qr_code": {
@@ -114,8 +114,9 @@
                     "subscription": {
                       "billing_cycle": "MONTHLY",
                       "billing_interval": 1,
-                      "payment_start_date": "2024-01-01",
-                      "payment_end_date": "2024-12-31"
+                      "payment_start_date": "2027-01-15",
+                      "payment_end_date": "2028-01-15",
+                      "status": "PENDING"
                     }
                   }
                 }
@@ -217,15 +218,15 @@
                 },
                 "invoice": {
                   "number": "INVCARD001",
-                  "date": "2025-12-15"
+                  "date": "2026-12-15"
                 },
                 "standing_instruction": {
                   "billing_amount": "1000.00",
                   "billing_currency": "INR",
                   "billing_cycle": "MONTHLY",
                   "billing_interval": 1,
-                  "payment_start_date": "2026-01-15",
-                  "payment_end_date": "2027-01-15",
+                  "payment_start_date": "2027-01-15",
+                  "payment_end_date": "2028-01-15",
                   "remarks": "Monthly subscription for premium services",
                   "auto_refund_mandate": false
                 },
@@ -234,7 +235,7 @@
                   "number": "4111111111111111",
                   "cardholder_name": "John Doe",
                   "expiry_month": 12,
-                  "expiry_year": 2027,
+                  "expiry_year": 2028,
                   "cvv": "123",
                   "network": "VISA",
                   "nickname": "My Credit Card"
@@ -255,15 +256,16 @@
                   "success": true,
                   "message": "Card Subscription created successfully",
                   "data": {
-                    "order_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "order_id": "OD2000992103",
                     "subscription_type": "CARD_RECURRING",
-                    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+                    "subscription_id": "SUB7989707770",
                     "acstemplate": "<html>...</html>",
                     "subscription": {
                       "billing_cycle": "MONTHLY",
                       "billing_interval": 1,
-                      "payment_start_date": "2024-01-01",
-                      "payment_end_date": "2024-12-31"
+                      "payment_start_date": "2027-01-15",
+                      "payment_end_date": "2028-01-15",
+                      "status": "PENDING"
                     }
                   }
                 }
@@ -317,7 +319,7 @@
     "/pg/subscriptions/{subscription_id}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate",
-        "description": "Update mandate amount for a subscription.",
+        "description": "Change the mandate amount or dates of a subscription. At least one of `amount`, `start_date`, `end_date` is required. Cashfree requires `amount`. EximPe does not accept `start_date`.\n\nOn EximPe, the change is sent to the buyer's UPI app to approve. The response has `approval_pending: true`, and the subscription keeps its current terms until the buyer approves.\n\n`ADHOC`, `CANCELLED` and `EXPIRED` subscriptions cannot be modified.",
         "tags": [
           "Subscriptions"
         ],
@@ -341,7 +343,7 @@
           }
         ],
         "requestBody": {
-          "description": "Mandate modification payload. The amount field is required.",
+          "description": "Mandate modification payload. Send at least one of `amount`, `start_date`, `end_date`.",
           "required": true,
           "content": {
             "application/json": {
@@ -353,27 +355,103 @@
         },
         "responses": {
           "200": {
-            "description": "Subscription mandate modification request sent successfully",
+            "description": "The change was sent to the payment partner, or (EximPe) to the buyer to approve",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ModifySubscriptionMandateResponse"
                 },
-                "example": {
-                  "success": true,
-                  "message": "Subscription mandate modification request sent successfully",
-                  "data": {
-                    "subscription_id": "SUB7989707770",
-                    "mandate_modified": true,
-                    "updated_amount": "1500.00",
-                    "subscription_status": "INITIALIZED"
+                "examples": {
+                  "Modified": {
+                    "summary": "Change applied",
+                    "value": {
+                      "success": true,
+                      "message": "Subscription mandate modification request sent successfully",
+                      "data": {
+                        "subscription_id": "SUB7989707770",
+                        "mandate_modified": true,
+                        "updated_amount": "1500.00",
+                        "subscription_status": "ACTIVE"
+                      }
+                    }
+                  },
+                  "EximPe: awaiting buyer approval": {
+                    "summary": "EximPe: change sent to the buyer to approve",
+                    "value": {
+                      "success": true,
+                      "message": "Subscription mandate modification sent to the buyer to approve",
+                      "data": {
+                        "subscription_id": "SUB7989707770",
+                        "mandate_modified": true,
+                        "approval_pending": true,
+                        "mandate_update_id": "SMU7989707771",
+                        "requested_amount": "1500.00",
+                        "requested_end_date": null,
+                        "approve_by": "2026-11-20",
+                        "updated_amount": null,
+                        "updated_end_date": null,
+                        "updated_start_date": null,
+                        "subscription_status": "ACTIVE"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Validation / business error",
+            "description": "A field is invalid or missing, the subscription is `ADHOC`, `CANCELLED` or `EXPIRED`, a PayU card subscription was sent without `card_details`, or the payment partner refused the change",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "Nothing to change": {
+                    "summary": "No amount, start_date or end_date",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "error": "Either amount, end_date or start_date must be provided to modify mandate"
+                        }
+                      }
+                    }
+                  },
+                  "ADHOC subscription": {
+                    "summary": "ADHOC subscriptions cannot be modified",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "error": "Cannot modify mandate for an ADHOC subscription"
+                        }
+                      }
+                    }
+                  },
+                  "Card details missing": {
+                    "summary": "PayU card subscription without card_details",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "error": "card_details is required for card subscription modifications"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is suspended or closed (`ERR_MERCHANT_ACCOUNT_003`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -466,7 +544,7 @@
             }
           },
           "404": {
-            "description": "Subscription order not found",
+            "description": "The subscription has no order yet.",
             "content": {
               "application/json": {
                 "schema": {
@@ -575,7 +653,7 @@
     "/pg/subscriptions/{subscription_id}/cancel_mandate/": {
       "post": {
         "summary": "Cancel Subscription Mandate",
-        "description": "Cancel a UPI subscription mandate and mark the subscription as CANCELLED on success.",
+        "description": "Cancel a UPI or card subscription mandate and mark the subscription as CANCELLED on success.",
         "tags": [
           "Subscriptions"
         ],
@@ -598,6 +676,17 @@
             }
           }
         ],
+        "requestBody": {
+          "description": "Optional. Only AMEX card subscriptions send a body.",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelSubscriptionMandateRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Subscription mandate cancel request sent successfully",
@@ -661,6 +750,211 @@
         },
         "operationId": "v3_post_pg_subscriptions_subscription_id_cancel_mandate_"
       }
+    },
+    "/pg/subscriptions/{subscription_id}/pre_debit_notification/": {
+      "post": {
+        "summary": "Send Pre-Debit Notification",
+        "description": "Before each charge on a PayU or EximPe subscription, send this notification. It tells the buyer the debit date and amount. Then call [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment) **on** `debit_date` (IST).\n\nCashfree subscriptions do not use this endpoint. See [How charging works by payment partner](/integration-guide/v3/web-integration/manage-subscriptions#how-charging-works-by-payment-partner).\n\n**When to call**\n\n- **PayU:** `debit_date` must be after today (IST).\n- **EximPe:** at least 24 hours before `debit_date` starts (IST). Example: sent at 10:00 on 5 Nov, the earliest `debit_date` is 7 Nov.\n- More than one notification can be active, each for a different future date. A new one must be for a date **later** than every active one.",
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "description": "Subscription UID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The upcoming debit's date, amount and invoice display number.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreDebitNotificationRequest"
+              },
+              "example": {
+                "debit_date": "2026-12-05",
+                "amount": 999.0,
+                "invoice_display_number": "COURSE-INV-2026-12"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pre-debit notification sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreDebitNotificationResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Pre-debit notification triggered successfully",
+                  "data": {
+                    "subscription_id": "SUB7989707770",
+                    "debit_date": "2026-12-05",
+                    "amount": "999.00",
+                    "invoice_display_number": "COURSE-INV-2026-12",
+                    "notification_sent": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A field is invalid, the mandate is not active, or (EximPe) the notification is less than 24 hours before the debit date starts (`ERR_PAYMENT_001`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "Date not in the future": {
+                    "summary": "debit_date is today or earlier",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "debit_date": "debit_date must be greater than today"
+                        }
+                      }
+                    }
+                  },
+                  "Card without invoice number": {
+                    "summary": "Card subscription without invoice_display_number",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "invoice_display_number": "invoice_display_number is required for card subscriptions"
+                        }
+                      }
+                    }
+                  },
+                  "Amount too high": {
+                    "summary": "amount above the subscription's billing_amount",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "amount": "Pre-debit amount must be less than or equal to the subscription billing amount"
+                        }
+                      }
+                    }
+                  },
+                  "Mandate not active": {
+                    "summary": "The mandate is not active",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "error": "Subscription mandate is not active"
+                        }
+                      }
+                    }
+                  },
+                  "EximPe: too close to the debit date": {
+                    "summary": "EximPe: sent less than 24 hours before the debit date starts",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_PAYMENT_001",
+                        "message": "Validation error",
+                        "details": {
+                          "error": "The pre-debit notification must be sent at least 24 hours before the debit date starts."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your merchant account is suspended or closed (`ERR_MERCHANT_ACCOUNT_003`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A notification is already active for the same or a later date (`ERR_PAYMENT_001`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "pre_debit": "A charge is already initiated for 2026-12-05; a new one must be for a later date."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred while sending pre-debit notification"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "PayU refused the notification (`ERR_PAYMENT_003`), or the payment partner could not be reached (`ERR_GATEWAY_UNAVAILABLE`)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_subscriptions_subscription_id_pre_debit_notification_"
+      }
     }
   },
   "components": {
@@ -696,26 +990,54 @@
           "payment_start_date": {
             "type": "string",
             "format": "date",
-            "description": "First debit date (YYYY-MM-DD). Must be later than today in IST. Required unless `billing_cycle` is `ADHOC`."
+            "description": "First debit date (YYYY-MM-DD). Must be later than today in IST. Required for every `billing_cycle`, `ADHOC` included."
           },
           "payment_end_date": {
             "type": "string",
             "format": "date",
-            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be on or after payment_start_date. Required unless `billing_cycle` is `ADHOC`."
+            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be after `payment_start_date`. Required for every `billing_cycle`, `ADHOC` included."
+          },
+          "billing_date": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 31,
+            "description": "Day of the debit: 1 to 31 for the day of the month. On `WEEKLY`, 1 to 7 for Monday to Sunday. Optional."
+          },
+          "billing_limit": {
+            "type": "string",
+            "enum": [
+              "ON",
+              "BEFORE",
+              "AFTER"
+            ],
+            "default": "AFTER",
+            "description": "Whether the debit runs on, before or after the billing date. Optional; defaults to `AFTER`."
+          },
+          "billing_rule": {
+            "type": "string",
+            "enum": [
+              "MAX",
+              "EXACT"
+            ],
+            "default": "MAX",
+            "description": "`MAX`: each debit is up to `billing_amount`. `EXACT`: each debit is exactly `billing_amount`. Optional; defaults to `MAX`."
           },
           "remarks": {
             "type": "string",
-            "description": "Subscription remarks"
+            "maxLength": 50,
+            "description": "Subscription remarks, up to 50 characters."
           },
           "auto_refund_mandate": {
             "type": "boolean",
-            "description": "Whether the mandate authorisation amount is refunded once the mandate is set up."
+            "description": "Cashfree only. Whether the mandate authorisation amount is refunded once the mandate is set up."
           }
         },
         "required": [
           "billing_amount",
           "billing_currency",
-          "billing_cycle"
+          "billing_cycle",
+          "payment_start_date",
+          "payment_end_date"
         ]
       },
       "CreateOrderRequest": {
@@ -731,7 +1053,7 @@
         "properties": {
           "amount": {
             "type": "string",
-            "description": "Order amount"
+            "description": "Order amount. Must not exceed `standing_instruction.billing_amount`."
           },
           "currency": {
             "type": "string",
@@ -788,7 +1110,10 @@
                     "type": "string",
                     "description": "Postal/ZIP code"
                   }
-                }
+                },
+                "required": [
+                  "postal_code"
+                ]
               },
               "ip_address": {
                 "type": "string",
@@ -798,7 +1123,13 @@
                 "type": "string",
                 "description": "Browser/device user agent"
               }
-            }
+            },
+            "required": [
+              "name",
+              "email",
+              "phone",
+              "address"
+            ]
           },
           "product": {
             "type": "object",
@@ -814,7 +1145,7 @@
               },
               "hs_code": {
                 "type": "string",
-                "description": "8-digit HS Code"
+                "description": "8-digit HS Code. Required when `type_of_goods` is `physical_goods`."
               },
               "hs_code_description": {
                 "type": "string",
@@ -829,7 +1160,11 @@
                   "service"
                 ]
               }
-            }
+            },
+            "required": [
+              "name",
+              "type_of_goods"
+            ]
           },
           "invoice": {
             "type": "object",
@@ -844,7 +1179,27 @@
                 "format": "date",
                 "description": "Invoice date (YYYY-MM-DD)"
               }
-            }
+            },
+            "required": [
+              "number"
+            ]
+          },
+          "purpose_code": {
+            "type": "string",
+            "description": "FEMA/FETERS purpose code this order settles under (e.g. S0802). Optional \u2014 derived from the merchant's allowed purpose codes when omitted and exactly one is allowed."
+          },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "description": "Whether the buyer is a business (B2B) or a consumer (B2C). Optional \u2014 derived from the merchant's KYC when omitted."
+          },
+          "return_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional. Where the buyer is sent when the payment step finishes."
           }
         }
       },
@@ -855,6 +1210,12 @@
           },
           {
             "type": "object",
+            "required": [
+              "mop_type",
+              "collection_mode",
+              "card_details",
+              "standing_instruction"
+            ],
             "properties": {
               "standing_instruction": {
                 "$ref": "#/components/schemas/StandingInstruction"
@@ -898,6 +1259,19 @@
                   "nickname": {
                     "type": "string",
                     "description": "Card nickname for easy identification"
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "Saved card token. Send it with `identifier` instead of the full card details."
+                  },
+                  "identifier": {
+                    "type": "string",
+                    "description": "The buyer identifier the card was saved under. Send it with `token`."
+                  },
+                  "save_card": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Whether to save the card for later use. Optional; defaults to `false`."
                   }
                 }
               }
@@ -936,7 +1310,11 @@
                 "description": "Base64-encoded ACS template for 3D Secure authentication"
               },
               "subscription": {
-                "$ref": "#/components/schemas/StandingInstruction"
+                "$ref": "#/components/schemas/SubscriptionSummary"
+              },
+              "message": {
+                "type": "string",
+                "description": "A message from the payment partner, when it returns one."
               }
             }
           }
@@ -1018,7 +1396,7 @@
                 }
               },
               "subscription": {
-                "$ref": "#/components/schemas/StandingInstruction"
+                "$ref": "#/components/schemas/SubscriptionSummary"
               }
             }
           }
@@ -1026,14 +1404,29 @@
       },
       "ModifySubscriptionMandateRequest": {
         "type": "object",
-        "required": [
-          "amount"
-        ],
+        "description": "At least one of `amount`, `start_date`, `end_date` is required. Cashfree requires `amount`. EximPe does not accept `start_date`.",
         "properties": {
           "amount": {
+            "type": "number",
+            "description": "New mandate amount."
+          },
+          "start_date": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
-            "pattern": "^\\d+\\.\\d{2}$"
+            "format": "date",
+            "description": "New mandate start date (YYYY-MM-DD)."
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "description": "New mandate end date (YYYY-MM-DD). Must be on or after the start date."
+          },
+          "card_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MandateCardDetails"
+              }
+            ],
+            "description": "**Required for PayU card subscriptions.** Not needed for UPI subscriptions."
           }
         }
       },
@@ -1061,10 +1454,52 @@
                 "type": "boolean"
               },
               "updated_amount": {
-                "type": "string"
+                "type": "string",
+                "nullable": true,
+                "description": "The new mandate amount as a string. `null` while the change awaits the buyer's approval (EximPe)."
+              },
+              "updated_end_date": {
+                "type": "string",
+                "nullable": true,
+                "description": "PayU and EximPe. The new mandate end date, when you sent one. `null` while the change awaits the buyer's approval (EximPe)."
+              },
+              "updated_start_date": {
+                "type": "string",
+                "nullable": true,
+                "description": "EximPe. `null` while the change awaits the buyer's approval."
               },
               "subscription_status": {
-                "type": "string"
+                "type": "string",
+                "description": "The subscription's status after the call."
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "description": "PayU. The payment partner's message, when it returns one."
+              },
+              "approval_pending": {
+                "type": "boolean",
+                "description": "EximPe. `true` when the change awaits the buyer's approval in their UPI app. The subscription keeps its current terms until then."
+              },
+              "mandate_update_id": {
+                "type": "string",
+                "description": "EximPe. Identifier of the change awaiting approval."
+              },
+              "requested_amount": {
+                "type": "string",
+                "nullable": true,
+                "description": "EximPe. The amount you asked for, as a string."
+              },
+              "requested_end_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "EximPe. The end date you asked for (YYYY-MM-DD)."
+              },
+              "approve_by": {
+                "type": "string",
+                "format": "date",
+                "description": "EximPe. The last day the buyer can approve the change (YYYY-MM-DD)."
               }
             }
           }
@@ -1110,22 +1545,28 @@
             "type": "object",
             "properties": {
               "order_id": {
-                "type": "string"
+                "type": "string",
+                "description": "The subscription's mandate order."
               },
               "reference_id": {
-                "type": "string"
+                "type": "string",
+                "description": "The mandate order's `reference_id`."
               },
               "amount": {
-                "type": "string"
+                "type": "string",
+                "description": "The subscription's `billing_amount`, as a string (e.g. `\"1000.0\"`)."
               },
               "currency": {
-                "type": "string"
+                "type": "string",
+                "description": "ISO 4217 currency code (e.g. `INR`)."
               },
               "status": {
-                "type": "string"
+                "type": "string",
+                "description": "The subscription's status: `PENDING`, `ACTIVE`, `PAUSED`, `CANCELLED`, `EXPIRED` or `FAILED`."
               },
               "subscription_type": {
-                "type": "string"
+                "type": "string",
+                "description": "`UPI_RECURRING` or `CARD_RECURRING`."
               }
             }
           }
@@ -1187,27 +1628,163 @@
               },
               "status": {
                 "type": "string",
-                "description": "Mandate status reported by the payment gateway.",
-                "enum": [
-                  "ACTIVE",
-                  "PAUSED",
-                  "CANCELLED",
-                  "EXPIRED",
-                  "FAILED",
-                  "PENDING"
-                ]
+                "description": "The mandate status as reported by the payment partner. Values and casing vary by partner. Use `mandate_is_active` to decide whether the mandate is live."
+              },
+              "gateway_status": {
+                "type": "string",
+                "description": "The payment partner's own mandate status. Returned for some mandates."
               },
               "amount": {
                 "type": "number",
-                "description": "Billing amount (card mandates)."
+                "description": "Mandate amount. Returned when the payment partner provides it."
               },
               "mandate_start_date": {
                 "type": "string",
-                "description": "Mandate start date (card mandates)."
+                "description": "Mandate start date. Returned when the payment partner provides it."
               },
               "mandate_end_date": {
                 "type": "string",
-                "description": "Mandate end date (card mandates)."
+                "description": "Mandate end date. Returned when the payment partner provides it."
+              }
+            }
+          }
+        }
+      },
+      "SubscriptionSummary": {
+        "type": "object",
+        "description": "The subscription as created",
+        "properties": {
+          "billing_cycle": {
+            "type": "string"
+          },
+          "billing_interval": {
+            "type": "integer",
+            "nullable": true
+          },
+          "payment_start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "payment_end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string",
+            "description": "The subscription's status. `PENDING` until the buyer approves the mandate."
+          }
+        }
+      },
+      "MandateCardDetails": {
+        "type": "object",
+        "description": "Card details for a card subscription. Send `network` plus either `card_token` with `identifier`, or the full card details.",
+        "properties": {
+          "network": {
+            "type": "string",
+            "description": "Card network: `VISA`, `MASTERCARD` or `AMEX`."
+          },
+          "card_token": {
+            "type": "string",
+            "description": "Saved card token. Send it with `identifier`."
+          },
+          "identifier": {
+            "type": "string",
+            "description": "The buyer identifier the card was saved under."
+          },
+          "number": {
+            "type": "string",
+            "description": "Card number."
+          },
+          "cardholder_name": {
+            "type": "string",
+            "description": "Name on the card."
+          },
+          "expiry_month": {
+            "type": "integer",
+            "description": "Card expiry month (MM)."
+          },
+          "expiry_year": {
+            "type": "integer",
+            "description": "Card expiry year (YYYY)."
+          },
+          "cvv": {
+            "type": "string",
+            "description": "Card CVV."
+          }
+        }
+      },
+      "CancelSubscriptionMandateRequest": {
+        "type": "object",
+        "properties": {
+          "card_details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MandateCardDetails"
+              }
+            ],
+            "description": "**Required for AMEX card subscriptions**, with `network` set to `AMEX`. Not needed for other subscriptions."
+          }
+        }
+      },
+      "PreDebitNotificationRequest": {
+        "type": "object",
+        "required": [
+          "debit_date"
+        ],
+        "properties": {
+          "debit_date": {
+            "type": "string",
+            "format": "date",
+            "description": "The day you will trigger the charge (YYYY-MM-DD). Must be after today (IST)."
+          },
+          "amount": {
+            "type": "number",
+            "minimum": 0.01,
+            "description": "Up to 12 digits with 2 decimals, minimum `0.01`, at most the subscription's `billing_amount`. Defaults to `billing_amount`. The charge on `debit_date` cannot exceed it."
+          },
+          "invoice_display_number": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "**Required for card subscriptions.** Optional for UPI; on EximPe, if you leave it out, one is assigned and returned. Use a new value for each charge, and send the same value to Trigger Recurring Payment."
+          }
+        }
+      },
+      "PreDebitNotificationResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "subscription_id": {
+                "type": "string"
+              },
+              "debit_date": {
+                "type": "string",
+                "format": "date",
+                "description": "The notified debit date (YYYY-MM-DD)."
+              },
+              "amount": {
+                "type": "string",
+                "description": "The notified amount, as a string. The charge on `debit_date` cannot exceed it."
+              },
+              "invoice_display_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "The invoice display number for this charge. Send the same value to Trigger Recurring Payment."
+              },
+              "notification_sent": {
+                "type": "boolean"
               }
             }
           }

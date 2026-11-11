@@ -90,7 +90,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/card/' \
     "remarks": "Monthly subscription for premium services",
     "auto_refund_mandate": false
   },
-  "mop_type": "credit_card",
+  "mop_type": "CREDIT_CARD",
   "card_details": {
     "number": "4111111111111111",
     "cardholder_name": "John Doe",
@@ -118,7 +118,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/card/' \
       "billing_cycle": "MONTHLY",
       "billing_interval": 1,
       "payment_start_date": "2027-01-12",
-      "payment_end_date": "2028-01-12"
+      "payment_end_date": "2028-01-12",
+      "status": "PENDING"
     }
   }
 }
@@ -130,11 +131,7 @@ For the full request and response schema, see [Create Card Subscription](/api-re
 
 ## Step 2: Complete 3D Secure authentication
 
-Card mandates usually require 3D Secure authentication. If the response carries an `acstemplate`, it is a base64-encoded HTML form: decode it and render it on the client so the buyer can authenticate with their bank. The mandate becomes active only after that completes.
-
-<Note>
-  **No `acstemplate` in the response** means no 3D Secure step was required for that card. Move straight to confirming the mandate.
-</Note>
+Card mandates require 3D Secure authentication. The response carries an `acstemplate`: a base64-encoded HTML form. Decode it and render it on the client so the buyer can authenticate with their bank. The mandate becomes active only after that completes.
 
 ## Step 3: Confirm the mandate is active
 

@@ -458,6 +458,7 @@
                   "api-reference/v3/subscriptions/mandate-status",
                   "api-reference/v3/subscriptions/cancel-mandate",
                   "api-reference/v3/subscriptions/recurring-payment",
+                  "api-reference/v3/subscriptions/pre-debit-notification",
                   "api-reference/v3/subscriptions/payments"
                 ]
               },
