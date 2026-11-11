@@ -2684,7 +2684,7 @@
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN, a proposed remittance amount (INR) and the LRS purpose code, returns the TCS due and the all-in total the buyer pays. TCS depends on the purpose code. For `S0303`, `S0304`, `S0305` and `S1107` it is nil up to Rs.10,00,000 of cumulative LRS this financial year and 2% on the slice above it. `S0306` is priced by your account's travel type: a tour package is taxed 2% of the whole amount from the first rupee; other travel is nil up to Rs.10,00,000 and 20% on the slice above it. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2704,7 +2704,8 @@
                 "type": "object",
                 "required": [
                   "pan",
-                  "amount"
+                  "amount",
+                  "purpose_code"
                 ],
                 "properties": {
                   "pan": {
@@ -2719,14 +2720,21 @@
                   },
                   "purpose_code": {
                     "type": "string",
-                    "description": "Ignored. The quote is priced on `pan` and `amount` alone; accepted so existing callers keep working.",
+                    "description": "LRS purpose code of the remittance (`S0303`, `S0304`, `S0305`, `S0306`, `S1107`). Must be enabled for LRS on the account the payment settles to. It decides how TCS is charged.",
                     "example": "S0305"
+                  },
+                  "payment_id": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Send to re-quote a payment you have already submitted details for. The quote uses the TCS rate fixed at that first submit and leaves this payment's own amount out of `committed_inr`.",
+                    "example": "PR6938527534"
                   }
                 }
               },
               "example": {
                 "pan": "ABCDE1234F",
-                "amount": 1200000
+                "amount": 1200000,
+                "purpose_code": "S0305"
               }
             }
           }
@@ -2755,6 +2763,11 @@
                           "description": "The PAN the quote was run for, upper-cased.",
                           "example": "ABCDE1234F"
                         },
+                        "purpose_code": {
+                          "type": "string",
+                          "description": "The purpose code the quote was priced for, upper-cased.",
+                          "example": "S0305"
+                        },
                         "financial_year": {
                           "type": "string",
                           "description": "Financial year the quote applies to, rendered `YYYY-YY` (1 April - 31 March).",
@@ -2767,28 +2780,33 @@
                         },
                         "remittance_inr": {
                           "type": "string",
-                          "description": "The proposed remittance (INR).",
-                          "example": "1200000.00"
+                          "description": "The proposed remittance (INR). `null` when `refusal_reason` is set.",
+                          "example": "1200000.00",
+                          "nullable": true
                         },
                         "taxable_inr": {
                           "type": "string",
-                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it.",
-                          "example": "200000.00"
+                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it. `null` when `refusal_reason` is set.",
+                          "example": "200000.00",
+                          "nullable": true
                         },
                         "tcs_rate": {
                           "type": "string",
-                          "description": "The TCS rate applied, formatted for display. Flat across every supported purpose code.",
-                          "example": "2%"
+                          "description": "The TCS rate applied, formatted for display, e.g. `2%` or `20%`. `null` when `refusal_reason` is set.",
+                          "example": "2%",
+                          "nullable": true
                         },
                         "tcs_inr": {
                           "type": "string",
-                          "description": "TCS due on this remittance (INR).",
-                          "example": "4000.00"
+                          "description": "TCS due on this remittance (INR). `null` when `refusal_reason` is set.",
+                          "example": "4000.00",
+                          "nullable": true
                         },
                         "total_payable_inr": {
                           "type": "string",
-                          "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response.",
-                          "example": "1211080.00"
+                          "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response. `null` when `refusal_reason` is set.",
+                          "example": "1211080.00",
+                          "nullable": true
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
@@ -2805,10 +2823,25 @@
                           "enum": [
                             "nil_below_threshold",
                             "partial_above_threshold",
-                            "full_amount_taxable"
+                            "full_amount_taxable",
+                            "tour_package_flat_rate",
+                            null
                           ],
-                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under Rs.10L; this remittance crosses the line and only the slice above it is taxed; or the counter was already past and the whole remittance is taxable.",
-                          "example": "partial_above_threshold"
+                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under Rs.10L; this remittance crosses the line and only the slice above it is taxed; the counter was already past and the whole remittance is taxable; or the remittance is an `S0306` tour package, taxed at a flat rate from the first rupee. `null` when `refusal_reason` is set.",
+                          "example": "partial_above_threshold",
+                          "nullable": true
+                        },
+                        "tcs_category": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            "STANDARD",
+                            "S0306_TOUR_PACKAGE",
+                            "S0306_OTHER_TRAVEL",
+                            null
+                          ],
+                          "description": "The TCS category the rate comes from: `STANDARD` for every code but `S0306`, and the account's travel type on `S0306`. `null` when `refusal_reason` is set.",
+                          "example": "STANDARD"
                         },
                         "refusal_reason": {
                           "type": "string",
@@ -2820,22 +2853,52 @@
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "message": "LRS amount quoted",
-                  "data": {
-                    "pan": "ABCDE1234F",
-                    "financial_year": "2025-26",
-                    "committed_inr": "0.00",
-                    "remittance_inr": "1200000.00",
-                    "taxable_inr": "200000.00",
-                    "tcs_rate": "2%",
-                    "tcs_inr": "4000.00",
-                    "total_payable_inr": "1211080.00",
-                    "tcs_threshold_breached_before": false,
-                    "tcs_threshold_breached_after": true,
-                    "tcs_reason": "partial_above_threshold",
-                    "refusal_reason": null
+                "examples": {
+                  "quoted": {
+                    "summary": "Quoted: crosses the Rs.10,00,000 threshold",
+                    "value": {
+                      "success": true,
+                      "message": "LRS amount quoted",
+                      "data": {
+                        "pan": "ABCDE1234F",
+                        "purpose_code": "S0305",
+                        "financial_year": "2025-26",
+                        "committed_inr": "0.00",
+                        "remittance_inr": "1200000.00",
+                        "taxable_inr": "200000.00",
+                        "tcs_rate": "2%",
+                        "tcs_inr": "4000.00",
+                        "total_payable_inr": "1211080.00",
+                        "tcs_threshold_breached_before": false,
+                        "tcs_threshold_breached_after": true,
+                        "tcs_reason": "partial_above_threshold",
+                        "tcs_category": "STANDARD",
+                        "refusal_reason": null
+                      }
+                    }
+                  },
+                  "refused": {
+                    "summary": "Refused: principal over Rs 25,00,000",
+                    "value": {
+                      "success": true,
+                      "message": "LRS amount quoted",
+                      "data": {
+                        "pan": "ABCDE1234F",
+                        "purpose_code": "S0305",
+                        "financial_year": "2025-26",
+                        "committed_inr": "0.00",
+                        "remittance_inr": null,
+                        "taxable_inr": null,
+                        "tcs_rate": null,
+                        "tcs_inr": null,
+                        "total_payable_inr": null,
+                        "tcs_threshold_breached_before": false,
+                        "tcs_threshold_breached_after": true,
+                        "tcs_reason": null,
+                        "tcs_category": null,
+                        "refusal_reason": "lrs_remittance_cap_exceeded"
+                      }
+                    }
                   }
                 }
               }

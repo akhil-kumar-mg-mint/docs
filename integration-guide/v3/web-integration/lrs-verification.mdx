@@ -23,7 +23,7 @@ Two calls, in order:
 2. **[Quote LRS Amount](/api-reference/v3/lrs/quote)** — tells you the full amount to ask the buyer for, inclusive of TCS and our fee. Ask for that figure, and the payment covers itself.
 
 <Note>
-  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to, on the quote and on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details) alike — so the figure the quote returns is the figure the payment is held to, and the one `refusal.outstanding_rupees` measures a shortfall against.
+  **PSPs: the fee in that quote is the sub-merchant's.** Our fee and the GST on it resolve against the account the payment settles to. When the details are filed on [Submit Verification Details](/api-reference/v3/lrs/submit-verification-details), TCS is recomputed against the buyer's LRS usage at that moment and the fee against the payment's own payment method, so the filed figure can differ; any shortfall shows as `refusal.outstanding_rupees`.
 </Note>
 
 ## Once the money lands
@@ -64,7 +64,7 @@ If you ever need the whole picture rather than just what changed — you missed 
 
 **An unknown key is rejected, not silently dropped.** A misspelled field would otherwise leave the payment waiting forever for something you believe you sent.
 
-**Omit a key rather than sending `null` or an empty string.** A boolean is only satisfied by `true` — `false` reads as not yet answered.
+**Omit a key rather than sending `null` or an empty string.** A blank value is refused, except on the optional address lines, where it is ignored. A boolean is only satisfied by `true` — `false` reads as not yet answered.
 
 **A failed check doesn't discard what you sent.** Everything you already sent is kept. Fix only what the event names, and send that.
 

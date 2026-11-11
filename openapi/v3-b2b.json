@@ -181,6 +181,151 @@
                       }
                     }
                   },
+                  "classified_lrs": {
+                    "summary": "A classified payment (S0305, LRS education)",
+                    "description": "An LRS education payment with nothing supplied yet: the buyer and invoice basics, the remitter's identity, the declaration, the amount to be settled, the student, and the documents `S0305` asks for.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification requirements",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_id": "OD3376378679",
+                        "settlement_status": "ACTION_REQUIRED",
+                        "linked_primary_payment_id": null,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "message": "Buyer / remitter name",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_address_line_1",
+                            "message": "Buyer address line 1",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_city",
+                            "message": "Buyer city",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "message": "Buyer state",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "message": "Buyer PIN code",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_email",
+                            "message": "Buyer email",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "message": "Buyer phone",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_number",
+                            "message": "Invoice number",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_date",
+                            "message": "Invoice date",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "message": "Remitter PAN",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "message": "Remitter date of birth (as per PAN)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "message": "Amount to be settled for this payment, in INR",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "persons",
+                            "message": "The person this remittance is for",
+                            "satisfied": false,
+                            "provided": false
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "relationship_declaration",
+                            "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "PAYING_FOR_SOMEONE_ELSE"
+                          },
+                          {
+                            "code": "offer_letter",
+                            "message": "Letter of admission from the institution",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "passport",
+                            "message": "Student's passport",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_id_or_visa",
+                            "message": "Student visa or university ID card (either)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "fee_invoice",
+                            "message": "Fee invoice",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          }
+                        ],
+                        "review": {
+                          "review_state": "FRESH",
+                          "rejection_reason": "",
+                          "reviewed_at": null,
+                          "documents": []
+                        }
+                      }
+                    }
+                  },
                   "unclassified": {
                     "summary": "Nothing has classified the payment",
                     "description": "No checklist claims the payment yet, so the two facts that would resolve one are listed as ordinary outstanding fields. Send them back through the POST and the real checklist appears.",
@@ -438,6 +583,55 @@
                     ],
                     "finalize": true
                   }
+                },
+                "lrs": {
+                  "summary": "LRS (S0305, education \u2014 study abroad)",
+                  "description": "A complete LRS body: the remitter's identity, the declaration, the amount to be settled, the student as the one person, and the documents `S0305` asks for. `invoice_amount` and `declaration` are not asked for on an LRS payment.",
+                  "value": {
+                    "fields": {
+                      "buyer_name": "Ravi Kumar",
+                      "buyer_address_line_1": "12 Brigade Road",
+                      "buyer_city": "Bengaluru",
+                      "buyer_state": "Karnataka",
+                      "buyer_postal_code": "560001",
+                      "buyer_email": "ravi@example.com",
+                      "buyer_phone": "+919876543210",
+                      "invoice_number": "INV-2026-0041",
+                      "invoice_date": "2026-08-01",
+                      "remitter_pan": "ABCPK1234F",
+                      "remitter_dob": "1985-04-12",
+                      "buyer_declaration": true,
+                      "amount_to_be_settled": "150000.00"
+                    },
+                    "persons": [
+                      {
+                        "is_remitter": false,
+                        "name": "Ananya Kumar",
+                        "relation": "CHILD",
+                        "dob": "2005-09-30",
+                        "passport_number": "Z1234567"
+                      }
+                    ],
+                    "documents": [
+                      {
+                        "code": "offer_letter",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "passport",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "student_id_or_visa",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "relationship_declaration",
+                        "ref": "<ref from Upload Document>"
+                      }
+                    ],
+                    "finalize": true
+                  }
                 }
               }
             }
@@ -512,9 +706,10 @@
                                 "PAN_NOT_VERIFIED",
                                 "PAN_NAME_MISMATCH",
                                 "SENDER_NAME_MISMATCH",
+                                "S0306_TRAVEL_TYPE_NOT_CONFIGURED",
                                 null
                               ],
-                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `null` \u2014 no headline verdict; `missing` and `outstanding_rupees` are the whole story.",
+                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `S0306_TRAVEL_TYPE_NOT_CONFIGURED` \u2014 the payment is `S0306` and your account's travel type is not set; `missing` is `[\"purpose_code\"]`. Contact EximPe. `null` \u2014 no headline verdict; `missing` and `outstanding_rupees` are the whole story.",
                               "example": "PURPOSE_CODE_NOT_ALLOWED"
                             },
                             "missing": {
