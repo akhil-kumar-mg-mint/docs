@@ -21,7 +21,7 @@ Returns your payment links a page at a time, newest first. Each entry carries th
 | `ordering` | string | `-created_at` | `created_at`, `last_updated_at` or `payment_completed_at`. Prefix with `-` for descending. |
 
 <Warning>
-  **The list takes no filters.** There is no status, date or reference filter, so page through every link and filter on your side. To follow one link, call [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) with its `link_id`.
+  **The list has no status, date or reference filter.** Page through every link and filter on your side. To follow one link, call [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) with its `link_id`.
 </Warning>
 
 ## Pagination
@@ -58,8 +58,10 @@ Follow `next` until it is `null`. A page past the last one is not returned empty
 |---|---|
 | `active` | Open for payment. |
 | `paid` | Paid. This outranks expiry: a paid link reads `paid` even after its `expiry_date` passes. |
-| `expired` | Past its `expiry_date`, or deactivated — a deactivated link reads `expired`. |
+| `expired` | Past its `expiry_date`, or deactivated. |
 | `failed` | Could not be created, or closed without being paid. |
+
+A deactivated link reads `expired` or `failed`, depending on how your account collects payment links. Treat both as closed. `expiry_date` may keep its original value.
 
 <Note>
   List returns each link's status as last recorded. [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve) checks an active link for a payment before answering, so right after a payment it can read `paid` before List does.

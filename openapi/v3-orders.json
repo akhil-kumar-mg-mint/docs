@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "EximPe Payment Gateway API \u2014 v3 Orders",
-    "description": "Create Order for the v3 API. v3 supports two collection modes: Hosted Checkout and S2S UPI Intent.",
+    "description": "Create Order, Get Order Details and Get Order Status for the v3 API. v3 supports two collection modes: Hosted Checkout and S2S UPI Intent.",
     "version": "3.0.0"
   },
   "servers": [
@@ -152,7 +152,7 @@
             }
           },
           "400": {
-            "description": "The request was refused. Always `ERR_ORDER_002`; read `details`.",
+            "description": "The request was refused. `ERR_ORDER_002`, read `details`; or `ORDER_BLOCKED` when EximPe's risk checks declined the order.",
             "content": {
               "application/json": {
                 "schema": {
@@ -228,6 +228,45 @@
                         }
                       }
                     }
+                  },
+                  "Unsupported currency": {
+                    "summary": "currency is not INR",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "currency": "Unsupported currency"
+                        }
+                      }
+                    }
+                  },
+                  "Invalid MOP type": {
+                    "summary": "mop_type missing or not allowed",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "mop_type": "Invalid MOP type"
+                        }
+                      }
+                    }
+                  },
+                  "Order blocked": {
+                    "summary": "Declined by EximPe's risk checks",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ORDER_BLOCKED",
+                        "message": "This payment cannot be processed. Please use a different payment method or contact the merchant.",
+                        "details": {
+                          "payment": "This payment cannot be processed. Please use a different payment method or contact the merchant."
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -285,7 +324,7 @@
             }
           },
           "403": {
-            "description": "Your account cannot create this order \u2014 for example, S2S payments are not enabled on it",
+            "description": "Your account cannot create this order: S2S payments are not enabled on it, its setup does not permit this collection mode (`ERR_AUTH_005`), it is not configured to collect this way (`ERR_SERVICE_ERROR_000`), or it is inactive (`ERR_MERCHANT_ACCOUNT_002`), suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
             "content": {
               "application/json": {
                 "examples": {
@@ -304,6 +343,79 @@
                         "message": "Merchant account is not active",
                         "details": {
                           "authentication": "Merchant account is inactive."
+                        }
+                      }
+                    }
+                  },
+                  "Collection mode not permitted": {
+                    "summary": "Collection mode not permitted",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_005",
+                        "message": "This account's lane does not permit this collection",
+                        "details": {
+                          "collection_mode": "HOSTED_CHECKOUT is not enabled for this account."
+                        }
+                      }
+                    }
+                  },
+                  "Not configured": {
+                    "summary": "Not configured to collect this way",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SERVICE_ERROR_000",
+                        "message": "Payment gateway error",
+                        "details": {
+                          "payment_gateway": "Payment gateway not configured"
+                        }
+                      }
+                    }
+                  },
+                  "Merchant suspended": {
+                    "summary": "Merchant account suspended or closed",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_MERCHANT_ACCOUNT_003",
+                        "message": "Merchant account is suspended",
+                        "details": {
+                          "merchant_account": "Merchant account is suspended."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "EximPe or the payment network is rate limiting requests. Retry after the `Retry-After` header.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Rate limited": {
+                    "summary": "Rate limited",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_RATE_LIMIT_EXCEEDED",
+                        "message": "Too many requests. Please try again later.",
+                        "details": {
+                          "detail": "Request was throttled. Expected available in 3 seconds.",
+                          "path": "/pg/orders/"
                         }
                       }
                     }
@@ -336,6 +448,31 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "The payment network could not be reached, or returned an error. Retry shortly.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Temporarily unavailable": {
+                    "summary": "Temporarily unavailable",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_GATEWAY_UNAVAILABLE",
+                        "message": "Payment gateway temporarily unavailable",
+                        "details": {
+                          "message": "We couldn't reach the payment provider. Please try again shortly."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -343,6 +480,308 @@
             "$ref": "#/components/parameters/ApiVersion"
           }
         ]
+      }
+    },
+    "/pg/orders/{order_id}/": {
+      "get": {
+        "summary": "Get Order Details",
+        "description": "Retrieve an order by its ID: buyer, product, invoice, its payments and their settlement status.",
+        "operationId": "v3_getOrder",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "description": "The order's ID, from Create Order.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "OD4512093456"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_GetOrderResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Order fetched successfully",
+                  "data": {
+                    "order_id": "OD4512093456",
+                    "reference_id": "ORD-BOOKS-2024-3QWD98",
+                    "amount": "1899.00",
+                    "currency": "INR",
+                    "opted_mop_type": "upi",
+                    "buyer": {
+                      "name": "Vikash Gupta",
+                      "email": "vikash.gupta@edupublishers.com",
+                      "phone": "+919456789012",
+                      "address": {
+                        "line_1": "C-45, Sector 62, Institutional Area",
+                        "line_2": "Near Metro Station",
+                        "city": "Noida",
+                        "state": "Uttar Pradesh",
+                        "postal_code": "201309"
+                      },
+                      "pan_number": "ABCPV1234G",
+                      "dob": "1987-03-15"
+                    },
+                    "product": {
+                      "name": "Python Programming Book Set",
+                      "description": "Set of three printed programming textbooks",
+                      "hs_code": "49019900",
+                      "hs_code_description": "Printed books, brochures, leaflets and similar printed matter",
+                      "type_of_goods": "physical_goods"
+                    },
+                    "invoice": {
+                      "number": "INV_EDU_20241205",
+                      "date": "2024-12-05",
+                      "file": "https://eximpe.com/invoice_file.pdf"
+                    },
+                    "air_waybills": [
+                      {
+                        "number": "AWB23498234",
+                        "file": "https://eximpe.com/awb_file.pdf"
+                      }
+                    ],
+                    "payments": [
+                      {
+                        "payment_id": "PR3932678387",
+                        "mop_type": "upi",
+                        "status": "captured",
+                        "status_message": null,
+                        "settlement": {
+                          "status": "settled",
+                          "message": null,
+                          "linked_primary_payment_id": null,
+                          "settlement_details": {
+                            "settlement_id": "ST8865592169",
+                            "settlement_completed_at": "2025-08-20T20:30:00.212494Z",
+                            "settlement_currency": "USD",
+                            "transaction_amount": "1899.00",
+                            "merchant_service_fee": "37.98",
+                            "merchant_service_tax": "6.84",
+                            "merchant_net_amount": "1854.18",
+                            "sgst": "0.00",
+                            "cgst": "0.00",
+                            "igst": "0.00",
+                            "merchant_transaction_id": "OD4512093456-PR3932678387",
+                            "card_type": "domestic",
+                            "offer_service_fee": "0.00",
+                            "offer_service_tax": "0.00",
+                            "forex_rate": "86",
+                            "discount": "0.00",
+                            "additional_tdr_fee": "0.00",
+                            "additional_tdr_tax": "0.00",
+                            "total_processing_fee": "0.00",
+                            "total_service_tax": "0.00",
+                            "transaction_currency": "INR"
+                          }
+                        },
+                        "created_at": "2025-08-20T06:13:30.033816Z"
+                      }
+                    ],
+                    "business_model": "B2C",
+                    "purpose_code": "S0101",
+                    "status": "payment_successful",
+                    "status_message": "Payment captured successfully",
+                    "created_at": "2025-08-20T06:13:29.988329Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order with this ID belongs to you",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pg/orders/{order_id}/status/": {
+      "get": {
+        "summary": "Get Order Status",
+        "description": "Retrieve only an order's status. Use it for lightweight polling.",
+        "operationId": "v3_getOrderStatus",
+        "tags": [
+          "Orders"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          },
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "description": "The order's ID, from Create Order.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "OD9795883191"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order's status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_GetOrderStatusResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Order status fetched successfully",
+                  "data": {
+                    "order_id": "OD9795883191",
+                    "status": "payment_successful",
+                    "status_message": "Payment captured successfully",
+                    "created_at": "2025-11-04T10:53:33.444171Z",
+                    "last_updated_at": "2025-11-04T11:01:17.586554Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order with this ID belongs to you",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_ORDER_001",
+                    "message": "Order not found",
+                    "details": {
+                      "order_id": "Order not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "An unexpected error occurred. Please try again later"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -450,7 +889,6 @@
           "currency",
           "reference_id",
           "collection_mode",
-          "buyer",
           "product",
           "invoice"
         ],
@@ -497,12 +935,13 @@
               "debit_card",
               "upi",
               "net_banking",
+              "wallet",
               "qr"
             ]
           },
           "upi_flow_type": {
             "type": "string",
-            "description": "Required for S2S UPI Intent, where it must be `intent`. Not used by Hosted Checkout.",
+            "description": "S2S UPI Intent: optional, defaults to `intent`. Not used by Hosted Checkout.",
             "enum": [
               "intent"
             ]
@@ -521,7 +960,12 @@
             "example": "S0802"
           },
           "buyer": {
-            "$ref": "#/components/schemas/v3_Buyer"
+            "description": "Hosted Checkout: optional when your payment page asks the buyer for their details; required otherwise. S2S UPI Intent: required.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/v3_Buyer"
+              }
+            ]
           },
           "product": {
             "$ref": "#/components/schemas/v3_Product"
@@ -680,6 +1124,411 @@
               "digital_goods",
               "service"
             ]
+          }
+        }
+      },
+      "v3_OrderDetails": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "reference_id",
+          "amount",
+          "currency",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string",
+            "description": "The order's ID: `OD` followed by 10 digits."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Unique reference identifier for the order"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount in decimal format (e.g., \"100.00\")",
+            "pattern": "^\\d+\\.\\d{2}$"
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO currency code"
+          },
+          "opted_mop_type": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "credit_card",
+              "debit_card",
+              "upi",
+              "net_banking",
+              "wallet",
+              "qr",
+              "eftnet",
+              "emi",
+              "bnpl",
+              "lr",
+              "card",
+              "vba_transfer"
+            ],
+            "description": "The method of payment chosen when the order was created, in lowercase. `null` when none was chosen."
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Buyer's full name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Buyer's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Buyer's phone number with country code"
+              },
+              "address": {
+                "description": "The buyer's address. `null` when the order has no `line_1`, even if other address fields were sent.",
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/v3_OrderAddress"
+                  }
+                ]
+              },
+              "pan_number": {
+                "type": "string",
+                "nullable": true,
+                "description": "Buyer's PAN number"
+              },
+              "dob": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Buyer's date of birth"
+              }
+            },
+            "nullable": true,
+            "description": "The buyer. `null` when the order holds no buyer name, e.g. a Hosted Checkout order whose payment page asked the buyer for their details."
+          },
+          "product": {
+            "$ref": "#/components/schemas/v3_OrderProduct"
+          },
+          "invoice": {
+            "type": "object",
+            "properties": {
+              "number": {
+                "type": "string",
+                "description": "Invoice number"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Invoice date in YYYY-MM-DD format"
+              },
+              "file": {
+                "type": "string",
+                "nullable": true,
+                "description": "Invoice file URL"
+              }
+            },
+            "nullable": true,
+            "description": "Invoice details. `null` when the order has no invoice number, date or file."
+          },
+          "air_waybills": {
+            "type": "array",
+            "description": "Array of air waybill information",
+            "items": {
+              "type": "object",
+              "properties": {
+                "number": {
+                  "type": "string",
+                  "description": "Air waybill number"
+                },
+                "file": {
+                  "type": "string",
+                  "description": "Air waybill file URL"
+                }
+              }
+            }
+          },
+          "payments": {
+            "type": "array",
+            "description": "Array of payment request information",
+            "items": {
+              "$ref": "#/components/schemas/v3_OrderPayment"
+            }
+          },
+          "business_model": {
+            "type": "string",
+            "enum": [
+              "B2B",
+              "B2C"
+            ],
+            "nullable": true,
+            "description": "Whether the buyer is a business or a consumer. `null` until it is known: the order did not declare one and your KYC does not name exactly one."
+          },
+          "purpose_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "FEMA/FETERS purpose code the order settles under (e.g. `S0802`), or `null` until it is known.",
+            "example": "S0802"
+          },
+          "status": {
+            "type": "string",
+            "description": "Order status",
+            "enum": [
+              "payment_pending",
+              "payment_successful",
+              "failed"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Order status message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Order creation timestamp"
+          }
+        }
+      },
+      "v3_OrderAddress": {
+        "type": "object",
+        "required": [
+          "postal_code"
+        ],
+        "properties": {
+          "line_1": {
+            "type": "string",
+            "description": "Address line 1"
+          },
+          "line_2": {
+            "type": "string",
+            "description": "Address line 2"
+          },
+          "city": {
+            "type": "string",
+            "description": "City name"
+          },
+          "state": {
+            "type": "string",
+            "description": "State name"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "Postal/ZIP code"
+          }
+        }
+      },
+      "v3_OrderProduct": {
+        "type": "object",
+        "required": [
+          "name",
+          "type_of_goods"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Product description"
+          },
+          "hs_code": {
+            "type": "string",
+            "description": "Harmonized System code, required for physical goods"
+          },
+          "hs_code_description": {
+            "type": "string",
+            "description": "Description of the HS code"
+          },
+          "type_of_goods": {
+            "type": "string",
+            "description": "Type of goods (e.g., physical_goods)",
+            "enum": [
+              "physical_goods",
+              "digital_goods",
+              "service"
+            ]
+          }
+        }
+      },
+      "v3_OrderPayment": {
+        "type": "object",
+        "required": [
+          "payment_id",
+          "mop_type",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "description": "Payment request ID"
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "credit_card",
+              "debit_card",
+              "upi",
+              "net_banking",
+              "wallet",
+              "qr",
+              "eftnet",
+              "emi",
+              "bnpl",
+              "lr",
+              "card",
+              "vba_transfer"
+            ],
+            "description": "The method of payment used, in lowercase. `null` when none was chosen."
+          },
+          "status": {
+            "type": "string",
+            "description": "Payment status. `invalid`: the attempt was voided when its order failed.",
+            "enum": [
+              "pending",
+              "captured",
+              "failed",
+              "invalid"
+            ]
+          },
+          "status_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Payment status message"
+          },
+          "settlement": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "Settlement status, in lowercase.",
+                "enum": [
+                  "not_applicable",
+                  "payment_pending",
+                  "payment_failed",
+                  "info_pending",
+                  "ready_for_settlement",
+                  "settled",
+                  "settlement_error",
+                  "under_review",
+                  "action_required",
+                  "verified",
+                  "on_hold",
+                  "expired",
+                  "rejected"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Settlement message"
+              },
+              "linked_primary_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "For a top-up counted toward an earlier payment, that payment's `payment_id`; `status` and `message` are then read from it. Otherwise `null`."
+              },
+              "settlement_details": {
+                "type": "object",
+                "nullable": true,
+                "description": "Settlement details"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Payment request creation timestamp"
+          }
+        }
+      },
+      "v3_GetOrderResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_OrderDetails"
+          }
+        }
+      },
+      "v3_GetOrderStatusResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "order_id",
+              "status",
+              "created_at",
+              "last_updated_at"
+            ],
+            "properties": {
+              "order_id": {
+                "type": "string",
+                "description": "The order's ID."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "payment_pending",
+                  "payment_successful",
+                  "failed"
+                ],
+                "description": "`payment_pending`: no payment has gone through yet. `payment_successful`: a payment was captured. `failed`: the order failed or was abandoned."
+              },
+              "status_message": {
+                "type": "string",
+                "nullable": true,
+                "description": "Why the order is in its status, when there is a reason to give."
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the order was created. UTC, with microseconds."
+              },
+              "last_updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the order last changed. UTC, with microseconds."
+              }
+            }
           }
         }
       }

@@ -20,14 +20,14 @@ Hosted Checkout is a pre-built payment page. You create an order from your serve
 </CardGroup>
 
 <Info>
-  **Collection is only half the flow.** A successful payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required**, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance).
+  **Collection is only half the flow.** When a payment is captured it goes to **Under Review** if the order already has every detail its purpose code needs. Otherwise it goes to **Action Required** until you send what is missing. See [Step 5](#step-5-assert-compliance).
 </Info>
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
-- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`. `X-API-Version: 3.0.0` is optional; it is echoed back in the response
 - **Domain Whitelist**: Your website domain whitelisted for integration
 - **Return URL**: A URL on your site that EximPe redirects the buyer back to
 - **Webhook URL**: A secure endpoint to receive payment status updates
@@ -37,11 +37,13 @@ Before you begin, ensure you have:
   PSP callers additionally send `X-Merchant-ID` naming the sub-merchant the order belongs to.
 </Note>
 
-The integration is three steps, plus verification:
+The integration is five steps:
 
 1. **Your backend creates an order** and receives a `session_id`.
 2. **Your frontend opens the checkout page** with that session, via the EximPe JS SDK.
 3. **Your backend confirms the outcome** from the Order Status API or the webhook.
+4. **Your backend verifies the callback hash** on the redirect to your `return_url`.
+5. **You send the compliance details** the payment still needs.
 
 ## Step 1: Create an order
 
@@ -103,7 +105,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
 <Note>
   `collection_mode` has no server-side default — send `"hosted_payment"` explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
 
-  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`) only to pre-select a method on the checkout page.
+  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr`) only to pre-select a method on the checkout page.
 </Note>
 
 <Warning>
@@ -153,7 +155,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
 
 ### Error handling
 
-`checkout()` returns a promise — always attach a `.catch()`. An invalid or expired session surfaces as:
+`checkout()` returns a promise — always attach a `.catch()`. An invalid or expired session surfaces as a `401`:
 
 ```json
 {
@@ -167,6 +169,10 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
   }
 }
 ```
+
+<Note>
+  **The `error.code` can be `ERR_AUTH_000` or `ERR_AUTH_004`** (`message` `Invalid session ID`). In both, `details.session_id` reads `Invalid or expired session`. Branch on `details.session_id`, not on the code.
+</Note>
 
 <Note>
   **Common causes**: the session is older than 15 minutes, it is malformed, or it has already been used for a completed payment. In every case the fix is the same — create a new order.
@@ -230,8 +236,8 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/orders/OD5916184980/status/' \
     "order_id": "OD5916184980",
     "status": "payment_successful",
     "status_message": "Payment captured successfully",
-    "created_at": "2025-09-04T10:12:41Z",
-    "last_updated_at": "2025-09-04T10:15:48Z"
+    "created_at": "2025-09-04T10:12:41.123456Z",
+    "last_updated_at": "2025-09-04T10:15:48.654321Z"
   }
 }
 ```
@@ -281,7 +287,7 @@ curl '{return_url}' \
 | `message` | Human-readable status message |
 | `mop_type` | Method of payment (`UPI`, `CREDIT_CARD`, …) |
 | `bank_ref_num` | Bank reference number |
-| `payment_completed_at` | Payment completion timestamp |
+| `payment_completed_at` | Payment completion timestamp. Hash it exactly as posted; do not reparse or reformat it, as it can carry fractional seconds |
 | `hash` | HMAC-SHA256 signature over the fields below |
 
 The hash is an HMAC-SHA256 over exactly six fields, in this order, joined with `|`, keyed by your encryption key:
@@ -345,11 +351,16 @@ def handle_payment_callback(request):
 
 ## Step 5: Assert compliance
 
-A collected payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
+When a payment is captured it goes to **Under Review** if the order already has every detail its purpose code needs. Otherwise it goes to **Action Required** until you send what is missing.
 
-<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-  What a payment needs, and how to send it.
-</Card>
+<CardGroup cols={2}>
+  <Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+    What an LRS payment needs, and how to send it.
+  </Card>
+  <Card title="B2B Services Verification" icon="briefcase" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    What a B2B services payment needs, and how to send it.
+  </Card>
+</CardGroup>
 
 ## Security Notes
 

@@ -292,7 +292,7 @@
             }
           },
           "429": {
-            "description": "The payment network is rate limiting requests",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -892,7 +892,7 @@
     "/pg/payment-links/{link_id}/deactivate/": {
       "post": {
         "summary": "Deactivate Payment Link",
-        "description": "Close an active payment link so it takes no further payment. A deactivated link reads expired.",
+        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links. Treat both as closed.",
         "operationId": "v3_deactivatePaymentLink",
         "tags": [
           "Payment Links"
@@ -1068,7 +1068,7 @@
             }
           },
           "429": {
-            "description": "The payment network is rate limiting requests",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -1598,7 +1598,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links."
           }
         }
       },
@@ -1653,7 +1653,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the link stops accepting payment; the moment of deactivation for a deactivated link. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link stops accepting payment. For a deactivated link, either the moment of deactivation or its original value. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
           },
           "mop_type": {
             "type": "string",
@@ -1798,7 +1798,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`, depending on how your account collects payment links."
           },
           "status_message": {
             "type": "string",

@@ -14,7 +14,7 @@ Returns the full record of one payment: the order it belongs to, the settlement 
 
 ## Payment status
 
-`status` is the payment's status as recorded: `pending`, `captured` or `failed`.
+`status` is the payment's status as recorded: `pending`, `captured`, `failed` or `invalid`. `invalid` means the attempt was voided when its order failed.
 
 <Note>
   **A pending payment that has expired still reads `pending` here.** [List Payments](/api-reference/v3/payment/list) shows the same payment as `failed`. Treat a `pending` payment whose order has passed its expiry as failed.
@@ -33,7 +33,7 @@ Returns the full record of one payment: the order it belongs to, the settlement 
 
 | `mop_type` | `mop_detail` |
 |---|---|
-| `upi` | `vpa` |
+| `upi` | `vpa`, masked, e.g. `ra****@okhdfc` |
 | `credit_card`, `debit_card` | `card_last_4_digits`, `card_holder_name`, `card_issuer_country`, `card_issuer_bank` |
 | `net_banking` | `bank_ref_num`, `acq_id` |
 | `qr`, or any other method | `null` |

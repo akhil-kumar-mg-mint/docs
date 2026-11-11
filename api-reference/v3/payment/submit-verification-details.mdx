@@ -1,7 +1,7 @@
 ---
 title: 'Submit Payment Verification Details'
 description: 'Send a payment’s verification details — buyer, invoice and goods fields — in a single JSON call.'
-openapi: 'POST /pg/payments/{payment_id}/verification/'
+openapi: '/openapi/v3-b2b.json POST /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -12,11 +12,11 @@ Use it when you receive a [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/ver
 
 ## When this applies
 
-Credits that land in a Virtual Bank Account create a payment against an order. If that order is missing anything the payment needs before it can settle, the platform emits `VERIFICATION_NEEDED` naming exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
+Every payment is made against an order, however it was collected: Hosted Checkout, S2S UPI Intent, a payment link or a Virtual Bank Account credit. If that order is missing anything the payment needs before it can settle, the platform emits `VERIFICATION_NEEDED` naming exactly which fields are absent. This endpoint is how you supply them programmatically, rather than editing the order in the dashboard.
 
 <Steps>
   <Step title="Payment recorded">
-    A credit is received and a payment is created against the order.
+    The buyer pays and a payment is created against the order.
   </Step>
   <Step title="Missing fields reported">
     [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) fires with an `action_required_fields` array naming each one.
@@ -31,7 +31,7 @@ Credits that land in a Virtual Bank Account create a payment against an order. I
 
 ## A worked example
 
-Your answers go in `fields`, keyed by code; files you have already uploaded go in `documents` as `{ "code": …, "ref": … }`.
+Your answers go in `fields`, keyed by code; files you have already uploaded go in `documents` as `{ "code": …, "ref": … }`. A document entry can carry `waiver_reason` (up to 500 characters) instead of `ref`, never both. LRS payments also send `persons` and `top_up`; see [LRS Submit Verification Details](/api-reference/v3/lrs/submit-verification-details).
 
 ```json
 {
@@ -97,7 +97,7 @@ A goods payment is asked for the buyer's IEC, and it is **checked with the issue
 </Warning>
 
 <Warning>
-  **`business_model` and `purpose_code` must travel together, and only once.** Send one without the other and the call is refused naming the one you left out; once set, sending either again is a `400`. A purpose code that does not belong to the business model is refused with `ERR_IMPORT_VERIFICATION_003`, `details.purpose_code` naming the pair.
+  **Send whichever of `business_model` and `purpose_code` is missing.** Once set, sending a different value is a `400`: `Already set on the order; it cannot be changed here.` Re-sending the same value is accepted. A purpose code that does not belong to the business model is refused with `ERR_IMPORT_VERIFICATION_003`, `details.purpose_code` naming the pair.
 </Warning>
 
 ## Send as much or as little as you have
@@ -109,7 +109,7 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
 </Note>
 
 <Note>
-  **The response `status` tells you the outcome:** `in_review`, `action_required` or `complete`. The shape of your call is the same for every payment.
+  **The response `status` tells you the outcome:** `incomplete`, `complete`, `in_review` or `action_required`. The shape of your call is the same for every payment.
 </Note>
 
 <Warning>
@@ -125,7 +125,7 @@ Send three fields today and two tomorrow and you have sent five. Nothing you sen
   "data": {
     "payment_id": "PR7712349900",
     "status": "incomplete",
-    "outstanding": ["invoice_number", "hs_code"]
+    "outstanding": ["invoice_date", "iec"]
   }
 }
 ```
@@ -156,7 +156,7 @@ Document entries in the `VERIFICATION_STATUS` event carry `code`, `message`, `do
 
 ## Errors
 
-A refused send answers in the standard error envelope, with `details` keyed by the offending code — so one call reports every problem at once:
+A refused send answers in the standard error envelope. `details` is keyed by the offending code, except for `40360`, where it is a plain string. One call reports every problem at once:
 
 ```json
 {
@@ -180,6 +180,11 @@ Some refusals carry a code of their own:
 | `400` | `ERR_DECLARATION_001` | `declaration` was sent as something other than `true` or `false`. `details` names the field. |
 | `400` | `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together, e.g. a business buyer filing a travel code. `details.purpose_code` names the pair. |
 | `400` | `ERR_B2B_GOODS_IEC_001` | All 5 IEC checks for the order have been used. |
+| `400` | `ERR_LRS_MERCHANT_047` | The payment is a top-up; send details on the payment it tops up. |
+| `400` | `ERR_LRS_MERCHANT_022` | `amount_to_be_settled` was sent, but EximPe works it out for your account; leave it out. |
+| `400` | `40355` | The details could not be processed. `details` says why. |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | Too many requests. Retry after the `Retry-After` header. |
+| `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached. Retry the same call. |
 | `503` | `ERR_B2B_GOODS_IEC_002` | The IEC check could not run. Retry the same call. |
 
 | Message | Cause |
@@ -196,6 +201,7 @@ Some refusals carry a code of their own:
 | `Enter a valid Indian PIN code.` | `buyer_postal_code` is not in the India Post directory. |
 | `Enter a valid email address.` | `buyer_email` is not an email address. |
 | `Enter a valid PAN in the format ABCDE1234F.` | `remitter_pan` is not in PAN format. |
+| `This document cannot be waived.` | A `waiver_reason` was sent for a document that must be uploaded. |
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
 | `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
 

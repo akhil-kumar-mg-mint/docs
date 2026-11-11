@@ -175,7 +175,7 @@
             "name": "status",
             "in": "query",
             "required": false,
-            "description": "`pending`, `captured` or `failed`. Case-insensitive; comma-separate several values. Matches the status as recorded — see the note on expired payments.",
+            "description": "`pending`, `captured`, `failed` or `invalid`. Case-insensitive; comma-separate several values. Matches the status as recorded — see the note on expired payments.",
             "schema": {
               "type": "string",
               "example": "captured"
@@ -471,7 +471,7 @@
                         "mop_type": "upi",
                         "bank_ref_num": "629012345678",
                         "mop_detail": {
-                          "vpa": "rahul@okhdfc"
+                          "vpa": "ra****@okhdfc"
                         },
                         "payment_completed_at": "2026-10-15T06:45:02.000000Z",
                         "status": "captured",
@@ -781,11 +781,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Payment status. A pending payment past its expiry reads `failed` here.",
+            "description": "Payment status. A pending payment past its expiry reads `failed` here. `invalid`: the attempt was voided when its order failed.",
             "enum": [
               "pending",
               "captured",
-              "failed"
+              "failed",
+              "invalid"
             ]
           }
         }
@@ -1120,7 +1121,7 @@
                 "properties": {
                   "vpa": {
                     "type": "string",
-                    "description": "Payer VPA.",
+                    "description": "Payer VPA, masked: the first 2 characters of the user part and the handle, e.g. `ra****@okhdfc`.",
                     "nullable": true
                   }
                 }
@@ -1177,11 +1178,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Payment status as recorded. Unlike List Payments, a pending payment past its expiry still reads `pending` here.",
+            "description": "Payment status as recorded. Unlike List Payments, a pending payment past its expiry still reads `pending` here. `invalid`: the attempt was voided when its order failed.",
             "enum": [
               "pending",
               "captured",
-              "failed"
+              "failed",
+              "invalid"
             ]
           },
           "status_message": {

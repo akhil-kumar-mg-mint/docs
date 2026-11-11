@@ -24,7 +24,7 @@ Both return an `order_id`. A successful create returns `201 Created`.
 |---|---|---|
 | `X-Client-ID` | Yes | Your Client ID, from Developer Settings in the merchant dashboard. |
 | `X-Client-Secret` | Yes | Your Client Secret. Keep it on your server. |
-| `X-API-Version` | Recommended | `3.0.0`. It selects the API version; it is not a credential. |
+| `X-API-Version` | No | `3.0.0`. Optional; it is echoed back in the response. It is not a credential. |
 | `X-Merchant-ID` | PSPs only | The sub-merchant the order is for. Required when you authenticate as a PSP; merchants using their own credentials leave it out. |
 | `Content-Type` | Yes | `application/json` |
 
@@ -38,7 +38,7 @@ Both return an `order_id`. A successful create returns `201 Created`.
 |---|---|---|
 | `collection_mode` | `hosted_payment` | `s2s` |
 | `mop_type` | Optional. Pre-selects a payment method on the payment page | Must be `upi` |
-| `upi_flow_type` | Not used | Must be `intent` |
+| `upi_flow_type` | Not used | Optional; defaults to `intent` |
 | `buyer.ip_address`, `buyer.user_agent` | Not used; EximPe captures them on the payment page | Required |
 | `return_url` | Optional. Where the customer lands after paying | Not used; the customer is not redirected |
 | Returns | `order_id`, `session_id` | `order_id`, `intent_uri`, `expires_at` |
@@ -59,12 +59,12 @@ Fields not listed as required are optional. "Conditional" means the field is req
 | currency | string | Yes | ISO 4217 currency code. | `INR` |
 | reference_id | string | Yes | Your reference for the order. | 1–50 chars; letters, numbers and hyphens only (`ORDER-123456`, not `ORDER_123456`); unique across your orders. See [Duplicate requests](#duplicate-requests) |
 | collection_mode | string | Yes | How the payment is collected. | `hosted_payment` or `s2s`; no default |
-| mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `upi`, `net_banking`, `qr`. S2S UPI Intent: required, `upi` |
-| upi_flow_type | string | Conditional | UPI flow. | S2S UPI Intent: required, `intent` |
+| mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `upi`, `net_banking`, `wallet`, `qr`. S2S UPI Intent: required, `upi` |
+| upi_flow_type | string | No | UPI flow. | S2S UPI Intent: optional, defaults to `intent` |
 | return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
 | business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; derived from your KYC when omitted |
 | purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`); derived from your KYC when omitted |
-| buyer | object | Yes | The buyer. | See Buyer |
+| buyer | object | Conditional | The buyer. | Hosted Checkout: optional when your payment page asks the buyer for their details; required otherwise. S2S UPI Intent: required. See Buyer |
 | product | object | Yes | What is being sold. | See Product |
 | invoice | object | Yes | Invoice metadata. | See Invoice |
 
@@ -201,13 +201,13 @@ A successful create returns `201 Created`.
 - `order_id`: The order's ID
 - `intent_uri`: The UPI payment request to open the customer's UPI app with. See [Invoking the intent](#invoking-the-intent)
 - `expires_at`: When the intent stops accepting payment, in UTC — 5 minutes after creation
-- `test_simulator_url`: **Sandbox only.** Open it in a browser to complete the payment without a real UPI app; the result follows the test VPA you use in the simulator. Not returned in production
+- `test_simulator_url`: **Sandbox only.** Open it in a browser to complete the payment without a real UPI app, and choose the outcome there. On some sandbox accounts the outcome follows the test VPA instead: `testsuccess@gocash` succeeds, `testfailure@gocash` fails. Not returned in production
 
 Sandbox responses may carry other testing fields. Ignore any field not listed here.
 
 ### Invoking the intent
 
-Depending on how your account collects UPI, `intent_uri` comes either as a complete URI (`upi://pay?pa=...`) or as its query string alone (`pa=...&pn=...`). Handle both: if it does not start with `upi://`, prefix it with `upi://pay?` before invoking it, and never add a second scheme. See the [integration guide](/integration-guide/v3/web-integration/s2s-upi-intent#step-3-invoke-upi-intent) for Android, iOS and desktop handling.
+Depending on how your account collects UPI, `intent_uri` comes either as a complete URI (`upi://pay?pa=...`) or as its query string alone (`pa=...&pn=...`). Handle both. For a QR code or the generic `upi://pay?` intent, use it as is if it starts with `upi://`; otherwise prefix it with `upi://pay?`. Never add a second scheme. For the Android `intent://pay?` and iOS app-scheme formats, use the query string only: strip a leading `upi://pay?` first. See the [integration guide](/integration-guide/v3/web-integration/s2s-upi-intent#step-3-invoke-upi-intent) for Android, iOS and desktop handling.
 
 <CodeGroup>
 
@@ -251,7 +251,7 @@ Depending on how your account collects UPI, `intent_uri` comes either as a compl
 
 ## Errors
 
-Refusals use the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` always carries `ERR_ORDER_002` — read `details` to see what failed and fix that field before retrying.
+Refusals use the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` carries `ERR_ORDER_002`, except an order declined by risk checks (`ORDER_BLOCKED`) — read `details` to see what failed and fix that field before retrying.
 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
@@ -269,7 +269,15 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 | `401` | `ERR_AUTH_000` | A PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
 | `401` | `ERR_AUTH_001` | `X-Merchant-ID` is not one of your active sub-merchants | `{"authentication": "Invalid X-Merchant-ID provided."}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_002` | Your merchant account is not active | `{"authentication": "Merchant account is inactive."}` |
+| `400` | `ERR_ORDER_002` | `currency` is not `INR` | `{"currency": "Unsupported currency"}` |
+| `400` | `ERR_ORDER_002` | `mop_type` is missing or not allowed | `{"mop_type": "Invalid MOP type"}` |
+| `400` | `ORDER_BLOCKED` | The order was declined by EximPe's risk checks | `{"payment": "This payment cannot be processed. Please use a different payment method or contact the merchant."}` |
 | `403` | — | S2S payments are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
+| `403` | `ERR_AUTH_005` | Your account's setup does not permit this collection mode | e.g. `{"collection_mode": "HOSTED_CHECKOUT is not enabled for this account."}` |
+| `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect this way | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your merchant account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}` |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe or the payment network is rate limiting requests | Retry after the `Retry-After` header |
+| `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached, or returned an error | Retry shortly |
 | `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
 
 ```json Duplicate reference_id

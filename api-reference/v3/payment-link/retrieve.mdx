@@ -37,8 +37,10 @@ PSPs do not need `X-Merchant-ID` here: a sub-merchant's link is found without it
 |---|---|
 | `active` | Open for payment. |
 | `paid` | Paid. This outranks expiry: a paid link reads `paid` even after its `expiry_date` passes. |
-| `expired` | Past its `expiry_date`, or deactivated — a deactivated link reads `expired`. |
+| `expired` | Past its `expiry_date`, or deactivated. |
 | `failed` | Could not be created, or closed without being paid. |
+
+A deactivated link reads `expired` or `failed`, depending on how your account collects payment links. Treat both as closed. `expiry_date` may keep its original value.
 
 ## How the link was paid
 
@@ -93,12 +95,12 @@ A link the buyer paid on their second try, with the rest of the response left ou
 </Note>
 
 - `link_id`: The link's ID. `payment_id` is the same value, kept for compatibility.
-- `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
+- `expiry_date`: When the link stops accepting payment. For a deactivated link, either the moment it was deactivated or its original value.
 - `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after. `payments` gives the method of each payment.
 - `buyer`, `product`, `invoice`: As sent on create.
   - `buyer.pan_number` and `buyer.dob` are `null` unless they were collected from the buyer.
   - `product.hs_code` and `product.hs_code_description` are `null`: the link does not store them.
   - `invoice.date` and `invoice.file` are `null` unless they were added to the order later.
-- `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes. When `paid_payment_id` differs from `link_id`, the money moved on that payment rather than on the link, and `settlement` does not follow it: reconcile by `paid_payment_id`.
+- `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes. When `paid_payment_id` differs from `link_id`, the money moved on that payment, and `settlement` is read from it: reconcile by `paid_payment_id`.
 - `status_message`: Why the link failed or closed, when there is a reason to give; otherwise `null`.
 - `created_at` and the other timestamps are UTC with microseconds, e.g. `2026-09-14T09:30:15.123456Z`.

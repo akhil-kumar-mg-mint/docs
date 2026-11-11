@@ -144,7 +144,7 @@ Two IDs are in play: the link's `link_id`, and the `payment_id` of each payment 
 
 On some accounts a link and its payment share one ID, so a webhook's `payment_id` and `link_id` are the same value. Handle both cases the same way: match on `link_id`, refund by `payment_id`.
 
-Where each try is a payment of its own, a try that fails sends no webhook: the link stays open and the buyer can pay again through it. If the link closes without being paid — it expires, you deactivate it, or 20 tries have failed — one [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) arrives for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it, and it is not a payment the payments API returns: look the link up by `link_id` with [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve).
+Where each try is a payment of its own, a try that fails sends no webhook: the link stays open and the buyer can pay again through it. If the link closes without being paid — it expires, you deactivate it, or 20 tries have failed — and no try is under way, one [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) arrives for the link itself, with `payment_id` equal to `link_id`. There is nothing to refund on it, and it is not a payment the payments API returns: look the link up by `link_id` with [Retrieve Payment Link](/api-reference/v3/payment-link/retrieve). If a try is under way when the link closes, that try decides: it pays the link, or it ends with one `PAYMENT_FAILED` for its own `payment_id`, with the link's `link_id`.
 
 ## Errors
 
@@ -164,7 +164,7 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
 | `403` | — | Payment links are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit payment links | `{"collection_mode": "PAYMENT_LINKS is not enabled for this account."}` |
 | `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect through payment links | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
-| `429` | `ERR_RATE_LIMIT_EXCEEDED` | The payment network is rate limiting requests | Retry after the `Retry-After` header, when it is sent |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe's rate limit or the payment network is limiting requests | Retry after the `Retry-After` header |
 | `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached, or returned an error | Retry shortly |
 | `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
 
