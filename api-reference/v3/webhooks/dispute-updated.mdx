@@ -25,7 +25,7 @@ When you receive a `PAYMENT_DISPUTED` event, respond before the deadline:
 4. Upload your supporting documents and submit your response **before the `reply_before` time**.
 
 <Warning>
-  If no response is provided before `reply_before`, the dispute is automatically **closed in the customer's favour** (`chargeback_status` → `CLOSED_CUSTOMER_FAVOUR`) and the disputed amount is debited from the merchant.
+  If you don't respond by `reply_before`, the payment partner may close the dispute in the customer's favour, and the disputed amount is debited.
 </Warning>
 
 ---

@@ -1045,7 +1045,7 @@
                             },
                             "ifsc": {
                               "type": "string",
-                              "description": "Optional. When present, a transfer matches this entry only if the remitter's IFSC matches too. Omit to match on the account number alone.",
+                              "description": "Optional. If you leave out `ifsc`, only the account number is matched; if you include it, the payer's IFSC must match too.",
                               "example": "YESB0000262"
                             }
                           }
@@ -1577,7 +1577,7 @@
                             },
                             "ifsc": {
                               "type": "string",
-                              "description": "Optional. When present, a transfer matches this entry only if the remitter's IFSC matches too. Omit to match on the account number alone.",
+                              "description": "Optional. If you leave out `ifsc`, only the account number is matched; if you include it, the payer's IFSC must match too.",
                               "example": "YESB0000262"
                             }
                           }
