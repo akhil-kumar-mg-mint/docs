@@ -67,7 +67,7 @@ Fields not listed as required are optional. "Conditional" means the field is req
 | return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
 | business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; derived from your KYC when omitted |
 | purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`). When omitted, it is filled in only if your account has exactly one allowed purpose code |
-| buyer | object | Conditional | The buyer. | Hosted Checkout: optional when your payment page asks the buyer for their details; required otherwise. S2S UPI Intent and Collect: required. See Buyer |
+| buyer | object | Yes | The buyer paying for this order. `name`, `email`, `phone` and `address` (including `postal_code`) are required. | See Buyer |
 | product | object | Yes | What is being sold. | See Product |
 | invoice | object | Yes | Invoice metadata. | See Invoice |
 

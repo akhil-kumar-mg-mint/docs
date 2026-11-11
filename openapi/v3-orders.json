@@ -989,6 +989,7 @@
           "currency",
           "reference_id",
           "collection_mode",
+          "buyer",
           "product",
           "invoice"
         ],
@@ -1067,7 +1068,7 @@
             "example": "S0802"
           },
           "buyer": {
-            "description": "Hosted Checkout: optional when your payment page asks the buyer for their details; required otherwise. S2S UPI Intent: required.",
+            "description": "The buyer paying for this order. `name`, `email`, `phone` and `address` (including `postal_code`) are required.",
             "allOf": [
               {
                 "$ref": "#/components/schemas/v3_Buyer"
