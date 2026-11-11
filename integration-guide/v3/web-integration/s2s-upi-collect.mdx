@@ -26,7 +26,7 @@ With S2S UPI Collect, the buyer types their UPI ID (VPA) on your page and your b
 | What the buyer gives you | Their UPI ID | Nothing; they pick an app or scan a QR code |
 | How the payment starts | A request arrives in the buyer's UPI app | Your page opens the UPI app or shows a QR code |
 | `upi_flow_type` | `collection` | `intent` |
-| You get back | `order_id` | `order_id`, `intent_uri`, `expires_at` |
+| You get back | `order_id`, `expires_at` | `order_id`, `intent_uri`, `expires_at` |
 
 ## Prerequisites
 
@@ -114,7 +114,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
   "message": "S2S UPI Request created successfully",
   "data": {
     "order_id": "OD2000992104",
-    "message": "UPI Collection request sent"
+    "message": "UPI Collection request sent",
+    "expires_at": "2026-11-10T10:35:00.156967Z"
   }
 }
 ```
@@ -129,11 +130,13 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
   - `upi_flow_type`: `"collection"`. It is not case-sensitive, and `"collect"` is refused
   - `vpa`: the buyer's UPI ID
   - `buyer.ip_address` and `buyer.user_agent`: the buyer's device IP address and browser or app user agent
+
+  Optionally, send `upi_expiry_minutes` (5–20, default 5) to give the buyer longer to approve.
 </Note>
 
 A `201` means the request reached the payment network, not that the buyer has paid. The order is now `payment_pending`. Tell the buyer to open their UPI app and approve the request, and keep your page waiting for the outcome.
 
-The response has no `intent_uri` and no `expires_at`. There is nothing to invoke on the buyer's device.
+The response has no `intent_uri`; there is nothing to invoke on the buyer's device. It carries `expires_at`, in UTC: `upi_expiry_minutes` after creation (5 minutes if you did not send it), or sooner if the payment method allows less.
 
 ### When the request is refused
 
@@ -145,6 +148,7 @@ Field errors come back as `400` with `ERR_ORDER_002`, keyed by field. No order i
 | `{"vpa": "Invalid VPA"}` | `vpa` does not match the format in [Step 1](#step-1-ask-for-the-buyers-upi-id) |
 | `{"upi_flow_type": "UPI flow type must be one of: INTENT, COLLECTION"}` | Any value other than `intent` or `collection`, including `collect` |
 | `{"mop_type": "Invalid MOP type"}` | `mop_type` was left out or is not `upi` |
+| `{"upi_expiry_minutes": "Ensure this value is greater than or equal to 5."}` | `upi_expiry_minutes` is below 5; above 20 says `less than or equal to 20` |
 
 If the payment network cannot be reached, Create Order returns `502` with `ERR_GATEWAY_UNAVAILABLE` or `ERR_PAYMENT_003`. Retry with a new `reference_id`.
 
@@ -156,7 +160,7 @@ If the payment network cannot be reached, Create Order returns `502` with `ERR_G
 
 The buyer sees the request in their UPI app, checks the amount and payee, and approves it with their UPI PIN. Your page has nothing to call in the meantime. Show a "waiting for approval" state and tell the buyer which app to open.
 
-The request expires if the buyer does not approve it in time. How long that is depends on how your account collects UPI, so don't build in a fixed countdown. When the request expires or the buyer declines it, the order fails and you receive `PAYMENT_FAILED`.
+The request expires if the buyer does not approve it in time. Show the buyer how long they have from `expires_at`, but don't fail the order yourself when it passes: wait for the outcome, which can arrive some minutes later. When the request expires or the buyer declines it, the order fails and you receive `PAYMENT_FAILED`.
 
 <Tip>
   If the buyer typed the wrong UPI ID, the request went to someone else's app or nowhere at all. Let them correct it and start a new order with a new `reference_id`.
