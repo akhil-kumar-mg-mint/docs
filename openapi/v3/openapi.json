@@ -42,7 +42,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/v1_CreateRefundRequest"
+                "$ref": "#/components/schemas/v3_CreateRefundRequest"
               },
               "example": {
                 "payment_id": "PR2024120567891",
@@ -58,7 +58,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetRefundResponse"
+                  "$ref": "#/components/schemas/v3_GetRefundResponse"
                 },
                 "example": {
                   "success": true,
@@ -82,7 +82,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Payment not found": {
@@ -171,7 +171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -257,7 +257,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListRefundsResponse"
+                  "$ref": "#/components/schemas/v3_ListRefundsResponse"
                 },
                 "example": {
                   "count": 4,
@@ -296,7 +296,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -351,7 +351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetRefundResponse"
+                  "$ref": "#/components/schemas/v3_GetRefundResponse"
                 },
                 "example": {
                   "success": true,
@@ -376,7 +376,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -401,7 +401,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Refund not found": {
@@ -465,7 +465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListSettlementsResponse"
+                  "$ref": "#/components/schemas/v3_ListSettlementsResponse"
                 },
                 "example": {
                   "success": true,
@@ -530,7 +530,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetSettlementResponse"
+                  "$ref": "#/components/schemas/v3_GetSettlementResponse"
                 },
                 "example": {
                   "success": true,
@@ -565,7 +565,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -604,7 +604,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListMerchantsResponse"
+                  "$ref": "#/components/schemas/v3_ListMerchantsResponse"
                 },
                 "example": {
                   "success": true,
@@ -651,7 +651,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -687,7 +687,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/v1_CreateMerchantRequest"
+                "$ref": "#/components/schemas/v3_CreateMerchantRequest"
               },
               "example": {
                 "settlement_details": {
@@ -744,7 +744,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_CreateMerchantResponse"
+                  "$ref": "#/components/schemas/v3_CreateMerchantResponse"
                 },
                 "example": {
                   "success": true,
@@ -809,7 +809,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -831,7 +831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
                   "success": false,
@@ -881,7 +881,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetMerchantResponse"
+                  "$ref": "#/components/schemas/v3_GetMerchantResponse"
                 },
                 "example": {
                   "success": true,
@@ -946,7 +946,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -984,7 +984,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/v1_UpdateMerchantRequest"
+                "$ref": "#/components/schemas/v3_UpdateMerchantRequest"
               },
               "example": {
                 "company_details": {
@@ -1038,7 +1038,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_UpdateMerchantResponse"
+                  "$ref": "#/components/schemas/v3_UpdateMerchantResponse"
                 },
                 "example": {
                   "success": true,
@@ -1059,7 +1059,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1069,7 +1069,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1451,7 +1451,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1461,7 +1461,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1471,7 +1471,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1481,7 +1481,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1491,7 +1491,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1648,7 +1648,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1658,7 +1658,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1668,7 +1668,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1678,7 +1678,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1688,7 +1688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1698,7 +1698,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1941,7 +1941,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1951,7 +1951,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1961,7 +1961,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1971,7 +1971,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1981,7 +1981,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2120,7 +2120,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2130,7 +2130,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2140,7 +2140,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2150,7 +2150,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2160,7 +2160,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -7793,25 +7793,6 @@
             "items": {
               "type": "string"
             }
-          }
-        }
-      },
-      "v1_ErrorResponse": {
-        "type": "object",
-        "required": [
-          "success",
-          "error"
-        ],
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [
-              false
-            ],
-            "description": "Indicates if the request was successful. Always false for error responses."
-          },
-          "error": {
-            "$ref": "#/components/schemas/v1_ErrorDetails"
           }
         }
       },
