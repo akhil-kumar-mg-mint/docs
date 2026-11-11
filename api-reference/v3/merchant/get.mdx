@@ -30,8 +30,8 @@ Returns one of your sub-merchants: every field you sent when you created or last
 | changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
 | section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
-| created_at | string | Time of creation, UTC, ISO 8601 without a timezone suffix. |
-| updated_at | string | Time of the last change, UTC, ISO 8601 without a timezone suffix. |
+| created_at | string | Time of creation, UTC, ISO 8601 with microseconds and a `Z` suffix, e.g. `2026-04-28T06:30:00.000000Z`. |
+| updated_at | string | Time of the last change, UTC, ISO 8601 with microseconds and a `Z` suffix. |
 
 <CodeGroup>
 
@@ -109,8 +109,8 @@ Returns one of your sub-merchants: every field you sent when you created or last
       }
     ],
     "reject_reason": null,
-    "created_at": "2026-04-28T06:30:00",
-    "updated_at": "2026-04-29T11:02:41"
+    "created_at": "2026-04-28T06:30:00.000000Z",
+    "updated_at": "2026-04-29T11:02:41.000000Z"
   }
 }
 ```
@@ -133,6 +133,8 @@ Returns one of your sub-merchants: every field you sent when you created or last
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account, or the sub-merchant, is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
 | `404` | `ERR_MERCHANT_016` | No sub-merchant with this ID belongs to you, or it has been deleted | `{}`. Check the ID. The same answer is given whether the ID does not exist or belongs to someone else |

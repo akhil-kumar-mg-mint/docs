@@ -54,12 +54,14 @@ The upload is accepted in any status. The invoice is not returned by [Get Mercha
 
 ## Errors
 
-Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages; otherwise it is an empty object. See [Create Merchant](/api-reference/v3/merchant/create#errors).
+Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages. A `404` and a `403` `ERR_MERCHANT_017` carry an empty object; any other `403` carries an object. See [Create Merchant](/api-reference/v3/merchant/create#errors).
 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `400` | `ERR_MERCHANT_001` | `document_type` or `file` is missing, `document_type` is not `INVOICE`, or the file breaks a rule above | Keyed by field, each with a list of reasons, e.g. `{"document_type": ["\"RECEIPT\" is not a valid choice."]}`. Fix it and upload again |
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account, or the sub-merchant, is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
 | `404` | `ERR_MERCHANT_016` | No sub-merchant with this ID belongs to you, or it has been deleted | `{}`. Check the ID |

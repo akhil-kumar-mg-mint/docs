@@ -39,7 +39,7 @@ As a PSP you collect on behalf of other businesses. Each one is onboarded as a *
 
 5. Click **Add**.
 
-In sandbox the sub-merchant is activated within seconds and you can start collecting for them straight away.
+In sandbox the sub-merchant may start `PENDING`. If it does, ask the EximPe team to approve it, or add it over the API, where sandbox approves it at once.
 
 ## Then use their merchant ID
 
@@ -53,7 +53,7 @@ The API takes the same details as the dashboard form, checked against the same r
   **Import PSPs only.** Managing sub-merchants over the API is open to PSPs set up for import collections. Other accounts get a `403`.
 </Note>
 
-1. **Fetch the allowed values.** Country, organisation type, volume band and business category accept only listed values, and nationality takes the listed nationalities. [Get Merchant Options](/api-reference/v3/merchant/options) returns them, including the business categories you are approved for. Goods categories also need HS codes, which you find with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Bank details can be filled from the SWIFT code; see [Look Up SWIFT Code](/api-reference/v3/merchant/swift).
+1. **Fetch the allowed values.** Country, organisation type, volume band and business category accept only listed values, and nationality takes the listed nationalities or any other value made of letters and spaces. [Get Merchant Options](/api-reference/v3/merchant/options) returns them, including the business categories you are approved for. Goods categories also need HS codes, which you find with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Bank details can be filled from the SWIFT code; see [Look Up SWIFT Code](/api-reference/v3/merchant/swift).
 2. **Create the sub-merchant** with [Create Merchant](/api-reference/v3/merchant/create). In sandbox it is approved at once. In production it starts `PENDING` and EximPe reviews it.
 3. **Wait for the decision.** EximPe sends one of three webhooks to your webhook URL:
 

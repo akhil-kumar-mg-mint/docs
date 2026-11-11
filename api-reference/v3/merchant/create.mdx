@@ -13,7 +13,7 @@ The status a new sub-merchant starts in depends on the environment:
 | Environment | Starting status | What happens next |
 |---|---|---|
 | Sandbox | `APPROVED` | Activated at once. You receive the `MERCHANT_APPROVED` webhook and can collect for it straight away. |
-| Production | `PENDING` | EximPe reviews the application. You receive a webhook when it is approved, rejected, or sent back for changes. |
+| Production | `PENDING` | EximPe reviews the application. You receive the [Merchant Approved](/api-reference/v3/webhooks/merchant-approved), [Merchant Rejected](/api-reference/v3/webhooks/merchant-rejected) or [Merchant Changes Needed](/api-reference/v3/webhooks/merchant-changes-requested) webhook with the decision. |
 
 <Note>
   **Edit, resubmit and delete cannot be tried on sandbox sub-merchants you create.** A sub-merchant created through the API in sandbox is approved immediately, so it is never `PENDING`, `CHANGES_REQUESTED` or `REJECTED` there. [Update Merchant](/api-reference/v3/merchant/update) and [Delete Merchant](/api-reference/v3/merchant/delete) refuse it with a `409`, and it can never be resubmitted. The API offers no way to change this. Contact EximPe if you need a sandbox sub-merchant in another status to test with.
@@ -49,25 +49,25 @@ All fields sit inside `global_company`.
 
 | Name | Type | Required | Description | Constraints |
 |---|---|---|---|---|
-| registration_number | string | Yes | Company registration number. | 5–25 characters |
-| tax_id | string | Yes | Tax identification number. | 5–20 characters |
+| registration_number | string | Yes | Company registration number. | 5–25 characters: upper-case letters, digits, `-` and `/`; no spaces |
+| tax_id | string | Yes | Tax identification number. | 5–20 characters: upper-case letters, digits and `-`; no spaces or dots |
 | international_org_type | string | Yes | Type of organisation. | One of the [organisation types](/api-reference/v3/merchant/options#organisation-types) |
 | website | string | Yes | Company website. | 12–508 characters, starting with `https://` and including a domain, e.g. `https://example.com`. `http://` is refused |
 | monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | One of the [volume bands](/api-reference/v3/merchant/options#monthly-volume-bands) |
 | business_category | string | Yes | What the sub-merchant sells, as category slugs. | One or more slugs from your approved categories, comma-separated, e.g. `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See [Business categories](/api-reference/v3/merchant/options#business-categories) |
 | hs_codes | string[] | When a goods category is selected | HS codes for the goods traded. | Each code must exist; find them with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Refused when no goods category is selected |
-| mcc | string | Yes | Merchant Category Codes. | Comma-separated 4-digit codes, e.g. `5734` or `5411,5812` |
-| description_of_products_and_services | string | Yes | What the sub-merchant sells. | 20–300 characters |
-| agreement_details | string | Yes | The agreement you hold with the sub-merchant. | 20–300 characters |
-| registered_address | string | Yes | Registered office address. | 2–250 characters |
-| registered_city | string | Yes | Registered office city. | 2–150 characters |
-| registered_state | string | Yes | Registered office state or province. | 2–150 characters |
+| mcc | string | Yes | Merchant Category Codes. | Comma-separated 4-digit codes, e.g. `5734` or `5411,5812`. Up to 100 characters |
+| description_of_products_and_services | string | Yes | What the sub-merchant sells. | 20–300 characters. Same characters as `registered_address` |
+| agreement_details | string | Yes | The agreement you hold with the sub-merchant. | 20–300 characters: letters, digits, spaces and `. , - # / ( ) & '` |
+| registered_address | string | Yes | Registered office address. | 2–250 characters: letters A–Z, digits, spaces and `. , - ' & ( ) /` |
+| registered_city | string | Yes | Registered office city. | 2–150 characters. Same characters as `registered_address` |
+| registered_state | string | Yes | Registered office state or province. | 2–150 characters. Same characters as `registered_address` |
 | registered_country | string | Yes | Registered office country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
 | registered_pincode | string | Yes | Registered office postal code. | 1–10 letters, digits, spaces or hyphens, starting and ending with a letter or digit |
 | same_as_registered_address | boolean | Yes | Whether the communication address is the registered address. | `true` or `false` |
-| communication_address | string | When `same_as_registered_address` is `false` | Communication address. | 2–250 characters |
-| communication_city | string | When `same_as_registered_address` is `false` | Communication city. | 2–150 characters |
-| communication_state | string | When `same_as_registered_address` is `false` | Communication state or province. | 2–150 characters |
+| communication_address | string | When `same_as_registered_address` is `false` | Communication address. | 2–250 characters. Same characters as `registered_address` |
+| communication_city | string | When `same_as_registered_address` is `false` | Communication city. | 2–150 characters. Same characters as `registered_address` |
+| communication_state | string | When `same_as_registered_address` is `false` | Communication state or province. | 2–150 characters. Same characters as `registered_address` |
 | communication_country | string | When `same_as_registered_address` is `false` | Communication country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
 | communication_pincode | string | When `same_as_registered_address` is `false` | Communication postal code. | Same rule as `registered_pincode` |
 
@@ -82,11 +82,11 @@ All fields sit inside `settlement_details`.
 | bank_account_number | string | Yes | Account number or IBAN. | 10–34 uppercase letters and digits |
 | bank_account_name | string | Yes | Name on the account. | 2–80 characters. Same characters as `legal_name` |
 | bank_swift_code | string | Yes | SWIFT/BIC code. | 8 or 11 characters, upper case: 6 letters, then 2 letters or digits, then an optional 3-character branch code of letters or digits, e.g. `HDFCINBB` or `HDFCINBB123` |
-| bank_state | string | Yes | Branch state or province. | 2–150 characters |
-| bank_name | string | No, filled from `bank_swift_code` | Name of the bank. | 2–150 characters |
-| bank_branch_name | string | No, filled from `bank_swift_code` | Branch name. | 2–150 characters |
-| bank_address | string | No, filled from `bank_swift_code` | Branch address. | 20–150 characters |
-| bank_city | string | No, filled from `bank_swift_code` | Branch city. | 2–150 characters |
+| bank_state | string | Yes | Branch state or province. | 2–150 characters. Same characters as `registered_address` |
+| bank_name | string | No, filled from `bank_swift_code` | Name of the bank. | 2–150 characters. Same characters as `registered_address` |
+| bank_branch_name | string | No, filled from `bank_swift_code` | Branch name. | 2–150 characters. Same characters as `registered_address` |
+| bank_address | string | No, filled from `bank_swift_code` | Branch address. | 20–150 characters. Same characters as `registered_address` |
+| bank_city | string | No, filled from `bank_swift_code` | Branch city. | 2–150 characters. Same characters as `registered_address` |
 | bank_country | string | No, filled from `bank_swift_code` | Branch country. | One of the [countries](/api-reference/v3/merchant/options#countries) |
 | bank_pincode | string | No, filled from `bank_swift_code` | Branch postal code. | Same rule as `registered_pincode` |
 | routing_number | string | No | Routing number, sort code or IFSC. | 6–12 uppercase letters and digits |
@@ -126,7 +126,7 @@ Each owner is either a person (`INDIVIDUAL`) or a company (`INSTITUTIONAL`).
 | first_name | string | When `type` is `INDIVIDUAL` | The person's first name. | 2–50 letters, spaces, `.`, `-` or `'` |
 | last_name | string | When `type` is `INDIVIDUAL` | The person's last name. | Same rule as `first_name` |
 | email | string | When `type` is `INDIVIDUAL` | The person's email address. | A valid email address |
-| nationality | string | When `type` is `INDIVIDUAL` | The person's nationality. | A nationality, e.g. `Indian`. See the [supported values](/api-reference/v3/merchant/options#nationalities). Letters only |
+| nationality | string | When `type` is `INDIVIDUAL` | The person's nationality. | A nationality, e.g. `Indian`. See the [supported values](/api-reference/v3/merchant/options#nationalities). A value not on the list is accepted as sent if it has only letters and spaces |
 | date_of_birth | string | When `type` is `INDIVIDUAL` | The person's date of birth. | `YYYY-MM-DD`. The owner must be 18–80 years old |
 | authorized_user_name | string | When `type` is `INSTITUTIONAL` | The company's name. | 2–50 letters, spaces, `.`, `-` or `'` |
 | country_of_incorporation | string | When `type` is `INSTITUTIONAL` | Where the company is incorporated. | One of the [countries](/api-reference/v3/merchant/options#countries) |
@@ -269,8 +269,8 @@ Refused fields are listed in the same response as any other problems in the requ
 | global_company.hs_codes | string[] \| null | The HS codes stored for the sub-merchant. `null` or an empty list when it has none. |
 | settlement_currency | string \| null | ISO currency code the sub-merchant is paid out in. |
 | beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name, and `identify_number` is `null` for an `INDIVIDUAL` owner. Empty list when your account does not collect under EximPe's licence. |
-| created_at | string | Time of creation, UTC, ISO 8601 without a timezone suffix. |
-| updated_at | string | Time of the last change, UTC, ISO 8601 without a timezone suffix. |
+| created_at | string | Time of creation, UTC, ISO 8601 with microseconds and a `Z` suffix, e.g. `2026-04-28T06:30:00.000000Z`. |
+| updated_at | string | Time of the last change, UTC, ISO 8601 with microseconds and a `Z` suffix. |
 
 <CodeGroup>
 
@@ -357,8 +357,8 @@ Refused fields are listed in the same response as any other problems in the requ
     "changes_requested_reason": null,
     "section_reasons": [],
     "reject_reason": null,
-    "created_at": "2026-04-28T06:30:00",
-    "updated_at": "2026-04-28T06:30:00"
+    "created_at": "2026-04-28T06:30:00.000000Z",
+    "updated_at": "2026-04-28T06:30:00.000000Z"
   }
 }
 ```
@@ -435,28 +435,31 @@ Every error uses the standard envelope: `{ "success": false, "error": { "code", 
 | `400` | `ERR_MERCHANT_001` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `{"global_company": {"non_field_errors": ["Add at least one HSN code for a goods business category."]}}` or `{"global_company": {"non_field_errors": ["HSN codes apply only to a goods business category."]}}` |
 | `400` | `ERR_MERCHANT_001` | An HS code EximPe does not recognise | `{"global_company": {"hs_codes": [...]}}`, listing the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/merchant/hs-codes) |
 | `400` | `ERR_MERCHANT_001` | Owners sent on a partner-licence account, or owners totalling over 100% | e.g. `{"beneficial_owners": ["Beneficial owners are only supported for EXIMPE CB sub-merchants"]}`. See [Which licence applies to you](#beneficial-owners) |
-| `400` | `ERR_MERCHANT_001` | A beneficial owner's name is too short or long, or has characters that are not allowed | One entry per owner, e.g. `{"beneficial_owners": [{"authorized_user_name": ["authorized_user_name must be 2-50 characters"]}]}` |
+| `400` | `ERR_MERCHANT_001` | A beneficial owner's name is too short or long, has characters that are not allowed, or a field its `type` needs is missing | One entry per owner. A person's `first_name`, `last_name` and `email` problems are keyed by field, e.g. `{"beneficial_owners": [{"first_name": ["This field is required for Individual UBOs."]}]}`. A company owner's name, and any other field its `type` needs, are reported under `non_field_errors`, e.g. `{"beneficial_owners": [{"non_field_errors": ["authorized_user_name must be 2-50 characters"]}]}` |
 | `400` | `ERR_MERCHANT_001` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `{"settlement_details": {"bank_address": [...]}}`, naming the field. Send that field yourself |
 | `400` | `ERR_MERCHANT_001` | A field not listed on this page is sent, at the top level, in `global_company`, in `settlement_details` or in an owner | Each field where you sent it, e.g. `{"business_mode": ["business_mode is not accepted"]}`. Remove it |
 | `400` | `ERR_MERCHANT_005` when it is the only problem, otherwise `ERR_MERCHANT_001` | `status`, `sub_merchant_status` or `is_active` sent | Each one sent, e.g. `{"status": ["status cannot be set"]}`. Remove the field |
 | `400` | `ERR_MERCHANT_019` when it is the only problem, otherwise `ERR_MERCHANT_001` | Bank fields were left out and no bank details were found for `bank_swift_code`, or the bank details found have no value for some of them | Each field still missing, and `bank_swift_code` when no details were found, e.g. `{"settlement_details": {"bank_swift_code": ["Bank details could not be found for bank_swift_code"], "bank_city": ["bank_city could not be found from bank_swift_code; send bank_city"]}}`. Send them, or check the code |
 | `400` | `ERR_MERCHANT_006` when it is the only problem, otherwise `ERR_MERCHANT_001` | `bank_country` was left out and the bank's country is not one of the supported countries | `{"settlement_details": {"bank_country": ["bank_country could not be matched from bank_swift_code; send bank_country"]}}`. Send `bank_country` |
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can onboard sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can onboard sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
 
 <AccordionGroup>
 <Accordion title="How details is shaped">
 
-`details` takes one of two shapes:
+`details` takes one of three shapes:
 
-- **An object keyed by field,** for every `400`. Each field maps to a list of every problem found with it, e.g. `"tax_id": ["Invalid input: @@", "Ensure this field has at least 5 characters."]`. Fields inside `global_company` and `settlement_details` are nested under those keys. `beneficial_owners` holds either a list of reasons about the owners as a whole, or a list with one entry per owner you sent, each an object keyed by the owner's fields (`{}` for an owner with no errors). A rule that spans several fields, such as the communication address or the HS code rule, is reported under `non_field_errors` inside the object it belongs to, e.g. `details.global_company.non_field_errors`.
-- **An empty object** `{}`, when there is nothing to add to `message`, such as a `403`, `404` or `409`.
+- **An object keyed by field,** for every `400`. Each field maps to a list of every problem found with it, e.g. `"tax_id": ["Invalid input: @@", "Ensure this field has at least 5 characters."]`. Fields inside `global_company` and `settlement_details` are nested under those keys. `beneficial_owners` holds either a list of reasons about the owners as a whole, or a list with one entry per owner you sent, each an object keyed by the owner's fields (`{}` for an owner with no errors). A rule that spans several fields, such as the communication address or the HS code rule, is reported under `non_field_errors` inside the object it belongs to, e.g. `details.global_company.non_field_errors`. `details` is also an object on a `403` `ERR_AUTH_003`, `ERR_MERCHANT_ACCOUNT_002` or `ERR_MERCHANT_ACCOUNT_003`, e.g. `{"authentication": "This endpoint is only accessible to PSP merchants."}`.
+- **A string**, the reason, on a `409`, e.g. `"Sub-Merchant can only be edited while Pending or Changes Requested"`.
+- **An empty object** `{}` on a `404` or a `403` `ERR_MERCHANT_017`.
 
 </Accordion>
 <Accordion title="Every problem in one response">
 
-A `400` lists every problem EximPe finds in the request, so you can fix them all before you send it again. Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill appear in `details` alongside the other field errors.
+A `400` lists every problem EximPe finds in the request, with two exceptions: when `same_as_registered_address` is `false`, only the first missing communication field is reported, and each owner reports only the first missing field for its `type`. Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill appear in `details` alongside the other field errors.
 
 </Accordion>
 <Accordion title="Rules across fields are checked last">

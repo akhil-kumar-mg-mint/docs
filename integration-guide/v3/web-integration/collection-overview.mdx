@@ -33,9 +33,9 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step before the payment and no tax — on a payment EximPe collects, the buying business's PAN is checked once the payment succeeds. See [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
   </Step>
   <Step title="Get your money">
-    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
+    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. What reaches you depends on the payment; see [What it costs you](#what-it-costs-you).
 
-    [What it costs you](/integration-guide/v3/getting-started/faqs#what-does-it-cost-me) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
+    [What it costs you](#what-it-costs-you) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
 </Steps>
 
@@ -84,8 +84,22 @@ These are not the same number, and mixing them up is the most common way a payme
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
 <Note>
-  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credit itself, read from the payment.
+  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credited amount minus the MDR and the GST on that MDR, read from the payment.
 </Note>
+
+## What it costs you
+
+On an LRS payment nothing comes out of the amount to be settled. The buyer pays the amount to be collected: the amount to be settled, plus these charges on top.
+
+| Charge | What it is |
+| :--- | :--- |
+| **MDR** | Our processing fee. Your rate is agreed with your account manager. |
+| **GST on the MDR** | Indian tax on that fee. |
+| **TCS** | Tax collected at source on the buyer's remittance, where it applies. |
+
+The quote does not break out the MDR and the GST on the MDR. If you need them itemised, ask your account manager.
+
+On every other payment, including B2B services and B2B goods, the MDR and the GST on the MDR are deducted from the amount we settle to you.
 
 ## Payment statuses
 
