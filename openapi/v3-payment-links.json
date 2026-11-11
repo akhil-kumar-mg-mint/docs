@@ -24,8 +24,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -376,7 +375,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       },
       "get": {
         "summary": "List Payment Links",
@@ -388,8 +392,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -433,6 +436,9 @@
               ],
               "default": "-created_at"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -632,8 +638,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -646,6 +651,9 @@
               "type": "string",
               "example": "PR4829301756"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -901,8 +909,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -915,6 +922,9 @@
               "type": "string",
               "example": "PR4829301756"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1181,14 +1191,6 @@
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
-        "name": "X-API-Version",
-        "in": "header",
-        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
       }
     },
     "schemas": {
@@ -2112,6 +2114,22 @@
             "description": "Why the request was refused"
           }
         }
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": false,
+        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }

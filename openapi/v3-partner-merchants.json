@@ -14,8 +14,7 @@
   "security": [
     {
       "clientAuth": [],
-      "clientSecretAuth": [],
-      "apiVersionHeader": []
+      "clientSecretAuth": []
     }
   ],
   "tags": [
@@ -34,8 +33,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -81,6 +79,9 @@
                 "-created_at"
               ]
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -243,8 +244,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "requestBody": {
@@ -484,7 +484,12 @@
             }
           }
         },
-        "operationId": "v3_createMerchant"
+        "operationId": "v3_createMerchant",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/partners/merchants/options/": {
@@ -497,8 +502,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "responses": {
@@ -601,7 +605,12 @@
             }
           }
         },
-        "operationId": "v3_getMerchantOptions"
+        "operationId": "v3_getMerchantOptions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/partners/merchants/hs-codes/": {
@@ -614,8 +623,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -648,6 +656,9 @@
               "default": 250,
               "maximum": 1000
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -732,8 +743,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -746,6 +756,9 @@
               "type": "string",
               "pattern": "^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -842,8 +855,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -855,6 +867,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1008,8 +1023,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -1021,6 +1035,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -1257,8 +1274,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -1270,6 +1286,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1378,8 +1397,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -1391,6 +1409,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -1560,14 +1581,6 @@
         "description": "**Client Secret Key** - Your secret key used alongside the Client ID for secure authentication. Keep this confidential and never expose it in client-side code. Available in the Developer Settings section of the merchant dashboard.",
         "x-displayName": "Client Secret",
         "x-example": "your-client-secret"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
-        "name": "X-API-Version",
-        "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
       }
     },
     "schemas": {
@@ -2973,6 +2986,22 @@
             }
           }
         }
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": false,
+        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }
