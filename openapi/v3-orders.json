@@ -303,6 +303,19 @@
                       }
                     }
                   },
+                  "Card not enabled": {
+                    "summary": "mop_type card, card payments not enabled",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "mop_type": "CARD is not enabled for this account."
+                        }
+                      }
+                    }
+                  },
                   "Order blocked": {
                     "summary": "Declined by EximPe's risk checks",
                     "value": {
@@ -1016,10 +1029,11 @@
           },
           "mop_type": {
             "type": "string",
-            "description": "Hosted Checkout: optional, pre-selects a payment method on the payment page. S2S UPI Intent and Collect: required, must be `upi`.",
+            "description": "Hosted Checkout: optional, limits the payment page to one payment method. `card` lets the buyer pay by credit or debit card, and needs card payments enabled on your account. S2S UPI Intent and Collect: required, must be `upi`.",
             "enum": [
               "credit_card",
               "debit_card",
+              "card",
               "upi",
               "net_banking",
               "wallet",

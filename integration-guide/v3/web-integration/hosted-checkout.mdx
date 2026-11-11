@@ -105,7 +105,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
 <Note>
   `collection_mode` has no server-side default — send `"hosted_payment"` explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
 
-  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr`) only to pre-select a method on the checkout page.
+  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `card`, `net_banking`, `wallet`, `qr`) only to limit the checkout page to one method. `card` offers both credit and debit cards; it is refused at order creation with `{"mop_type": "CARD is not enabled for this account."}` when card payments are not enabled on your account.
 </Note>
 
 <Warning>
