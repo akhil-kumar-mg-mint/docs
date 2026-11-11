@@ -279,7 +279,7 @@
           {
             "name": "from_date",
             "in": "query",
-            "description": "Refunds created on or after this date. Format: YYYY-MM-DD. A date in another format is ignored, and the filter is not applied.",
+            "description": "Refunds created on or after this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
@@ -288,7 +288,7 @@
           {
             "name": "to_date",
             "in": "query",
-            "description": "Refunds created up to and including this date. Format: YYYY-MM-DD. A date in another format is ignored, and the filter is not applied.",
+            "description": "Refunds created up to and including this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
@@ -523,7 +523,7 @@
           {
             "name": "from_date",
             "in": "query",
-            "description": "Filter settlements from this date. Format: YYYY-MM-DD. A date in another format is ignored, and the filter is not applied.",
+            "description": "Filter settlements from this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
@@ -532,7 +532,7 @@
           {
             "name": "to_date",
             "in": "query",
-            "description": "Filter settlements up to this date. Format: YYYY-MM-DD. A date in another format is ignored, and the filter is not applied.",
+            "description": "Filter settlements up to this date. Format: YYYY-MM-DD.",
             "schema": {
               "type": "string",
               "format": "date"
@@ -8865,7 +8865,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

@@ -14,7 +14,7 @@ You get a [Payment Successful](/api-reference/v3/webhooks/payment-successful) we
 ## Before you start
 
 - An approved merchant account with virtual accounts enabled
-- Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes the version used
+- Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes it back
 - A webhook URL on your account
 
 PSPs also send `X-Merchant-ID` naming the sub-merchant the account belongs to.
@@ -96,9 +96,9 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
 
 <Warning>Sandbox only. In production the endpoint answers `403` and nothing is simulated.</Warning>
 
-You get back the payment the credit created — `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
+What comes back depends on how the virtual account is provisioned: an acknowledgement of the transfer, or the payment the credit created. Confirm the credit with [Get VBA Payment by UTR](/api-reference/v3/vba/get-payment-by-utr) or the payment webhook. `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
 
-A credit that breaks a rule on the account (the VBA is inactive, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded rather than rejected — we never drop real money — and comes back `failed` with the reason in `status_message`.
+A credit that breaks a rule on the account (the VBA is inactive, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded rather than rejected — we never drop real money — and the payment reads `failed`, with the reason in `status_message`.
 
 <Note>
   The same rules apply to real credits. Simulating one is the way to see what a locked account does to a transfer before a buyer sends money into it.

@@ -79,7 +79,7 @@ Thirteen fields and one document, plus `buyer_pan` when it is owed:
     "invoice_amount": "125000.00",
     "declaration": true,
     "buyer_date_of_incorporation": "2011-04-18",
-    "delivery_due_date": "2026-08-31"
+    "delivery_due_date": "2027-03-31"
   },
   "documents": [
     { "code": "invoice", "ref": "8207383264" }
@@ -111,7 +111,8 @@ Values are strings unless noted; `declaration` is a boolean.
 | Kind | Send |
 |---|---|
 | `invoice_date` | `YYYY-MM-DD` |
-| `buyer_date_of_incorporation`, `delivery_due_date` | `YYYY-MM-DD` |
+| `buyer_date_of_incorporation` | `YYYY-MM-DD`. Not in the future, and not before 1800 |
+| `delivery_due_date` | `YYYY-MM-DD`. Today or later (IST) |
 | `buyer_phone` | With its country code, e.g. `+919876543210` |
 | `invoice_number` | Up to 255 characters. See [Raised only by the call that files](#raised-only-by-the-call-that-files) for the characters allowed. |
 | `buyer_postal_code` | A six-digit Indian PIN code |
@@ -215,7 +216,7 @@ Every refusal is a `400`, whatever the reason, except a PAN check that could not
 | `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed, or the payment was rejected or fully refunded. |
 | `ERR_DECLARATION_001` | `declaration` was sent as something other than `true` or `false`. `details` names the field. |
 | `ERR_IMPORT_VERIFICATION_001` | The `invoice_number` is already used on another of your orders. Raised only by the call that files — see [below](#raised-only-by-the-call-that-files). |
-| `ERR_IMPORT_VERIFICATION_002` | The `business_model` sent differs from the one already on the order. The message reads `The category of this payment cannot be changed once chosen.` |
+| `ERR_IMPORT_VERIFICATION_002` | The `business_model` or `purpose_code` sent differs from the one already on the order, while the other is still unset. The message reads `The category of this payment cannot be changed once chosen.` Once both are set, a different value is a `40359` reading `Already set on the order; it cannot be changed here.` |
 | `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — `S1005` filed as `B2C`, for example. `details.purpose_code` names the pair. |
 | `ERR_BUYER_PAN_001` | All 5 PAN checks for the order have been used. Contact EximPe support. |
 | `ERR_BUYER_PAN_002` | The PAN check could not run (`503`); retry the same call. |
@@ -256,7 +257,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Unknown document ref.` | The `ref` is not one of this payment's active documents. A ref uploaded against another payment reads as unknown. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not true. No B2B services item is waivable, so every `waiver_reason` on this flow lands here. |
 | `Already set on the order; it cannot be changed here.` | A different `business_model` or `purpose_code` after classification has landed. |
-| `Send B2B or B2C.` | `business_model` is not `B2B` or `B2C`. |
+| `Send B2B or B2C.` | `business_model` is not `B2B` or `B2C`, or it is missing and the order has none. |
 | `Send the purpose code this payment settles under.` | `business_model` was sent without `purpose_code`, and the order has none. |
 | `Unknown, inactive, or not enabled for this merchant.` | `purpose_code` is not one your merchant account is allow-listed for. |
 | `Send exactly one of 'ref' and 'waiver_reason'.` | A `documents` entry has both, or neither. |
@@ -267,8 +268,11 @@ Value rules run on the call that carries the value. They answer under `40359` wi
 
 | Message | Cause |
 |---|---|
-| `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
+| `Not a date; send YYYY-MM-DD.` | `invoice_date`, `buyer_date_of_incorporation` or `delivery_due_date` will not parse. |
 | `The invoice date cannot be in the future.` | `invoice_date` is after today. |
+| `The date of incorporation cannot be in the future.` | `buyer_date_of_incorporation` is after today. |
+| `Enter a valid date of incorporation: a past date, not before 1800.` | `buyer_date_of_incorporation` is before 1800. |
+| `Due date cannot be in the past` | `delivery_due_date` is before today. |
 | `Not an amount; send a number like "500000.00".` | `invoice_amount` is not a decimal. |
 | `Amount must be greater than zero.` | `invoice_amount` is zero or negative. |
 | `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a PIN code in the India Post directory. A foreign postal code lands here — the buyer is the Indian remitter, not your customer abroad. |
@@ -276,7 +280,7 @@ Value rules run on the call that carries the value. They answer under `40359` wi
 
 ### Raised only by the call that files
 
-Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own. `invoice_amount` is checked against the credit, and is refused naming `invoice_amount` when the two are more than a paisa apart. `invoice_number` must be unique across all your orders, including an invoice number set when the order was created. An amount refusal reads `Invoice amount must match the amount credited into the VBA (125000.00).`, with the credit in brackets. A collision does **not** answer under `40359` — it carries its own code:
+Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own. `invoice_amount` is checked against the credit, and is refused naming `invoice_amount` when the two are more than a paisa apart. `invoice_number` must be unique across your orders that have not failed, including an invoice number set when the order was created. An amount refusal reads `Invoice amount must match the amount credited into the VBA (125000).`, with the credit in brackets. A collision does **not** answer under `40359` — it carries its own code:
 
 ```json
 {
@@ -290,7 +294,7 @@ Two things are only judged when a complete set is filed, because they compare ag
 ```
 
 <Note>
-  `invoice_number` must be unique across all your orders, including an invoice number set when the order was created. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
+  `invoice_number` must be unique across your orders that have not failed, including an invoice number set when the order was created. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
 </Note>
 
 `buyer_phone` and `invoice_number` are also checked only by the call that files. A refusal answers under `40359`, reads `Invalid verification request.`, and keys `details` by the field:

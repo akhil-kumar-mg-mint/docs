@@ -326,7 +326,7 @@
     "/pg/subscriptions/{subscription_id}/modify_mandate/": {
       "post": {
         "summary": "Modify Subscription Mandate",
-        "description": "Change the mandate amount or dates of a subscription. At least one of `amount`, `start_date`, `end_date` is required. Cashfree requires `amount`. EximPe does not accept `start_date`.\n\nOn EximPe, the change is sent to the buyer's UPI app to approve. The response has `approval_pending: true`, and the subscription keeps its current terms until the buyer approves.\n\n`ADHOC`, `CANCELLED` and `EXPIRED` subscriptions cannot be modified.",
+        "description": "Change the mandate amount or end date of a subscription. Send `amount`, `end_date` or both. Cashfree changes the amount only, so send `amount`. The start date cannot be changed.\n\nOn EximPe, the change is sent to the buyer's UPI app to approve. The response has `approval_pending: true`, and the subscription keeps its current terms until the buyer approves.\n\n`ADHOC`, `CANCELLED` and `EXPIRED` subscriptions cannot be modified.",
         "tags": [
           "Subscriptions"
         ],
@@ -352,7 +352,7 @@
           }
         ],
         "requestBody": {
-          "description": "Mandate modification payload. Send at least one of `amount`, `start_date`, `end_date`.",
+          "description": "Mandate modification payload. Send `amount`, `end_date` or both.",
           "required": true,
           "content": {
             "application/json": {
@@ -417,7 +417,7 @@
                 },
                 "examples": {
                   "Nothing to change": {
-                    "summary": "No amount, start_date or end_date",
+                    "summary": "No amount or end_date",
                     "value": {
                       "success": false,
                       "error": {
@@ -555,7 +555,7 @@
             }
           },
           "404": {
-            "description": "The subscription has no order yet.",
+            "description": "The subscription does not exist or is not yours, or it has no order yet. An unknown or foreign `subscription_id` answers outside the standard envelope: `{\"detail\": \"No Subscription matches the given query.\"}`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -833,7 +833,7 @@
             }
           },
           "400": {
-            "description": "A field is invalid, the mandate is not active, or (EximPe) the notification is less than 24 hours before the debit date starts (`ERR_PAYMENT_001`)",
+            "description": "A field is invalid, the mandate is not active, or (EximPe) the notification is less than 24 hours before the debit date starts; `details.error` then names the earliest debit date you can use (`ERR_PAYMENT_001`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -888,19 +888,6 @@
                         "message": "Validation error",
                         "details": {
                           "error": "Subscription mandate is not active"
-                        }
-                      }
-                    }
-                  },
-                  "EximPe: too close to the debit date": {
-                    "summary": "EximPe: sent less than 24 hours before the debit date starts",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": "ERR_PAYMENT_001",
-                        "message": "Validation error",
-                        "details": {
-                          "error": "The pre-debit notification must be sent at least 24 hours before the debit date starts."
                         }
                       }
                     }
@@ -1012,7 +999,7 @@
           "payment_end_date": {
             "type": "string",
             "format": "date",
-            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be after `payment_start_date`. Required for every `billing_cycle`, `ADHOC` included."
+            "description": "Last date the mandate stays valid (YYYY-MM-DD). Must be on or after `payment_start_date`. Required for every `billing_cycle`, `ADHOC` included."
           },
           "billing_date": {
             "type": "integer",
@@ -1421,16 +1408,11 @@
       },
       "ModifySubscriptionMandateRequest": {
         "type": "object",
-        "description": "At least one of `amount`, `start_date`, `end_date` is required. Cashfree requires `amount`. EximPe does not accept `start_date`.",
+        "description": "Send `amount`, `end_date` or both. Cashfree changes the amount only, so send `amount`. The start date cannot be changed.",
         "properties": {
           "amount": {
             "type": "number",
             "description": "New mandate amount."
-          },
-          "start_date": {
-            "type": "string",
-            "format": "date",
-            "description": "New mandate start date (YYYY-MM-DD)."
           },
           "end_date": {
             "type": "string",
@@ -1762,7 +1744,7 @@
           "invoice_display_number": {
             "type": "string",
             "maxLength": 255,
-            "description": "**Required for card subscriptions.** Optional for UPI; on EximPe, if you leave it out, one is assigned and returned. Use a new value for each charge, and send the same value to Trigger Recurring Payment."
+            "description": "**Required on PayU**, card and UPI: Trigger Recurring Payment must repeat it. Optional on EximPe; if you leave it out, one is assigned and returned. Use a new value for each charge, and send the same value to Trigger Recurring Payment."
           }
         }
       },
@@ -1839,7 +1821,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

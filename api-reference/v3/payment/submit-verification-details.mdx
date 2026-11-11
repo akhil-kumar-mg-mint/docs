@@ -183,7 +183,7 @@ Some refusals carry a code of their own:
 | `400` | `ERR_LRS_MERCHANT_047` | The payment is a top-up; send details on the payment it tops up. |
 | `400` | `ERR_LRS_MERCHANT_022` | `amount_to_be_settled` was sent, but EximPe works it out for your account; leave it out. |
 | `400` | `40355` | The details could not be processed. `details` says why. |
-| `429` | `ERR_RATE_LIMIT_EXCEEDED` | Too many requests. Retry after the `Retry-After` header. |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | Too many requests. Retry after the `Retry-After` header when it is present; otherwise back off and retry. |
 | `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached. Retry the same call. |
 | `503` | `ERR_B2B_GOODS_IEC_002` | The IEC check could not run. Retry the same call. |
 

@@ -27,7 +27,7 @@ Hosted Checkout is a pre-built payment page. You create an order from your serve
 
 Before you begin, ensure you have:
 
-- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`. `X-API-Version` is optional. Send `3.0.0`; the response echoes the version used
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`. `X-API-Version` is optional. Send `3.0.0`; the response echoes it back
 - **Domain Whitelist**: Your website domain whitelisted for integration
 - **Return URL**: A URL on your site that EximPe redirects the buyer back to
 - **Webhook URL**: A secure endpoint to receive payment status updates
@@ -105,7 +105,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
 <Note>
   `collection_mode` has no server-side default — send `"hosted_payment"` explicitly. Omitting it (or sending an unrecognised value) fails with `{"collection_mode": "Invalid collection mode"}`.
 
-  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `card`, `net_banking`, `wallet`, `qr`) only to limit the checkout page to one method. `card` offers both credit and debit cards; it is refused at order creation with `{"mop_type": "CARD is not enabled for this account."}` when card payments are not enabled on your account.
+  `mop_type` is optional here. Include it (`upi`, `credit_card`, `debit_card`, `card`, `net_banking`, `wallet`) only to limit the checkout page to one method. `card` offers both credit and debit cards; it is refused at order creation with `{"mop_type": "CARD is not enabled for this account."}` when card payments are not enabled on your account.
 </Note>
 
 <Warning>
@@ -171,11 +171,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/orders/' \
 ```
 
 <Note>
-  **The `error.code` can be `ERR_AUTH_000` or `ERR_AUTH_004`** (`message` `Invalid session ID`). In both, `details.session_id` reads `Invalid or expired session`. Branch on `details.session_id`, not on the code.
-</Note>
-
-<Note>
-  **Common causes**: the session is older than 15 minutes, it is malformed, or it has already been used for a completed payment. In every case the fix is the same — create a new order.
+  **Treat any `401` from `checkout()` as an invalid or expired session.** The `error.code` can be `ERR_AUTH_000` or `ERR_AUTH_004`. Common causes: the session is older than 15 minutes, it is malformed, or it has already been used for a completed payment. In every case the fix is the same — create a new order.
 </Note>
 
 ### Complete example

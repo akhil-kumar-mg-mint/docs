@@ -40,7 +40,7 @@ PSPs do not need `X-Merchant-ID` here: a sub-merchant's link is found without it
 | `expired` | Past its `expiry_date`, or deactivated. |
 | `failed` | Could not be created, or closed without being paid. |
 
-A deactivated link reads `expired` or `failed`. Treat both as closed. Do not read the deactivation time from `expiry_date`.
+A deactivated link reads `expired`.
 
 ## How the link was paid
 
@@ -95,7 +95,7 @@ A link the buyer paid on their second try, with the rest of the response left ou
 </Note>
 
 - `link_id`: The link's ID. `payment_id` is the same value, kept for compatibility.
-- `expiry_date`: When the link stops accepting payment. For a deactivated link, either the moment it was deactivated or its original value.
+- `expiry_date`: When the link stops accepting payment. For a deactivated link, the moment it was deactivated.
 - `mop_type`: The method the buyer paid with, in uppercase (`UPI`, `CREDIT_CARD`) — List gives the same value in lowercase. It is `null` until the link is paid, and can stay `null` after. `payments` gives the method of each payment.
 - `buyer`, `product`, `invoice`: As sent on create.
   - `buyer.pan_number` and `buyer.dob` are `null` unless they were collected from the buyer.

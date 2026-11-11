@@ -25,7 +25,7 @@ All three return an `order_id`. A successful create returns `201 Created`.
 |---|---|---|
 | `X-Client-ID` | Yes | Your Client ID, from Developer Settings in the merchant dashboard. |
 | `X-Client-Secret` | Yes | Your Client Secret. Keep it on your server. |
-| `X-API-Version` | No | Optional. Send `3.0.0`; the response echoes the version used. It is not a credential. |
+| `X-API-Version` | No | Optional. Send `3.0.0`; the response echoes it back. It is not a credential. |
 | `X-Merchant-ID` | PSPs only | The sub-merchant the order is for. Required when you authenticate as a PSP; merchants using their own credentials leave it out. |
 | `Content-Type` | Yes | `application/json` |
 
@@ -61,7 +61,7 @@ Fields not listed as required are optional. "Conditional" means the field is req
 | currency | string | Yes | ISO 4217 currency code. | `INR` |
 | reference_id | string | Yes | Your reference for the order. | 1–50 chars; letters, numbers and hyphens only (`ORDER-123456`, not `ORDER_123456`); unique across your orders. See [Duplicate requests](#duplicate-requests) |
 | collection_mode | string | Yes | How the payment is collected. | `hosted_payment` or `s2s`; no default |
-| mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `card`, `upi`, `net_banking`, `wallet`, `qr`. `card` lets the buyer pay by credit or debit card, and needs card payments enabled on your account. S2S UPI Intent and Collect: required, `upi` |
+| mop_type | string | Conditional | Payment method. | Hosted Checkout: optional, one of `credit_card`, `debit_card`, `card`, `upi`, `net_banking`, `wallet`. `card` lets the buyer pay by credit or debit card, and needs card payments enabled on your account. S2S UPI Intent and Collect: required, `upi` |
 | upi_flow_type | string | Conditional | UPI flow. | S2S: required. `intent` for S2S UPI Intent, `collection` for S2S UPI Collect; not case-sensitive. `collect` is refused |
 | vpa | string | Conditional | The customer's UPI ID, which receives the payment request. | S2S UPI Collect: required. Lowercased, then must match `^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$`, e.g. `john.doe@okaxis`. Ignored by the other flows |
 | return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
@@ -308,7 +308,7 @@ Depending on how your account collects UPI, `intent_uri` comes either as a compl
 
 ## Errors
 
-Refusals use the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` carries `ERR_ORDER_002`, except an order declined by risk checks (`ORDER_BLOCKED`) — read `details` to see what failed and fix that field before retrying.
+Refusals use the standard envelope: `success` is `false`, and `error` carries a `code`, a `message` and `details`. A `400` carries `ERR_ORDER_002`: read `details` to see what failed and fix that field before retrying. An order declined by risk checks is a `400` with `ORDER_BLOCKED`; there is nothing to fix in the request.
 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
@@ -337,7 +337,7 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit this collection mode | e.g. `{"collection_mode": "HOSTED_CHECKOUT is not enabled for this account."}` |
 | `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect this way | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_003` | Your merchant account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}` |
-| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe or the payment network is rate limiting requests | Retry after the `Retry-After` header |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe or the payment network is rate limiting requests | Retry after the `Retry-After` header when it is present; otherwise back off and retry |
 | `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | S2S: the payment network could not be reached, or returned an error | Retry with a new `reference_id` |
 | `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
 

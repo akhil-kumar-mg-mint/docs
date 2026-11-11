@@ -491,7 +491,7 @@
             }
           },
           "429": {
-            "description": "EximPe or the payment network is rate limiting requests. Retry after the `Retry-After` header.",
+            "description": "EximPe or the payment network is rate limiting requests. Retry after the `Retry-After` header when it is present; otherwise back off and retry.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying.",
@@ -1036,8 +1036,7 @@
               "card",
               "upi",
               "net_banking",
-              "wallet",
-              "qr"
+              "wallet"
             ]
           },
           "upi_flow_type": {
@@ -1325,13 +1324,25 @@
                 "format": "date",
                 "nullable": true,
                 "description": "Buyer's date of birth"
+              },
+              "date_of_incorporation": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Buyer's date of incorporation"
               }
             },
             "nullable": true,
             "description": "The buyer. `null` when the order holds no buyer name, e.g. a Hosted Checkout order whose payment page asked the buyer for their details."
           },
           "product": {
-            "$ref": "#/components/schemas/v3_OrderProduct"
+            "description": "What is being sold. `null` when the order has no product name.",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/v3_OrderProduct"
+              }
+            ]
           },
           "invoice": {
             "type": "object",
@@ -1345,6 +1356,12 @@
                 "format": "date",
                 "description": "Invoice date in YYYY-MM-DD format"
               },
+              "delivery_due_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Due date of delivery, in YYYY-MM-DD format"
+              },
               "file": {
                 "type": "string",
                 "nullable": true,
@@ -1352,7 +1369,7 @@
               }
             },
             "nullable": true,
-            "description": "Invoice details. `null` when the order has no invoice number, date or file."
+            "description": "Invoice details. `null` when the order has no invoice number, date, delivery due date or file."
           },
           "air_waybills": {
             "type": "array",
@@ -1651,7 +1668,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

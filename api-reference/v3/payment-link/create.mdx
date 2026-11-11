@@ -164,7 +164,7 @@ Every refusal uses the standard envelope: `success` is `false`, and `error` carr
 | `403` | — | Payment links are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit payment links | `{"collection_mode": "PAYMENT_LINKS is not enabled for this account."}` |
 | `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect through payment links | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
-| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe's rate limit or the payment network is limiting requests | Retry after the `Retry-After` header |
+| `429` | `ERR_RATE_LIMIT_EXCEEDED` | EximPe's rate limit or the payment network is limiting requests | Retry after the `Retry-After` header when it is present; otherwise back off and retry |
 | `502` | `ERR_GATEWAY_UNAVAILABLE`, `ERR_PAYMENT_003` | The payment network could not be reached, or returned an error | Retry shortly |
 | `500` | `ERR_SERVICE_ERROR_000` | Anything unexpected | `{"error": "An unexpected error occurred. Please try again later"}` |
 

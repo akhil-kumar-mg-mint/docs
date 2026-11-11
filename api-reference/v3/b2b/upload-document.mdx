@@ -96,7 +96,7 @@ Validated on upload, so a bad file fails here rather than at submit time.
 | Maximum file name | 100 characters, extension included |
 | Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
 
-A refused file is a `400` reading `Uploaded file is not a supported type or exceeds the allowed size.`:
+A file of a type we do not accept, or an encrypted PDF, is refused with a `400` reading `Uploaded file is not a supported type or exceeds the allowed size.`:
 
 | Cause | `code` |
 |---|---|

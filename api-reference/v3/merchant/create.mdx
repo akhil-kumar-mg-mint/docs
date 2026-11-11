@@ -459,7 +459,7 @@ Every error uses the standard envelope: `{ "success": false, "error": { "code", 
 </Accordion>
 <Accordion title="Every problem in one response">
 
-A `400` lists every problem EximPe finds in the request, with two exceptions: when `same_as_registered_address` is `false`, only the first missing communication field is reported, and each owner reports only the first missing field for its `type`. Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill appear in `details` alongside the other field errors.
+A `400` lists every problem EximPe finds in the request, with two exceptions: when `same_as_registered_address` is `false`, only the first missing communication field is reported, and each owner reports only the first missing field for its `type`, except that a person's missing `first_name`, `last_name` and `email` are reported together. Fields that are not accepted, `status`, `sub_merchant_status` or `is_active`, and bank fields the SWIFT lookup could not fill appear in `details` alongside the other field errors.
 
 </Accordion>
 <Accordion title="Rules across fields are checked last">

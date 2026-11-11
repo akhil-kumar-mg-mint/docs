@@ -2993,7 +2993,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

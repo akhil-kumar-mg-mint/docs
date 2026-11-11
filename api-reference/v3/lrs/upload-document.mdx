@@ -59,7 +59,7 @@ Validated on upload, so a bad file fails here rather than at submit time.
 | Maximum file name | 100 characters, extension included |
 | Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
 
-A refused upload is a `400`, and `details` is keyed by the part that was refused:
+These refusals are a `400`, and `details` is keyed by the part that was refused:
 
 | Cause | `code` |
 |---|---|

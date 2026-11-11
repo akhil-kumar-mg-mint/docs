@@ -410,7 +410,7 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**; send whichever is missing. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is filed. On an LRS payment the answer is `in_review` or `action_required`. On a B2B services payment it goes to EximPe for review, and the answer is `in_review` or a `400` naming what to fix. `complete` means nothing is outstanding and nothing was filed. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in rupees (`outstanding_rupees`). It is absent on every other response, and it arises on LRS payments only.\n\n**Refusals name the flow.** `error.message` reads `Invalid LRS request.` on an LRS payment, `Invalid B2B services request.` on a B2B services payment, and `Invalid verification request.` before the payment is classified. The `400` examples below use the LRS wording; branch on `error.code`.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**; send whichever is missing. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is filed. On an LRS payment the answer is `in_review` or `action_required`. On a B2B services payment it goes to EximPe for review, and the answer is `in_review` or a `400` naming what to fix. `complete` means nothing is outstanding and nothing was filed. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in rupees (`outstanding_rupees`). It is absent on every other response. On a B2B services payment a refused filing is a `400` instead.\n\n**Refusals name the flow.** `error.message` reads `Invalid LRS request.` on an LRS payment, `Invalid B2B services request.` on a B2B services payment, and `Invalid verification request.` before the payment is classified. The `400` examples below use the LRS wording; branch on `error.code`.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
           "Payment verification"
         ],
@@ -460,7 +460,7 @@
                       "invoice_amount": "125000.00",
                       "declaration": true,
                       "buyer_date_of_incorporation": "2011-04-18",
-                      "delivery_due_date": "2026-08-31"
+                      "delivery_due_date": "2027-03-31"
                     }
                   },
                   "documents": {
@@ -576,7 +576,7 @@
                       "invoice_amount": "125000.00",
                       "declaration": true,
                       "buyer_date_of_incorporation": "2011-04-18",
-                      "delivery_due_date": "2026-08-31"
+                      "delivery_due_date": "2027-03-31"
                     },
                     "documents": [
                       {
@@ -677,7 +677,7 @@
                             "in_review",
                             "action_required"
                           ],
-                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed. `in_review` \u2014 the set was complete and filed, and it is under review. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment. LRS payments only.",
+                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed. `in_review` \u2014 the set was complete and filed, and it is under review. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment. On a B2B services payment a refusal is a `400` instead.",
                           "example": "incomplete"
                         },
                         "outstanding": {
@@ -905,7 +905,7 @@
             }
           },
           "429": {
-            "description": "Too many requests. Can come from EximPe's rate limit or the payment network; retry after the `Retry-After` header.",
+            "description": "Too many requests. Can come from EximPe's rate limit or the payment network; retry after the `Retry-After` header when it is present, otherwise back off and retry.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1044,9 +1044,10 @@
               "PAYING_FOR_SOMEONE_ELSE",
               "PASSENGER_DETAILS_LEVEL",
               "GOODS_PURPOSE_CODE",
+              "ADVANCE_GOODS_PURPOSE_CODE",
               "SERVICES_PURPOSE_CODE"
             ],
-            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 your account collects traveller details on travel payments. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code. `SERVICES_PURPOSE_CODE` \u2014 the order's purpose code is a services or digital-goods code.",
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 your account collects traveller details on travel payments. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code. `ADVANCE_GOODS_PURPOSE_CODE` \u2014 the order's purpose code is `S0101`, an advance payment for goods. `SERVICES_PURPOSE_CODE` \u2014 the order's purpose code is a services or digital-goods code.",
             "example": "PAYING_FOR_SOMEONE_ELSE"
           },
           "waivable": {
@@ -1226,7 +1227,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

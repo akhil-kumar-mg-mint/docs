@@ -24,7 +24,7 @@ A card subscription collects recurring payments against the buyer's card. You re
 
 Before you begin, ensure you have:
 
-- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes the version used
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes it back
 - **Domain Whitelist**: Your website domain whitelisted for integration
 - **Webhook URL**: A secure endpoint to receive payment and subscription status updates
 - **Card subscription enablement**: Card recurring subscriptions enabled and approved by EximPe on your account
@@ -131,7 +131,7 @@ For the full request and response schema, see [Create Card Subscription](/api-re
 
 ## Step 2: Complete 3D Secure authentication
 
-Card mandates require 3D Secure authentication. The response carries an `acstemplate`: a base64-encoded HTML form. Decode it and render it on the client so the buyer can authenticate with their bank. The mandate becomes active only after that completes.
+Card mandates require 3D Secure authentication. When the response carries an `acstemplate`, it is a base64-encoded HTML form: decode it and render it on the client so the buyer can authenticate with their bank. The mandate becomes active only after that completes. If the response has no `acstemplate`, check `message` and the mandate status.
 
 ## Step 3: Confirm the mandate is active
 

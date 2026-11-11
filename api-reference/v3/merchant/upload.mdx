@@ -54,7 +54,7 @@ The upload is accepted in any status. The invoice is not returned by [Get Mercha
 
 ## Errors
 
-Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages. A `404` and a `403` `ERR_MERCHANT_017` carry an empty object; any other `403` carries an object. See [Create Merchant](/api-reference/v3/merchant/create#errors).
+Errors use the standard envelope. For a `400`, `details` lists every problem, each field mapped to a list of messages. A `404` and a `403` `ERR_MERCHANT_017` carry an empty object; any other `403` carries the reason as an object, e.g. keyed by `authentication` or `merchant_account`. See [Create Merchant](/api-reference/v3/merchant/create#errors).
 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|

@@ -291,7 +291,7 @@
             }
           },
           "429": {
-            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header.",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header when it is present; otherwise back off and retry.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -885,7 +885,7 @@
     "/pg/payment-links/{link_id}/deactivate/": {
       "post": {
         "summary": "Deactivate Payment Link",
-        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired` or `failed`. Treat both as closed.",
+        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired`.",
         "operationId": "v3_deactivatePaymentLink",
         "tags": [
           "Payment Links"
@@ -1063,7 +1063,7 @@
             }
           },
           "429": {
-            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header.",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header when it is present; otherwise back off and retry.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -1585,7 +1585,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired`."
           }
         }
       },
@@ -1640,7 +1640,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the link stops accepting payment. For a deactivated link, either the moment of deactivation or its original value. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link stops accepting payment. For a deactivated link, the moment of deactivation. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
           },
           "mop_type": {
             "type": "string",
@@ -1785,7 +1785,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired` or `failed`."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired`."
           },
           "status_message": {
             "type": "string",
@@ -2106,7 +2106,7 @@
         "name": "X-API-Version",
         "in": "header",
         "required": false,
-        "description": "The API version you integrate against. Send `3.0.0` for v3. It is a version selector, not a credential. If you leave it out, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
         "schema": {
           "type": "string",
           "enum": [

@@ -18,7 +18,7 @@ On PayU and EximPe, only one charge can be in progress at a time: while one is p
 </Info>
 
 <Info>
-A `409` means the subscription's state refused the charge: no pre-debit notification for today, a charge already in progress, or an inactive mandate. A `400` means a field is invalid, the subscription is a Cashfree plan that is not `ADHOC`, or PayU or EximPe declined the charge. A `403` means your merchant account is suspended or closed. A `502` means the payment partner could not be reached, or Cashfree refused the charge.
+A `409` means the subscription's state refused the charge: no pre-debit notification for today, a charge already in progress, or, on Cashfree and EximPe, an inactive mandate. A `400` means a field is invalid, the subscription is a Cashfree plan that is not `ADHOC`, or PayU or EximPe declined the charge. A `403` means your merchant account is suspended or closed. A `502` means the payment partner could not be reached, or Cashfree refused the charge.
 </Info>
 
 ### Path Parameters
@@ -34,7 +34,7 @@ A `409` means the subscription's state refused the charge: no pre-debit notifica
 </ParamField>
 
 <ParamField body="invoice_display_number" type="string">
-  **Required on PayU.** Up to 255 characters. Send the same value you sent in today's pre-debit notification. Optional on EximPe: if you send it, it must match the notification's value (the notification response returns it). Not used on Cashfree. On PayU, use a new value for each charge. A value already used on another of your orders is refused with `400`.
+  **Required on PayU.** Up to 255 characters. Send the same value you sent in today's pre-debit notification. Optional on EximPe: if you send it, it must match the notification's value (the notification response returns it). Not used on Cashfree. On PayU, use a new value for each charge. A value already used on another of your orders that has not failed is refused with `400`.
 </ParamField>
 
 <ParamField body="transaction_id" type="string">

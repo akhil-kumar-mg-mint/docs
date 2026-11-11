@@ -59,7 +59,7 @@ Stop paging when `next` is `null`.
 | `pending` | Started, with no final outcome yet. |
 | `captured` | Paid. |
 | `failed` | Declined, abandoned, or expired before it completed. `comment` says why when there is a reason. |
-| `invalid` | Voided when its order failed. |
+| `invalid` | Voided when its payment link was closed. |
 
 <Note>
   **Expired payments read differently in the list and in the filter.** A pending payment that passes its expiry is shown as `failed` here, but the `status` filter matches the status as recorded. So `status=pending` can return entries that read `failed`, and `status=failed` will not find them. [Get Payment](/api-reference/v3/payment/get) shows the recorded status, so the same payment reads `pending` there.

@@ -256,7 +256,7 @@ Sending the same code twice in one call is a `400`. Sending it again in a **late
 | `name` | Required for everyone who is not the remitter. Letters, spaces, dots, hyphens and apostrophes only. Omit it for the remitter — the name comes from [Verify PAN](/api-reference/v3/lrs/verify-pan). |
 | `relation` | Required for everyone who is not the remitter: **that person's relation to the remitter**, so a student paid for by a parent is `CHILD`. `PARENT` · `GUARDIAN` · `SPOUSE` · `SIBLING` · `CHILD` · `OTHER`, upper case. Not allowed on the remitter's own entry — mark the remitter with `is_remitter`, not a relation. |
 | `dob` | `YYYY-MM-DD`. Required for an education student who is not the remitter. Not in the future, and not more than 120 years ago. |
-| `nationality` | Two-letter upper-case country code, e.g. `IN`. Required for every traveller on a travel code. An unknown code is refused with `40188`, `Invalid country code.` |
+| `nationality` | Two-letter upper-case country code, e.g. `IN`. Required for every traveller on a travel code. An unknown code is refused with `40188`, `Invalid country code` |
 | `passport_number` | Letters, digits and dashes, up to 32 characters. Required for every traveller, and for the one person on `S0305`. Not asked for on `S1107`: leave it out; one sent there is discarded. Self-declared and never checked against a register. |
 
 Sending `persons` again replaces the list; the newest send wins. An empty list, `[]`, does not clear it. Nothing about a person is ever returned to you — the [`GET`](/api-reference/v3/lrs/verification-requirements) reports only whether `persons` is `satisfied` and `provided`.
@@ -320,7 +320,7 @@ A link is refused, with a named error, when:
 - the top-up is already in another group, or has top-ups of its own (`ERR_LRS_MERCHANT_037`, `ERR_LRS_MERCHANT_038`);
 - the top-up is the short payment itself.
 
-A top-up whose order carries a purpose code must carry the short payment's purpose code, however it was paid (`ERR_LRS_MERCHANT_042`). A hosted-checkout top-up must carry the short payment's PAN (`ERR_LRS_MERCHANT_041`). A top-up that arrived by bank transfer to the virtual account must have a sender name that matches the remitter (`40361`).
+A top-up whose order carries a purpose code must carry the short payment's purpose code, however it was paid (`ERR_LRS_MERCHANT_042`). A top-up paid any way other than a bank transfer to the virtual account must carry the short payment's PAN (`ERR_LRS_MERCHANT_041`). A top-up that arrived by bank transfer to the virtual account must have a sender name that matches the remitter (`40361`).
 
 <Note>
   **A top-up payment is created like any LRS order.** For a payment made through hosted checkout, create the order the way you create any LRS order, and the buyer verifies the PAN at checkout. The order must carry an LRS purpose code and business model. Otherwise there is no PAN check at checkout, and the link is refused for lack of a verified PAN (`ERR_LRS_MERCHANT_040`). There is no separate endpoint for top-ups.
@@ -521,7 +521,7 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not `true`. |
 | `Unknown document ref.` | The `ref` is not one of the uploads held for the settling merchant or its parent/children. |
-| `Document type mismatch: <ref> is a passport, not student_id_or_visa.` | The upload's `type` differs from the `code` you cited. Cite each `ref` under the same code you uploaded it as. Raised only by the call that files, with `details` as a single string; the send is still saved. |
+| `Document type mismatch: <ref> is a passport, not student_id_or_visa.` | The upload's `type` differs from the `code` you cited. Cite each `ref` under the same code you uploaded it as. Raised only by the call that files, with `details` as a single string that contains this text; the send is still saved. |
 | `Already set on the order; it cannot be changed here.` | A different `business_model` or `purpose_code` after classification has landed. Re-sending the same value is accepted. |
 
 Value rules run on the send that carries the value, and name the same codes:

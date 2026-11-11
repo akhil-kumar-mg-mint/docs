@@ -25,7 +25,7 @@ Create the subscription first — over [UPI Intent](/integration-guide/v3/web-in
   </Card>
 </CardGroup>
 
-Every call carries `X-Client-ID` and `X-Client-Secret`. PSP callers add `X-Merchant-ID`. `X-API-Version` is optional. Send `3.0.0`; the response echoes the version used. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
+Every call carries `X-Client-ID` and `X-Client-Secret`. PSP callers add `X-Merchant-ID`. `X-API-Version` is optional. Send `3.0.0`; the response echoes it back. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
 
 ## Check mandate status
 
@@ -137,7 +137,7 @@ curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_
 }
 ```
 
-At least one of `amount`, `start_date`, `end_date` is required. Cashfree requires `amount`. EximPe does not accept `start_date`. On a PayU card subscription, also send `card_details`.
+Send `amount`, `end_date` or both. Cashfree changes the amount only, so send `amount`. The start date cannot be changed. On a PayU card subscription, also send `card_details`.
 
 On EximPe, the change is sent to the buyer's UPI app to approve. The response has `approval_pending: true`, and the subscription keeps its current terms until the buyer approves.
 

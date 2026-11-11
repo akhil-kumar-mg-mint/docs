@@ -76,7 +76,7 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 | The payment has no checklist yet | Send `business_model` and `purpose_code`; the real requirement set appears on the next read |
 | Something is still missing | Send just those fields or documents — what you already sent is kept |
 | A value was refused | Fix only the code the response names and send that again |
-| The invoice number was already used | `invoice_number` must be unique across all your orders, including an invoice number set when the order was created; raise a new one |
+| The invoice number was already used | `invoice_number` must be unique across your orders that have not failed, including an invoice number set when the order was created; raise a new one |
 | The set was already filed | Staging is closed. Wait for it to be sent back, then correct it — see below for how you learn that |
 
 ## Five things that will bite you
