@@ -83,7 +83,7 @@ Every services payment settles under one FEMA purpose code, and you pick exactly
 
 **The buyer is the Indian remitter, not your customer abroad.** These fields describe whoever in India paid you, not the overseas party being paid. `buyer_postal_code` is stored as an Indian PIN code, so send the remitter's Indian address — filling this block with your own address is the most common way a first integration goes wrong.
 
-**The amount you declare has to match the credit.** `invoice_amount` is on the checklist, in rupees, and it is checked against what actually landed in the VBA — more than a paisa apart and the finalizing call is refused naming `invoice_amount`. It is a cross-check, not a figure that decides anything: what settles is still the credit itself. There is no `amount_to_be_settled` and no TCS; both are a `400`, like any unknown key.
+**The amount you declare has to match the credit.** `invoice_amount` is on the checklist, in rupees, and it is checked against what actually landed in the VBA — more than a paisa apart and the finalizing call is refused naming `invoice_amount`. It is a cross-check, not a figure that decides anything: what settles is still the credited amount minus the MDR and the GST on that MDR. There is no `amount_to_be_settled` and no TCS; both are a `400`, like any unknown key.
 
 **The declaration is a field, not an implication.** Send `declaration: true` — that the service was received and the invoice is genuine. Send it as a boolean: a string such as `"true"` is refused with `ERR_DECLARATION_001`, and `false` is accepted but leaves the item owed.
 
@@ -147,7 +147,7 @@ Integrations go wrong here more often by sending something extra than by leaving
 | :--- | :--- |
 | HS code | Never. HS codes describe physical goods crossing a border. |
 | Tax | None. Nothing is collected on top of the credit. |
-| Settlement amount | None. `amount_to_be_settled` is an LRS key. What settles is the credit itself. |
+| Settlement amount | None. `amount_to_be_settled` is an LRS key. What settles is the credited amount minus the MDR and the GST on that MDR. |
 
 Every one of them is a `400` if you send it, the same as any unknown key.
 
