@@ -109,6 +109,36 @@
                     }
                   }
                 },
+                "S2S UPI Collect": {
+                  "summary": "UPI Collect (S2S)",
+                  "description": "Server-to-server UPI collect flow: EximPe sends a payment request to the buyer's UPI ID",
+                  "value": {
+                    "amount": "1000.00",
+                    "currency": "INR",
+                    "reference_id": "ORD_2024_SP_005679",
+                    "collection_mode": "s2s",
+                    "mop_type": "upi",
+                    "upi_flow_type": "collection",
+                    "vpa": "john.doe@okaxis",
+                    "buyer": {
+                      "name": "John Doe",
+                      "email": "john.doe@example.com",
+                      "phone": "+919876543210",
+                      "address": {
+                        "line_1": "123 Main Street",
+                        "city": "Delhi",
+                        "state": "Delhi",
+                        "postal_code": "110001"
+                      },
+                      "ip_address": "203.0.113.10",
+                      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    },
+                    "product": {
+                      "name": "Smartphone",
+                      "type_of_goods": "physical_goods"
+                    }
+                  }
+                },
                 "S2S Card Payment": {
                   "summary": "Card Payment (S2S)",
                   "description": "Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. The card details are securely processed and can be tokenized using the Save Card API after successful payment.",
@@ -272,7 +302,21 @@
                       "message": "S2S UPI Request created successfully",
                       "data": {
                         "intent_uri": "pa=rajesh.kumar@okaxis&pn=Rajesh%20Kumar&tr=624857392104738291&tid=EXIMPE624857392104738291120425184729&am=24999.00&cu=INR&tn=Samsung%20Galaxy%20S24%20Ultra%205G",
-                        "order_id": "OD2024120567890"
+                        "order_id": "OD2024120567890",
+                        "expires_at": "2024-12-04T18:52:29.156967Z"
+                      }
+                    }
+                  },
+                  "S2S UPI Collect": {
+                    "summary": "UPI Collect (S2S)",
+                    "description": "Response for S2S UPI Collect mode. The request was sent to the buyer's UPI app; take the outcome from the webhook or the Order Status API.",
+                    "value": {
+                      "success": true,
+                      "message": "S2S UPI Request created successfully",
+                      "data": {
+                        "order_id": "OD2024120567891",
+                        "message": "UPI Collection request sent",
+                        "expires_at": "2024-12-04T18:52:29.156967Z"
                       }
                     }
                   },
@@ -320,6 +364,18 @@
                         "message": "Validation error",
                         "details": {
                           "reference_id": "Reference ID must be unique"
+                        }
+                      }
+                    }
+                  },
+                  "upi_expiry_minutes out of range": {
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "upi_expiry_minutes": "Ensure this value is less than or equal to 20."
                         }
                       }
                     }
@@ -7483,6 +7539,21 @@
               "collection"
             ]
           },
+          "vpa": {
+            "type": "string",
+            "description": "The buyer's UPI ID (required when upi_flow_type is collection)",
+            "pattern": "^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$",
+            "example": "john.doe@okaxis"
+          },
+          "upi_expiry_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 5,
+            "maximum": 20,
+            "default": 5,
+            "example": 15,
+            "description": "Minutes the customer has to complete an S2S UPI Intent or Collect payment. Omitted or null means 5. Some payment methods allow less than you ask for; the window that applies is returned as expires_at. Ignored by Hosted Checkout."
+          },
           "buyer": {
             "$ref": "#/components/schemas/v1_Buyer"
           },
@@ -7941,6 +8012,11 @@
           "acs_template": {
             "type": "string",
             "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the UPI request stops accepting payment, in UTC (S2S UPI Intent and Collect): upi_expiry_minutes after creation (5 minutes if not sent), or sooner if the payment method allows less"
           }
         }
       },
@@ -11050,6 +11126,21 @@
               "collection"
             ]
           },
+          "vpa": {
+            "type": "string",
+            "description": "The buyer's UPI ID (required when upi_flow_type is collection)",
+            "pattern": "^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$",
+            "example": "john.doe@okaxis"
+          },
+          "upi_expiry_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 5,
+            "maximum": 20,
+            "default": 5,
+            "example": 15,
+            "description": "Minutes the customer has to complete an S2S UPI Intent or Collect payment. Omitted or null means 5. Some payment methods allow less than you ask for; the window that applies is returned as expires_at. Ignored by Hosted Checkout."
+          },
           "buyer": {
             "$ref": "#/components/schemas/v2_Buyer"
           },
@@ -11508,6 +11599,11 @@
           "acs_template": {
             "type": "string",
             "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the UPI request stops accepting payment, in UTC (S2S UPI Intent and Collect): upi_expiry_minutes after creation (5 minutes if not sent), or sooner if the payment method allows less"
           }
         }
       },

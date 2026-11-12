@@ -191,7 +191,8 @@
                       "message": "S2S UPI Request created successfully",
                       "data": {
                         "order_id": "OD2000992104",
-                        "message": "UPI Collection request sent"
+                        "message": "UPI Collection request sent",
+                        "expires_at": "2026-11-10T10:35:00.156967Z"
                       }
                     }
                   }
@@ -351,6 +352,19 @@
                         "message": "Validation error",
                         "details": {
                           "vpa": "Invalid VPA"
+                        }
+                      }
+                    }
+                  },
+                  "upi_expiry_minutes out of range": {
+                    "summary": "upi_expiry_minutes below 5 or above 20",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "upi_expiry_minutes": "Ensure this value is less than or equal to 20."
                         }
                       }
                     }
@@ -1054,6 +1068,15 @@
             "pattern": "^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$",
             "description": "S2S UPI Collect only, where it is required: the customer's UPI ID, which receives the payment request. Lowercased before the pattern is checked. Ignored by the other flows."
           },
+          "upi_expiry_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 5,
+            "maximum": 20,
+            "default": 5,
+            "example": 15,
+            "description": "S2S UPI Intent and Collect: how long the customer has to complete the payment, in minutes. Omitted or null means 5. Some payment methods allow less than you ask for, so read the window that applies from `expires_at`. Ignored by Hosted Checkout."
+          },
           "business_model": {
             "type": "string",
             "enum": [
@@ -1196,7 +1219,7 @@
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "description": "S2S UPI Intent only. When the intent stops accepting payment, in UTC \u2014 5 minutes after creation."
+            "description": "S2S UPI Intent and Collect. When the request stops accepting payment, in UTC: `upi_expiry_minutes` after creation (5 if not sent), or sooner if the payment method allows less. Take the outcome from the webhook or the Order Status API, not from this time."
           },
           "message": {
             "type": "string",
