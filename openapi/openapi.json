@@ -1339,7 +1339,9 @@
                     "mop_type": "upi",
                     "bank_ref_num": "OD1729756084-PR2099558561",
                     "mop_detail": {
-                      "vpa": "buyer@payu"
+                      "vpa": "buyer@payu",
+                      "upi_instrument": "upi_cc",
+                      "upi_app": "PhonePe"
                     },
                     "payment_completed_at": "2025-09-04T09:38:44.000000Z",
                     "status": "captured",
@@ -9978,6 +9980,25 @@
                   "vpa": {
                     "type": "string",
                     "description": "Payer VPA (UPI ID)"
+                  },
+                  "upi_instrument": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "upi",
+                      "upi_cc",
+                      "upi_cl",
+                      "upi_ppi",
+                      "upi_si",
+                      "upi_si_ppi",
+                      null
+                    ],
+                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI."
+                  },
+                  "upi_app": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "UPI app the payer used, resolved from the VPA handle, e.g. `PhonePe`. `null` when the handle is not recognised."
                   }
                 },
                 "required": [
@@ -13462,6 +13483,25 @@
                   "vpa": {
                     "type": "string",
                     "description": "Payer VPA (UPI ID)"
+                  },
+                  "upi_instrument": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "upi",
+                      "upi_cc",
+                      "upi_cl",
+                      "upi_ppi",
+                      "upi_si",
+                      "upi_si_ppi",
+                      null
+                    ],
+                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI."
+                  },
+                  "upi_app": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "UPI app the payer used, resolved from the VPA handle, e.g. `PhonePe`. `null` when the handle is not recognised."
                   }
                 },
                 "required": [
@@ -16740,6 +16780,25 @@
                   "vpa": {
                     "type": "string",
                     "description": "Payer VPA (UPI ID)"
+                  },
+                  "upi_instrument": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "upi",
+                      "upi_cc",
+                      "upi_cl",
+                      "upi_ppi",
+                      "upi_si",
+                      "upi_si_ppi",
+                      null
+                    ],
+                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI."
+                  },
+                  "upi_app": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "UPI app the payer used, resolved from the VPA handle, e.g. `PhonePe`. `null` when the handle is not recognised."
                   }
                 },
                 "required": [
