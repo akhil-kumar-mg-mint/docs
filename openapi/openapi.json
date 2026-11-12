@@ -272,7 +272,8 @@
                       "message": "S2S UPI Request created successfully",
                       "data": {
                         "intent_uri": "pa=rajesh.kumar@okaxis&pn=Rajesh%20Kumar&tr=624857392104738291&tid=EXIMPE624857392104738291120425184729&am=24999.00&cu=INR&tn=Samsung%20Galaxy%20S24%20Ultra%205G",
-                        "order_id": "OD2024120567890"
+                        "order_id": "OD2024120567890",
+                        "expires_at": "2024-12-04T18:52:29.156967Z"
                       }
                     }
                   },
@@ -320,6 +321,18 @@
                         "message": "Validation error",
                         "details": {
                           "reference_id": "Reference ID must be unique"
+                        }
+                      }
+                    }
+                  },
+                  "upi_expiry_minutes out of range": {
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_002",
+                        "message": "Validation error",
+                        "details": {
+                          "upi_expiry_minutes": "Ensure this value is less than or equal to 20."
                         }
                       }
                     }
@@ -7483,6 +7496,15 @@
               "collection"
             ]
           },
+          "upi_expiry_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 5,
+            "maximum": 20,
+            "default": 5,
+            "example": 15,
+            "description": "Minutes the customer has to complete an S2S UPI Intent or Collect payment. Omitted or null means 5. Some payment methods allow less than you ask for; the window that applies is returned as expires_at. Ignored by Hosted Checkout."
+          },
           "buyer": {
             "$ref": "#/components/schemas/v1_Buyer"
           },
@@ -7941,6 +7963,11 @@
           "acs_template": {
             "type": "string",
             "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the UPI request stops accepting payment, in UTC (S2S UPI Intent and Collect): upi_expiry_minutes after creation (5 minutes if not sent), or sooner if the payment method allows less"
           }
         }
       },
@@ -11050,6 +11077,15 @@
               "collection"
             ]
           },
+          "upi_expiry_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 5,
+            "maximum": 20,
+            "default": 5,
+            "example": 15,
+            "description": "Minutes the customer has to complete an S2S UPI Intent or Collect payment. Omitted or null means 5. Some payment methods allow less than you ask for; the window that applies is returned as expires_at. Ignored by Hosted Checkout."
+          },
           "buyer": {
             "$ref": "#/components/schemas/v2_Buyer"
           },
@@ -11508,6 +11544,11 @@
           "acs_template": {
             "type": "string",
             "description": "Base64-encoded HTML template for 3D Secure authentication (for S2S Card Payment mode)"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the UPI request stops accepting payment, in UTC (S2S UPI Intent and Collect): upi_expiry_minutes after creation (5 minutes if not sent), or sooner if the payment method allows less"
           }
         }
       },
