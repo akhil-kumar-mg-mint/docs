@@ -56,7 +56,8 @@
                     "group": "Server to Server",
                     "pages": [
                       "integration-guide/v1/web-integration/s2s-card-payment",
-                      "integration-guide/v1/web-integration/s2s-upi-intent"
+                      "integration-guide/v1/web-integration/s2s-upi-intent",
+                      "integration-guide/v1/web-integration/s2s-upi-collect"
                     ]
                   },
                   "integration-guide/v1/web-integration/bin-lookup",
