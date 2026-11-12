@@ -40,6 +40,7 @@ Server-to-server card payment flow with 3D Secure authentication. For new cards,
 - `collection_mode`: Payment collection mode (`hosted_payment` or `s2s`)
 - `mop_type`: Method of payment (`upi`, `credit_card`, `debit_card`, `net_banking`, `qr`)
 - `upi_flow_type`: UPI flow type (`intent`) - required when using S2S with UPI
+- `upi_expiry_minutes`: Minutes the customer has to complete an S2S UPI payment, 5–20 (default 5)
 - `card_details`: Card information object - required when `mop_type` is `credit_card` or `debit_card`
 
 ### Card Payment Specific Parameters
@@ -75,6 +76,7 @@ The following tables define all request parameters, including nested objects, ty
 | collection_mode | string | No | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; default `hosted_payment` |
 | mop_type | string | No | Method of payment. | Enum: `upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr` |
 | upi_flow_type | string | Conditionally | UPI flow when `mop_type` is `UPI` and `collection_mode` is `s2s`. | Required if `mop_type=UPI` and `collection_mode=s2s`; Enum: `intent`, `collection` |
+| upi_expiry_minutes | integer | No | How long the customer has to complete an S2S UPI payment, in minutes. | S2S UPI Intent and Collect. Whole number from 5 to 20; omitted or `null` means 5. Some payment methods allow less than you ask for, so read the window that applies from `expires_at`. Ignored by Hosted Checkout |
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
 | buyer | object | Yes | Buyer/customer details. | See Buyer object |
 | product | object | Yes | Product or service being purchased. | See Product object |
@@ -155,6 +157,9 @@ For hosted payment mode, the response includes:
 For S2S UPI Intent mode, the response includes:
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
+- `expires_at`: When the UPI request stops accepting payment, in UTC: `upi_expiry_minutes` after creation (5 minutes if you did not send it), or sooner if the payment method allows less
+
+S2S UPI Collect (`upi_flow_type` `collection`) returns `order_id`, `message` and `expires_at`.
 
 ### S2S Card Payment Response
 For S2S Card Payment mode, the response includes:
@@ -329,7 +334,8 @@ For S2S Card Payment mode, the response includes:
   "message": "S2S UPI Request created successfully",
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
-    "order_id": "OD2000992103"
+    "order_id": "OD2000992103",
+    "expires_at": "2025-07-08T10:35:00.156967Z"
   }
 }
 ```
@@ -351,6 +357,7 @@ For S2S Card Payment mode, the response includes:
 
 ### UPI Payments
 - **S2S UPI Intent**: The response includes a UPI intent link that can be used to open UPI apps directly
+- **Payment window**: Send `upi_expiry_minutes` (5–20) to give the customer longer than the default 5 minutes. Use `expires_at` for the countdown you show the customer, not to decide the outcome: take that from the webhook or the Order Status API, which can report it some minutes after `expires_at`. A value below 5 or above 20 is rejected with `400` `ERR_ORDER_002`, for example `{"upi_expiry_minutes": "Ensure this value is less than or equal to 20."}`
 
 ### Card Payments
 - **3D Secure Flow**: For new cards, the system initiates 3D Secure verification

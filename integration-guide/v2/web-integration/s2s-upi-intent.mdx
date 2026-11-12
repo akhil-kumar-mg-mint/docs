@@ -106,6 +106,8 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
   - `upi_flow_type`: must be set to `"intent"`
   - `buyer.ip_address`: the customer’s device IP address
   - `buyer.user_agent`: the customer’s browser or app user-agent string
+
+  Optionally, send `upi_expiry_minutes` (5–20, default 5) to give the buyer longer to pay.
 </Note>
 
 ### S2S UPI Intent Response
@@ -116,7 +118,8 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
   "message": "S2S UPI Request created successfully",
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
-    "order_id": "OD2000992103"
+    "order_id": "OD2000992103",
+    "expires_at": "2025-07-08T10:35:00.156967Z"
   }
 }
 ```
@@ -125,6 +128,7 @@ For S2S UPI Intent mode, the response includes:
 
 - `order_id`: Unique order identifier
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
+- `expires_at`: When the UPI request stops accepting payment, in UTC: `upi_expiry_minutes` after creation (5 minutes if you did not send it), or sooner if the payment method allows less. Use it for the countdown you show the buyer
 
 **Explanation of URL Arguments**
 
