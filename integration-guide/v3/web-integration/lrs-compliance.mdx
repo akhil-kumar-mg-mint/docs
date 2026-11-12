@@ -36,6 +36,14 @@ You give us the buyer, the amount, and the documents. We enforce the rest.
 - **Whose money** — it must come from the buyer's own account. LRS is reported against the PAN of the account that was debited.
 - **What for** — every payment carries a FEMA purpose code, and the code decides the documents and the tax.
 
+## The yearly limit
+
+A buyer can remit up to **USD 250,000 per financial year** (April to March) under LRS, counted against their PAN. Once their settled remittances through us reach it, further payments are held for review.
+
+- The count uses what the bank actually settled, converted to USD, across every merchant the buyer pays through us.
+- On the hosted checkout, a buyer whose PAN has reached the limit is stopped at PAN entry, before paying, with: *"This payment can't be made as this PAN has reached the USD 250,000 LRS limit for FY 2026-27."*
+- Every other payment from that buyer is accepted, then held back from settlement while we review it. There is no separate status or event for the hold, and we never refund it automatically.
+
 ## What we check
 
 <Steps>
