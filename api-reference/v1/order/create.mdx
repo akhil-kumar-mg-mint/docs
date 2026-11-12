@@ -22,7 +22,10 @@ The standard hosted payment flow where customers are redirected to EximPe's secu
 ### 2. S2S UPI Intent
 Server-to-server UPI intent flow that generates a UPI intent link for direct app-to-app payments.
 
-### 3. S2S Card Payment
+### 3. S2S UPI Collect
+Server-to-server UPI collect flow: send the buyer's UPI ID as `vpa` with `upi_flow_type` `collection`, and EximPe sends a payment request to their UPI app. See the [S2S UPI Collect guide](/integration-guide/v1/web-integration/s2s-upi-collect).
+
+### 4. S2S Card Payment
 Server-to-server card payment flow with 3D Secure authentication. For new cards, the system initiates 3D Secure verification and returns an ACS template that must be rendered on the client side to complete authentication. Card details are securely processed and can be tokenized using the [Create Token API](/api-reference/v1/card-tokens/save) after successful payment.
 
 ## Request Parameters
@@ -76,6 +79,7 @@ The following tables define all request parameters, including nested objects, ty
 | collection_mode | string | No | Mode of payment collection. | Enum: `hosted_payment`, `s2s`; default `hosted_payment` |
 | mop_type | string | No | Method of payment. | Enum: `upi`, `credit_card`, `debit_card`, `net_banking`, `wallet`, `qr` |
 | upi_flow_type | string | Conditionally | UPI flow when `mop_type` is `UPI` and `collection_mode` is `s2s`. | Required if `mop_type=UPI` and `collection_mode=s2s`; Enum: `intent`, `collection` |
+| vpa | string | Conditionally | The buyer's UPI ID, for S2S UPI Collect. | Required if `upi_flow_type=collection`; format `^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+$` |
 | upi_expiry_minutes | integer | No | How long the customer has to complete an S2S UPI payment, in minutes. | S2S UPI Intent and Collect. Whole number from 5 to 20; omitted or `null` means 5. Some payment methods allow less than you ask for, so read the window that applies from `expires_at`. Ignored by Hosted Checkout |
 | return_url | string | Yes | URL to redirect after payment/auth completion. | HTTPS URL recommended |
 | buyer | object | Yes | Buyer/customer details. | See Buyer object |
@@ -159,14 +163,20 @@ For S2S UPI Intent mode, the response includes:
 - `intent_uri`: UPI intent link that can be used to open UPI apps directly
 - `expires_at`: When the UPI request stops accepting payment, in UTC: `upi_expiry_minutes` after creation (5 minutes if you did not send it), or sooner if the payment method allows less
 
-S2S UPI Collect (`upi_flow_type` `collection`) returns `order_id`, `message` and `expires_at`.
-
 ### S2S Card Payment Response
 For S2S Card Payment mode, the response includes:
 - `order_id`: Unique order identifier
 - `acs_template`: Base64-encoded HTML template for 3D Secure authentication
 
 **Important**: The `acs_template` must be decoded from Base64 and rendered in the customer's browser to complete the 3D Secure authentication process.
+
+### S2S UPI Collect Response
+For S2S UPI Collect mode, the response includes:
+- `order_id`: Unique order identifier
+- `message`: `UPI Collection request sent`
+- `expires_at`: When the request stops accepting payment, in UTC
+
+A successful response means the request was sent, not that the buyer has paid. Take the outcome from the webhook or the [Order Status API](/api-reference/v1/order/get-status).
 
 ## Examples
 
@@ -216,6 +226,35 @@ For S2S Card Payment mode, the response includes:
       "state": "Delhi",
       "postal_code": "110001"
     }
+  },
+  "product": {
+    "name": "Smartphone",
+    "type_of_goods": "physical_goods"
+  }
+}
+```
+
+```json S2S UPI Collect
+{
+  "amount": "1000.00",
+  "currency": "INR",
+  "reference_id": "ORDER_123458",
+  "collection_mode": "s2s",
+  "mop_type": "upi",
+  "upi_flow_type": "collection",
+  "vpa": "john.doe@okaxis",
+  "buyer": {
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phone": "+919876543210",
+    "address": {
+      "line_1": "123 Main Street",
+      "city": "Delhi",
+      "state": "Delhi",
+      "postal_code": "110001"
+    },
+    "ip_address": "203.0.113.10",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
   },
   "product": {
     "name": "Smartphone",
@@ -335,6 +374,18 @@ For S2S Card Payment mode, the response includes:
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
     "order_id": "OD2000992103",
+    "expires_at": "2025-07-08T10:35:00.156967Z"
+  }
+}
+```
+
+```json S2S UPI Collect Response
+{
+  "success": true,
+  "message": "S2S UPI Request created successfully",
+  "data": {
+    "order_id": "OD2000992104",
+    "message": "UPI Collection request sent",
     "expires_at": "2025-07-08T10:35:00.156967Z"
   }
 }
