@@ -1334,7 +1334,7 @@
               }
             },
             "nullable": true,
-            "description": "The buyer. `null` when the order holds no buyer name, e.g. a Hosted Checkout order whose payment page asked the buyer for their details."
+            "description": "The buyer. `null` when the order holds no buyer name."
           },
           "product": {
             "description": "What is being sold. `null` when the order has no product name.",

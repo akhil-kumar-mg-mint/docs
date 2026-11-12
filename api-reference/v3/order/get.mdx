@@ -10,7 +10,7 @@ The Get Order endpoint allows you to retrieve complete order information includi
 
 ## Response Fields
 
-- `buyer` is `null` when the order holds no buyer name, e.g. a Hosted Checkout order whose payment page asked the buyer for their details.
+- `buyer` is `null` when the order holds no buyer name.
 - `buyer.address` is `null` when the order has no `line_1`, even if other address fields were sent.
 - `invoice` is `null` when the order has no invoice number, date, delivery due date or file.
 - `opted_mop_type` and `payments[].mop_type` are lowercase, e.g. `upi` or `credit_card`, and `null` when no method was chosen.
