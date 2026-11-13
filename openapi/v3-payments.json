@@ -471,7 +471,9 @@
                         "mop_type": "upi",
                         "bank_ref_num": "629012345678",
                         "mop_detail": {
-                          "vpa": "rahul@okhdfc"
+                          "vpa": "rahul@okhdfc",
+                          "upi_instrument": "upi_cc",
+                          "upi_app": "PhonePe"
                         },
                         "payment_completed_at": "2026-10-15T06:45:02.000000Z",
                         "status": "captured",
@@ -1122,6 +1124,25 @@
                     "type": "string",
                     "description": "Payer VPA.",
                     "nullable": true
+                  },
+                  "upi_instrument": {
+                    "type": "string",
+                    "nullable": true,
+                    "enum": [
+                      "upi",
+                      "upi_cc",
+                      "upi_cl",
+                      "upi_ppi",
+                      "upi_si",
+                      "upi_si_ppi",
+                      null
+                    ],
+                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI."
+                  },
+                  "upi_app": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "UPI app the payer used, resolved from the VPA handle, e.g. `PhonePe`. `null` when the handle is not recognised."
                   }
                 }
               },
