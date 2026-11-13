@@ -105,7 +105,7 @@ On an LRS payment nothing comes out of the amount to be settled. The buyer pays 
 
 The quote does not break out the MDR and the GST on the MDR. If you need them itemised, ask your account manager.
 
-If EximPe works out the amount to be settled for your account, it runs the other way: the buyer's payment is fixed, and the MDR, the GST on the MDR and the TCS come out of it. What is left is the amount to be settled. There is nothing to quote, you don't send `amount_to_be_settled`, and a shortfall can't be topped up. Your account manager can tell you which way your account works.
+If your account settles an amount derived from the credit, it runs the other way: the buyer's payment is fixed, and the MDR, the GST on the MDR and the TCS come out of it. What is left is the amount to be settled. There is nothing to quote, you don't send `amount_to_be_settled`, and a shortfall can't be topped up. Your account manager can tell you which way your account works.
 
 On every other payment, including B2B services and B2B goods, the MDR and the GST on the MDR are deducted from the amount we settle to you.
 
@@ -128,7 +128,7 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 **The buyer paid too little.** The payment waits, and the `outstanding` entry on the event names the shortfall. Either have the buyer pay the difference and link that payment as a top-up with `top_up`, or declare a smaller `amount_to_be_settled` for what actually arrived and submit again.
 
-If EximPe works out the amount to be settled for your account, neither option applies: the buyer has to send a larger payment.
+If your account settles an amount derived from the credit, neither option applies: the buyer has to send a larger payment.
 
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 
