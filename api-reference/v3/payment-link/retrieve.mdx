@@ -103,4 +103,4 @@ A link the buyer paid on their second try, with the rest of the response left ou
   - `invoice.date` and `invoice.file` are `null` unless they were added to the order later.
 - `settlement`: The settlement state recorded against the link. `settlement_details` stays `null` until the payment is part of a settlement; its `settlement_id` is what [Get Settlement](/api-reference/v3/settlement/get) takes. When `paid_payment_id` differs from `link_id`, the money moved on that payment, and `settlement` is read from it: reconcile by `paid_payment_id`.
 - `status_message`: Why the link failed or closed, when there is a reason to give; otherwise `null`.
-- `created_at` and the other timestamps are UTC with microseconds, e.g. `2026-09-14T09:30:15.123456Z`.
+- `created_at` and the other timestamps are UTC, e.g. `2026-09-14T09:30:15.123456Z`.

@@ -2314,12 +2314,12 @@
           },
           "created_at": {
             "type": "string",
-            "description": "Creation time, UTC, ISO 8601 with microseconds and a `Z` suffix, e.g. `2026-04-28T06:30:00.000000Z`.",
+            "description": "Creation time, UTC, e.g. `2026-04-28T06:30:00.000000Z`.",
             "format": "date-time"
           },
           "updated_at": {
             "type": "string",
-            "description": "Time of the last change, UTC, ISO 8601 with microseconds and a `Z` suffix.",
+            "description": "Time of the last change, UTC, e.g. `2026-04-28T06:30:00.000000Z`.",
             "format": "date-time"
           }
         }

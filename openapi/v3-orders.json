@@ -1675,12 +1675,12 @@
               "created_at": {
                 "type": "string",
                 "format": "date-time",
-                "description": "When the order was created. UTC, with microseconds."
+                "description": "When the order was created. UTC, e.g. `2026-10-15T06:44:13.414209Z`."
               },
               "last_updated_at": {
                 "type": "string",
                 "format": "date-time",
-                "description": "When the order last changed. UTC, with microseconds."
+                "description": "When the order last changed. UTC, e.g. `2026-10-15T06:44:13.414209Z`."
               }
             }
           }

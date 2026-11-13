@@ -269,8 +269,8 @@ Refused fields are listed in the same response as any other problems in the requ
 | global_company.hs_codes | string[] \| null | The HS codes stored for the sub-merchant. `null` or an empty list when it has none. |
 | settlement_currency | string \| null | ISO currency code the sub-merchant is paid out in. |
 | beneficial_owners[].id | string | ID of each beneficial owner. Every owner carries every owner field; fields that do not apply to its type are `null`, an `INDIVIDUAL` owner's `authorized_user_name` is its first and last name, and `identify_number` is `null` for an `INDIVIDUAL` owner. Empty list when your account does not collect under EximPe's licence. |
-| created_at | string | Time of creation, UTC, ISO 8601 with microseconds and a `Z` suffix, e.g. `2026-04-28T06:30:00.000000Z`. |
-| updated_at | string | Time of the last change, UTC, ISO 8601 with microseconds and a `Z` suffix. |
+| created_at | string | Time of creation, UTC, e.g. `2026-04-28T06:30:00.000000Z`. |
+| updated_at | string | Time of the last change, UTC, e.g. `2026-04-28T06:30:00.000000Z`. |
 
 <CodeGroup>
 

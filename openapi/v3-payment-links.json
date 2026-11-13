@@ -1565,7 +1565,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link was created. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "comment": {
             "type": "string",
@@ -1640,7 +1640,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the link stops accepting payment. For a deactivated link, the moment of deactivation. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link stops accepting payment. For a deactivated link, the moment of deactivation. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "mop_type": {
             "type": "string",
@@ -1795,7 +1795,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link was created. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "paid_payment_id": {
             "type": "string",
@@ -1849,7 +1849,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was made. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the payment was made. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "payment_completed_at": {
             "type": "string",
@@ -1910,7 +1910,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the settlement completed. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the settlement completed. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "settlement_currency": {
             "type": "string",

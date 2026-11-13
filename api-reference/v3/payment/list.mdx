@@ -72,7 +72,7 @@ Stop paging when `next` is `null`.
 - `mop_type` is the method the buyer paid with, in lowercase (`upi`, `credit_card`). It is `null` when no method was chosen.
 - `comment` says why a payment failed, or what state it is in, when there is something to say; otherwise it is `null`.
 - `order_id` is the order behind the payment (`OD` followed by 10 digits). One order can have several payments, one per attempt.
-- `created_at` is UTC with microseconds, e.g. `2026-10-15T06:44:13.414209Z`.
+- `created_at` is UTC, e.g. `2026-10-15T06:44:13.414209Z`.
 
 <Info>
   The response is the same whatever `X-API-Version` you send. v1, v2 and v3 integrations share this endpoint and its response.

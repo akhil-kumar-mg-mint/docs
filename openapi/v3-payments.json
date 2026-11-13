@@ -740,7 +740,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was created, UTC with microseconds."
+            "description": "When the payment was created, UTC, e.g. `2026-10-15T06:44:13.414209Z`."
           },
           "comment": {
             "type": "string",
@@ -1175,7 +1175,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was created, UTC with microseconds."
+            "description": "When the payment was created, UTC, e.g. `2026-10-15T06:44:13.414209Z`."
           }
         }
       },

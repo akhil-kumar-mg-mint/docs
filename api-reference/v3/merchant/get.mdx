@@ -30,8 +30,8 @@ Returns one of your sub-merchants: every field you sent when you created or last
 | changes_requested_reason | string \| null | EximPe's reason when the status is `CHANGES_REQUESTED`; otherwise `null`. |
 | section_reasons | array | When the status is `CHANGES_REQUESTED`, one `{ "section", "reason" }` entry per part of the application that needs changes; otherwise empty. See [Sections](/api-reference/v3/merchant/options#sections). |
 | reject_reason | string \| null | EximPe's reason when the status is `REJECTED`; otherwise `null`. |
-| created_at | string | Time of creation, UTC, ISO 8601 with microseconds and a `Z` suffix, e.g. `2026-04-28T06:30:00.000000Z`. |
-| updated_at | string | Time of the last change, UTC, ISO 8601 with microseconds and a `Z` suffix. |
+| created_at | string | Time of creation, UTC, e.g. `2026-04-28T06:30:00.000000Z`. |
+| updated_at | string | Time of the last change, UTC, e.g. `2026-04-28T06:30:00.000000Z`. |
 
 <CodeGroup>
 
