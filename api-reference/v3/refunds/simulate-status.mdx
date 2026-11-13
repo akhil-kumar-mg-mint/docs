@@ -1,11 +1,11 @@
 ---
 title: 'Set Refund Status (Sandbox)'
 description: 'Force a refund to any status on demand and fire the matching webhook, so one refund can exercise every branch of your handler.'
-openapi: 'POST /pg/refunds/{refund_id}/simulate-status/'
+openapi: '/openapi/v3/openapi.json POST /pg/refunds/{refund_id}/simulate-status/'
 ---
 
 <Warning>
-  **Sandbox only.** This endpoint returns `400` in production. It operates only on refunds created through the **Simulator** payment gateway — a refund on a real gateway is rejected.
+  **Sandbox only.** This endpoint returns `403` in production. It operates only on refunds created through the **Simulator** payment gateway — a refund on a real gateway is rejected.
 </Warning>
 
 ## Overview
@@ -48,7 +48,7 @@ Setting `REFUNDED` also stamps `refunded_at` with the current time, if it is not
   **Webhooks fire only on a genuine transition.** Setting a refund to the status it already holds returns `200` and sends nothing. To re-trigger an event, move the refund to a different status first.
 </Warning>
 
-Your `status_message` is carried into the webhook, so you can assert on it end to end.
+Your `status_message` arrives in the webhook as `comments` on each `refunds[]` entry, so you can assert on it end to end.
 
 ## Case asymmetry
 
@@ -72,6 +72,7 @@ Each transition fires the corresponding event from the table above.
 curl -X POST "https://<your-sandbox-host>/pg/refunds/RF7019490071/simulate-status/" \
   -H "X-Client-ID: <client-id>" \
   -H "X-Client-Secret: <client-secret>" \
+  -H "X-API-Version: 3.0.0" \
   -H "Content-Type: application/json" \
   -d '{
         "status": "FAILED",
@@ -83,22 +84,19 @@ Your endpoint receives `REFUND_FAILED` carrying your custom message.
 
 ## Errors
 
-`400` responses use `error.code` = `ERR_REFUND_002`:
+`400` responses:
 
-| `details` | Cause |
-|---|---|
-| `status: "…" is not a valid choice.` | Unknown status, or lowercase |
-| `status: This field is required.` | `status` omitted |
-| `refund_uid: RF… is not on the simulator gateway` | Refund created on a real gateway |
-| `error: Refund status simulation is not available in production` | Called in production |
+| `error.code` | `details` | Cause |
+|---|---|---|
+| `ERR_REFUND_002` | `status: "…" is not a valid choice.` | Unknown status, or lowercase |
+| `ERR_REFUND_002` | `status: This field is required.` | `status` omitted |
+| `ERR_REFUND_009` | `refund_uid: RF… is not on the simulator gateway` | Refund created on a real gateway |
 
-<Warning>
-  **`404` does not use the standard envelope.** A refund that does not exist — or belongs to another merchant — returns a bare `{"detail": "..."}` rather than the `success`/`error` shape. Handle that separately.
+In production the endpoint returns `403` with `ERR_REFUND_012`.
 
-  Note this is a `404`, not a `403`: refunds are scoped to your account and its sub-merchants, and someone else's refund is simply not found.
-</Warning>
+A refund that does not exist — or belongs to another merchant — returns `404` with `ERR_REFUND_003`. It is a `404`, not a `403`: refunds are scoped to your account and its sub-merchants, and someone else's refund is simply not found.
 
-A `500` on this endpoint uses `ERR_SERVICE_ERROR_000`, unlike its `400`s.
+A `500` on this endpoint uses `ERR_SERVICE_ERROR_000`.
 
 ## Related
 

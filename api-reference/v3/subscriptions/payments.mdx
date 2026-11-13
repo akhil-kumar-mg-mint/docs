@@ -4,7 +4,9 @@ description: 'Fetch all payments recorded against a subscription.'
 api: 'GET /pg/subscriptions/{subscription_id}/payments/'
 ---
 
-Fetch every payment EximPe has recorded against the subscription — the mandate payment and each recurring debit. Available for **all payment methods** and **all environments**, production included.
+Fetch every payment EximPe has recorded against the subscription — the mandate payment and each recurring debit, newest first. Available for **all payment methods** and **all environments**, production included.
+
+A `404` means the subscription does not exist or does not belong to you. A `403` means subscriptions are not enabled for your account.
 
 ### Path Parameters
 
@@ -50,7 +52,7 @@ Fetch every payment EximPe has recorded against the subscription — the mandate
 </ResponseField>
 
 <ResponseField name="mop_type" type="string">
-  Mode of payment. One of: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`, `EMI`, `BNPL`, `CARD`, `VBA_TRANSFER`.
+  Mode of payment. One of: `CREDIT_CARD`, `DEBIT_CARD`, `UPI`, `NET_BANKING`, `WALLET`, `QR`, `EMI`, `BNPL`, `CARD`, `VBA_TRANSFER`, `EFTNET`, `LR`.
 </ResponseField>
 
 <ResponseField name="bank_ref_num" type="string">
@@ -80,7 +82,7 @@ Fetch every payment EximPe has recorded against the subscription — the mandate
   "message": "Subscription payments fetched successfully",
   "data": [
     {
-      "payment_id": "dpr_abc123",
+      "payment_id": "PR7989707772",
       "order_id": "OD2000992103",
       "reference_id": "REC-SUB7989707770-a1b2c3d4",
       "amount": 1000.00,
@@ -99,14 +101,7 @@ Fetch every payment EximPe has recorded against the subscription — the mandate
 
 ```json 404 - Subscription not found
 {
-  "success": false,
-  "error": {
-    "code": "PAYMENT_GATEWAY_ERROR",
-    "message": "Subscription not found",
-    "details": {
-      "error": "Subscription not found"
-    }
-  }
+  "detail": "No Subscription matches the given query."
 }
 ```
 </ResponseExample>

@@ -1,7 +1,7 @@
 ---
 title: 'Upload Document'
 description: "Upload a supporting file and get back a ref to send under its checklist code. Multipart file + type."
-openapi: 'POST /pg/payments/{payment_id}/documents/'
+openapi: '/openapi/v3/openapi.json POST /pg/payments/{payment_id}/documents/'
 ---
 
 ## Overview
@@ -31,7 +31,7 @@ The path resolves the payment before anything is stored, under the same ownershi
 
 ## Document types
 
-`type` must be one of these, and one the payment's own flow files: a payment nothing has classified yet is refused until `business_model` and `purpose_code` are sent, and a B2B services payment accepts only its own types (`invoice` and `delivery_proof`). They are the codes the checklists ask for, so the value you upload under is the same value you submit under:
+`type` must be one of these codes. The upload does not check it against this payment's checklist: a type the checklist does not ask for is stored, then refused when you cite it on the submit. A payment that nothing has classified yet is refused until `business_model` and `purpose_code` are sent. They are the codes the checklists ask for, so the value you upload under is the same value you submit under:
 
 | `type` | |
 |---|---|
@@ -56,7 +56,17 @@ Validated on upload, so a bad file fails here rather than at submit time.
 |---|---|
 | Extensions | `pdf` · `png` · `jpg` · `jpeg` · `docx` · `xlsx` · `csv` |
 | Maximum size | 10 MB |
+| Maximum file name | 100 characters, extension included |
 | Encrypted PDFs | Rejected — a password-protected file cannot be read by anyone who has to review it |
+
+These refusals are a `400`, and `details` is keyed by the part that was refused:
+
+| Cause | `code` |
+|---|---|
+| The file's type or content is refused, or the PDF is encrypted. `details.file` says which. | `40359` |
+| `type` is not one of the [document types](#document-types). `details.type` reads `Unknown document type.` | `40359` |
+| Nothing has classified the payment yet. The message reads `Invalid verification request.` | `40359` |
+| No such payment for this merchant. | `40360` |
 
 ## The response
 

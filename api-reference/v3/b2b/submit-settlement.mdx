@@ -1,7 +1,7 @@
 ---
 title: 'Submit Settlement Documents'
 description: "File a settled B2B-services payment's delivery proofs by ref, and lock the set — in one call."
-openapi: 'POST /pg/payments/{payment_id}/settlement/submit/'
+openapi: '/openapi/v3/openapi.json POST /pg/payments/{payment_id}/settlement/submit/'
 ---
 
 ## Overview
@@ -13,7 +13,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/settlemen
   -H 'X-Client-ID: <client_id>' -H 'X-Client-Secret: <client_secret>' \
   -H 'X-API-Version: 3.0.0' \
   -H 'Content-Type: application/json' \
-  -d '{ "refs": ["8207383264", "5512907744"] }'
+  -d '{ "refs": ["4193006825", "7250884131"] }'
 ```
 
 ```json
@@ -78,6 +78,7 @@ Every refusal is a `400` in the standard envelope:
 | Cause | `code` | What to do |
 |---|---|---|
 | `refs` is empty or absent | `ERR_B2B_SETTLEMENT_004` | Send at least one `delivery_proof` ref. |
+| `refs` is not a list, or a ref is over 64 characters or holds anything but letters, digits and dashes. | `40359` | Send `refs` as a list of the refs Upload Document returned. |
 | A ref is not one of this payment's delivery proofs | `ERR_B2B_SETTLEMENT_001` | The same answer whether it does not exist, was uploaded against another payment, or was uploaded as an `invoice`. Upload the file against this payment with `type=delivery_proof`. |
 | The payment is not settled | `ERR_B2B_SETTLEMENT_003` | Wait for [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled). |
 | Already submitted | `ERR_B2B_SETTLEMENT_002` | Nothing to do — the step is done. Read `state` from [List Settlement Documents](/api-reference/v3/b2b/list-settlement-documents) to tell the two apart before calling. |
@@ -85,7 +86,7 @@ Every refusal is a `400` in the standard envelope:
 | The payment id does not resolve for this caller | `40360` | The same answer whether it does not exist or belongs to another merchant, so the endpoint never confirms someone else's payment id. |
 
 <Note>
-  **The refs are the payload, so they are answered for first.** An unknown ref is reported before the payment's own state is judged — a `400` carrying `ERR_B2B_SETTLEMENT_001` does not tell you the payment has settled, only that the ref did not resolve. An empty list, which names no ref, does surface the state: an unsettled payment answers `ERR_B2B_SETTLEMENT_003` rather than `_004`.
+  **The refs are the payload, so they are answered for first.** An unknown ref is reported before the payment's own state is judged — a `400` carrying `ERR_B2B_SETTLEMENT_001` does not tell you the payment has settled, only that the ref did not resolve. An empty list, which names no ref, does surface the state: an unsettled payment answers `ERR_B2B_SETTLEMENT_003`, and an already submitted set answers `ERR_B2B_SETTLEMENT_002`, rather than `_004`.
 </Note>
 
 ## Related

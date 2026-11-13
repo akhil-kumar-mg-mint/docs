@@ -66,5 +66,7 @@ Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-r
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |

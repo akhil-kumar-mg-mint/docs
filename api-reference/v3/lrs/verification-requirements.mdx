@@ -1,7 +1,7 @@
 ---
 title: 'Get Verification Requirements'
 description: "Everything a payment's checklist calls for — every field and document, which are satisfied, and what state the payment itself is in."
-openapi: 'GET /pg/payments/{payment_id}/verification/'
+openapi: '/openapi/v3-b2b.json GET /pg/payments/{payment_id}/verification/'
 ---
 
 ## Overview
@@ -47,6 +47,7 @@ Example responses: an education payment with nothing supplied yet, a payment not
     "payment_id": "PR6938527534",
     "order_id": "OD3376378679",
     "settlement_status": "ACTION_REQUIRED",
+    "linked_primary_payment_id": null,
     "business_model": "B2C",
     "purpose_code": "S0305",
     "fields": [
@@ -190,6 +191,7 @@ Example responses: an education payment with nothing supplied yet, a payment not
     "payment_id": "PR4471903288",
     "order_id": "OD9925177340",
     "settlement_status": "ACTION_REQUIRED",
+    "linked_primary_payment_id": null,
     "business_model": null,
     "purpose_code": null,
     "fields": [
@@ -219,6 +221,7 @@ Example responses: an education payment with nothing supplied yet, a payment not
     "payment_id": "PR7042318866",
     "order_id": "OD8451220934",
     "settlement_status": "ACTION_REQUIRED",
+    "linked_primary_payment_id": null,
     "business_model": "B2C",
     "purpose_code": "S0306",
     "fields": [
@@ -349,11 +352,16 @@ Example responses: an education payment with nothing supplied yet, a payment not
   | `INFO_PENDING` | The same, earlier in the flow — nothing has been filed yet. |
   | `UNDER_REVIEW` | Filed and with EximPe. **Sending is closed** — see below. This value does not change when EximPe approves: read [`review.review_state`](#the-review) for the decision. |
   | `READY_FOR_SETTLEMENT` · `SETTLED` | Past verification. Sending is closed. |
+  | `VERIFIED` | Past verification. Sending is closed. Read [`review.review_state`](#the-review) for the decision. |
   | `EXPIRED` · `REJECTED` · `ON_HOLD` | The payment did not proceed. Nothing you send reopens it. |
 
   A payment can also read `NOT_APPLICABLE`, `PAYMENT_PENDING`, `PAYMENT_FAILED` or `SETTLEMENT_ERROR` — states in which no verification is being asked of you.
 
   Once the verification has been **filed**, sending closes: a `POST` to this path is refused. A rejected or fully refunded payment refuses sends too. Read this key before you send.
+</ParamField>
+
+<ParamField path="linked_primary_payment_id" type="string | null" required>
+  For an LRS top-up, the id of the short payment it is linked to; `null` otherwise. A linked top-up shows its primary's status. See [Linking a top-up](/api-reference/v3/lrs/submit-verification-details#linking-a-top-up).
 </ParamField>
 
 <ParamField path="business_model" type="string | null" required>
@@ -452,6 +460,8 @@ Every entry in `fields` and `documents` carries `code`, `message`, `satisfied` a
   | `PAYING_FOR_SOMEONE_ELSE` | A person other than the remitter is on the remittance. |
   | `PASSENGER_DETAILS_LEVEL` | Your account [collects traveller details](/api-reference/v3/lrs/submit-verification-details#verification-level) on travel payments. |
   | `GOODS_PURPOSE_CODE` | The order's purpose code is a goods code. |
+  | `ADVANCE_GOODS_PURPOSE_CODE` | The order's purpose code is `S0101`, an advance payment for goods. |
+  | `SERVICES_PURPOSE_CODE` | The order's purpose code is a services or digital-goods code. |
 
   While the condition cannot yet be evaluated — no person has been sent — the item reads `satisfied: true`, `provided: false`. It is still listed, so you know it exists.
 </ParamField>
@@ -544,9 +554,12 @@ The light B2C set (`S0101`, `S0802`, `S0301`) asks for those nine fields and no 
 | Code | Asks for |
 |---|---|
 | `invoice_amount` | Invoice total in INR, as stated on the invoice |
-| `declaration` | The declaration the payer affirms: the purchase is genuine and the invoice is accurate |
 | `hs_code` | HS code of the goods. Owed only when the purpose code is a physical-goods code |
 | `invoice` (document) | Optional |
+| `buyer_dob` | Buyer date of birth. Owed only when the purpose code is a services or digital-goods code |
+| `delivery_due_date` | Due date of delivery. Owed only when the purpose code is a services or digital-goods code |
+
+On the light B2C set `invoice_date` is optional.
 
 ### LRS checklists
 
@@ -585,8 +598,8 @@ Documents, per purpose code:
 
 | Code | Extra fields | Documents |
 |---|---|---|
-| `S0101` — goods | `invoice_amount`, `declaration`, `hs_code` and `iec` | `invoice` |
-| `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | `invoice_amount` and `declaration` | `invoice` |
+| `S0101` — goods | `invoice_amount`, `declaration`, `hs_code`, `iec` and `delivery_due_date` | `invoice` |
+| `S0802` · `S0803` · `S1005` · `S1009` · `S1010` · `S1013` · `S1015` · `S1016` · `S1017` · `S1105` · `S1106` — services | `invoice_amount`, `declaration`, `buyer_date_of_incorporation` and `delivery_due_date`, plus `buyer_pan` when it is owed | `invoice` |
 
 ## The requirement set can grow
 

@@ -1,11 +1,19 @@
 ---
 title: 'Get Order Status'
 description: 'Retrieve current status of an order by order ID.'
-openapi: 'GET /pg/orders/{order_id}/status/'
+openapi: '/openapi/v3-orders.json GET /pg/orders/{order_id}/status/'
 ---
 
 ## Overview
 
 Use this endpoint to fetch only the status details for an order. This is useful for lightweight polling without fetching full order details.
 
+## Order status
 
+| `status` | Meaning |
+|---|---|
+| `payment_pending` | No payment has gone through yet. |
+| `payment_successful` | A payment was captured. |
+| `failed` | The order failed or was abandoned. |
+
+The response also carries `order_id`, `status_message`, `created_at` and `last_updated_at`. An order ID that does not exist, or is not yours, returns `404` with `ERR_ORDER_001`.

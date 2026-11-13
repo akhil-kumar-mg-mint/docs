@@ -11,6 +11,35 @@ description: "Technical reference for the REFUND_STATUS_UPDATE webhook event, in
 
 This webhook is triggered whenever a refund transitions to a new status (for example, while it is being processed) through EximPe.
 
+---
+
+## Delivery Details
+
+| Attribute | Value |
+|-----------|--------|
+| **HTTP method** | `POST` |
+| **URL** | The webhook URL configured for your merchant account |
+| **Content-Type** | `application/json` |
+| **Timeout** | 10 seconds |
+| **Retries** | Up to 5 delivery attempts (backoff: 1 min, 5 min, 15 min, 60 min) |
+
+### Headers
+
+| Header | Description |
+|--------|-------------|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Eximpe-Webhook/1.0` |
+| `X-Webhook-Event` | `REFUND_STATUS_UPDATE` |
+| `X-Webhook-Timestamp` | Unix timestamp (string) at the time of the request |
+| `X-Webhook-Signature` | `HMAC-SHA256(encryption_key, raw_body)`, hex-encoded |
+| `X-Webhook-Signature-V2` | `t=<timestamp>,v2=<hex>` where the digest is `HMAC-SHA256(encryption_key, "<timestamp>." + raw_body)` |
+
+**Verifying.** The body is serialised once and those exact bytes are both sent and signed, so hashing the raw request body as received is correct — do not re-serialise the parsed JSON first.
+
+Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifying webhooks](/integration-guide/v3/web-integration/webhooks#check-the-message-is-really-from-us).
+
+---
+
 ## Payload Schema
 
 <CodeGroup>

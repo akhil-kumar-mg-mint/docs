@@ -145,7 +145,7 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
 1. **Respond `2xx`** as soon as you have accepted the payload, so the delivery is not retried.
 2. **Verify the signature** against the raw request body.
 3. **Record the payment as under review** and stop chasing the payer. Nothing more is needed from either of you.
-4. **Wait for settlement.** [`PAYMENT_SETTLED`](/api-reference/v3/webhooks/payment-settled) is the next event in this payment's life.
+4. **Wait for the verdict.** [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) brings `APPROVED` or `REJECTED`. If EximPe sends the payment back for changes, [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) arrives instead. `PAYMENT_SETTLED` follows only an approval.
 
 <Warning>
   **Sending is closed from here.** Once you have filed, sending is closed.

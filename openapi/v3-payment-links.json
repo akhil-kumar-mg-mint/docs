@@ -24,8 +24,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -292,7 +291,7 @@
             }
           },
           "429": {
-            "description": "The payment network is rate limiting requests",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header when it is present; otherwise back off and retry.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -376,7 +375,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       },
       "get": {
         "summary": "List Payment Links",
@@ -388,8 +392,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -397,7 +400,7 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "description": "Page number, starting at 1. Stop when `next` is null: a page past the last one is refused with a 500.",
+            "description": "Page number, starting at 1. Stop paging when `next` is `null`.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -433,6 +436,9 @@
               ],
               "default": "-created_at"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -594,26 +600,11 @@
             }
           },
           "500": {
-            "description": "Internal server error, including a page past the last one",
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v3_ErrorResponse"
-                },
-                "examples": {
-                  "Page past the end": {
-                    "summary": "Page past the end",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": 40350,
-                        "message": "Failed to retrieve domestic payment requests",
-                        "details": {
-                          "error": "Invalid page."
-                        }
-                      }
-                    }
-                  }
                 }
               }
             }
@@ -632,8 +623,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -646,6 +636,9 @@
               "type": "string",
               "example": "PR4829301756"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -892,7 +885,7 @@
     "/pg/payment-links/{link_id}/deactivate/": {
       "post": {
         "summary": "Deactivate Payment Link",
-        "description": "Close an active payment link so it takes no further payment. A deactivated link reads expired.",
+        "description": "Close an active payment link so it takes no further payment. A deactivated link reads `expired`.",
         "operationId": "v3_deactivatePaymentLink",
         "tags": [
           "Payment Links"
@@ -901,8 +894,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -915,6 +907,9 @@
               "type": "string",
               "example": "PR4829301756"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1068,7 +1063,7 @@
             }
           },
           "429": {
-            "description": "The payment network is rate limiting requests",
+            "description": "A `429` can come from EximPe's rate limit or the payment network. Retry after the `Retry-After` header when it is present; otherwise back off and retry.",
             "headers": {
               "Retry-After": {
                 "description": "Seconds to wait before retrying. Not always present.",
@@ -1181,14 +1176,6 @@
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
-        "name": "X-API-Version",
-        "in": "header",
-        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
       }
     },
     "schemas": {
@@ -1578,7 +1565,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link was created. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "comment": {
             "type": "string",
@@ -1598,7 +1585,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired`."
           }
         }
       },
@@ -1653,7 +1640,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the link stops accepting payment; the moment of deactivation for a deactivated link. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link stops accepting payment. For a deactivated link, the moment of deactivation. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "mop_type": {
             "type": "string",
@@ -1798,7 +1785,7 @@
               "expired",
               "failed"
             ],
-            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid."
+            "description": "Where the link stands. `active`: open for payment. `paid`: paid; this outranks an expiry that has since passed. `expired`: past its expiry_date, or deactivated. `failed`: could not be created, or closed without being paid. A deactivated link reads `expired`."
           },
           "status_message": {
             "type": "string",
@@ -1808,7 +1795,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the link was created. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the link was created. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "paid_payment_id": {
             "type": "string",
@@ -1862,7 +1849,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was made. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the payment was made. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "payment_completed_at": {
             "type": "string",
@@ -1923,7 +1910,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "When the settlement completed. UTC, ISO 8601 with microseconds (e.g. `2026-09-14T09:30:15.123456Z`)."
+            "description": "When the settlement completed. UTC, e.g. `2026-09-14T09:30:15.123456Z`."
           },
           "settlement_currency": {
             "type": "string",
@@ -2112,6 +2099,22 @@
             "description": "Why the request was refused"
           }
         }
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": false,
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }

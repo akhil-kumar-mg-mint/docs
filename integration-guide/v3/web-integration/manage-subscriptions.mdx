@@ -1,6 +1,6 @@
 ---
 title: "Manage Subscriptions"
-description: "Check mandate status, let recurring payments run, modify or cancel a mandate, trigger ad hoc charges, and read payment history."
+description: "Check mandate status, charge installments, modify or cancel a mandate, and read payment history."
 ---
 
 Everything after the subscription exists: confirming the mandate went live, watching the debits arrive, changing or stopping the mandate, and reading back what was collected.
@@ -11,21 +11,21 @@ Create the subscription first — over [UPI Intent](/integration-guide/v3/web-in
   <Card title="Check Mandate Status" icon="clock" href="#check-mandate-status">
     Verify the mandate is active before you rely on it
   </Card>
-  <Card title="Automatic Payments" icon="rotate" href="#automatic-recurring-payments">
-    Recurring debits run on the billing cycle, with no call from you
+  <Card title="How Charging Works" icon="rotate" href="#how-charging-works-by-payment-partner">
+    Who starts each charge, and what you send
   </Card>
   <Card title="Modify or Cancel" icon="pen" href="#modify-or-cancel-the-mandate">
     Change the mandate amount, or stop future debits
   </Card>
-  <Card title="Ad Hoc Payment" icon="credit-card" href="#trigger-an-adhoc-recurring-payment">
-    Trigger a charge on an ADHOC subscription
+  <Card title="Trigger a Payment" icon="credit-card" href="#trigger-a-recurring-payment">
+    Charge a subscription installment
   </Card>
   <Card title="View Payments" icon="list" href="#view-subscription-payments">
     Read every payment recorded against a subscription
   </Card>
 </CardGroup>
 
-Every call carries `X-Client-ID`, `X-Client-Secret`, and `X-API-Version: 3.0.0`. PSP callers add `X-Merchant-ID`. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
+Every call carries `X-Client-ID` and `X-Client-Secret`. PSP callers add `X-Merchant-ID`. `X-API-Version` is optional. Send `3.0.0`; the response echoes it back. Examples use the sandbox host `https://api-pacb-uat.eximpe.com`; in production use `https://api-pacb.eximpe.com`.
 
 ## Check mandate status
 
@@ -70,13 +70,25 @@ Only act on the subscription once `mandate_is_active` is `true`.
   Only `ACTIVE` subscriptions have debits processed. Track the rest through the [Subscription Status webhook](/api-reference/v3/webhooks/subscription-status) rather than polling.
 </Note>
 
-## Automatic recurring payments
+## How charging works by payment partner
 
-Once the mandate is active, the debits run themselves on the billing cycle you set in `standing_instruction` — `MONTHLY`, `WEEKLY`, `DAILY`. **You do not call an API to trigger them.**
+Each subscription runs on one payment partner: Cashfree, PayU or EximPe. The partner decides who starts each charge and what you send.
 
-1. **Mandate activation** — the buyer approves, the mandate goes `ACTIVE`
-2. **Scheduled debit** — on each billing date the amount is debited automatically
-3. **Webhook** — the outcome arrives as a webhook carrying the `subscription_id`
+| | Cashfree | PayU | EximPe (UPI) |
+| :--- | :--- | :--- | :--- |
+| **Who starts each charge** | Every `billing_cycle` except `ADHOC` (`DAILY`, `WEEKLY`, `MONTHLY`, `YEARLY`, `ONCE`): Cashfree, on the plan's schedule. You call nothing. `ADHOC`: you, with [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment) | You, for **every** charge, on every billing cycle | You, for **every** charge, on every billing cycle |
+| **Pre-debit notification** | Not used. Do not call Send Pre-Debit Notification | Required. Call [Send Pre-Debit Notification](/api-reference/v3/subscriptions/pre-debit-notification) with a `debit_date` after today (IST) | Required. Call [Send Pre-Debit Notification](/api-reference/v3/subscriptions/pre-debit-notification) at least 24 hours before the debit date starts (IST) |
+| **When to trigger** | Any day. The debit runs the next day (IST) | On the notified `debit_date` (IST) | On the notified `debit_date` (IST) |
+| **Fields you send** | `amount` (optional), `reference_id` (optional) | `invoice_display_number` (**required**, same value as the notification, new for each charge), `amount`, `transaction_id`, `reference_id` (optional) | `amount`, `transaction_id` (letters, numbers and hyphens), `invoice_display_number` (all optional). `reference_id` is not used: send `transaction_id` to set the debit's reference |
+| **Final result** | [Payment Successful](/api-reference/v3/webhooks/payment-successful) or [Payment Failed](/api-reference/v3/webhooks/payment-failed). The order is created when the webhook arrives. Its `merchant_reference_id` is the `payment_id` you stored | Same webhooks, or [Get Order Status](/api-reference/v3/order/get-status) with the returned `order_id` | Same webhooks, or [Get Order Status](/api-reference/v3/order/get-status) with the returned `order_id` |
+
+<Note>
+  **Not sure which partner you are on?** Ask your EximPe account manager.
+</Note>
+
+<Warning>
+  **On PayU and EximPe, nothing is charged until you trigger it.** Send a pre-debit notification, then a trigger, for every billing cycle, `MONTHLY` included.
+</Warning>
 
 ### Watching the debits
 
@@ -99,7 +111,7 @@ Once the mandate is active, the debits run themselves on the billing cycle you s
 
 ### Modify the mandate
 
-To change the billing amount on an active subscription, call [Modify Subscription Mandate](/api-reference/v3/subscriptions/modify-mandate).
+To change the mandate amount or dates, call [Modify Subscription Mandate](/api-reference/v3/subscriptions/modify-mandate). `ADHOC`, `CANCELLED` and `EXPIRED` subscriptions cannot be modified: the call returns `400`.
 
 ```bash cURL
 curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_mandate/' \
@@ -120,12 +132,14 @@ curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/modify_
     "subscription_id": "SUB7989707770",
     "mandate_modified": true,
     "updated_amount": "1500.00",
-    "subscription_status": "INITIALIZED"
+    "subscription_status": "ACTIVE"
   }
 }
 ```
 
-`amount` is required.
+Send `amount`, `end_date` or both. Cashfree changes the amount only, so send `amount`. The start date cannot be changed. On a PayU card subscription, also send `card_details`.
+
+On EximPe, the change is sent to the buyer's UPI app to approve. The response has `approval_pending: true`, and the subscription keeps its current terms until the buyer approves.
 
 ### Cancel the mandate
 
@@ -152,19 +166,17 @@ curl -X POST 'https://api-pacb.eximpe.com/pg/subscriptions/SUB7989707770/cancel_
 
 The subscription is marked `CANCELLED`. Payments already collected are unaffected — they carry on through compliance and settlement as normal.
 
-## Trigger an adhoc recurring payment
+For an AMEX card subscription, send `card_details` with `network` set to `AMEX`.
 
-An **ADHOC** subscription has no billing cycle: nothing is debited until you ask for it. Each charge is a call to [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment).
+## Trigger a recurring payment
 
-<Info>
-  This applies to **ADHOC** subscriptions only. On a `MONTHLY`, `WEEKLY`, or `DAILY` subscription the debits run by themselves — see [Automatic recurring payments](#automatic-recurring-payments).
-</Info>
+An **ADHOC** subscription has no billing cycle: nothing is debited until you ask for it. Each charge is a call to [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment). On PayU and EximPe, every charge on every billing cycle is such a call, made after a [pre-debit notification](/api-reference/v3/subscriptions/pre-debit-notification).
 
 The subscription must have an active mandate first. Then:
 
-1. **Initiate** — call the API with an optional `amount` and `reference_id`
-2. **Wait** — the debit is processed asynchronously, typically the day after the call
-3. **Webhook** — the outcome arrives by the [Payment Successful](/api-reference/v3/webhooks/payment-successful) or [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhook, and the order and payment records are created at that point
+1. **Initiate** — call the API with the fields your partner takes (see [How charging works by payment partner](#how-charging-works-by-payment-partner))
+2. **Wait** — the debit is processed asynchronously. On Cashfree it runs the day after the call; on PayU and EximPe it runs the same day
+3. **Webhook** — the outcome arrives by the [Payment Successful](/api-reference/v3/webhooks/payment-successful) or [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhook. On Cashfree, the order and payment records are created at that point. On PayU and EximPe, the order is created before the charge and its `order_id` is returned in the response
 
 ```bash cURL
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/recurring_payment/' \
@@ -178,7 +190,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
 }'
 ```
 
-```json
+```json Cashfree
 {
   "success": true,
   "message": "Recurring payment triggered successfully",
@@ -192,15 +204,17 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/rec
 }
 ```
 
+The PayU and EximPe responses carry `order_id` instead. See the per-partner examples on [Trigger Recurring Payment](/api-reference/v3/subscriptions/recurring-payment).
+
 <Warning>
-  **`success` means initiated, not captured.** The real outcome arrives later by webhook — [`PAYMENT_SUCCESSFUL`](/api-reference/v3/webhooks/payment-successful) when the debit is captured, or [`PAYMENT_FAILED`](/api-reference/v3/webhooks/payment-failed) when it fails or is cancelled. Do not release goods on the API response.
+  **Confirm every charge by webhook.** Always confirm the charge outcome from the [Payment Successful](/api-reference/v3/webhooks/payment-successful) or [Payment Failed](/api-reference/v3/webhooks/payment-failed) webhook before marking an installment paid.
 </Warning>
 
-If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged.
+If you pass `amount`, it must not exceed the subscription's `billing_amount`. Omit it and the full billing amount is charged (on EximPe, the notified amount).
 
-To name the debit yourself, pass a `reference_id` (1–50 letters, numbers and hyphens, unique across your orders). It is used as the debit's `payment_id`. Omit it and one is generated with a `REC-` prefix.
+On Cashfree, to name the debit yourself, pass a `reference_id` (1–50 letters, numbers and hyphens, unique across your orders). It is used as the debit's `payment_id`. Omit it and one is generated with a `REC-` prefix.
 
-Store the returned `payment_id` against your order. When the outcome arrives, the debit's payment carries it as `merchant_reference_id` in the webhook and as `reference_id` in [Get Subscription Payments](/api-reference/v3/subscriptions/payments), so you can match the result to your order even when several debits on one subscription are in flight. If the debit is retried, each retry has `-attempt-1`, `-attempt-2`, and so on appended.
+On Cashfree, store the returned `payment_id` against your order. When the outcome arrives, the debit's payment carries it as `merchant_reference_id` in the webhook and as `reference_id` in [Get Subscription Payments](/api-reference/v3/subscriptions/payments), so you can match the result to your order even when several debits on one subscription are in flight. If the debit is retried, each retry has `-attempt-1`, `-attempt-2`, and so on appended. On PayU and EximPe, store the returned `order_id`.
 
 ## View subscription payments
 
@@ -219,7 +233,7 @@ curl -X GET 'https://api-pacb-uat.eximpe.com/pg/subscriptions/SUB7989707770/paym
   "message": "Subscription payments fetched successfully",
   "data": [
     {
-      "payment_id": "dpr_abc123",
+      "payment_id": "PR7989707772",
       "order_id": "OD2000992103",
       "reference_id": "REC-SUB7989707770-a1b2c3d4",
       "amount": 1000.00,

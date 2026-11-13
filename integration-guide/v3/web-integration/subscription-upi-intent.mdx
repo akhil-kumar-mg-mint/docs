@@ -29,7 +29,7 @@ This page covers the **UPI Intent** flow: no VPA is collected up front — the b
 
 Before you begin, ensure you have:
 
-- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- **Credentials**: Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes it back
 - **Domain Whitelist**: Your website domain whitelisted for integration
 - **Webhook URL**: A secure endpoint to receive payment and subscription status updates
 - **UPI Subscription enablement**: UPI recurring subscriptions enabled and approved by EximPe on your account
@@ -94,8 +94,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/intent/' \
     "auto_refund_mandate": false
   },
   "mop_type": "UPI",
-  "upi_flow_type": "intent",
-  "upi_app_name": "others"
+  "upi_flow_type": "intent"
 }'
 ```
 
@@ -104,10 +103,10 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/intent/' \
 ```json
 {
   "success": true,
-  "message": "UPI Subscription created successfully",
+  "message": "UPI Intent Subscription created successfully",
   "data": {
-    "order_id": "550e8400-e29b-41d4-a716-446655440000",
-    "subscription_id": "660e8400-e29b-41d4-a716-446655440001",
+    "order_id": "OD2000992103",
+    "subscription_id": "SUB7989707770",
     "subscription_type": "UPI_RECURRING",
     "intent_uri": "ver=01&pa=collect.sandbox@examplebank&pn=MERCHANT&tr=enroll150506157&am=1.00&validityend=25042028&mc=5817&txnType=CREATE&tn=Subscription&fam=1.00&purpose=14&block=N&rev=Y&orgid=000000",
     "qr_code": {
@@ -118,7 +117,8 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/subscriptions/intent/' \
       "billing_cycle": "MONTHLY",
       "billing_interval": 1,
       "payment_start_date": "2027-01-15",
-      "payment_end_date": "2028-01-15"
+      "payment_end_date": "2028-01-15",
+      "status": "PENDING"
     }
   }
 }
@@ -156,6 +156,8 @@ Show the QR code from Step 2. The buyer scans it with their mobile UPI app and a
 ### Mobile (Android & iOS)
 
 Use the `intent_uri` to launch the buyer's UPI app directly.
+
+`intent_uri` may already be a full `upi://` or `https://` link. If it is, use it as is and do not add an app prefix, or use `qr_code.url`.
 
 #### 1. Specific app invocation
 

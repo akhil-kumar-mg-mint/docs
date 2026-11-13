@@ -17,8 +17,7 @@
   "security": [
     {
       "clientAuth": [],
-      "clientSecretAuth": [],
-      "apiVersionHeader": []
+      "clientSecretAuth": []
     }
   ],
   "paths": {
@@ -32,8 +31,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "requestBody": {
@@ -42,11 +40,11 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/v1_CreateRefundRequest"
+                "$ref": "#/components/schemas/v3_CreateRefundRequest"
               },
               "example": {
-                "payment_id": "PR2024120567891",
-                "refund_amount": "2250.00",
+                "payment_id": "PR2099558561",
+                "refund_amount": "1000.00",
                 "reference_id": "RF-2026-0001"
               }
             }
@@ -58,7 +56,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetRefundResponse"
+                  "$ref": "#/components/schemas/v3_CreateRefundResponse"
                 },
                 "example": {
                   "success": true,
@@ -78,11 +76,11 @@
             }
           },
           "400": {
-            "description": "Validation error. The payment is not captured or is on hold, the total of refunds that have not failed would exceed the payment amount (`refund_amount`: \"Total refund amount would exceed payment amount\"), `reference_id` was reused with a different amount, or your refund balance does not cover the refund (`ERR_REFUND_004`, with `available_balance` and `requested_amount` in `details`).",
+            "description": "The refund was refused. `error.code` names the reason:\n\n- `ERR_REFUND_013`: the payment does not exist or is not yours.\n- `ERR_REFUND_010`: the payment is not captured.\n- `ERR_REFUND_011`: the payment is on hold.\n- `ERR_REFUND_005`: the total of refunds that have not failed would exceed the payment amount.\n- `ERR_REFUND_006`: `reference_id` was already used for a refund of a different amount.\n- `ERR_REFUND_004`: your refund balance does not cover the refund; `details` gives `available_balance` and `requested_amount`.\n- `ERR_REFUND_007`: the refund failed; `details.refund` gives the reason.\n- `ERR_REFUND_014`: a top-up in a cleared group cannot be refunded on its own; contact EximPe Support.\n- `ERR_REFUND_015`: a payment with top-ups counted toward it can only be refunded in full.\n- `ERR_REFUND_016`: the payment's top-up group has already settled.\n- `ERR_REFUND_002`: a field is invalid, such as a malformed `refund_amount` or `reference_id`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Payment not found": {
@@ -90,10 +88,10 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_013",
+                        "message": "Payment not found",
                         "details": {
-                          "payment_id": "Payment request not found"
+                          "payment_id": "Payment not found"
                         }
                       }
                     }
@@ -103,10 +101,10 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_010",
+                        "message": "Cannot refund a payment that is not captured",
                         "details": {
-                          "payment_id": "Cannot refund a transaction that is not captured"
+                          "payment_id": "Cannot refund a payment that is not captured"
                         }
                       }
                     }
@@ -116,9 +114,11 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
-                        "details": "Cannot refund payment when it is on hold"
+                        "code": "ERR_REFUND_011",
+                        "message": "Cannot refund a payment that is on hold",
+                        "details": {
+                          "payment_id": "Cannot refund a payment that is on hold"
+                        }
                       }
                     }
                   },
@@ -127,8 +127,8 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_005",
+                        "message": "Total refund amount would exceed payment amount",
                         "details": {
                           "refund_amount": "Total refund amount would exceed payment amount"
                         }
@@ -140,8 +140,8 @@
                     "value": {
                       "success": false,
                       "error": {
-                        "code": "ERR_REFUND_002",
-                        "message": "Validation error",
+                        "code": "ERR_REFUND_006",
+                        "message": "Reference ID already used for a refund of a different amount",
                         "details": {
                           "reference_id": "Reference ID reused with different refund amount"
                         }
@@ -171,7 +171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -190,9 +190,54 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "`ERR_MERCHANT_ACCOUNT_003`: your merchant account is suspended or closed. `ERR_SERVICE_ERROR_000`: refunds are not available on your account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_MERCHANT_ACCOUNT_003",
+                    "message": "Merchant account is suspended",
+                    "details": {
+                      "merchant_account": "Merchant account is suspended."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. `error.code` is `ERR_SERVICE_ERROR_000`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "`ERR_REFUND_008`: the refund could not be completed. Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
           }
         },
-        "operationId": "v1_post_pg_refunds_"
+        "operationId": "v1_post_pg_refunds_",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       },
       "get": {
         "summary": "List Refunds",
@@ -203,8 +248,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -249,6 +293,37 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Refunds per page (max 1000).",
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "X-Merchant-ID",
+            "in": "header",
+            "description": "PSP only. Send a sub-merchant's ID to list only that sub-merchant's refunds.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -257,36 +332,40 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListRefundsResponse"
+                  "$ref": "#/components/schemas/v3_ListRefundsResponse"
                 },
                 "example": {
-                  "count": 4,
-                  "page": 1,
-                  "page_size": 250,
-                  "next": null,
-                  "previous": null,
-                  "results": [
-                    {
-                      "refund_id": "RF8380989720",
-                      "refund_amount": "11.00",
-                      "refund_status": "INITIATED",
-                      "refunded_at": null,
-                      "message": "Refund Request Queued",
-                      "payment_id": "PR8867819681",
-                      "reference_id": "RF-2026-0002",
-                      "created_at": "2026-02-15T16:53:15.123456Z"
-                    },
-                    {
-                      "refund_id": "RF8370660295",
-                      "refund_amount": "12.00",
-                      "refund_status": "INITIATED",
-                      "refunded_at": null,
-                      "message": "No action status found",
-                      "payment_id": "PR3828502708",
-                      "reference_id": "RF-2026-0003",
-                      "created_at": "2026-02-15T16:54:02.481203Z"
-                    }
-                  ]
+                  "success": true,
+                  "message": "Refund requests retrieved successfully",
+                  "data": {
+                    "count": 2,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "refund_id": "RF8380989720",
+                        "refund_amount": "11.00",
+                        "refund_status": "initiated",
+                        "refunded_at": null,
+                        "message": "Refund Request Queued",
+                        "payment_id": "PR8867819681",
+                        "reference_id": "RF-2026-0002",
+                        "created_at": "2026-02-15T16:53:15.123456Z"
+                      },
+                      {
+                        "refund_id": "RF8370660295",
+                        "refund_amount": "12.00",
+                        "refund_status": "initiated",
+                        "refunded_at": null,
+                        "message": "No action status found",
+                        "payment_id": "PR3828502708",
+                        "reference_id": "RF-2026-0003",
+                        "created_at": "2026-02-15T16:54:02.481203Z"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -296,7 +375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -330,8 +409,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -343,6 +421,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -351,16 +432,16 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetRefundResponse"
+                  "$ref": "#/components/schemas/v3_GetRefundResponse"
                 },
                 "example": {
                   "success": true,
                   "message": "Refund details retrieved successfully",
                   "data": {
-                    "refund_id": "RF1481534012",
+                    "refund_id": "RF8370660295",
                     "payment_id": "PR3828502708",
                     "refund_amount": "12.00",
-                    "refund_status": "INITIATED",
+                    "refund_status": "initiated",
                     "refunded_at": null,
                     "message": "No action status found",
                     "settlement_details": {},
@@ -376,7 +457,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Missing credentials": {
@@ -401,7 +482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "examples": {
                   "Refund not found": {
@@ -435,8 +516,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -457,6 +537,44 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Settlements per page (max 1000).",
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "ordering",
+            "in": "query",
+            "description": "Sort by `created_at` or `last_updated_at`. Prefix with `-` for descending. Default `-created_at`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "merchant_id",
+            "in": "query",
+            "description": "PSP only. A sub-merchant's ID: returns only settlements that hold that sub-merchant's payments.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -465,31 +583,48 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ListSettlementsResponse"
+                  "$ref": "#/components/schemas/v3_ListSettlementsResponse"
                 },
                 "example": {
                   "success": true,
-                  "message": "Settlements fetched successfully",
+                  "message": "Settlements retrieved successfully",
                   "data": {
-                    "settlement_id": "ST4353980017",
-                    "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
-                    "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
-                    "forex_rate": 86,
-                    "settlement_amount": 1000,
-                    "settlement_currency": "USD",
-                    "transactions": [
+                    "count": 1,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
                       {
-                        "settlement_type": "capture",
-                        "transaction_id": "PR3828502708",
-                        "transaction_amount": 1000.0,
-                        "merchant_service_fee": 0.0,
-                        "merchant_service_tax": 0.0,
-                        "merchant_net_amount": 1000.0,
-                        "mop_type": "upi",
-                        "transaction_currency": "INR",
-                        "forex_rate": 86.0
+                        "settlement_id": "ST4353980017",
+                        "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
+                        "settlement_completed_at": "2025-06-20T08:06:59.293548Z",
+                        "forex_rate": "86",
+                        "settlement_amount": "1000.00",
+                        "settlement_charges": "0.00",
+                        "settlement_gst": "0.00"
                       }
                     ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The page is out of range. `error.code` is `ERR_SETTLEMENT_003`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SETTLEMENT_003",
+                    "message": "Invalid page",
+                    "details": {
+                      "page": "Invalid page."
+                    }
                   }
                 }
               }
@@ -509,8 +644,7 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           }
         ],
         "parameters": [
@@ -522,6 +656,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -530,7 +667,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_GetSettlementResponse"
+                  "$ref": "#/components/schemas/v3_GetSettlementResponse"
                 },
                 "example": {
                   "success": true,
@@ -538,21 +675,35 @@
                   "data": {
                     "settlement_id": "ST4353980017",
                     "utr_number": "092dc30a-4f19-4318-9798-ad08b48801f6",
-                    "settlement_completed_date": "2025-06-20T08:06:59.293548Z",
-                    "forex_rate": 86,
-                    "settlement_amount": 1000,
+                    "forex_rate": "86",
+                    "settlement_amount": "1000.00",
+                    "settlement_completed_at": "2025-06-20T08:06:59.293548Z",
                     "settlement_currency": "USD",
                     "transactions": [
                       {
                         "settlement_type": "capture",
                         "transaction_id": "PR3828502708",
-                        "transaction_amount": 1000.0,
-                        "merchant_service_fee": 0.0,
-                        "merchant_service_tax": 0.0,
-                        "merchant_net_amount": 1000.0,
-                        "mop_type": "upi",
-                        "transaction_currency": "INR",
-                        "forex_rate": 86.0
+                        "settlement_id": "ST4353980017",
+                        "settlement_completed_at": "2025-06-20T08:06:59.293548Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "1000.00",
+                        "merchant_service_fee": "0.00",
+                        "merchant_service_tax": "0.00",
+                        "merchant_net_amount": "1000.00",
+                        "sgst": "0.00",
+                        "cgst": "0.00",
+                        "igst": "0.00",
+                        "merchant_transaction_id": "403993715531234567",
+                        "card_type": null,
+                        "offer_service_fee": "0.00",
+                        "offer_service_tax": "0.00",
+                        "forex_rate": "86",
+                        "discount": "0.00",
+                        "additional_tdr_fee": "0.00",
+                        "additional_tdr_tax": "0.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "transaction_currency": "INR"
                       }
                     ]
                   }
@@ -560,20 +711,48 @@
               }
             }
           },
-          "404": {
-            "description": "Settlement not found.",
+          "400": {
+            "description": "Unexpected error. `error.code` is `ERR_SERVICE_ERROR_000`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`ERR_SETTLEMENT_002`: the settlement does not exist or is not yours. `ERR_SETTLEMENT_001`: the settlement holds none of your transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_SETTLEMENT_002",
-                    "message": "Settlement not found",
-                    "details": {
-                      "settlement_id": "Settlement not found"
+                "examples": {
+                  "Settlement not found": {
+                    "summary": "Settlement not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SETTLEMENT_002",
+                        "message": "Settlement not found",
+                        "details": {
+                          "settlement_id": "Settlement not found"
+                        }
+                      }
+                    }
+                  },
+                  "Invalid settlement ID": {
+                    "summary": "Invalid settlement ID",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SETTLEMENT_001",
+                        "message": "Invalid settlement ID",
+                        "details": {
+                          "settlement_id": "Settlement not found"
+                        }
+                      }
                     }
                   }
                 }
@@ -584,504 +763,10 @@
         "operationId": "v1_get_pg_settlements_settlement_id_"
       }
     },
-    "/partners/merchants/": {
-      "get": {
-        "summary": "List Merchants",
-        "description": "Retrieve a list of merchants with pagination.",
-        "tags": [
-          "Merchants"
-        ],
-        "security": [
-          {
-            "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A paginated list of merchants.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ListMerchantsResponse"
-                },
-                "example": {
-                  "success": true,
-                  "message": "Sub-merchants retrieved successfully",
-                  "data": {
-                    "count": 4,
-                    "page": 1,
-                    "page_size": 250,
-                    "next": null,
-                    "previous": null,
-                    "results": [
-                      {
-                        "id": "3604346598",
-                        "brand_name": "InnovateTech Solutions",
-                        "kyc_status": "APPROVED",
-                        "created_date": "2024-11-19T18:06:05.523720Z"
-                      },
-                      {
-                        "id": "8319446548",
-                        "brand_name": "DigitalCraft Enterprises",
-                        "kyc_status": "PENDING",
-                        "created_date": "2024-11-19T17:43:25.467834Z"
-                      },
-                      {
-                        "id": "2343915596",
-                        "brand_name": "CloudSync Technologies",
-                        "kyc_status": "APPROVED",
-                        "created_date": "2024-11-19T16:43:53.317062Z"
-                      },
-                      {
-                        "id": "4455704961",
-                        "brand_name": "NextGen Software Ltd",
-                        "kyc_status": "PENDING",
-                        "created_date": "2024-11-19T08:53:22.411374Z"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid credentials.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_AUTH_000",
-                    "message": "Missing credentials",
-                    "details": {
-                      "authentication": "Missing credentials."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "v1_get_partners_merchants_"
-      },
-      "post": {
-        "summary": "Create Merchant",
-        "description": "Create a new merchant with settlement and company details.",
-        "tags": [
-          "Merchants"
-        ],
-        "security": [
-          {
-            "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
-          }
-        ],
-        "requestBody": {
-          "description": "Merchant details to create",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/v1_CreateMerchantRequest"
-              },
-              "example": {
-                "settlement_details": {
-                  "bank_account_number": "6789123450987654",
-                  "bank_account_name": "InnovateTech Solutions Private Limited",
-                  "bank_swift_code": "CHASINUS33XXX",
-                  "bank_name": "JPMorgan Chase Bank",
-                  "bank_branch_name": "Financial District Branch",
-                  "bank_address": "270 Park Avenue, New York",
-                  "bank_city": "New York",
-                  "bank_state": "NY",
-                  "bank_country": "United States",
-                  "bank_pincode": "10017",
-                  "routing_number": "021000021"
-                },
-                "company_details": {
-                  "legal_name": "InnovateTech Solutions Private Limited",
-                  "brand_name": "InnovateTech",
-                  "registration_number": "US-CORP-2024-IT789456",
-                  "international_org_type": "Private Limited Company",
-                  "tax_id": "94-8765432",
-                  "website": "https://www.innovatetech.com",
-                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                  "communication_address": "Suite 1200, 101 California Street",
-                  "communication_city": "San Francisco",
-                  "communication_state": "CA",
-                  "communication_country": "United States",
-                  "communication_pincode": "94111",
-                  "same_as_registered_address": false,
-                  "registered_address": "1455 Market Street, Suite 1600",
-                  "registered_city": "San Francisco",
-                  "registered_state": "CA",
-                  "registered_country": "United States",
-                  "registered_pincode": "94103",
-                  "business_category": "E-commerce (physical goods & cross-border shipping)",
-                  "business_mode": "b2b",
-                  "hs_codes": [
-                    "85234910",
-                    "84715000"
-                  ],
-                  "description_of_products_and_services": "InnovateTech provides cutting-edge cloud computing solutions, artificial intelligence platforms, and enterprise software systems. We specialize in machine learning algorithms, data analytics, and scalable cloud infrastructure for Fortune 500 companies.",
-                  "agreement_details": "Master Service Agreement for Cloud Solutions dated 2024-03-15",
-                  "email": "contact@example.com",
-                  "phone_number": "+919876543210"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Merchant created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_CreateMerchantResponse"
-                },
-                "example": {
-                  "success": true,
-                  "message": "Sub-merchant created successfully",
-                  "data": {
-                    "id": "6182929449",
-                    "settlement_details": {
-                      "bank_account_number": "9876543210",
-                      "bank_account_name": "GlobalTech Solutions Inc.",
-                      "bank_swift_code": "CHASUS33XXX",
-                      "bank_name": "JPMorgan Chase Bank",
-                      "bank_branch_name": "Corporate Banking Division",
-                      "bank_address": "270 Park Avenue",
-                      "bank_city": "New York",
-                      "bank_state": "NY",
-                      "bank_country": "United States",
-                      "bank_pincode": "10017",
-                      "routing_number": "021000021",
-                      "settlement_currency": "USD"
-                    },
-                    "created_at": "2025-01-15T10:30:00.000000Z",
-                    "company_details": {
-                      "legal_name": "GlobalTech Solutions Inc.",
-                      "brand_name": "GlobalTech",
-                      "registration_number": "US-CORP-99887766",
-                      "international_org_type": "Private Limited Company",
-                      "tax_id": "94-1234567",
-                      "website": "https://www.globaltech.io",
-                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "communication_address": "500 Mission Street, Suite 2400",
-                      "communication_city": "San Francisco",
-                      "communication_state": "CA",
-                      "communication_country": "United States",
-                      "communication_pincode": "94105",
-                      "same_as_registered_address": false,
-                      "registered_address": "1600 Amphitheatre Parkway",
-                      "registered_city": "Mountain View",
-                      "registered_state": "CA",
-                      "registered_country": "United States",
-                      "registered_pincode": "94043",
-                      "business_category": "E-commerce (physical goods & cross-border shipping)",
-                      "business_mode": "b2b",
-                      "hs_codes": [
-                        "85234910",
-                        "84715000"
-                      ],
-                      "description_of_products_and_services": "GlobalTech provides cloud-native enterprise software, including AI-powered analytics platforms, CRM solutions, and infrastructure automation tools. We enable digital transformation for Fortune 500 companies through scalable and secure software systems.",
-                      "agreement_details": "Master Service Agreement dated 2024-01-10 with Global Clients",
-                      "email": "contact@example.com",
-                      "phone_number": "+919876543210",
-                      "business_category_other": null
-                    },
-                    "last_updated_at": "2025-01-15T10:30:00.000000Z",
-                    "kyc_status": "PENDING"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40000,
-                    "message": "Invalid request",
-                    "details": {
-                      "settlement_details": {
-                        "bank_account_number": "This field is required."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": "ERR_AUTH_003",
-                    "message": "This endpoint is only accessible to PSP merchants",
-                    "details": {
-                      "authentication": "This endpoint is only accessible to PSP merchants."
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "operationId": "v1_post_partners_merchants_"
-      }
-    },
-    "/partners/merchants/{merchant_id}/": {
-      "get": {
-        "summary": "Get Merchant",
-        "description": "Retrieve the details of a specific merchant by its ID.",
-        "tags": [
-          "Merchants"
-        ],
-        "security": [
-          {
-            "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "merchant_id",
-            "in": "path",
-            "description": "The ID of the merchant to retrieve.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Merchant details retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_GetMerchantResponse"
-                },
-                "example": {
-                  "success": true,
-                  "message": "Sub-merchant details retrieved successfully",
-                  "data": {
-                    "id": "3604346598",
-                    "settlement_details": {
-                      "bank_account_number": "9876543210123456",
-                      "bank_account_name": "InnovateTech Solutions Private Limited",
-                      "bank_swift_code": "CHASUS33XXX",
-                      "bank_name": "JPMorgan Chase Bank",
-                      "bank_branch_name": "Corporate Banking Division",
-                      "bank_address": "270 Park Avenue",
-                      "bank_city": "New York",
-                      "bank_state": "NY",
-                      "bank_country": "United States",
-                      "bank_pincode": "10017",
-                      "routing_number": "021000021",
-                      "settlement_currency": "USD"
-                    },
-                    "created_at": "2025-06-19T18:06:05.523720Z",
-                    "company_details": {
-                      "legal_name": "InnovateTech Solutions Private Limited",
-                      "brand_name": "InnovateTech Solutions",
-                      "registration_number": "US-CORP-2024-IT789456",
-                      "international_org_type": "Private Limited Company",
-                      "tax_id": "94-8765432",
-                      "website": "https://www.innovatetech.com",
-                      "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                      "communication_address": "123 Tech Street",
-                      "communication_city": "San Francisco",
-                      "communication_state": "CA",
-                      "communication_country": "United States",
-                      "communication_pincode": "94105",
-                      "same_as_registered_address": true,
-                      "registered_address": "123 Tech Street",
-                      "registered_city": "San Francisco",
-                      "registered_state": "CA",
-                      "registered_country": "United States",
-                      "registered_pincode": "94105",
-                      "business_category": "E-commerce (physical goods & cross-border shipping)",
-                      "business_mode": "b2b",
-                      "hs_codes": [
-                        "84713010",
-                        "85423100"
-                      ],
-                      "description_of_products_and_services": "We provide comprehensive IT solutions including software development, cloud migration, data analytics, and digital transformation services for enterprises. Our solutions help businesses streamline operations, improve efficiency, and accelerate digital adoption.",
-                      "agreement_details": "global_company aggrement",
-                      "email": "contact@example.com",
-                      "phone_number": "+919876543210",
-                      "business_category_other": null
-                    },
-                    "last_updated_at": "2025-06-19T18:06:05.523752Z",
-                    "kyc_status": "PENDING"
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Merchant not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "v1_get_partners_merchants_merchant_id_"
-      },
-      "patch": {
-        "summary": "Update Merchant",
-        "description": "Update specific fields of an existing merchant.",
-        "tags": [
-          "Merchants"
-        ],
-        "security": [
-          {
-            "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "merchant_id",
-            "in": "path",
-            "description": "The ID of the merchant to update.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Merchant update request - only include fields to update",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/v1_UpdateMerchantRequest"
-              },
-              "example": {
-                "company_details": {
-                  "legal_name": "Shakti Logistics & Exports Pvt Ltd",
-                  "brand_name": "ShaktiXpress",
-                  "registration_number": "IN09DEL2021PTC987654",
-                  "international_org_type": "Private Limited Company",
-                  "tax_id": "29AABCT1234D1Z9",
-                  "website": "https://www.shaktiexpress.in",
-                  "monthly_avg_transaction_volume": "BETWEEN_20_K_AND_50_K",
-                  "business_category": "E-commerce (physical goods & cross-border shipping)",
-                  "business_mode": "b2b",
-                  "description_of_products_and_services": "ShaktiXpress provides export logistics and warehousing services for textile machinery and automotive components across Asia and Europe.",
-                  "agreement_details": "Master Logistics Agreement valid until 2027-12-31",
-                  "communication_address": "Plot No. 56, Electronic City Phase 1",
-                  "communication_city": "Bengaluru",
-                  "communication_state": "Karnataka",
-                  "communication_country": "India",
-                  "communication_pincode": "560100",
-                  "same_as_registered_address": false,
-                  "registered_address": "7th Floor, Sagar Tech Plaza, Andheri-Kurla Road",
-                  "registered_city": "Mumbai",
-                  "registered_state": "Maharashtra",
-                  "registered_country": "India",
-                  "registered_pincode": "400072",
-                  "hs_codes": [
-                    "85234910",
-                    "84715000"
-                  ]
-                },
-                "settlement_details": {
-                  "bank_account_number": "5087654321123456",
-                  "bank_account_name": "Shakti Logistics & Exports Pvt Ltd",
-                  "bank_swift_code": "HDFCINBBXXX",
-                  "bank_name": "HDFC Bank Ltd.",
-                  "bank_branch_name": "Andheri East Branch",
-                  "bank_address": "Unit 3A, Ground Floor, Hiranandani Business Park, Powai",
-                  "bank_city": "Mumbai",
-                  "bank_state": "Maharashtra",
-                  "bank_country": "India",
-                  "bank_pincode": "400076",
-                  "routing_number": "HDFC0000001"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Merchant updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_UpdateMerchantResponse"
-                },
-                "example": {
-                  "success": true,
-                  "message": "Merchant updated successfully",
-                  "data": {
-                    "merchant_id": "3604346598",
-                    "updated_fields": [
-                      "company_details",
-                      "settlement_details"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - Invalid parameters.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Merchant not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "v1_patch_partners_merchants_merchant_id_"
-      }
-    },
     "/pg/vba/": {
       "get": {
         "summary": "List Virtual Bank Accounts",
-        "description": "Return a paginated list of Virtual Bank Accounts for the authenticated merchant or sub-merchant. Supports optional filtering by `vba_status`, and pagination via `page`.",
+        "description": "Return a paginated list of Virtual Bank Accounts for the authenticated merchant or sub-merchant. Supports optional filtering by `vba_status`, and pagination via `page` and `page_size`.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -1089,8 +774,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -1105,7 +789,7 @@
                 "INACTIVE"
               ]
             },
-            "description": "Filter by VBA status."
+            "description": "Filter by VBA status. Any other value returns `400`."
           },
           {
             "name": "page",
@@ -1115,6 +799,20 @@
               "type": "integer"
             },
             "description": "Page number for pagination."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            },
+            "description": "VBAs per page (max 1000)."
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1131,7 +829,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Request processed successfully."
+                      "example": "VBAs retrieved successfully"
                     },
                     "data": {
                       "type": "object",
@@ -1163,10 +861,6 @@
                           "items": {
                             "type": "object",
                             "properties": {
-                              "uid": {
-                                "type": "string",
-                                "example": "VBA_7d1f9a2b3c"
-                              },
                               "virtual_account_id": {
                                 "type": "string",
                                 "example": "24586202"
@@ -1194,6 +888,44 @@
                                   "INACTIVE"
                                 ],
                                 "example": "ACTIVE"
+                              },
+                              "remitter_lock_details": {
+                                "type": "object",
+                                "nullable": true,
+                                "description": "The remitter lock on the VBA. `null` when no lock is set.",
+                                "properties": {
+                                  "allowed_remitters": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "account_number": {
+                                          "type": "string",
+                                          "example": "26291800001191"
+                                        },
+                                        "ifsc": {
+                                          "type": "string",
+                                          "example": "YESB0000262"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "amount_lock_details": {
+                                "type": "object",
+                                "nullable": true,
+                                "description": "The amount lock on the VBA, in INR. `null` when no lock is set.",
+                                "properties": {
+                                  "min_amount": {
+                                    "type": "number",
+                                    "example": 1000
+                                  },
+                                  "max_amount": {
+                                    "type": "number",
+                                    "example": 5000
+                                  }
+                                }
                               }
                             }
                           }
@@ -1204,7 +936,7 @@
                 },
                 "example": {
                   "success": true,
-                  "message": "Request processed successfully.",
+                  "message": "VBAs retrieved successfully",
                   "data": {
                     "count": 2,
                     "page": 1,
@@ -1213,24 +945,56 @@
                     "previous": null,
                     "results": [
                       {
-                        "uid": "VBA_7d1f9a2b3c",
                         "virtual_account_id": "24586202",
                         "vba_account_name": "Acme Imports",
                         "vba_bank_code": "UTIB",
                         "vba_account_number": "9461257424586202",
                         "vba_ifsc": "UTIB0CCH274",
-                        "vba_status": "ACTIVE"
+                        "vba_status": "ACTIVE",
+                        "remitter_lock_details": {
+                          "allowed_remitters": [
+                            {
+                              "account_number": "26291800001191",
+                              "ifsc": "YESB0000262"
+                            }
+                          ]
+                        },
+                        "amount_lock_details": {
+                          "min_amount": 1000,
+                          "max_amount": 5000
+                        }
                       },
                       {
-                        "uid": "VBA_8e2a0b3c4d",
                         "virtual_account_id": "24586203",
                         "vba_account_name": "Acme Imports",
                         "vba_bank_code": "YESB",
                         "vba_account_number": "9461257424586203",
                         "vba_ifsc": "YESB0CMSNOC",
-                        "vba_status": "INACTIVE"
+                        "vba_status": "INACTIVE",
+                        "remitter_lock_details": null,
+                        "amount_lock_details": null
                       }
                     ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`ERR_PAYMENT_001`: `vba_status` is not `ACTIVE` or `INACTIVE`, or the page is out of range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "error": "Invalid vba_status: CLOSED"
+                    }
                   }
                 }
               }
@@ -1241,7 +1005,7 @@
       },
       "post": {
         "summary": "Create VBA",
-        "description": "Create a Virtual Bank Account for the authenticated merchant. The account holder details (name, email, phone) and the `virtual_account_id` are derived from your merchant account and generated by Eximpe — you do not supply them. A merchant can hold multiple ACTIVE VBAs at the same time.\n\nThe request body is optional — both `remitter_lock_details` and `amount_lock_details` are independently optional and can be omitted, sent individually, or sent together. When omitted, the corresponding field is returned as `null` and the VBA accepts transfers from any remitter / for any amount.",
+        "description": "Create a Virtual Bank Account for the authenticated merchant. The account name and email are taken from the merchant account; EximPe generates `virtual_account_id`. A merchant can hold multiple ACTIVE VBAs at the same time.\n\nThe request body is optional — both `remitter_lock_details` and `amount_lock_details` are independently optional and can be omitted, sent individually, or sent together. When omitted, the corresponding field is returned as `null` and the VBA accepts transfers from any remitter / for any amount.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -1249,8 +1013,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -1282,7 +1045,7 @@
                             },
                             "ifsc": {
                               "type": "string",
-                              "description": "Optional. When present, a transfer matches this entry only if the remitter's IFSC matches too. Omit to match on the account number alone.",
+                              "description": "Optional. If you leave out `ifsc`, only the account number is matched; if you include it, the payer's IFSC must match too.",
                               "example": "YESB0000262"
                             }
                           }
@@ -1413,7 +1176,7 @@
                           }
                         }
                       },
-                      "description": "One entry per virtual bank account created. Currently always a single entry."
+                      "description": "One entry per virtual bank account created. A create returns one entry."
                     }
                   }
                 },
@@ -1447,11 +1210,11 @@
             }
           },
           "400": {
-            "description": "Validation error — invalid `remitter_lock_details` or `amount_lock_details`, or no email on the merchant account",
+            "description": "`ERR_PAYMENT_001`: invalid lock, missing email, or VBA transfers not enabled.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1461,17 +1224,47 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
           },
           "403": {
-            "description": "VBA feature not enabled for the merchant, or the merchant is not entitled to the VBA lane",
+            "description": "`ERR_AUTH_005`: your account is not set up to collect by virtual account. `{\"detail\": \"You do not have permission to perform this action.\"}`: virtual accounts are not enabled on your account.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/v3_ErrorResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "detail": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "examples": {
+                  "Not set up to collect by virtual account": {
+                    "summary": "Not set up to collect by virtual account",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_AUTH_005",
+                        "message": "This account's lane does not permit this collection"
+                      }
+                    }
+                  },
+                  "Virtual accounts not enabled": {
+                    "summary": "Virtual accounts not enabled",
+                    "value": {
+                      "detail": "You do not have permission to perform this action."
+                    }
+                  }
                 }
               }
             }
@@ -1481,7 +1274,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1491,13 +1284,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
           }
         },
-        "operationId": "v2_post_pg_vba_"
+        "operationId": "v2_post_pg_vba_",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/pg/vba/{virtual_account_id}/": {
@@ -1511,8 +1309,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -1524,6 +1321,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1648,7 +1448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1658,7 +1458,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1668,7 +1468,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1678,7 +1478,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1688,7 +1488,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1698,13 +1498,574 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
           }
         },
         "operationId": "v2_get_pg_vba_virtual_account_id_"
+      },
+      "put": {
+        "summary": "Edit VBA",
+        "description": "Update a Virtual Bank Account. Fields you leave out stay unchanged. The remitter lock takes the same shape as Create VBA.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA to update.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "virtual_account_name": {
+                    "type": "string",
+                    "description": "Account name shown on the VBA.",
+                    "example": "Acme Imports Pvt Ltd"
+                  },
+                  "virtual_account_email": {
+                    "type": "string",
+                    "description": "Contact email for the VBA.",
+                    "example": "accounts@acmeimports.com"
+                  },
+                  "virtual_account_phone": {
+                    "type": "string",
+                    "description": "Contact phone number for the VBA.",
+                    "example": "9876543210"
+                  },
+                  "remitter_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Replaces the remitter lock with the supplied list of allowed remitters. Same shape as Create VBA.",
+                    "properties": {
+                      "allowed_remitters": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "account_number"
+                          ],
+                          "properties": {
+                            "account_number": {
+                              "type": "string",
+                              "minLength": 9,
+                              "maxLength": 30,
+                              "description": "Remitter bank account number (9–30 chars). Matched ignoring leading zeros and letter case.",
+                              "example": "26291800001191"
+                            },
+                            "ifsc": {
+                              "type": "string",
+                              "description": "Optional. If you leave out `ifsc`, only the account number is matched; if you include it, the payer's IFSC must match too.",
+                              "example": "YESB0000262"
+                            }
+                          }
+                        },
+                        "description": "The remitter accounts permitted to transfer into this VBA. A transfer is accepted when its remitter account number matches an entry; if that entry also specifies an `ifsc`, the remitter's IFSC must match as well."
+                      }
+                    }
+                  },
+                  "amount_lock_details": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Optional. Replaces the amount lock. Same shape and rules as Create VBA: `min_amount` and `max_amount` are each optional and must be non-negative, and `min_amount` must be less than or equal to `max_amount`.",
+                    "properties": {
+                      "min_amount": {
+                        "type": "number",
+                        "description": "Minimum allowed transfer amount, in INR. Omit to leave the range open at the bottom.",
+                        "example": 1000
+                      },
+                      "max_amount": {
+                        "type": "number",
+                        "description": "Maximum allowed transfer amount, in INR. Omit to leave the range open at the top.",
+                        "example": 5000
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "virtual_account_name": "Acme Imports Pvt Ltd",
+                "remitter_lock_details": {
+                  "allowed_remitters": [
+                    {
+                      "account_number": "26291800001191",
+                      "ifsc": "YESB0000262"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VBA updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "VBA updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uid": {
+                          "type": "string",
+                          "example": "VBA5977751432"
+                        },
+                        "virtual_account_id": {
+                          "type": "string",
+                          "example": "24586202"
+                        },
+                        "vba_account_name": {
+                          "type": "string",
+                          "example": "Acme Imports"
+                        },
+                        "vba_bank_code": {
+                          "type": "string",
+                          "example": "UTIB"
+                        },
+                        "vba_account_number": {
+                          "type": "string",
+                          "example": "9461257424586202"
+                        },
+                        "vba_ifsc": {
+                          "type": "string",
+                          "example": "UTIB0CCH274"
+                        },
+                        "vba_status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ],
+                          "example": "ACTIVE"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The remitter lock on the VBA. `null` when no lock is set.",
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "26291800001191"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "YESB0000262"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "amount_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The amount lock on the VBA, in INR. `null` when no lock is set.",
+                          "properties": {
+                            "min_amount": {
+                              "type": "number",
+                              "example": 1000
+                            },
+                            "max_amount": {
+                              "type": "number",
+                              "example": 5000
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA updated successfully",
+                  "data": {
+                    "uid": "VBA5977751432",
+                    "virtual_account_id": "24586202",
+                    "vba_account_name": "Acme Imports Pvt Ltd",
+                    "vba_bank_code": "UTIB",
+                    "vba_account_number": "9461257424586202",
+                    "vba_ifsc": "UTIB0CCH274",
+                    "vba_status": "ACTIVE",
+                    "remitter_lock_details": {
+                      "allowed_remitters": [
+                        {
+                          "account_number": "26291800001191",
+                          "ifsc": "YESB0000262"
+                        }
+                      ]
+                    },
+                    "amount_lock_details": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`ERR_PAYMENT_001`: invalid `remitter_lock_details` or `amount_lock_details`. `ERR_SERVICE_ERROR_000`: no editable field was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "No editable fields provided"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Virtual accounts are not enabled on your account, or this VBA cannot be edited.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "error": "VBA not found for this merchant"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to update VBA details or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_put_pg_vba_virtual_account_id_"
+      },
+      "patch": {
+        "summary": "Manage VBA Status",
+        "description": "Sets the VBA status to `ACTIVE` or `INACTIVE`. A merchant can have more than one `ACTIVE` VBA.",
+        "tags": [
+          "Virtual Bank Accounts"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "virtual_account_id",
+            "in": "path",
+            "description": "Virtual account ID of the VBA to manage.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "ACTIVE",
+                      "INACTIVE"
+                    ],
+                    "description": "VBA status."
+                  }
+                }
+              },
+              "example": {
+                "status": "INACTIVE"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "VBA status updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "VBA status updated successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "uid": {
+                          "type": "string",
+                          "example": "VBA5977751432"
+                        },
+                        "virtual_account_id": {
+                          "type": "string",
+                          "example": "24586202"
+                        },
+                        "vba_account_name": {
+                          "type": "string",
+                          "example": "Acme Imports"
+                        },
+                        "vba_bank_code": {
+                          "type": "string",
+                          "example": "UTIB"
+                        },
+                        "vba_account_number": {
+                          "type": "string",
+                          "example": "9461257424586202"
+                        },
+                        "vba_ifsc": {
+                          "type": "string",
+                          "example": "UTIB0CCH274"
+                        },
+                        "vba_status": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVE",
+                            "INACTIVE"
+                          ],
+                          "example": "INACTIVE"
+                        },
+                        "remitter_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The remitter lock on the VBA. `null` when no lock is set.",
+                          "properties": {
+                            "allowed_remitters": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "account_number": {
+                                    "type": "string",
+                                    "example": "26291800001191"
+                                  },
+                                  "ifsc": {
+                                    "type": "string",
+                                    "example": "YESB0000262"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "amount_lock_details": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The amount lock on the VBA, in INR. `null` when no lock is set.",
+                          "properties": {
+                            "min_amount": {
+                              "type": "number",
+                              "example": 1000
+                            },
+                            "max_amount": {
+                              "type": "number",
+                              "example": 5000
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "VBA status updated successfully",
+                  "data": {
+                    "uid": "VBA5977751432",
+                    "virtual_account_id": "24586202",
+                    "vba_account_name": "Acme Imports",
+                    "vba_bank_code": "UTIB",
+                    "vba_account_number": "9461257424586202",
+                    "vba_ifsc": "UTIB0CCH274",
+                    "vba_status": "INACTIVE",
+                    "remitter_lock_details": null,
+                    "amount_lock_details": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`status` is not `ACTIVE` or `INACTIVE`. `error.code` is `ERR_SERVICE_ERROR_000`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SERVICE_ERROR_000",
+                    "message": "Payment gateway error",
+                    "details": {
+                      "error": "status must be 'ACTIVE' or 'INACTIVE'"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Merchant account not identified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Virtual accounts are not enabled on your account, the status of this VBA cannot be changed, or, when setting `ACTIVE`, your merchant account is suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "VBA not found for this merchant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_PAYMENT_001",
+                    "message": "Validation error",
+                    "details": {
+                      "error": "VBA not found for this merchant"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to update VBA status or configuration error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Payment gateway API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_patch_pg_vba_virtual_account_id_"
       }
     },
     "/pg/vba/{virtual_account_id}/payments/": {
@@ -1718,8 +2079,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -1803,6 +2163,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -1840,7 +2203,7 @@
                           "type": "string",
                           "format": "uri",
                           "nullable": true,
-                          "example": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2&page_size=10"
+                          "example": "https://api-pacb-uat.eximpe.com/pg/vba/24586202/payments/?page=2&page_size=10"
                         },
                         "previous": {
                           "type": "string",
@@ -1856,23 +2219,23 @@
                               "payment_id": {
                                 "type": "string",
                                 "description": "EximPe payment identifier (UID). Stable, use as primary key.",
-                                "example": "pmt_01HXYZABCDEF"
+                                "example": "PR6115489451"
                               },
                               "order_id": {
                                 "type": "string",
                                 "description": "EximPe order UID this payment belongs to.",
-                                "example": "ord_01HXYZABCDEF"
+                                "example": "OD6767097620"
                               },
                               "status": {
                                 "type": "string",
                                 "enum": [
-                                  "PENDING",
-                                  "CAPTURED",
-                                  "FAILED",
-                                  "INVALID"
+                                  "pending",
+                                  "captured",
+                                  "failed",
+                                  "invalid"
                                 ],
-                                "description": "Effective payment status. `PENDING` — created, awaiting completion. `CAPTURED` — money received. `FAILED` — failed or expired past `expiry_date`. `INVALID` — marked invalid by the gateway.",
-                                "example": "CAPTURED"
+                                "description": "Effective payment status, in lowercase. `pending`: created, awaiting completion. `captured`: money received. `failed`: failed or expired past `expiry_date`. `invalid`: marked invalid by the payment network.",
+                                "example": "captured"
                               },
                               "amount": {
                                 "type": "number",
@@ -1884,6 +2247,12 @@
                                 "type": "string",
                                 "description": "Bank UTR / transaction reference. Empty string if not yet known.",
                                 "example": "SBIN0123456789"
+                              },
+                              "remarks": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Payer narration sent with the transfer. `null` when there is none.",
+                                "example": "Invoice INV-2025-0091"
                               },
                               "buyer_account_number": {
                                 "type": "string",
@@ -1917,15 +2286,16 @@
                     "count": 138,
                     "page": 1,
                     "page_size": 250,
-                    "next": "https://api.example.com/pg/vba/a1b2c3d4/payments/?page=2",
+                    "next": "https://api-pacb-uat.eximpe.com/pg/vba/24586202/payments/?page=2",
                     "previous": null,
                     "results": [
                       {
-                        "payment_id": "pmt_01HXYZABCDEF",
-                        "order_id": "ord_01HXYZABCDEF",
-                        "status": "CAPTURED",
+                        "payment_id": "PR6115489451",
+                        "order_id": "OD6767097620",
+                        "status": "captured",
                         "amount": 12500.0,
                         "payment_utr": "SBIN0123456789",
+                        "remarks": "Invoice INV-2025-0091",
                         "buyer_account_number": "1234567890",
                         "buyer_ifsc": "SBIN0001234",
                         "created_at": "2026-05-15T18:30:00.000000Z"
@@ -1941,7 +2311,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1951,7 +2321,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1961,7 +2331,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1971,7 +2341,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -1981,7 +2351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2001,8 +2371,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -2023,6 +2392,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -2047,23 +2419,23 @@
                         "payment_id": {
                           "type": "string",
                           "description": "EximPe payment identifier (UID). Stable, use as primary key.",
-                          "example": "pmt_01HXYZABCDEF"
+                          "example": "PR6115489451"
                         },
                         "order_id": {
                           "type": "string",
                           "description": "EximPe order UID this payment belongs to.",
-                          "example": "ord_01HXYZABCDEF"
+                          "example": "OD6767097620"
                         },
                         "status": {
                           "type": "string",
                           "enum": [
-                            "PENDING",
-                            "CAPTURED",
-                            "FAILED",
-                            "INVALID"
+                            "pending",
+                            "captured",
+                            "failed",
+                            "invalid"
                           ],
-                          "description": "Effective payment status. `PENDING` — created, awaiting completion. `CAPTURED` — money received. `FAILED` — failed or expired past `expiry_date`. `INVALID` — marked invalid by the gateway.",
-                          "example": "CAPTURED"
+                          "description": "Effective payment status, in lowercase. `pending`: created, awaiting completion. `captured`: money received. `failed`: failed or expired past `expiry_date`. `invalid`: marked invalid by the payment network.",
+                          "example": "captured"
                         },
                         "amount": {
                           "type": "number",
@@ -2075,6 +2447,12 @@
                           "type": "string",
                           "description": "Bank UTR / transaction reference. Empty string if not yet known.",
                           "example": "SBIN0123456789"
+                        },
+                        "remarks": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Payer narration sent with the transfer. `null` when there is none.",
+                          "example": "Invoice INV-2025-0091"
                         },
                         "buyer_account_number": {
                           "type": "string",
@@ -2102,11 +2480,12 @@
                   "success": true,
                   "message": "VBA payment retrieved successfully",
                   "data": {
-                    "payment_id": "pmt_01HXYZABCDEF",
-                    "order_id": "ord_01HXYZABCDEF",
-                    "status": "CAPTURED",
+                    "payment_id": "PR6115489451",
+                    "order_id": "OD6767097620",
+                    "status": "captured",
                     "amount": 12500.0,
                     "payment_utr": "SBIN0123456789",
+                    "remarks": "Invoice INV-2025-0091",
                     "buyer_account_number": "1234567890",
                     "buyer_ifsc": "SBIN0001234",
                     "created_at": "2026-05-15T18:30:00.000000Z"
@@ -2120,7 +2499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2130,7 +2509,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2140,7 +2519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2150,7 +2529,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2160,7 +2539,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/v1_ErrorResponse"
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 }
               }
             }
@@ -2172,7 +2551,7 @@
     "/pg/vba/simulate-transfer/": {
       "post": {
         "summary": "Simulate VBA Transfer",
-        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer. Works for every VBA; how the credit is simulated is resolved from the target VBA's issuing bank — either the bank's sandbox simulate API is called, or (for banks without a sandbox) the incoming bank credit is synthesised and run through the real processing pipeline, creating the payment (in Action Required) and firing the partner webhook.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations — a repeat returns `409`. `vba_ifsc` and the account/VAN are derived from the target VBA, not the client.\n\nOn the synthesised-credit path the response is the payment that was created. A credit that breaches a rule on the account (inactive VBA, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded — real money is never dropped — but comes back with `status: failed` and the reason in `status_message`.",
+        "description": "Simulate a payment landing in a Virtual Bank Account so you can test the collection flow end-to-end without a real bank transfer.\n\n**Sandbox only** — returns `403` in production. The `utr` must be unique across simulations — a repeat returns `409`. `vba_ifsc` and the account number are taken from the target VBA, not from the request.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -2180,8 +2559,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -2242,23 +2620,23 @@
                       },
                       "payment_date": {
                         "type": "string",
-                        "description": "Optional. Payer payment date in DD/MM/YYYY format. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise. If omitted or unparseable, the payment's completion time falls back to the time the simulated credit is processed.",
+                        "description": "Optional. Payer payment date in DD/MM/YYYY format. Not all virtual accounts support it; where it is not supported it is ignored.",
                         "example": "07/07/2026"
                       },
                       "bank_txn_number": {
                         "type": "string",
-                        "description": "Optional. Bank internal transaction number, stored as the payment's bank reference number. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise.",
+                        "description": "Optional. Bank transaction number, stored as the payment's bank reference number. Not all virtual accounts support it; where it is not supported it is ignored.",
                         "example": "BANKTXN00012345"
                       },
                       "remarks": {
                         "type": "string",
-                        "description": "Optional. Payer narration stored on the payment as payment_message. Only applies to VBAs simulated via the synthesised-credit path; ignored otherwise (the bank-sandbox simulate API has no narration field).",
+                        "description": "Optional. Payer narration, stored on the payment as `payment_message`. Not all virtual accounts support it; where it is not supported it is ignored.",
                         "example": "Invoice INV-2025-0091"
                       },
                       "sender_remark": {
                         "type": "string",
                         "deprecated": true,
-                        "description": "Deprecated alias of remarks. Used only when remarks is absent.",
+                        "description": "Deprecated alias of `remarks`. Used only when `remarks` is absent.",
                         "example": "Invoice INV-2025-0091"
                       }
                     }
@@ -2281,7 +2659,7 @@
         },
         "responses": {
           "200": {
-            "description": "VBA transfer simulation processed (response shape depends on the VBA's provider).",
+            "description": "VBA transfer simulation processed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2296,86 +2674,14 @@
                       "example": "VBA transfer simulation successful"
                     },
                     "data": {
-                      "description": "Shape depends on how the credit was simulated. Banks with a sandbox return that sandbox's acknowledgement; banks without one return the payment the real processing pipeline created.",
-                      "oneOf": [
-                        {
-                          "title": "Synthesised credit — the payment that was created",
-                          "type": "object",
-                          "properties": {
-                            "payment_id": {
-                              "type": "string",
-                              "description": "The created payment. Use it with Get Payment or List VBA Payments.",
-                              "example": "PR6115489451"
-                            },
-                            "order_id": {
-                              "type": "string",
-                              "example": "OD6767097620"
-                            },
-                            "reference_id": {
-                              "type": "string",
-                              "description": "Reference generated for the order behind this credit.",
-                              "example": "VBA-864042420509"
-                            },
-                            "status": {
-                              "type": "string",
-                              "description": "`captured` when the credit became a payment. `failed` when the credit was recorded but breached a rule on the account — the money is kept for reconciliation, and `status_message` says which rule.",
-                              "enum": [
-                                "captured",
-                                "failed"
-                              ],
-                              "example": "captured"
-                            },
-                            "settlement_status": {
-                              "type": "string",
-                              "description": "`action_required` on a captured credit — send the compliance details next. `not_applicable` when the credit was recorded `failed`.",
-                              "example": "action_required"
-                            },
-                            "status_message": {
-                              "type": "string",
-                              "nullable": true,
-                              "description": "Why the credit was recorded `failed`; `null` on a clean capture. One of: `VBA is inactive`, `Amount exceeds 25 lacs limit`, `Remitter not in allow-list`, `Amount outside allowed range`.",
-                              "example": null
-                            }
-                          }
-                        },
-                        {
-                          "title": "Bank sandbox — the bank's acknowledgement",
-                          "type": "object",
-                          "properties": {
-                            "simulation_id": {
-                              "type": "string",
-                              "example": "sim_109690183D6zXpEmefYBXNIkzaDBovgM7jW"
-                            },
-                            "entity": {
-                              "type": "string",
-                              "example": "VBA_TRANSFER"
-                            },
-                            "entity_id": {
-                              "type": "string",
-                              "example": "9461257424586202"
-                            },
-                            "entity_simulation": {
-                              "type": "object",
-                              "properties": {
-                                "payment_status": {
-                                  "type": "string",
-                                  "example": "Payment processed successfully"
-                                },
-                                "payment_error_code": {
-                                  "type": "string",
-                                  "example": ""
-                                }
-                              }
-                            }
-                          }
-                        }
-                      ]
+                      "type": "object",
+                      "description": "`data` depends on how the virtual account is provisioned. Do not parse it; confirm the credit with Get VBA Payment by UTR or the payment webhook."
                     }
                   }
                 },
                 "examples": {
                   "bank_sandbox": {
-                    "summary": "VBA simulated via the bank's sandbox",
+                    "summary": "Acknowledgement of the simulated transfer",
                     "value": {
                       "success": true,
                       "message": "VBA transfer simulation successful",
@@ -2391,7 +2697,7 @@
                     }
                   },
                   "synthesised_credit": {
-                    "summary": "Synthesised credit — captured (runs the real processing pipeline)",
+                    "summary": "The payment the simulated transfer created",
                     "value": {
                       "success": true,
                       "message": "VBA transfer simulation processed",
@@ -2404,28 +2710,13 @@
                         "status_message": null
                       }
                     }
-                  },
-                  "synthesised_credit_failed": {
-                    "summary": "Synthesised credit — recorded but failed a rule on the account",
-                    "value": {
-                      "success": true,
-                      "message": "VBA transfer simulation processed",
-                      "data": {
-                        "payment_id": "PR2799500942",
-                        "order_id": "OD6892183700",
-                        "reference_id": "VBA-252507340603",
-                        "status": "failed",
-                        "settlement_status": "not_applicable",
-                        "status_message": "Amount outside allowed range"
-                      }
-                    }
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid request — missing required fields, or an amount that is not a positive number.",
+            "description": "`ERR_PAYMENT_001`: missing fields in `vba_simulation`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2445,7 +2736,7 @@
             }
           },
           "403": {
-            "description": "VBA simulation is only available in non-production environments, or the VBA feature is not enabled.",
+            "description": "Called in production, or simulation is not enabled on your account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2455,7 +2746,7 @@
             }
           },
           "404": {
-            "description": "Virtual bank account not found for this merchant.",
+            "description": "VBA not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2465,7 +2756,7 @@
             }
           },
           "409": {
-            "description": "The `utr` was already recorded by an earlier credit. Nothing was created — retry with a UTR you have not used.",
+            "description": "`ERR_PAYMENT_001`: `utr` already used. Nothing was created — retry with a UTR you have not used.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2485,7 +2776,12 @@
             }
           }
         },
-        "operationId": "v3_post_pg_vba_simulate_transfer_"
+        "operationId": "v3_post_pg_vba_simulate_transfer_",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/pg/pan/verify/": {
@@ -2499,8 +2795,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -2678,13 +2973,18 @@
             }
           }
         },
-        "operationId": "v3_post_pg_pan_verify_"
+        "operationId": "v3_post_pg_pan_verify_",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
-        "description": "Given a verified PAN and a proposed remittance amount (INR), returns the TCS due and the all-in total the buyer pays. TCS is nil up to Rs.10,00,000 of cumulative LRS this financial year and applies only to the slice above it (for education from the remitter's own funds the rate is 2%); education-loan-funded remittances are exempt. The Rs.10L threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
+        "description": "Given a verified PAN, a proposed remittance amount (INR) and the LRS purpose code, returns the TCS due and the all-in total the buyer pays. TCS depends on the purpose code. For `S0303`, `S0304`, `S0305` and `S1107` it is nil up to ₹10,00,000 of cumulative LRS this financial year and 2% on the slice above it. `S0306` is priced by your account's travel type: a tour package is taxed 2% of the whole amount from the first rupee; other travel is nil up to ₹10,00,000 and 20% on the slice above it. The ₹10,00,000 threshold is measured on the remittance amount against EximPe's own LRS counter — there is no buyer self-declaration. The tax itself is charged on `amount` — EximPe's fee and the GST on it are billed on top and do not reduce the taxable base — and the all-in total is `amount` + fee + GST + TCS. This quotes against the LRS usage visible to us and reserves nothing. Requires a verified PAN.\n\n**PSP callers must send `X-Merchant-ID`** naming the settling sub-merchant — LRS is always scoped to the settling entity, never the PSP.",
         "tags": [
           "LRS"
         ],
@@ -2692,8 +2992,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -2704,7 +3003,8 @@
                 "type": "object",
                 "required": [
                   "pan",
-                  "amount"
+                  "amount",
+                  "purpose_code"
                 ],
                 "properties": {
                   "pan": {
@@ -2719,14 +3019,21 @@
                   },
                   "purpose_code": {
                     "type": "string",
-                    "description": "Ignored. The quote is priced on `pan` and `amount` alone; accepted so existing callers keep working.",
+                    "description": "LRS purpose code of the remittance (`S0303`, `S0304`, `S0305`, `S0306`, `S1107`). Must be enabled for LRS on the account the payment settles to. It decides how TCS is charged.",
                     "example": "S0305"
+                  },
+                  "payment_id": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "description": "Send to re-quote a payment you have already submitted details for. The quote uses the TCS rate fixed at that first submit and leaves this payment's own amount out of `committed_inr`.",
+                    "example": "PR6938527534"
                   }
                 }
               },
               "example": {
                 "pan": "ABCDE1234F",
-                "amount": 1200000
+                "amount": 1200000,
+                "purpose_code": "S0305"
               }
             }
           }
@@ -2755,6 +3062,11 @@
                           "description": "The PAN the quote was run for, upper-cased.",
                           "example": "ABCDE1234F"
                         },
+                        "purpose_code": {
+                          "type": "string",
+                          "description": "The purpose code the quote was priced for, upper-cased.",
+                          "example": "S0305"
+                        },
                         "financial_year": {
                           "type": "string",
                           "description": "Financial year the quote applies to, rendered `YYYY-YY` (1 April - 31 March).",
@@ -2767,37 +3079,42 @@
                         },
                         "remittance_inr": {
                           "type": "string",
-                          "description": "The proposed remittance (INR).",
-                          "example": "1200000.00"
+                          "description": "The proposed remittance (INR). `null` when `refusal_reason` is set.",
+                          "example": "1200000.00",
+                          "nullable": true
                         },
                         "taxable_inr": {
                           "type": "string",
-                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the Rs.10L threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it.",
-                          "example": "200000.00"
+                          "description": "Portion of `remittance_inr` subject to TCS (INR). Zero below the ₹10,00,000 threshold; the above-threshold slice on the remittance that crosses it; the whole of `remittance_inr` once the counter is past it. EximPe's fee is billed on top and never reduces it. `null` when `refusal_reason` is set.",
+                          "example": "200000.00",
+                          "nullable": true
                         },
                         "tcs_rate": {
                           "type": "string",
-                          "description": "The TCS rate applied, formatted for display. Flat across every supported purpose code.",
-                          "example": "2%"
+                          "description": "The TCS rate applied, formatted for display, e.g. `2%` or `20%`. `null` when `refusal_reason` is set.",
+                          "example": "2%",
+                          "nullable": true
                         },
                         "tcs_inr": {
                           "type": "string",
-                          "description": "TCS due on this remittance (INR).",
-                          "example": "4000.00"
+                          "description": "TCS due on this remittance (INR). `null` when `refusal_reason` is set.",
+                          "example": "4000.00",
+                          "nullable": true
                         },
                         "total_payable_inr": {
                           "type": "string",
-                          "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response.",
-                          "example": "1211080.00"
+                          "description": "All-in total the buyer pays: remittance + EximPe's fee + GST on that fee + TCS. Collect exactly this — the fee and GST are not itemised in the response. `null` when `refusal_reason` is set.",
+                          "example": "1211080.00",
+                          "nullable": true
                         },
                         "tcs_threshold_breached_before": {
                           "type": "boolean",
-                          "description": "Whether EximPe's LRS counter had already crossed Rs.10L before this remittance.",
+                          "description": "Whether EximPe's LRS counter had already crossed ₹10,00,000 before this remittance.",
                           "example": false
                         },
                         "tcs_threshold_breached_after": {
                           "type": "boolean",
-                          "description": "Whether the counter is at or past Rs.10L once this remittance is counted. Also `true` when it was already past beforehand, and it flips at exactly Rs.10,00,000 — where `taxable_inr` is still `0.00`. Read `tcs_inr`, not this flag, to know whether tax is due.",
+                          "description": "Whether the counter is at or past ₹10,00,000 once this remittance is counted. Also `true` when it was already past beforehand, and it flips at exactly ₹10,00,000 — where `taxable_inr` is still `0.00`. Read `tcs_inr`, not this flag, to know whether tax is due.",
                           "example": true
                         },
                         "tcs_reason": {
@@ -2805,10 +3122,25 @@
                           "enum": [
                             "nil_below_threshold",
                             "partial_above_threshold",
-                            "full_amount_taxable"
+                            "full_amount_taxable",
+                            "tour_package_flat_rate",
+                            null
                           ],
-                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under Rs.10L; this remittance crosses the line and only the slice above it is taxed; or the counter was already past and the whole remittance is taxable.",
-                          "example": "partial_above_threshold"
+                          "description": "Why this remittance was taxed as it was: cumulative LRS stays under ₹10,00,000; this remittance crosses the line and only the slice above it is taxed; the counter was already past and the whole remittance is taxable; or the remittance is an `S0306` tour package, taxed at a flat rate from the first rupee. `null` when `refusal_reason` is set.",
+                          "example": "partial_above_threshold",
+                          "nullable": true
+                        },
+                        "tcs_category": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            "STANDARD",
+                            "S0306_TOUR_PACKAGE",
+                            "S0306_OTHER_TRAVEL",
+                            null
+                          ],
+                          "description": "The TCS category the rate comes from: `STANDARD` for every code but `S0306`, and the account's travel type on `S0306`. `null` when `refusal_reason` is set.",
+                          "example": "STANDARD"
                         },
                         "refusal_reason": {
                           "type": "string",
@@ -2820,22 +3152,52 @@
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "message": "LRS amount quoted",
-                  "data": {
-                    "pan": "ABCDE1234F",
-                    "financial_year": "2025-26",
-                    "committed_inr": "0.00",
-                    "remittance_inr": "1200000.00",
-                    "taxable_inr": "200000.00",
-                    "tcs_rate": "2%",
-                    "tcs_inr": "4000.00",
-                    "total_payable_inr": "1211080.00",
-                    "tcs_threshold_breached_before": false,
-                    "tcs_threshold_breached_after": true,
-                    "tcs_reason": "partial_above_threshold",
-                    "refusal_reason": null
+                "examples": {
+                  "quoted": {
+                    "summary": "Quoted: crosses the ₹10,00,000 threshold",
+                    "value": {
+                      "success": true,
+                      "message": "LRS amount quoted",
+                      "data": {
+                        "pan": "ABCDE1234F",
+                        "purpose_code": "S0305",
+                        "financial_year": "2025-26",
+                        "committed_inr": "0.00",
+                        "remittance_inr": "1200000.00",
+                        "taxable_inr": "200000.00",
+                        "tcs_rate": "2%",
+                        "tcs_inr": "4000.00",
+                        "total_payable_inr": "1211080.00",
+                        "tcs_threshold_breached_before": false,
+                        "tcs_threshold_breached_after": true,
+                        "tcs_reason": "partial_above_threshold",
+                        "tcs_category": "STANDARD",
+                        "refusal_reason": null
+                      }
+                    }
+                  },
+                  "refused": {
+                    "summary": "Refused: principal over Rs 25,00,000",
+                    "value": {
+                      "success": true,
+                      "message": "LRS amount quoted",
+                      "data": {
+                        "pan": "ABCDE1234F",
+                        "purpose_code": "S0305",
+                        "financial_year": "2025-26",
+                        "committed_inr": "0.00",
+                        "remittance_inr": null,
+                        "taxable_inr": null,
+                        "tcs_rate": null,
+                        "tcs_inr": null,
+                        "total_payable_inr": null,
+                        "tcs_threshold_breached_before": false,
+                        "tcs_threshold_breached_after": true,
+                        "tcs_reason": null,
+                        "tcs_category": null,
+                        "refusal_reason": "lrs_remittance_cap_exceeded"
+                      }
+                    }
                   }
                 }
               }
@@ -2862,7 +3224,12 @@
             }
           }
         },
-        "operationId": "v3_post_pg_lrs_quote_"
+        "operationId": "v3_post_pg_lrs_quote_",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
       }
     },
     "/pg/payments/{payment_id}/documents/": {
@@ -2876,8 +3243,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -2890,6 +3256,9 @@
             },
             "description": "UID of the payment the document is for.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -2906,7 +3275,7 @@
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "The document file. Allowed extensions: pdf, png, jpg, jpeg, docx, xlsx, csv. Maximum 10 MB. Password-protected PDFs are rejected."
+                    "description": "The document file. Allowed extensions: pdf, png, jpg, jpeg, docx, xlsx, csv. Maximum 10 MB; file name up to 100 characters, extension included. Password-protected PDFs are rejected."
                   },
                   "type": {
                     "type": "string",
@@ -3032,8 +3401,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -3046,6 +3414,9 @@
             },
             "description": "UID of the payment the details are for.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -3280,8 +3651,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -3294,6 +3664,9 @@
             },
             "description": "UID of the payment the details are for.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -3715,8 +4088,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "requestBody": {
@@ -3884,13 +4256,203 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ]
+      }
+    },
+    "/pg/settlements/{uid}/recon/": {
+      "get": {
+        "summary": "Settlement Reconciliation",
+        "description": "Returns a paginated list of the individual transactions that make up a single settlement batch: captures, refunds, chargebacks and chargeback reversals.\n\nUse this endpoint for reconciliation when a settlement contains too many transactions to fetch in one response. It returns a trimmed field set, and it differs from the settlement detail endpoint (`GET /pg/settlements/{settlement_id}/`). The detail endpoint lists `capture`, `refund` and `chargeback_reversed` rows; this endpoint lists `chargeback` rows as well.\n\nTransactions of all types are merged into a single stream ordered by `created_at` descending. A PSP always gets its own and all its sub-merchants' rows in this settlement.",
+        "tags": [
+          "Settlements"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Settlement unique identifier (e.g. `ST6937597440`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Transactions per page (max 1000).",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of settlement transactions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_SettlementReconResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Settlement transactions retrieved successfully",
+                  "data": {
+                    "count": 412,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": "https://api-pacb-uat.eximpe.com/pg/settlements/ST6937597440/recon/?page=2",
+                    "previous": null,
+                    "results": [
+                      {
+                        "settlement_type": "capture",
+                        "transaction_id": "PR7041820005",
+                        "settlement_id": "ST6937597440",
+                        "settlement_completed_at": "2026-05-28T11:20:33.412907Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "100.00",
+                        "merchant_net_amount": "95.00",
+                        "total_processing_fee": "3.00",
+                        "total_service_tax": "0.54",
+                        "mop_type": "UPI",
+                        "upi_instrument": "UPI",
+                        "transaction_currency": "INR"
+                      },
+                      {
+                        "settlement_type": "refund",
+                        "transaction_id": "RF1533204282",
+                        "settlement_id": "ST6937597440",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "20.00",
+                        "merchant_net_amount": "-20.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "mop_type": "UPI",
+                        "upi_instrument": "UPI",
+                        "transaction_currency": "INR"
+                      },
+                      {
+                        "settlement_type": "chargeback",
+                        "transaction_id": "CB4611686552",
+                        "settlement_id": "ST6937597440",
+                        "settlement_completed_at": "2026-05-28T11:20:33.412907Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "50.00",
+                        "merchant_net_amount": "-50.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "mop_type": "CREDIT_CARD",
+                        "upi_instrument": null,
+                        "transaction_currency": "INR"
+                      },
+                      {
+                        "settlement_type": "chargeback_reversed",
+                        "transaction_id": "CB3907715284",
+                        "settlement_id": "ST6937597440",
+                        "settlement_completed_at": "2026-05-28T11:20:33.412907Z",
+                        "settlement_currency": "USD",
+                        "transaction_amount": "40.00",
+                        "merchant_net_amount": "40.00",
+                        "total_processing_fee": "0.00",
+                        "total_service_tax": "0.00",
+                        "mop_type": "UPI",
+                        "transaction_currency": "INR"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_001",
+                    "message": "Invalid credentials"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`ERR_SETTLEMENT_002`: the settlement does not exist or does not belong to the authenticated merchant. `ERR_SETTLEMENT_003`: the page is out of range.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "examples": {
+                  "Settlement not found": {
+                    "summary": "Settlement not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SETTLEMENT_002",
+                        "message": "Settlement not found",
+                        "details": {
+                          "settlement_id": "Settlement not found"
+                        }
+                      }
+                    }
+                  },
+                  "Invalid page": {
+                    "summary": "Invalid page",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SETTLEMENT_003",
+                        "message": "Invalid page",
+                        "details": {
+                          "page": "Invalid page."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_get_pg_settlements_uid_recon_"
       }
     },
     "/pg/refunds/{refund_id}/simulate-status/": {
       "post": {
         "summary": "Set refund status (sandbox)",
-        "description": "Forces a refund straight to any status, bypassing the normal `INITIATED → REFUNDED/FAILED` progression, and fires the same webhook a real status change would. Lets one refund exercise every branch of your refund handler, including statuses a real rail reaches rarely.\n\n**Sandbox only.** This endpoint returns `400` in production, and operates only on transactions created through the **Simulator** payment gateway — transactions from real payment rails are rejected.\n\nUnlike a real rail, a refund may be moved **out of** a terminal status (`REFUNDED` / `FAILED`) and back again — deliberately, so you do not need a fresh refund per branch.\n\n**The refund resolves under your own account and your sub-merchants'.**",
+        "description": "Forces a refund straight to any status, bypassing the normal `INITIATED → REFUNDED/FAILED` progression, and fires the same webhook a real status change would. Lets one refund exercise every branch of your refund handler, including statuses a real rail reaches rarely.\n\n**Sandbox only.** This endpoint returns `403` in production, and operates only on transactions created through the **Simulator** payment gateway — transactions from real payment rails are rejected.\n\nUnlike a real rail, a refund may be moved **out of** a terminal status (`REFUNDED` / `FAILED`) and back again — deliberately, so you do not need a fresh refund per branch.\n\n**The refund resolves under your own account and your sub-merchants'.**",
         "tags": [
           "Refund"
         ],
@@ -3898,8 +4460,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -3912,6 +4473,9 @@
             },
             "description": "UID of the refund.",
             "example": "RF7019490071"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -4045,7 +4609,7 @@
             }
           },
           "400": {
-            "description": "Invalid or missing `status`, a refund not on the Simulator gateway, or the endpoint called in production. `error.code` is `ERR_REFUND_002`.",
+            "description": "Invalid or missing `status` (`ERR_REFUND_002`), or a refund not on the Simulator gateway (`ERR_REFUND_009`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -4064,26 +4628,48 @@
               }
             }
           },
-          "404": {
-            "description": "No such refund for this merchant. **This response does not use the standard envelope** — it returns a bare `detail` string.",
+          "403": {
+            "description": "Called in production. `error.code` is `ERR_REFUND_012`.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "detail": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
                 },
                 "example": {
-                  "detail": "No DomesticPaymentRefund matches the given query."
+                  "success": false,
+                  "error": {
+                    "code": "ERR_REFUND_012",
+                    "message": "Refund status simulation is not available in production",
+                    "details": {
+                      "error": "Refund status simulation is not available in production"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such refund for this merchant. `error.code` is `ERR_REFUND_003`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_REFUND_003",
+                    "message": "Refund not found",
+                    "details": {
+                      "refund_id": "Refund not found"
+                    }
+                  }
                 }
               }
             }
           },
           "500": {
-            "description": "Unexpected processing failure. `error.code` is `ERR_SERVICE_ERROR_000` here, unlike the 400s on this endpoint.",
+            "description": "Unexpected processing failure. `error.code` is `ERR_SERVICE_ERROR_000`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4106,8 +4692,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -4120,6 +4705,9 @@
             },
             "description": "UID of the settled B2B-services payment the documents belong to.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -4266,8 +4854,7 @@
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -4280,6 +4867,9 @@
             },
             "description": "UID of the settled B2B-services payment the documents belong to.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -5651,7 +6241,8 @@
           "callback_url": {
             "type": "string",
             "format": "uri",
-            "description": "URL that receives refund status updates for this refund."
+            "deprecated": true,
+            "description": "Deprecated and ignored. Refund status changes go to your webhook URL: `PAYMENT_REFUNDED` (refunded), `REFUND_FAILED` (failed), `REFUND_STATUS_UPDATE` (processing, reversed, on hold, bank rejected)."
           }
         }
       },
@@ -5689,7 +6280,16 @@
           },
           "refund_status": {
             "type": "string",
-            "description": "The status of the refund."
+            "description": "The status of the refund, in lowercase.",
+            "enum": [
+              "initiated",
+              "processing",
+              "refunded",
+              "failed",
+              "reversed",
+              "on_hold",
+              "bank_rejected_refund"
+            ]
           },
           "message": {
             "type": "string",
@@ -5739,40 +6339,58 @@
       "v3_ListRefundsResponse": {
         "type": "object",
         "required": [
-          "count",
-          "page",
-          "page_size",
-          "next",
-          "previous",
-          "results"
+          "success",
+          "message",
+          "data"
         ],
         "properties": {
-          "count": {
-            "type": "integer",
-            "description": "Total number of refunds"
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
           },
-          "page": {
-            "type": "integer",
-            "description": "Current page number"
-          },
-          "page_size": {
-            "type": "integer",
-            "description": "Number of refunds per page"
-          },
-          "next": {
+          "message": {
             "type": "string",
-            "nullable": true,
-            "description": "URL for the next page of results"
+            "description": "Response message"
           },
-          "previous": {
-            "type": "string",
-            "nullable": true,
-            "description": "URL for the previous page of results"
-          },
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/v3_RefundInList"
+          "data": {
+            "type": "object",
+            "required": [
+              "count",
+              "page",
+              "page_size",
+              "next",
+              "previous",
+              "results"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "description": "Total number of refunds"
+              },
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "page_size": {
+                "type": "integer",
+                "description": "Number of refunds per page"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the next page of results"
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true,
+                "description": "URL for the previous page of results"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_RefundInList"
+                }
+              }
             }
           }
         }
@@ -5798,7 +6416,16 @@
           },
           "refund_status": {
             "type": "string",
-            "description": "The status of the refund."
+            "description": "The status of the refund, in lowercase.",
+            "enum": [
+              "initiated",
+              "processing",
+              "refunded",
+              "failed",
+              "reversed",
+              "on_hold",
+              "bank_rejected_refund"
+            ]
           },
           "refunded_at": {
             "type": "string",
@@ -5838,21 +6465,23 @@
             "type": "string",
             "description": "UTR (Unique Transaction Reference) number for the settlement."
           },
-          "settlement_completed_date": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The timestamp of when the settlement was completed."
-          },
           "forex_rate": {
-            "type": "integer",
-            "description": "Forex rate."
+            "type": "string",
+            "nullable": true,
+            "description": "Forex rate, as a string (e.g. `\"86\"`, `\"86.25\"`). `null` when no rate was recorded."
           },
           "settlement_amount": {
-            "type": "integer",
-            "description": "Settlement amount."
+            "type": "string",
+            "description": "Settlement amount, as a decimal string with two places (e.g. `\"1000.00\"`)."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement completed. Format: `YYYY-MM-DDTHH:MM:SS.ffffffZ`."
           },
           "settlement_currency": {
             "type": "string",
+            "nullable": true,
             "description": "Currency code for the settlement amount."
           },
           "transactions": {
@@ -5865,54 +6494,117 @@
       },
       "v3_SettlementTransaction": {
         "type": "object",
+        "description": "One transaction in the settlement. `capture` and `refund` rows carry every field below except `mop_type`; `settlement_completed_at` is on `capture` rows only. `chargeback_reversed` rows carry only `settlement_type`, `transaction_id`, `settlement_id`, `settlement_completed_at`, `settlement_currency`, `transaction_amount`, `merchant_net_amount`, `total_processing_fee`, `total_service_tax`, `mop_type` and `transaction_currency`. Every amount is a decimal string with two places.",
         "properties": {
           "settlement_type": {
             "type": "string",
-            "description": "Type of settlement transaction (e.g., capture, refund)"
+            "enum": [
+              "capture",
+              "refund",
+              "chargeback_reversed"
+            ],
+            "description": "`capture` (a payment), `refund`, or `chargeback_reversed` (a chargeback returned to you)."
           },
           "transaction_id": {
             "type": "string",
-            "description": "Unique identifier for the transaction"
+            "description": "The transaction's ID (payment `PR…`, refund `RF…`, chargeback `CB…`)."
+          },
+          "settlement_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The parent settlement ID."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the settlement completed. Not on `refund` rows."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency the settlement is paid out in."
           },
           "transaction_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "Transaction amount"
+            "type": "string",
+            "description": "Gross transaction amount."
           },
           "merchant_service_fee": {
-            "type": "number",
-            "format": "float",
-            "description": "Merchant service fee"
+            "type": "string",
+            "description": "Merchant service fee."
           },
           "merchant_service_tax": {
-            "type": "number",
-            "format": "float",
-            "description": "Merchant service tax"
+            "type": "string",
+            "description": "Tax on the merchant service fee."
           },
           "merchant_net_amount": {
-            "type": "number",
-            "format": "float",
-            "description": "Net amount for merchant"
+            "type": "string",
+            "description": "Net amount to you. Positive on `refund` rows here; List Settlement Transactions shows refunds as negative."
+          },
+          "sgst": {
+            "type": "string",
+            "description": "SGST."
+          },
+          "cgst": {
+            "type": "string",
+            "description": "CGST."
+          },
+          "igst": {
+            "type": "string",
+            "description": "IGST."
+          },
+          "merchant_transaction_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The payment network's transaction reference."
+          },
+          "card_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Card type, for card payments."
+          },
+          "offer_service_fee": {
+            "type": "string",
+            "description": "Offer service fee."
+          },
+          "offer_service_tax": {
+            "type": "string",
+            "description": "Tax on the offer service fee."
+          },
+          "forex_rate": {
+            "type": "string",
+            "nullable": true,
+            "description": "Forex rate, as a string (e.g. `\"86\"`, `\"86.25\"`). `null` when no rate was recorded."
+          },
+          "discount": {
+            "type": "string",
+            "description": "Discount."
+          },
+          "additional_tdr_fee": {
+            "type": "string",
+            "description": "Additional TDR fee."
+          },
+          "additional_tdr_tax": {
+            "type": "string",
+            "description": "Tax on the additional TDR fee."
+          },
+          "total_processing_fee": {
+            "type": "string",
+            "description": "Total processing fee. `\"0.00\"` on `chargeback_reversed` rows."
+          },
+          "total_service_tax": {
+            "type": "string",
+            "description": "Total tax on the processing fee. `\"0.00\"` on `chargeback_reversed` rows."
           },
           "mop_type": {
             "type": "string",
-            "description": "Method of payment type",
-            "enum": [
-              "upi",
-              "credit_card",
-              "debit_card",
-              "net_banking",
-              "qr"
-            ]
+            "nullable": true,
+            "description": "Mode of payment, in uppercase (e.g. `UPI`). Only on `chargeback_reversed` rows."
           },
           "transaction_currency": {
             "type": "string",
-            "description": "Currency of the transaction"
-          },
-          "forex_rate": {
-            "type": "number",
-            "format": "float",
-            "description": "Forex rate applied to the transaction"
+            "nullable": true,
+            "description": "Currency the buyer was charged in."
           }
         }
       },
@@ -5920,25 +6612,34 @@
         "type": "object",
         "properties": {
           "settlement_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Unique identifier for the settlement."
           },
           "utr_number": {
-            "type": "string"
-          },
-          "settlement_completed_date": {
             "type": "string",
-            "format": "date-time"
+            "description": "UTR (Unique Transaction Reference) number for the settlement."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the settlement completed. Format: `YYYY-MM-DDTHH:MM:SS.ffffffZ`."
           },
           "forex_rate": {
-            "type": "number",
-            "format": "float"
+            "type": "string",
+            "nullable": true,
+            "description": "Forex rate, as a string (e.g. `\"86\"`, `\"86.25\"`). `null` when no rate was recorded."
           },
           "settlement_amount": {
-            "type": "number",
-            "format": "float"
+            "type": "string",
+            "description": "Settlement amount, as a decimal string with two places (e.g. `\"1000.00\"`)."
           },
-          "settlement_currency": {
-            "type": "string"
+          "settlement_charges": {
+            "type": "string",
+            "description": "Total fees in this settlement, as a decimal string with two places."
+          },
+          "settlement_gst": {
+            "type": "string",
+            "description": "Total GST on those fees, as a decimal string with two places."
           }
         }
       },
@@ -5959,29 +6660,40 @@
       "v3_ListSettlementsResponse": {
         "type": "object",
         "properties": {
-          "count": {
-            "type": "integer"
+          "success": {
+            "type": "boolean"
           },
-          "page": {
-            "type": "integer"
+          "message": {
+            "type": "string"
           },
-          "page_size": {
-            "type": "integer"
-          },
-          "next": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
-          },
-          "previous": {
-            "type": "string",
-            "format": "uri",
-            "nullable": true
-          },
-          "results": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/v3_SettlementInList"
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "format": "uri",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_SettlementInList"
+                }
+              }
             }
           }
         }
@@ -7733,25 +8445,6 @@
           }
         }
       },
-      "v1_ErrorResponse": {
-        "type": "object",
-        "required": [
-          "success",
-          "error"
-        ],
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [
-              false
-            ],
-            "description": "Indicates if the request was successful. Always false for error responses."
-          },
-          "error": {
-            "$ref": "#/components/schemas/v1_ErrorDetails"
-          }
-        }
-      },
       "v3_VerificationRequirementItem": {
         "type": "object",
         "description": "One field or document a payment's checklist calls for. `code` is the key you send it back under. `code` and `message` are always present; the remaining keys appear only when they apply, so their absence is meaningful — no `waivable` key means the item cannot be waived.",
@@ -7957,6 +8650,188 @@
             }
           }
         }
+      },
+      "v3_CreateRefundResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "message": {
+            "type": "string",
+            "description": "Response message"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "refund_id": {
+                "type": "string",
+                "description": "Unique identifier for the refund."
+              },
+              "payment_id": {
+                "type": "string",
+                "description": "The ID of the payment being refunded."
+              },
+              "refund_status": {
+                "type": "string",
+                "enum": [
+                  "initiated",
+                  "processing",
+                  "refunded",
+                  "failed",
+                  "reversed",
+                  "on_hold",
+                  "bank_rejected_refund"
+                ],
+                "description": "The status of the refund, in lowercase (e.g. `initiated`)."
+              },
+              "message": {
+                "type": "string",
+                "nullable": true,
+                "description": "A message providing more detail about the refund status."
+              },
+              "transaction_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The payment network's reference for this refund, when one is returned."
+              },
+              "bank_ref_num": {
+                "type": "string",
+                "nullable": true,
+                "description": "The bank reference number for the refund. `null` until the bank returns one."
+              },
+              "refund_amount": {
+                "type": "string",
+                "description": "The refund amount in rupees. A whole amount has no decimals (`\"1000\"`); any other amount has two (`\"10.50\"`). Get Refund and List Refunds always return two decimals."
+              },
+              "reference_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "Your refund reference ID, or the one generated for you."
+              }
+            }
+          }
+        }
+      },
+      "v3_SettlementReconTransaction": {
+        "type": "object",
+        "properties": {
+          "settlement_type": {
+            "type": "string",
+            "description": "The kind of transaction in the settlement. `chargeback_reversed` is a chargeback returned to you.",
+            "enum": [
+              "capture",
+              "refund",
+              "chargeback",
+              "chargeback_reversed"
+            ]
+          },
+          "transaction_id": {
+            "type": "string",
+            "description": "The transaction's unique identifier (payment `PR...`, refund `RF...`, chargeback `CB...`)."
+          },
+          "settlement_id": {
+            "type": "string",
+            "description": "The parent settlement UID."
+          },
+          "settlement_completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the settlement completed. Not present on refund rows."
+          },
+          "settlement_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency the settlement is paid out in."
+          },
+          "transaction_amount": {
+            "type": "string",
+            "description": "Gross transaction amount, returned as a decimal string (e.g. \"100.00\")."
+          },
+          "merchant_net_amount": {
+            "type": "string",
+            "description": "Net amount to the merchant, as a decimal string. Negative for refunds and chargebacks (money out); positive for `chargeback_reversed`."
+          },
+          "total_processing_fee": {
+            "type": "string",
+            "description": "Processing fee, as a decimal string. Always \"0.00\" for refunds, chargebacks and chargeback reversals."
+          },
+          "total_service_tax": {
+            "type": "string",
+            "description": "Service tax on the fee, as a decimal string. Always \"0.00\" for refunds, chargebacks and chargeback reversals."
+          },
+          "mop_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mode of payment: `UPI`, `CREDIT_CARD`, `DEBIT_CARD`, `NET_BANKING`, `WALLET`, `CARD`, `QR`, `EFTNET`, `EMI`, `BNPL`, `LR` or `VBA_TRANSFER`. `null` if the mode of payment was not recorded."
+          },
+          "upi_instrument": {
+            "type": "string",
+            "nullable": true,
+            "description": "For UPI payments, what funded the payment: `UPI` (bank account), `UPI_PPI` (wallet), `UPI_CC` (credit card), `UPI_CL` (credit line), `UPI_SI` or `UPI_SI_PPI` (recurring payment from a bank account or a wallet). `null` when not recorded. Not present on `chargeback_reversed` rows."
+          },
+          "transaction_currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency the buyer was charged in."
+          }
+        }
+      },
+      "v3_SettlementReconData": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "description": "Total number of transactions in this settlement (for the authenticated merchant)."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Current page number."
+          },
+          "page_size": {
+            "type": "integer",
+            "description": "Number of items per page."
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL for the next page, or null on the last page."
+          },
+          "previous": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "URL for the previous page, or null on the first page."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v3_SettlementReconTransaction"
+            }
+          }
+        }
+      },
+      "v3_SettlementReconResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/v3_SettlementReconData"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -7983,14 +8858,22 @@
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
+        "required": false,
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   },

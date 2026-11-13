@@ -72,7 +72,9 @@ The values are returned as EximPe holds them and are not checked against the rul
 
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
-| `400` | `ERR_MERCHANT_019` | `code` is missing or malformed, or no bank details were found for it | A string, not an object: `"Bank details could not be found for bank_swift_code"`. Check the code. If it is correct, send every bank field yourself on [Create Merchant](/api-reference/v3/merchant/create#settlement) |
+| `400` | `ERR_MERCHANT_019` | `code` is missing or malformed, no bank details were found for it, or the lookup service is unavailable | A string, not an object: `"Bank details could not be found for bank_swift_code"`. Check the code, or retry if it is correct. If it still fails, send every bank field yourself on [Create Merchant](/api-reference/v3/merchant/create#settlement) |
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |

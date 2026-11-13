@@ -16,15 +16,15 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     [Create Merchant](/api-reference/v3/merchant/create) · [Merchant Approved webhook](/api-reference/v3/webhooks/merchant-approved)
   </Step>
   <Step title="Set up a way to get paid">
-    Two ways to collect: send the buyer to an EximPe-hosted payment page, or give them a virtual account to pay into directly.
+    Send the buyer to an EximPe-hosted payment page, send them a payment link, open their UPI app from your server, or give them a virtual account to pay into directly.
 
-    [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
+    [Hosted Checkout](/integration-guide/v3/web-integration/hosted-checkout) · [Payment Links](/api-reference/v3/payment-link/create) · [S2S UPI Intent](/integration-guide/v3/web-integration/s2s-upi-intent) · [Virtual Bank Accounts](/integration-guide/v3/web-integration/virtual-accounts)
   </Step>
   <Step title="The buyer pays">
-    We create a payment and send you a webhook. Its status is `ACTION_REQUIRED`, because we do not have the compliance details yet.
+    We create a payment and send you a webhook. If the order already has every detail its purpose code needs, the payment goes to review; otherwise its status is `ACTION_REQUIRED` until you send what is missing.
   </Step>
   <Step title="Send the compliance details">
-    Tell us who paid, what for, and attach the documents. The status becomes `IN_REVIEW`.
+    Tell us who paid, what for, and attach the documents. The status becomes `UNDER_REVIEW` for an LRS payment, or `IN_REVIEW` for a B2B services payment.
 
     For a B2C payment, the `buyer`, `product`, and `invoice` fields you already sent at [Create Order](/api-reference/v3/order/create) are enough — there's nothing further to send.
 
@@ -33,9 +33,9 @@ This page shows the whole flow. Read it once, then follow the linked pages to bu
     For LRS and B2B services payments we tell you exactly what is needed, you send it, and it completes itself. An **LRS** payment (an individual paying for education or travel) verifies the buyer's PAN and collects the tax figures — see [LRS Verification](/integration-guide/v3/web-integration/lrs-verification). A **B2B services** payment (a business paying for a service) has no identity step before the payment and no tax — on a payment EximPe collects, the buying business's PAN is checked once the payment succeeds. See [B2B Services Verification](/integration-guide/v3/web-integration/b2b-services-verification).
   </Step>
   <Step title="Get your money">
-    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. Our fee, the GST on it, and any tax were paid by the buyer on top, so the whole amount reaches you.
+    We convert the amount to be settled at the exchange rate on the settlement date and send it to your account abroad. Status becomes `SETTLED`. What reaches you depends on the payment; see [What it costs you](#what-it-costs-you).
 
-    [What it costs you](/integration-guide/v3/getting-started/faqs#what-does-it-cost-me) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
+    [What it costs you](#what-it-costs-you) · [Settlement APIs](/api-reference/v3/settlement/list) · [Payment Settled webhook](/api-reference/v3/webhooks/payment-settled)
   </Step>
 </Steps>
 
@@ -46,6 +46,12 @@ Money can reach you by more than one Indian payment method.
 <CardGroup cols={2}>
   <Card title="Hosted Checkout" icon="credit-card" href="/integration-guide/v3/web-integration/hosted-checkout">
     Create an order, send the buyer to EximPe's payment page, and they pay by card, UPI, net banking, or QR. Nothing sensitive touches your servers.
+  </Card>
+  <Card title="Payment Links" icon="link" href="/api-reference/v3/payment-link/create">
+    Create a link from your backend and send it to the buyer by chat, email or SMS. You build no checkout of your own.
+  </Card>
+  <Card title="S2S UPI Intent" icon="mobile" href="/integration-guide/v3/web-integration/s2s-upi-intent">
+    Create the order from your server and open the buyer's UPI app directly, or show a QR code on desktop. The buyer stays on your page.
   </Card>
   <Card title="Virtual Bank Accounts" icon="building-columns" href="/integration-guide/v3/web-integration/virtual-accounts">
     An Indian account number we issue for you. The buyer pays into it by NEFT, RTGS, or IMPS, exactly as they would pay any local supplier. Give them the account number and the IFSC.
@@ -84,16 +90,31 @@ These are not the same number, and mixing them up is the most common way a payme
 Ask for the amount to be collected. Declare the amount to be settled. Collect the smaller of the two and the payment sits short until the buyer tops up.
 
 <Note>
-  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credit itself, read from the payment.
+  **Which flow this applies to.** Declaring an `amount_to_be_settled` and quoting the tax on it belongs to the LRS flow. A B2B services payment declares `invoice_amount` to cross-check against the credit, but no `amount_to_be_settled`: what settles is the credited amount minus the MDR and the GST on the MDR, read from the payment.
 </Note>
+
+## What it costs you
+
+On an LRS payment nothing comes out of the amount to be settled. The buyer pays the amount to be collected: the amount to be settled, plus these charges on top.
+
+| Charge | What it is |
+| :--- | :--- |
+| **MDR** | Our processing fee. Your rate is agreed with your account manager. |
+| **GST on the MDR** | Indian tax on that fee. |
+| **TCS** | Tax collected at source on the buyer's remittance, where it applies. |
+
+The quote does not break out the MDR and the GST on the MDR. If you need them itemised, ask your account manager.
+
+If your account settles an amount derived from the credit, it runs the other way: the buyer's payment is fixed, and the MDR, the GST on the MDR and the TCS come out of it. What is left is the amount to be settled. There is nothing to quote, you don't send `amount_to_be_settled`, and a shortfall can't be topped up. Your account manager can tell you which way your account works.
+
+On every other payment, including B2B services and B2B goods, the MDR and the GST on the MDR are deducted from the amount we settle to you.
 
 ## Payment statuses
 
 | `verification_status` | What it means | What you do |
 | :--- | :--- | :--- |
 | `ACTION_REQUIRED` | We have the money but not everything we need — either you have not sent the details yet, or something you sent did not pass | Read what is outstanding, fix it, send again |
-| `IN_REVIEW` | Details accepted, bank is processing | Wait |
-| `VERIFIED` | Nothing outstanding. No webhook fires for this. | Nothing |
+| `UNDER_REVIEW` (LRS) · `IN_REVIEW` (B2B services) | Filed and with EximPe for review | Wait |
 | `APPROVED` · `REJECTED` | The verdict of our review of a filed verification, sent as [`VERIFICATION_STATUS`](/api-reference/v3/webhooks/verification-status) | Act on a rejection |
 | `EXPIRED` | The window closed. Terminal — the money returns to the buyer. | Nothing to recover |
 
@@ -107,9 +128,11 @@ Settlement is reported separately, by the settlement APIs and `PAYMENT_SETTLED`.
 
 **The buyer paid too little.** The payment waits, and the `outstanding` entry on the event names the shortfall. Either have the buyer pay the difference and link that payment as a top-up with `top_up`, or declare a smaller `amount_to_be_settled` for what actually arrived and submit again.
 
+If your account settles an amount derived from the credit, neither option applies: the buyer has to send a larger payment.
+
 **A document was rejected.** We tell you exactly what is wrong. Fix only that item and send it again.
 
-**The money came from someone else's account.** This applies to LRS payments only. The name on the sending account did not match the PAN you gave us, so the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
+**The money came from someone else's account.** This applies to LRS payments paid by bank transfer into a virtual account. The name on the sending account did not match the PAN you gave us, so the payment stays in `action_required` with `reason: SENDER_NAME_MISMATCH`. Either we refund it and the buyer pays again from their own account, or you send us the PAN of whoever actually paid — the payment then settles against that person and counts against their LRS limit.
 
 **You need to refund.** Refunds go back to the buyer's own account. You can refund part of a payment, more than once, and you can refund while a payment's verification is still open. A refund for the whole amount closes the verification, and for an LRS payment releases the limit it counted against once the refund completes. If your balance does not cover it, the call fails — collect more and try again.
 

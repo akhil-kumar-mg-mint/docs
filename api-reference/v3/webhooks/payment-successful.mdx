@@ -59,13 +59,13 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
   "version": "3.0.0",
   "sequence_number": "550e8400-e29b-41d4-a716-446655440000",
   "data": {
-    "payment_id": "770e8400-e29b-41d4-a716-446655440002",
-    "order_id": "660e8400-e29b-41d4-a716-446655440001",
+    "payment_id": "PR6938527534",
+    "order_id": "OD3376378679",
     "link_id": null,
     "status": "CAPTURED",
     "message": "Payment Captured",
     "mop_type": "VBA_TRANSFER",
-    "amount": 1000,
+    "amount": 1000.0,
     "bank_ref_num": "BANKREF123",
     "extended_status": "SUCCESS",
     "payment_message": null,
@@ -113,13 +113,13 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
     <ParamField path="data.payment_id" type="string" required>
       UID of the payment
       
-      **Example**: `"770e8400-e29b-41d4-a716-446655440002"`
+      **Example**: `"PR6938527534"`
     </ParamField>
 
     <ParamField path="data.order_id" type="string" required>
       UID of the order for this payment
       
-      **Example**: `"660e8400-e29b-41d4-a716-446655440001"`
+      **Example**: `"OD3376378679"`
     </ParamField>
 
     <ParamField path="data.link_id" type="string">
@@ -147,9 +147,9 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
     </ParamField>
 
     <ParamField path="data.amount" type="number" required>
-      Payment amount
-      
-      **Example**: `1000`
+      Order amount, sent as a decimal number.
+
+      **Example**: `1000.0`
     </ParamField>
 
     <ParamField path="data.bank_ref_num" type="string">
@@ -158,8 +158,8 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
       **Example**: `"BANKREF123"`
     </ParamField>
 
-    <ParamField path="data.extended_status" type="string" required>
-      Detailed status code for the payment
+    <ParamField path="data.extended_status" type="string">
+      Detailed status code for the payment. Can be `null`.
       
       **Example**: `"SUCCESS"`
     </ParamField>
@@ -168,8 +168,8 @@ Both signature headers are sent. Verify V2 (recommended) or V1 — see [Verifyin
       Additional processor-level message; may be null
     </ParamField>
 
-    <ParamField path="data.payment_completed_at" type="string" required>
-      ISO 8601 datetime when payment completed (typically set for success)
+    <ParamField path="data.payment_completed_at" type="string">
+      ISO 8601 datetime when payment completed (typically set for success). Can be `null`.
       
       **Example**: `"2026-02-12T10:29:55.000000Z"`
     </ParamField>

@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.0",
   "info": {
     "title": "EximPe Payment Gateway API — v3 Payments",
     "version": "3.0.0",
@@ -28,14 +28,12 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           },
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -43,7 +41,7 @@
             "name": "page",
             "in": "query",
             "required": false,
-            "description": "Page number, starting at 1. Stop when `next` is null: a page past the last one is refused with a 500.",
+            "description": "Page number, starting at 1. Stop paging when `next` is `null`.",
             "schema": {
               "type": "integer",
               "minimum": 1,
@@ -175,7 +173,7 @@
             "name": "status",
             "in": "query",
             "required": false,
-            "description": "`pending`, `captured` or `failed`. Case-insensitive; comma-separate several values. Matches the status as recorded — see the note on expired payments.",
+            "description": "`pending`, `captured`, `failed` or `invalid`. Case-insensitive; comma-separate several values. Matches the status as recorded — see the note on expired payments.",
             "schema": {
               "type": "string",
               "example": "captured"
@@ -220,6 +218,9 @@
               "type": "string",
               "format": "date"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -325,7 +326,7 @@
             }
           },
           "500": {
-            "description": "Invalid filter value, invalid date or a page past the last one",
+            "description": "Invalid filter value or invalid date",
             "content": {
               "application/json": {
                 "schema": {
@@ -341,19 +342,6 @@
                         "message": "Failed to retrieve domestic payment requests",
                         "details": {
                           "error": "{'status': ErrorDetail(string='Invalid value. Must be one of: PENDING, CAPTURED, FAILED, INVALID', code='invalid')}"
-                        }
-                      }
-                    }
-                  },
-                  "Page past the last one": {
-                    "summary": "Page past the last one",
-                    "value": {
-                      "success": false,
-                      "error": {
-                        "code": 40350,
-                        "message": "Failed to retrieve domestic payment requests",
-                        "details": {
-                          "error": "Invalid page."
                         }
                       }
                     }
@@ -376,14 +364,12 @@
         "security": [
           {
             "clientAuth": [],
-            "clientSecretAuth": [],
-            "apiVersionHeader": []
+            "clientSecretAuth": []
           },
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -395,6 +381,9 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -471,7 +460,7 @@
                         "mop_type": "upi",
                         "bank_ref_num": "629012345678",
                         "mop_detail": {
-                          "vpa": "rahul@okhdfc"
+                          "vpa": "ra****@okhdfc"
                         },
                         "payment_completed_at": "2026-10-15T06:45:02.000000Z",
                         "status": "captured",
@@ -619,14 +608,6 @@
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
-        "name": "X-API-Version",
-        "in": "header",
-        "description": "**API Version** - Specifies which version of the API to use (e.g., '1.X.X', '2.X.X', or '3.X.X'). This header allows you to control which API version your integration uses. Default version information is available in the Developer Settings.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
       }
     },
     "schemas": {
@@ -759,7 +740,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was created, UTC with microseconds."
+            "description": "When the payment was created, UTC, e.g. `2026-10-15T06:44:13.414209Z`."
           },
           "comment": {
             "type": "string",
@@ -781,11 +762,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Payment status. A pending payment past its expiry reads `failed` here.",
+            "description": "Payment status. A pending payment past its expiry reads `failed` here. `invalid`: the attempt was voided when its payment link was closed.",
             "enum": [
               "pending",
               "captured",
-              "failed"
+              "failed",
+              "invalid"
             ]
           }
         }
@@ -1120,7 +1102,7 @@
                 "properties": {
                   "vpa": {
                     "type": "string",
-                    "description": "Payer VPA.",
+                    "description": "Payer VPA, masked: the first 2 characters of the user part and the handle, e.g. `ra****@okhdfc`.",
                     "nullable": true
                   }
                 }
@@ -1177,11 +1159,12 @@
           },
           "status": {
             "type": "string",
-            "description": "Payment status as recorded. Unlike List Payments, a pending payment past its expiry still reads `pending` here.",
+            "description": "Payment status as recorded. Unlike List Payments, a pending payment past its expiry still reads `pending` here. `invalid`: the attempt was voided when its payment link was closed.",
             "enum": [
               "pending",
               "captured",
-              "failed"
+              "failed",
+              "invalid"
             ]
           },
           "status_message": {
@@ -1192,7 +1175,7 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the payment was created, UTC with microseconds."
+            "description": "When the payment was created, UTC, e.g. `2026-10-15T06:44:13.414209Z`."
           }
         }
       },
@@ -1209,6 +1192,22 @@
             "$ref": "#/components/schemas/v3_Payment"
           }
         }
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": false,
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }

@@ -40,7 +40,7 @@ Send details keyed by the same codes that [Get Verification Requirements](/api-r
 
 ## Classify it first
 
-A payment with no `business_model` and `purpose_code` on its order has no requirement set, so nothing else about it can be validated. Both travel together:
+A payment with no `business_model` and `purpose_code` on its order has no requirement set, so nothing else about it can be validated. Send whichever of the two is missing:
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verification/' \
@@ -53,7 +53,7 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/payments/PR6938527534/verificat
 They can ride along with everything else in one call, but sending them first is the simplest thing to do.
 
 <Warning>
-  **`business_model` and `purpose_code` must travel together, and only once.** Send one without the other and the call is refused naming the one you left out. Once set, sending either again is a `400` — `Already set on the order; it cannot be changed here.`
+  **Send whichever of `business_model` and `purpose_code` is missing.** Once set, sending a different value is a `400`: `Already set on the order; it cannot be changed here.` Re-sending the same value is accepted.
 </Warning>
 
 <Info>
@@ -62,7 +62,7 @@ They can ride along with everything else in one call, but sending them first is 
 
 ## The complete body
 
-Eleven fields and one document — plus `buyer_pan` when it is owed. This is the whole of it:
+Thirteen fields and one document, plus `buyer_pan` when it is owed:
 
 ```json S0802 — B2B services
 {
@@ -77,7 +77,9 @@ Eleven fields and one document — plus `buyer_pan` when it is owed. This is the
     "invoice_number": "INV-2026-0041",
     "invoice_date": "2026-08-01",
     "invoice_amount": "125000.00",
-    "declaration": true
+    "declaration": true,
+    "buyer_date_of_incorporation": "2011-04-18",
+    "delivery_due_date": "2027-03-31"
   },
   "documents": [
     { "code": "invoice", "ref": "8207383264" }
@@ -95,18 +97,24 @@ Eleven fields and one document — plus `buyer_pan` when it is owed. This is the
 </Note>
 
 <Note>
-  **Payments EximPe collects add one more field, `buyer_pan`.** Once the payment is captured, the buying business's PAN is checked with the issuer, and until it passes `buyer_pan` is listed among the outstanding items and the payment stays in `ACTION_REQUIRED`. Send it under `fields` like any other code, as a twelfth entry — `"buyer_pan": "ABCDE1234F"`.
+  **Payments EximPe collects add one more field, `buyer_pan`.** Once the payment is captured, the buying business's PAN is checked with the issuer, and until it passes `buyer_pan` is listed among the outstanding items and the payment stays in `ACTION_REQUIRED`. Send it under `fields` like any other code, as a fourteenth entry — `"buyer_pan": "AABCE1234F"`.
+
+  The PAN must belong to the business named in `buyer_name`. Change `buyer_name` later and `buyer_pan` is owed again; a mismatch reads `The name on this PAN doesn't match the order's buyer name.` A personal PAN reads `This is a personal PAN. A B2B payment needs the buying business's PAN.`
 
   A PAN is **checked during the call**. A rejection is a `400` whose `details.buyer_pan` says why, and the rest of the call is still saved. If the check cannot run, the call is a `503` with `ERR_BUYER_PAN_002`; retry the same call. An order gets 5 PAN checks, after which the call answers `ERR_BUYER_PAN_001` and you need to contact EximPe support. On a payment that does not owe one, `buyer_pan` answers `Not a requirement of this payment.`
 </Note>
 
 ## Values
 
-Field values are strings.
+Values are strings unless noted; `declaration` is a boolean.
 
 | Kind | Send |
 |---|---|
 | `invoice_date` | `YYYY-MM-DD` |
+| `buyer_date_of_incorporation` | `YYYY-MM-DD`. Not in the future, and not before 1800 |
+| `delivery_due_date` | `YYYY-MM-DD`. Today or later (IST) |
+| `buyer_phone` | With its country code, e.g. `+919876543210` |
+| `invoice_number` | Up to 255 characters. See [Raised only by the call that files](#raised-only-by-the-call-that-files) for the characters allowed. |
 | `buyer_postal_code` | A six-digit Indian PIN code |
 | `business_model` | `B2B`. Case-insensitive. |
 | `purpose_code` | One of the eleven services codes your merchant account is allow-listed for. Case-insensitive. |
@@ -207,17 +215,18 @@ Every refusal is a `400`, whatever the reason, except a PAN check that could not
 | `40359` | The send itself is wrong — see the messages below. Also: the payment has no requirement set, and you did not send the classifying pair. |
 | `40360` | No such payment for this merchant — the same answer whether it does not exist or belongs to someone else. Also: the verification has already been filed and details can no longer be changed, or the payment was rejected or fully refunded. |
 | `ERR_DECLARATION_001` | `declaration` was sent as something other than `true` or `false`. `details` names the field. |
-| `ERR_IMPORT_VERIFICATION_001` | The `invoice_number` is already used by another of your payments. Raised only by the call that files — see [below](#raised-only-by-the-call-that-files). |
-| `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — a services code filed as B2C, for example. `details.purpose_code` names the pair. |
+| `ERR_IMPORT_VERIFICATION_001` | The `invoice_number` is already used on another of your orders. Raised only by the call that files — see [below](#raised-only-by-the-call-that-files). |
+| `ERR_IMPORT_VERIFICATION_002` | The `business_model` or `purpose_code` sent differs from the one already on the order, while the other is still unset. The message reads `The category of this payment cannot be changed once chosen.` Once both are set, a different value is a `40359` reading `Already set on the order; it cannot be changed here.` |
+| `ERR_IMPORT_VERIFICATION_003` | `business_model` and `purpose_code` do not belong together — `S1005` filed as `B2C`, for example. `details.purpose_code` names the pair. |
 | `ERR_BUYER_PAN_001` | All 5 PAN checks for the order have been used. Contact EximPe support. |
 | `ERR_BUYER_PAN_002` | The PAN check could not run (`503`); retry the same call. |
-| `ERR_B2B_SERVICES_004` | The verification has left your hands — under review, approved or rejected — and can no longer be edited. |
+| `ERR_B2B_SERVICES_004` | The verification can no longer be edited. |
 | `ERR_B2B_SERVICES_006` | A document being filed does not belong to this payment. |
 
 <Note>
-  **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a classified B2B services payment always reads `Invalid B2B services request.` The code is the stable part.
+  **Branch on `code`, not on `message`.** `40359` is shared with the other verification flows; `message` names which one refused you, so a classified B2B services payment reads `Invalid B2B services request.` The code is the stable part.
 
-  Before the payment is classified there is no flow to name, and the wording is `Invalid verification request.` instead — the one case on this flow where the message is not the services one.
+  Two cases read `Invalid verification request.` instead: any refusal before the payment is classified, when there is no flow to name, and a `buyer_phone` or `invoice_number` refused by the call that files.
 
   Not every refusal is `40359`. A few carry a code of their own, listed above — they are the specific ones, and they say more than the shared code does. Treat any code you do not recognise as a `400` you should not retry unchanged.
 </Note>
@@ -240,14 +249,18 @@ A `400` on the send carries `details` keyed by the offending code, so one call r
 
 | Message | Cause |
 |---|---|
-| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `amount_to_be_settled` and `remitter_pan` all land here. |
+| `Not a requirement of this payment's checklist.` | The code is not one this set asks for — `hs_code`, `iec`, `amount_to_be_settled`, `remitter_pan` and a `persons` list all land here. |
 | `This is a document code; send it under 'documents'.` | `invoice` appeared as a key in `fields`. |
 | `This is a field code; send it under 'fields'.` | The reverse. |
 | `Blank value; omit the key instead.` | `null`, `""`, or whitespace. |
 | `Sent more than once in this call.` | The same document code twice in one `documents` array. |
-| `Unknown document ref.` | The `ref` is not one of this payment's active documents. A ref uploaded against another payment, or superseded by a later upload of the same type, reads as unknown. |
+| `Unknown document ref.` | The `ref` is not one of this payment's active documents. A ref uploaded against another payment reads as unknown. |
 | `This document cannot be waived.` | A `waiver_reason` on an item whose `waivable` is not true. No B2B services item is waivable, so every `waiver_reason` on this flow lands here. |
-| `Already set on the order; it cannot be changed here.` | `business_model` or `purpose_code` after classification has landed. |
+| `Already set on the order; it cannot be changed here.` | A different `business_model` or `purpose_code` after classification has landed. |
+| `Send B2B or B2C.` | `business_model` is not `B2B` or `B2C`, or it is missing and the order has none. |
+| `Send the purpose code this payment settles under.` | `business_model` was sent without `purpose_code`, and the order has none. |
+| `Unknown, inactive, or not enabled for this merchant.` | `purpose_code` is not one your merchant account is allow-listed for. |
+| `Send exactly one of 'ref' and 'waiver_reason'.` | A `documents` entry has both, or neither. |
 
 ### Checked on the send
 
@@ -255,8 +268,11 @@ Value rules run on the call that carries the value. They answer under `40359` wi
 
 | Message | Cause |
 |---|---|
-| `Not a date; send YYYY-MM-DD.` | `invoice_date` will not parse. |
+| `Not a date; send YYYY-MM-DD.` | `invoice_date`, `buyer_date_of_incorporation` or `delivery_due_date` will not parse. |
 | `The invoice date cannot be in the future.` | `invoice_date` is after today. |
+| `The date of incorporation cannot be in the future.` | `buyer_date_of_incorporation` is after today. |
+| `Enter a valid date of incorporation: a past date, not before 1800.` | `buyer_date_of_incorporation` is before 1800. |
+| `Due date cannot be in the past` | `delivery_due_date` is before today. |
 | `Not an amount; send a number like "500000.00".` | `invoice_amount` is not a decimal. |
 | `Amount must be greater than zero.` | `invoice_amount` is zero or negative. |
 | `Enter a valid Indian PIN code.` | `buyer_postal_code` is not a PIN code in the India Post directory. A foreign postal code lands here — the buyer is the Indian remitter, not your customer abroad. |
@@ -264,7 +280,7 @@ Value rules run on the call that carries the value. They answer under `40359` wi
 
 ### Raised only by the call that files
 
-Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own: `invoice_amount` against the credit, which is refused naming `invoice_amount` when the two are more than a paisa apart, and `invoice_number`, which is unique per merchant across filed verifications. A collision does **not** answer under `40359` — it carries its own code:
+Two things are only judged when a complete set is filed, because they compare against something we hold rather than check a value on its own. `invoice_amount` is checked against the credit, and is refused naming `invoice_amount` when the two are more than a paisa apart. `invoice_number` must be unique across your orders that have not failed, including an invoice number set when the order was created. An amount refusal reads `Invoice amount must match the amount credited into the VBA (125000).`, with the credit in brackets. A collision does **not** answer under `40359` — it carries its own code:
 
 ```json
 {
@@ -278,7 +294,16 @@ Two things are only judged when a complete set is filed, because they compare ag
 ```
 
 <Note>
-  `invoice_number` is unique per merchant across filed verifications. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
+  `invoice_number` must be unique across your orders that have not failed, including an invoice number set when the order was created. Re-using one from an earlier payment is refused here, not at the call that saved it — raise a new number and send that field again. Your details are still saved; fix the named code and re-send only that.
+</Note>
+
+`buyer_phone` and `invoice_number` are also checked only by the call that files. A refusal answers under `40359`, reads `Invalid verification request.`, and keys `details` by the field:
+
+- `buyer_phone` must carry its country code, e.g. `+919876543210`.
+- `invoice_number` takes letters, digits, spaces, accented Latin letters and `. , ' - / & _ ( ) : ; ! @ # $ % * + = < > [ ] { } | ~`, up to 255 characters.
+
+<Note>
+  A finalizing call refused over the purpose code, the declaration, `invoice_amount` or a document sends [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) with `ACTION_REQUIRED` naming that code. A refused invoice number or PAN sends no event; the response is the only answer.
 </Note>
 
 ## Related
