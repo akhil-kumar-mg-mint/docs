@@ -6827,7 +6827,7 @@
     "/pg/chargebacks/{chargeback_id}/actions/": {
       "get": {
         "summary": "Get Chargeback Actions",
-        "description": "The ways this chargeback can be answered, by action. Each condition lists the text fields, true/false fields and documents it takes, with the required ones marked. Only what the payment's gateway supports is listed, so the conditions can differ from one payment to the next: always read them from here rather than hard-coding them.",
+        "description": "The ways this chargeback can be answered, by action. Each condition lists the text fields, true/false fields and documents it takes, with the required ones marked, and the fewest documents it needs (`min_documents`). What is offered depends on the payment: some payments offer detailed conditions, each with its own fields; others offer `accepted` and a single `contested` condition that takes any of the evidence documents with your remarks. Always read the conditions from here rather than hard-coding them.",
         "tags": [
           "Chargebacks"
         ],
@@ -6868,104 +6868,202 @@
                     }
                   }
                 },
-                "example": {
-                  "success": true,
-                  "message": "Chargeback actions retrieved successfully",
-                  "data": {
-                    "chargeback_id": "CB6358819770",
-                    "status": "NEW",
-                    "amount": "2500.00",
-                    "respond_by": "2026-11-02T03:47:59Z",
-                    "can_respond": true,
-                    "actions": {
-                      "accept": [
-                        {
-                          "condition": "customer_cancelled",
-                          "text_fields": [],
-                          "boolean_fields": [],
-                          "documents": []
-                        },
-                        {
-                          "condition": "other",
-                          "text_fields": [
+                "examples": {
+                  "contested": {
+                    "summary": "Accept, or contest with evidence",
+                    "value": {
+                      "success": true,
+                      "message": "Chargeback actions retrieved successfully",
+                      "data": {
+                        "chargeback_id": "CB6358819770",
+                        "status": "NEW",
+                        "amount": "2500.00",
+                        "respond_by": "2026-11-02T03:47:59Z",
+                        "can_respond": true,
+                        "actions": {
+                          "accept": [
                             {
-                              "name": "reason",
-                              "required": true
+                              "condition": "accepted",
+                              "text_fields": [],
+                              "boolean_fields": [],
+                              "documents": [],
+                              "min_documents": 0
                             }
                           ],
-                          "boolean_fields": [],
-                          "documents": []
-                        }
-                      ],
-                      "contest": [
-                        {
-                          "condition": "product_delivered",
-                          "text_fields": [
+                          "contest": [
                             {
-                              "name": "product_details",
-                              "required": true
-                            },
-                            {
-                              "name": "courier_name",
-                              "required": false
-                            },
-                            {
-                              "name": "awb_number",
-                              "required": false
-                            }
-                          ],
-                          "boolean_fields": [
-                            {
-                              "name": "customer_tried_to_cancel",
-                              "required": false
-                            }
-                          ],
-                          "documents": [
-                            {
-                              "name": "proof_of_delivery",
-                              "required": false
-                            },
-                            {
-                              "name": "invoice",
-                              "required": false
-                            }
-                          ]
-                        },
-                        {
-                          "condition": "already_refunded",
-                          "text_fields": [
-                            {
-                              "name": "refund_details",
-                              "required": false
-                            }
-                          ],
-                          "boolean_fields": [],
-                          "documents": [
-                            {
-                              "name": "refund_proof",
-                              "required": false
-                            }
-                          ]
-                        }
-                      ],
-                      "partial_accept": [
-                        {
-                          "condition": "partially_delivered",
-                          "text_fields": [
-                            {
-                              "name": "remarks",
-                              "required": false
-                            }
-                          ],
-                          "boolean_fields": [],
-                          "documents": [
-                            {
-                              "name": "supporting_document",
-                              "required": true
+                              "condition": "contested",
+                              "text_fields": [
+                                {
+                                  "name": "remarks",
+                                  "required": true
+                                }
+                              ],
+                              "boolean_fields": [],
+                              "documents": [
+                                {
+                                  "name": "proof_of_delivery",
+                                  "required": false
+                                },
+                                {
+                                  "name": "shipping_proof",
+                                  "required": false
+                                },
+                                {
+                                  "name": "statement_of_service",
+                                  "required": false
+                                },
+                                {
+                                  "name": "service_fulfilment_proof",
+                                  "required": false
+                                },
+                                {
+                                  "name": "cancellation_proof",
+                                  "required": false
+                                },
+                                {
+                                  "name": "refund_proof",
+                                  "required": false
+                                },
+                                {
+                                  "name": "business_model_explanation",
+                                  "required": false
+                                },
+                                {
+                                  "name": "extra_charges_declaration",
+                                  "required": false
+                                },
+                                {
+                                  "name": "terms_and_conditions",
+                                  "required": false
+                                },
+                                {
+                                  "name": "customer_communication",
+                                  "required": false
+                                },
+                                {
+                                  "name": "certificate_of_authenticity",
+                                  "required": false
+                                },
+                                {
+                                  "name": "reseller_agreement",
+                                  "required": false
+                                }
+                              ],
+                              "min_documents": 1
                             }
                           ]
                         }
-                      ]
+                      }
+                    }
+                  },
+                  "detailed_conditions": {
+                    "summary": "Detailed conditions",
+                    "value": {
+                      "success": true,
+                      "message": "Chargeback actions retrieved successfully",
+                      "data": {
+                        "chargeback_id": "CB6358819770",
+                        "status": "NEW",
+                        "amount": "2500.00",
+                        "respond_by": "2026-11-02T03:47:59Z",
+                        "can_respond": true,
+                        "actions": {
+                          "accept": [
+                            {
+                              "condition": "customer_cancelled",
+                              "text_fields": [],
+                              "boolean_fields": [],
+                              "documents": [],
+                              "min_documents": 0
+                            },
+                            {
+                              "condition": "other",
+                              "text_fields": [
+                                {
+                                  "name": "reason",
+                                  "required": true
+                                }
+                              ],
+                              "boolean_fields": [],
+                              "documents": [],
+                              "min_documents": 0
+                            }
+                          ],
+                          "contest": [
+                            {
+                              "condition": "product_delivered",
+                              "text_fields": [
+                                {
+                                  "name": "product_details",
+                                  "required": true
+                                },
+                                {
+                                  "name": "courier_name",
+                                  "required": false
+                                },
+                                {
+                                  "name": "awb_number",
+                                  "required": false
+                                }
+                              ],
+                              "boolean_fields": [
+                                {
+                                  "name": "customer_tried_to_cancel",
+                                  "required": false
+                                }
+                              ],
+                              "documents": [
+                                {
+                                  "name": "proof_of_delivery",
+                                  "required": false
+                                },
+                                {
+                                  "name": "invoice",
+                                  "required": false
+                                }
+                              ],
+                              "min_documents": 0
+                            },
+                            {
+                              "condition": "already_refunded",
+                              "text_fields": [
+                                {
+                                  "name": "refund_details",
+                                  "required": false
+                                }
+                              ],
+                              "boolean_fields": [],
+                              "documents": [
+                                {
+                                  "name": "refund_proof",
+                                  "required": false
+                                }
+                              ],
+                              "min_documents": 0
+                            }
+                          ],
+                          "partial_accept": [
+                            {
+                              "condition": "partially_delivered",
+                              "text_fields": [
+                                {
+                                  "name": "remarks",
+                                  "required": false
+                                }
+                              ],
+                              "boolean_fields": [],
+                              "documents": [
+                                {
+                                  "name": "supporting_document",
+                                  "required": true
+                                }
+                              ],
+                              "min_documents": 0
+                            }
+                          ]
+                        }
+                      }
                     }
                   }
                 }
@@ -7039,7 +7137,7 @@
     "/pg/chargebacks/{chargeback_id}/respond/": {
       "post": {
         "summary": "Respond to Chargeback",
-        "description": "Answer a chargeback with an action and one of its conditions. Send `multipart/form-data` (needed for documents); an answer with no documents may be sent as JSON instead. A chargeback takes one answer: once it is in, the chargeback moves to `PENDING_DOC_REVIEW` and a second answer is refused with `409`.",
+        "description": "Answer a chargeback with an action and one of its conditions. Send `multipart/form-data` (needed for documents); an answer with no documents may be sent as JSON instead. Once an answer is in, the chargeback moves to `PENDING_DOC_REVIEW` and a second answer is refused with `409`, unless EximPe sends it back to you for more information (`INSUFFICIENT_DOCUMENT`), when you can answer it again.",
         "tags": [
           "Chargebacks"
         ],
@@ -7085,18 +7183,35 @@
                   "condition": {
                     "type": "string",
                     "description": "A condition listed under `action` by Get Chargeback Actions.",
-                    "example": "product_delivered"
+                    "example": "contested"
                   },
                   "amount": {
                     "type": "string",
                     "description": "`partial_accept` only, and required there: the amount you accept, less than the disputed amount. Two decimals."
                   }
                 },
-                "description": "Plus one `fields[<name>]` part per field of the chosen condition, with the names from Get Chargeback Actions: the text for a text field, `true` or `false` for a true/false field, and the file for a document. See the request examples."
+                "description": "Plus one `fields[<name>]` part per field of the chosen condition, with the names from Get Chargeback Actions: the text for a text field, `true` or `false` for a true/false field, and the file for a document. Attach at least the condition's `min_documents` documents. See the request examples."
               },
               "examples": {
-                "contest": {
+                "contested": {
                   "summary": "Contest with evidence",
+                  "value": {
+                    "action": "contest",
+                    "condition": "contested",
+                    "fields[remarks]": "Delivered on 30 Oct, signed for by the customer",
+                    "fields[proof_of_delivery]": "@signed-pod.pdf",
+                    "fields[shipping_proof]": "@courier-receipt.pdf"
+                  }
+                },
+                "accepted": {
+                  "summary": "Accept",
+                  "value": {
+                    "action": "accept",
+                    "condition": "accepted"
+                  }
+                },
+                "product_delivered": {
+                  "summary": "Contest with a detailed condition",
                   "value": {
                     "action": "contest",
                     "condition": "product_delivered",
@@ -7115,8 +7230,8 @@
                     "fields[supporting_document]": "@delivery-note.pdf"
                   }
                 },
-                "accept": {
-                  "summary": "Accept",
+                "customer_cancelled": {
+                  "summary": "Accept with a detailed condition",
                   "value": {
                     "action": "accept",
                     "condition": "customer_cancelled"
@@ -7170,7 +7285,7 @@
         },
         "responses": {
           "201": {
-            "description": "Answer recorded and sent to the gateway. Returns the chargeback, now `PENDING_DOC_REVIEW`, with your answer.",
+            "description": "Answer recorded. Where the payment's gateway takes answers directly it is sent there at once; otherwise EximPe takes it to the bank for you. Returns the chargeback, now `PENDING_DOC_REVIEW`, with your answer.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7206,7 +7321,7 @@
                     "created_at": "2026-10-26T03:47:59Z",
                     "response": {
                       "action": "contest",
-                      "condition": "product_delivered",
+                      "condition": "contested",
                       "submitted_at": "2026-10-26T03:48:13Z"
                     }
                   }
@@ -7215,21 +7330,39 @@
             }
           },
           "400": {
-            "description": "The answer is invalid. `details` is keyed by the field at fault: `action`, `condition`, `amount` or a field name of the condition. Nothing was recorded.",
+            "description": "The answer is invalid. `details` is keyed by the field at fault: `action`, `condition`, `amount`, a field name of the condition, or `documents` when fewer than the condition's `min_documents` documents are attached. Nothing was recorded.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/v2_ErrorResponse"
                 },
-                "example": {
-                  "success": false,
-                  "error": {
-                    "code": 40668,
-                    "message": "The chargeback response is invalid.",
-                    "details": {
-                      "courier_name": "Text field 'courier_name' must not contain any of < > [ ] { }",
-                      "tracking": "Not a field of this condition.",
-                      "product_details": "Required for product_delivered."
+                "examples": {
+                  "invalid_fields": {
+                    "summary": "Invalid fields",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40668,
+                        "message": "The chargeback response is invalid.",
+                        "details": {
+                          "courier_name": "Text field 'courier_name' must not contain any of < > [ ] { }",
+                          "tracking": "Not a field of this condition.",
+                          "product_details": "Required for product_delivered."
+                        }
+                      }
+                    }
+                  },
+                  "no_document": {
+                    "summary": "No document attached",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": 40668,
+                        "message": "The chargeback response is invalid.",
+                        "details": {
+                          "documents": "Attach at least one document."
+                        }
+                      }
                     }
                   }
                 }
@@ -18035,7 +18168,12 @@
             "items": {
               "$ref": "#/components/schemas/v2_ChargebackField"
             },
-            "description": "Evidence files, one per name."
+            "description": "Evidence files, one per name. See also `min_documents`."
+          },
+          "min_documents": {
+            "type": "integer",
+            "description": "The fewest documents the answer must attach. `1` on a condition whose documents are all optional but that needs at least one of them; `0` when `documents` alone says what is required.",
+            "example": 0
           }
         }
       },
