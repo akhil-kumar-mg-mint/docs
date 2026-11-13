@@ -1,0 +1,63 @@
+---
+title: 'Respond to Chargeback'
+description: 'Accept, contest or partially accept a chargeback, with the evidence its condition takes.'
+openapi: 'openapi/openapi.json POST /pg/chargebacks/{chargeback_id}/respond/'
+---
+
+<Note>
+  The request and response are the same whatever `X-API-Version` you send. v1, v2 and v3 integrations share these chargeback endpoints.
+</Note>
+
+## Sending an answer
+
+Send the `action` and `condition` you picked from [Get Chargeback Actions](/api-reference/v3/chargebacks/actions), plus one `fields[<name>]` part per field of that condition:
+
+- **Text fields:** the text.
+- **True/false fields:** `true` or `false`.
+- **Documents:** the file. Attach at least the condition's `min_documents`.
+- **`amount`:** only with `partial_accept`, where it is required. It must be less than the disputed amount; to accept all of it, use `accept`.
+
+<CodeGroup>
+
+```bash Contest with evidence
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/chargebacks/CB6358819770/respond/' \
+  -H 'X-Client-ID: <client_id>' \
+  -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0' \
+  -F 'action=contest' \
+  -F 'condition=contested' \
+  -F 'fields[remarks]=Delivered on 30 Oct, signed for by the customer' \
+  -F 'fields[proof_of_delivery]=@signed-pod.pdf' \
+  -F 'fields[shipping_proof]=@courier-receipt.pdf'
+```
+
+```bash Contest with a detailed condition
+curl -X POST 'https://api-pacb-uat.eximpe.com/pg/chargebacks/CB6358819770/respond/' \
+  -H 'X-Client-ID: <client_id>' \
+  -H 'X-Client-Secret: <client_secret>' \
+  -H 'X-API-Version: 3.0.0' \
+  -F 'action=contest' \
+  -F 'condition=product_delivered' \
+  -F 'fields[product_details]=1 x Blue widget, order ORDER-10422' \
+  -F 'fields[courier_name]=BlueDart' \
+  -F 'fields[customer_tried_to_cancel]=false' \
+  -F 'fields[proof_of_delivery]=@signed-pod.pdf'
+```
+
+</CodeGroup>
+
+A field the condition doesn't take, a missing required field, or a value or file that can't be accepted comes back as a `400` keyed by that field's name. Fewer documents than `min_documents` comes back keyed `documents`. Nothing is recorded, so fix it and send the answer again.
+
+Documents may be PDF, JPG, JPEG or PNG. Some payments also take Word files; a file type the payment can't take is refused with a `400` naming the types it does take.
+
+## After you answer
+
+The chargeback moves to `PENDING_DOC_REVIEW` and takes no further answers (`409`). Its status changes from there are sent in the [`PAYMENT_DISPUTED`](/api-reference/v3/webhooks/dispute-updated) webhook.
+
+If EximPe needs more from you before taking your answer to the bank, the chargeback moves to `INSUFFICIENT_DOCUMENT` and you are emailed what is missing. It can then be answered again: fetch its actions and send a new answer before `respond_by`.
+
+<Warning>
+  **`502` with code `40670`: do not resubmit.** The gateway accepted some of your documents and then failed. Your contest **is registered** and the chargeback is `PENDING_DOC_REVIEW`. `details.delivered` and `details.failed` name the documents by your field names; send the failed ones to EximPe support.
+
+  Any other `502` means nothing was recorded, and you can retry.
+</Warning>
