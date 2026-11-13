@@ -13,6 +13,18 @@ Send the `action` and `condition` you picked from [Get Chargeback Actions](/api-
 - **Documents:** the file. Attach at least the condition's `min_documents`.
 - **`amount`:** only with `partial_accept`, where it is required. It must be less than the disputed amount; to accept all of it, use `accept`.
 
+<Info>
+  **Where the keys come from.** Every key you send is read from the [Get Chargeback Actions](/api-reference/v2/chargebacks/actions) response:
+
+  | In Get Chargeback Actions | Send as |
+  |---|---|
+  | The key under `actions`: `accept`, `contest` or `partial_accept` | `action` |
+  | The `condition` of the entry you picked under that key | `condition` |
+  | Each `name` in that entry's `text_fields`, `boolean_fields` and `documents` | `fields[<name>]` |
+
+  For example, the entry under `actions.contest` with `"condition": "contested"`, a text field named `remarks` and a document named `proof_of_delivery` is sent as `action=contest`, `condition=contested`, `fields[remarks]=…` and `fields[proof_of_delivery]=@file.pdf`.
+</Info>
+
 <CodeGroup>
 
 ```bash Contest with evidence
