@@ -38,7 +38,7 @@ All three return an `order_id`. A successful create returns `201 Created`.
 | | Hosted Checkout | S2S UPI Intent | S2S UPI Collect |
 |---|---|---|---|
 | `collection_mode` | `hosted_payment` | `s2s` | `s2s` |
-| `mop_type` | Optional. Limits the payment page to one payment method; `card` offers both credit and debit cards | Must be `upi` | Must be `upi` |
+| `mop_type` | Optional. Limits the payment page to one payment method | Must be `upi` | Must be `upi` |
 | `upi_flow_type` | Not used | Must be `intent` | Must be `collection` |
 | `vpa` | Not used | Not used | Required. The customer's UPI ID |
 | `buyer.ip_address`, `buyer.user_agent` | Not used; EximPe captures them on the payment page | Required | Required |
