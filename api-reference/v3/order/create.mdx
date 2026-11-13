@@ -338,7 +338,7 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 | `401` | `ERR_AUTH_000` | A PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
 | `401` | `ERR_AUTH_001` | `X-Merchant-ID` is not one of your active sub-merchants | `{"authentication": "Invalid X-Merchant-ID provided."}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_002` | Your merchant account is not active | `{"authentication": "Merchant account is inactive."}` |
-| `403` | — | S2S payments are not enabled on your account | Not the standard envelope: `{"detail": "You do not have permission to perform this action."}` |
+| `403` | — | S2S payments are not enabled on your account | `{"detail": "You do not have permission to perform this action."}` |
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit this collection mode | e.g. `{"collection_mode": "HOSTED_CHECKOUT is not enabled for this account."}` |
 | `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect this way | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_003` | Your merchant account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}` |

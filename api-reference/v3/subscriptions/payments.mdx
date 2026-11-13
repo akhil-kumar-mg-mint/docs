@@ -6,7 +6,7 @@ api: 'GET /pg/subscriptions/{subscription_id}/payments/'
 
 Fetch every payment EximPe has recorded against the subscription — the mandate payment and each recurring debit, newest first. Available for **all payment methods** and **all environments**, production included.
 
-A `404` means the subscription does not exist or does not belong to you. Its body is `{"detail": …}`, not the standard envelope. A `403` means subscriptions are not enabled for your account.
+A `404` means the subscription does not exist or does not belong to you. A `403` means subscriptions are not enabled for your account.
 
 ### Path Parameters
 

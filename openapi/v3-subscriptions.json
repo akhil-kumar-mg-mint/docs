@@ -555,7 +555,7 @@
             }
           },
           "404": {
-            "description": "The subscription does not exist or is not yours, or it has no order yet. An unknown or foreign `subscription_id` answers outside the standard envelope: `{\"detail\": \"No Subscription matches the given query.\"}`.",
+            "description": "The subscription does not exist or is not yours, or it has no order yet.",
             "content": {
               "application/json": {
                 "schema": {
