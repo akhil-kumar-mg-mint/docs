@@ -1284,8 +1284,7 @@
           },
           "amount": {
             "type": "string",
-            "description": "Amount in decimal format (e.g., \"100.00\")",
-            "pattern": "^\\d+\\.\\d{2}$"
+            "description": "Amount in decimal format (e.g., \"100.00\")"
           },
           "currency": {
             "type": "string",
