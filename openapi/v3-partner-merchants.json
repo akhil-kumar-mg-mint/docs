@@ -215,7 +215,7 @@
             }
           },
           "404": {
-            "description": "`page` is past the last page. The body is `{\"detail\": \"Invalid page.\"}`, not the standard envelope.",
+            "description": "`page` is beyond the last page of results.",
             "content": {
               "application/json": {
                 "schema": {
