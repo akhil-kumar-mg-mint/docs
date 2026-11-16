@@ -1137,7 +1137,7 @@
                       "upi_si_ppi",
                       null
                     ],
-                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI. The value is processor dependent: it is what the payment processor reports, so the same instrument can come back differently, or as `null`, depending on the processor that handled the payment."
+                    "description": "UPI instrument that funded the payment, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet/PPI), `upi_si` (UPI standing instruction), `upi_si_ppi` (standing instruction from a wallet/PPI). `null` means the provider did not report it; it does not mean plain UPI. This value may be available based on the processor."
                   },
                   "upi_app": {
                     "type": "string",
