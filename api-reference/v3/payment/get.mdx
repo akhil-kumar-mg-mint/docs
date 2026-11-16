@@ -40,7 +40,7 @@ Returns the full record of one payment: the order it belongs to, the settlement 
 
 Any field inside `mop_detail` can be `null` when the payment provider did not return it.
 
-- For a UPI payment, `upi_instrument` is what funded it, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet), `upi_si` (UPI standing instruction) or `upi_si_ppi` (standing instruction from a wallet). `null` means the provider did not report the instrument. It does not mean plain UPI.
+- For a UPI payment, `upi_instrument` is what funded it, lowercase: `upi` (bank account), `upi_cc` (credit card on UPI), `upi_cl` (credit line on UPI), `upi_ppi` (wallet), `upi_si` (UPI standing instruction) or `upi_si_ppi` (standing instruction from a wallet). `null` means the provider did not report the instrument. It does not mean plain UPI. This value may be available based on the processor.
 - `upi_app` is the UPI app the payer used, e.g. `PhonePe`, worked out from the handle of their VPA. It is `null` when the handle is not one we recognise.
 
 - `created_at`, `payment_completed_at`, `order.created_at`, and the timestamps under `settlement` and `refund`, are UTC with microseconds, e.g. `2026-10-15T06:44:13.414209Z`.
