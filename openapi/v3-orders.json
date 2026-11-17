@@ -541,6 +541,12 @@
           "user_agent": {
             "type": "string",
             "description": "The customer's browser user agent. Required for S2S UPI Intent and S2S UPI Collect; ignored for Hosted Checkout"
+          },
+          "pan_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "The buyer's PAN. Format `ABCDE1234F`; lowercase is accepted and stored uppercase. On a Hosted Checkout order, a PAN verified with [Verify a PAN and record consent](/api-reference/v3/lrs/pan-consent) in the last 24 hours lets the buyer skip the PAN page.",
+            "example": "ABCPK1234F"
           }
         }
       },

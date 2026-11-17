@@ -1,0 +1,52 @@
+---
+title: 'Verify a PAN and Record Consent'
+description: "Verify a buyer's PAN and record their consent before you create a Hosted Checkout order, so the buyer skips the PAN page."
+openapi: 'POST /pg/pan/consent/'
+---
+
+## How it works
+
+1. Show the buyer the consent statement below and get their agreement.
+2. Call this endpoint with the buyer's `pan` and `buyer_pan_consent: true`.
+3. If `verified` is `true`, create the order within 24 hours on [Create Order](/api-reference/v3/order/create#skip-the-pan-page). Send the same PAN as `buyer.pan_number`, with `business_model` and `purpose_code`.
+
+If `verified` is `false`, no consent is recorded. The buyer enters their PAN on the PAN page in Hosted Checkout.
+
+## Consent
+
+Send `buyer_pan_consent: true` only after the buyer has agreed to the statement Hosted Checkout shows on its PAN page.
+
+- **LRS payments:** "By continuing, I confirm that the PAN I entered belongs to the person paying for this purchase, that I have permission to share it, and that this payment is within their LRS limit for this financial year, and I agree to the Terms & Conditions and Privacy Policy."
+- **Other consumer payments:** "By continuing, I confirm that the PAN I entered belongs to the person paying for this purchase, that I have permission to share it, and I agree to the Terms & Conditions and Privacy Policy."
+
+The consent lasts 24 hours and covers every order created with that PAN in that time. After 24 hours the buyer sees the PAN page again; call this endpoint again to renew it. For an LRS order, the time of this call is recorded as the buyer's LRS declaration time.
+
+## Reasons
+
+| `reason` | Meaning |
+|---|---|
+| `INVALID_PAN` | The PAN does not exist. |
+| `NON_INDIVIDUAL_PAN` | The PAN belongs to a company, firm or other non-individual. |
+| `INOPERATIVE_PAN` | The PAN is inoperative. |
+| `AADHAAR_NOT_LINKED` | The PAN is active but not linked to Aadhaar. |
+
+## Errors
+
+| Status | `error.code` | When |
+|---|---|---|
+| `400` | `40357` | `buyer_pan_consent` is missing or not `true`, or `pan` is missing or badly formed. `details` is keyed by the field. |
+| `503` | `40356` | Verification is temporarily unavailable. No consent was recorded. Retry after the `Retry-After` header (60 seconds). |
+| `500` | `40356` | Anything unexpected. No consent was recorded. |
+
+```json Consent missing
+{
+  "success": false,
+  "error": {
+    "code": 40357,
+    "message": "Invalid PAN verification request.",
+    "details": {
+      "buyer_pan_consent": ["This field is required."]
+    }
+  }
+}
+```

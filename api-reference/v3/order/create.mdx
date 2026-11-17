@@ -85,6 +85,7 @@ When you omit `purpose_code`, it is filled in only if your account has exactly o
 | address | object | Yes | Address. | See Address |
 | ip_address | string | Conditional | The customer's IP address. | S2S UPI Intent and Collect: required. IPv4 or IPv6 |
 | user_agent | string | Conditional | The customer's browser user agent. | S2S UPI Intent and Collect: required |
+| pan_number | string | No | The buyer's PAN. | Format `ABCDE1234F`: 5 letters, 4 digits, 1 letter. Lowercase is accepted and stored uppercase. See [Skip the PAN page](#skip-the-pan-page) |
 
 #### Address (buyer.address)
 
@@ -351,6 +352,18 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
   }
 }
 ```
+
+## Skip the PAN page
+
+Hosted Checkout asks LRS buyers, and consumers on purpose codes that need the buyer's identity, for their PAN. To skip that page, verify the PAN and record the buyer's consent first with [Verify a PAN and record consent](/api-reference/v3/lrs/pan-consent). Then send the same PAN as `buyer.pan_number` on Create Order.
+
+The buyer skips the PAN page when all of these hold:
+
+- The order is Hosted Checkout, and you sent `business_model` and `purpose_code`.
+- The order needs the buyer's PAN.
+- The PAN passed, and its consent was recorded less than 24 hours ago.
+
+Otherwise the order is created as usual and the buyer sees the PAN page. The response is the same either way. One consent covers every order created with that PAN in the 24 hours.
 
 ## Duplicate requests
 
