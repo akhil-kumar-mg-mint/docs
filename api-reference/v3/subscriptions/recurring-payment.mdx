@@ -18,7 +18,7 @@ On PayU and EximPe, only one charge can be in progress at a time: while one is p
 </Info>
 
 <Info>
-A `409` means the subscription's state refused the charge: no pre-debit notification for today, a charge already in progress, or, on Cashfree and EximPe, an inactive mandate. A `400` means a field is invalid, the subscription is a Cashfree plan that is not `ADHOC`, or PayU or EximPe declined the charge. A `403` means your merchant account is suspended or closed. A `502` means the payment partner could not be reached, or Cashfree refused the charge.
+A `409` means the subscription's state refused the charge: no pre-debit notification for today, a charge already in progress, or, on Cashfree and EximPe, an inactive mandate. A `400` means a field is invalid, the subscription is a Cashfree plan that is not `ADHOC`, or PayU or EximPe declined the charge. A `403` means your merchant account is suspended or closed. A `502` means the payment partner could not be reached, or Cashfree refused the charge. A `404` with `ERR_SUBSCRIPTION_001` means the subscription does not exist or is not yours.
 </Info>
 
 ### Path Parameters

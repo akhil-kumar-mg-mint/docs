@@ -1228,7 +1228,7 @@
           },
           "purpose_code": {
             "type": "string",
-            "description": "FEMA/FETERS purpose code this payment settles under (e.g. S0802). Optional \u2014 derived from the merchant's allowed purpose codes when omitted and exactly one is allowed.",
+            "description": "FEMA/FETERS purpose code this payment settles under (e.g. `S0802`). Optional. Must be active and enabled on your account. If omitted and your account has exactly one allowed purpose code, that code is used. Otherwise the link is created without one, and you supply it after payment when the `VERIFICATION_NEEDED` webhook asks for it.",
             "example": "S0802"
           },
           "buyer": {

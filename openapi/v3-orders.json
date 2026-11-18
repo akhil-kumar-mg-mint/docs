@@ -438,12 +438,12 @@
             }
           },
           "403": {
-            "description": "Your account cannot create this order: S2S payments are not enabled on it, its setup does not permit this collection mode (`ERR_AUTH_005`), it is not configured to collect this way (`ERR_SERVICE_ERROR_000`), or it is inactive (`ERR_MERCHANT_ACCOUNT_002`), suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
+            "description": "Your account cannot create this order:\n\n- S2S orders only: S2S payments are not enabled on your account.\n- Your account's setup does not allow this collection mode (`ERR_AUTH_005`) or is not configured to collect this way (`ERR_SERVICE_ERROR_000`).\n- Your account is inactive (`ERR_MERCHANT_ACCOUNT_002`), or suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
             "content": {
               "application/json": {
                 "examples": {
                   "S2S not enabled": {
-                    "summary": "S2S not enabled",
+                    "summary": "S2S not enabled (S2S orders only)",
                     "value": {
                       "detail": "You do not have permission to perform this action."
                     }
@@ -1087,7 +1087,7 @@
           },
           "purpose_code": {
             "type": "string",
-            "description": "FEMA/FETERS purpose code this order settles under (e.g. S0802). Optional \u2014 derived from the merchant's allowed purpose codes when omitted and exactly one is allowed.",
+            "description": "FEMA/FETERS purpose code this order settles under (e.g. `S0802`). Optional. Must be active and enabled on your account. If omitted and your account has exactly one allowed purpose code, that code is used. Otherwise the order is created without one, and you supply it after payment when the `VERIFICATION_NEEDED` webhook asks for it.",
             "example": "S0802"
           },
           "buyer": {

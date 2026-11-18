@@ -5,7 +5,7 @@ description: "How EximPe tells your server that something happened, and how to c
 
 A webhook is a POST we send to your server when something happens — money arrived, a payment settled, a refund went through.
 
-You need them. There is no polling endpoint that tells you a credit landed, so without a webhook URL you will not know your buyer has paid.
+You need them. Webhooks are the only way to hear about a credit as it lands. Polling [List VBA Payments](/api-reference/v3/vba/list-payments) only finds it later.
 
 ## Events we send
 
@@ -60,7 +60,7 @@ You do not have to wait for real money, or a real settlement date, to exercise y
 Set Refund Status is the useful one for coverage: force a single refund through `REFUNDED`, `FAILED`, `PROCESSING`, `REVERSED`, `ON_HOLD` and `BANK_REJECTED_REFUND` in turn, and one refund exercises every branch of your handler. `INITIATED` fires nothing — it is the starting state, not a transition.
 
 <Warning>
-  **Both need the Simulator gateway.** They only work on transactions created through it. In production, Set Refund Status returns `403` and Mark as Settled returns `400`. If your sandbox account is not on the Simulator gateway, ask your EximPe integration manager to assign it.
+  **Both need the Simulator gateway.** They only work on transactions created through it. In production, Set Refund Status returns `403` and Mark as Settled returns `400`. If your UAT account is not on the Simulator gateway, ask your EximPe integration manager to assign it.
 </Warning>
 
 <Note>

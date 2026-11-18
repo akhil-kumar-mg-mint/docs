@@ -1210,7 +1210,7 @@
             }
           },
           "400": {
-            "description": "`ERR_PAYMENT_001`: invalid lock, missing email, or VBA transfers not enabled.",
+            "description": "`ERR_PAYMENT_001`: invalid lock, missing email, VBA transfers not enabled, or your payment gateway does not support virtual accounts (`details.vba`).",
             "content": {
               "application/json": {
                 "schema": {
@@ -1220,7 +1220,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1270,7 +1270,7 @@
             }
           },
           "500": {
-            "description": "Failed to generate a unique virtual_account_id, configuration error, or unexpected server error",
+            "description": "Something went wrong on our side. Nothing was created. Retry the call.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1301,7 +1301,7 @@
     "/pg/vba/{virtual_account_id}/": {
       "get": {
         "summary": "Get VBA Details",
-        "description": "Fetch details of an existing Virtual Bank Account by virtual_account_id for the authenticated merchant and syncs the local VBA record.",
+        "description": "Fetch one of your Virtual Bank Accounts by `virtual_account_id`, refreshed from the bank.",
         "tags": [
           "Virtual Bank Accounts"
         ],
@@ -1444,7 +1444,7 @@
             }
           },
           "400": {
-            "description": "Business/validation exception from service or missing virtual_account_id in path",
+            "description": "`ERR_PAYMENT_001`: the request is invalid. `details` says why. `ERR_PAYMENT_001` with `details.vba` also means your payment gateway does not support virtual accounts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1454,7 +1454,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1464,7 +1464,7 @@
             }
           },
           "403": {
-            "description": "VBA feature not enabled",
+            "description": "Virtual accounts are not enabled on your account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1474,7 +1474,7 @@
             }
           },
           "404": {
-            "description": "VBA not found for this merchant",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1738,7 +1738,7 @@
             }
           },
           "400": {
-            "description": "`ERR_PAYMENT_001`: invalid `remitter_lock_details` or `amount_lock_details`. `ERR_SERVICE_ERROR_000`: no editable field was sent.",
+            "description": "`ERR_PAYMENT_001`: invalid `remitter_lock_details` or `amount_lock_details`. `ERR_SERVICE_ERROR_000`: no editable field was sent. `ERR_PAYMENT_001` with `details.vba` also means your payment gateway does not support virtual accounts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1758,7 +1758,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1778,7 +1778,7 @@
             }
           },
           "404": {
-            "description": "VBA not found for this merchant",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1787,8 +1787,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "ERR_PAYMENT_001",
-                    "message": "Validation error",
+                    "code": "ERR_VBA_001",
+                    "message": "Virtual account not found",
                     "details": {
                       "error": "VBA not found for this merchant"
                     }
@@ -1985,7 +1985,7 @@
             }
           },
           "400": {
-            "description": "`status` is not `ACTIVE` or `INACTIVE`. `error.code` is `ERR_SERVICE_ERROR_000`.",
+            "description": "`status` is not `ACTIVE` or `INACTIVE`. `error.code` is `ERR_SERVICE_ERROR_000`. `ERR_PAYMENT_001` with `details.vba` also means your payment gateway does not support virtual accounts.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2005,7 +2005,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2025,7 +2025,7 @@
             }
           },
           "404": {
-            "description": "VBA not found for this merchant",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2034,8 +2034,8 @@
                 "example": {
                   "success": false,
                   "error": {
-                    "code": "ERR_PAYMENT_001",
-                    "message": "Validation error",
+                    "code": "ERR_VBA_001",
+                    "message": "Virtual account not found",
                     "details": {
                       "error": "VBA not found for this merchant"
                     }
@@ -2317,7 +2317,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2327,7 +2327,7 @@
             }
           },
           "403": {
-            "description": "VBA feature not enabled",
+            "description": "Virtual accounts are not enabled on your account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2337,7 +2337,7 @@
             }
           },
           "404": {
-            "description": "VBA not found for this merchant",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2505,7 +2505,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2515,7 +2515,7 @@
             }
           },
           "403": {
-            "description": "VBA feature not enabled",
+            "description": "Virtual accounts are not enabled on your account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2525,7 +2525,7 @@
             }
           },
           "404": {
-            "description": "VBA not found for this merchant or payment not found for given UTR and VBA",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours. `ERR_PAYMENT_001`: no payment with this UTR on this virtual account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2726,7 +2726,7 @@
             }
           },
           "401": {
-            "description": "Merchant account not identified.",
+            "description": "Your credentials could not be matched to a merchant account.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2746,7 +2746,7 @@
             }
           },
           "404": {
-            "description": "VBA not found.",
+            "description": "`ERR_VBA_001`: no virtual account with this ID is yours.",
             "content": {
               "application/json": {
                 "schema": {

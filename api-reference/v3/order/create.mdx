@@ -68,12 +68,12 @@ Fields not listed as required are optional. "Conditional" means the field is req
 | upi_expiry_minutes | integer | No | How long the customer has to complete an S2S UPI payment, in minutes. | S2S UPI Intent and Collect. Whole number from 5 to 20; omitted or `null` means 5. Some payment methods allow less than you ask for, so read the window that applies from `expires_at`. Ignored by Hosted Checkout |
 | return_url | string | No | Where Hosted Checkout sends the customer when the payment finishes, whatever the outcome. | Absolute URL, max 500 chars. Without it the customer sees EximPe's own result page |
 | business_model | string | No | Whether the buyer is a business or a consumer. | `B2B` or `B2C`, uppercase; derived from your KYC when omitted |
-| purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`). When omitted, it is filled in only if your account has exactly one allowed purpose code |
+| purpose_code | string | No | FEMA/FETERS purpose code the order settles under. | Must be active and enabled on your account (e.g. `S0802`). If omitted and your account has exactly one allowed purpose code, that code is used. Otherwise the order is created without one, and you supply it after payment when the [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) webhook asks for it |
 | buyer | object | Yes | The buyer paying for this order. `name`, `email`, `phone` and `address` (including `postal_code`) are required. | See Buyer |
 | product | object | Yes | What is being sold. | See Product |
 | invoice | object | Yes | Invoice metadata. | See Invoice |
 
-When you omit `purpose_code`, it is filled in only if your account has exactly one allowed code; otherwise it is left unset for later classification. Neither `business_model` nor `purpose_code` is returned by Create Order, and neither can be changed after the order is created. Read them back with [Get Order Details](/api-reference/v3/order/get).
+When you omit `purpose_code`, it is filled in only if your account has exactly one allowed code; otherwise the order has none until you send it after payment. Neither `business_model` nor `purpose_code` is returned by Create Order, and neither can be changed after the order is created. Read them back with [Get Order Details](/api-reference/v3/order/get).
 
 #### Buyer
 
@@ -242,7 +242,7 @@ A successful create returns `201 Created`.
 - `order_id`: The order's ID
 - `intent_uri`: The UPI payment request to open the customer's UPI app with. See [Invoking the intent](#invoking-the-intent)
 - `expires_at`: When the intent stops accepting payment, in UTC: `upi_expiry_minutes` after creation (5 minutes if you did not send it), or sooner if the payment method allows less
-- `test_simulator_url`: **Sandbox only.** Open it in a browser to complete the payment without a real UPI app, and choose the outcome there. Where the page asks for a VPA, `testsuccess@gocash` succeeds and `testfailure@gocash` fails. Not returned in production
+- `test_simulator_url`: **UAT (sandbox) only.** Open it in a browser to complete the payment without a real UPI app, and choose the outcome there. Where the page asks for a VPA, `testsuccess@gocash` succeeds and `testfailure@gocash` fails. Not returned in production
 
 ### S2S UPI Collect
 
@@ -338,7 +338,7 @@ Refusals use the standard envelope: `success` is `false`, and `error` carries a 
 | `401` | `ERR_AUTH_000` | A PSP left out `X-Merchant-ID` | `{"authentication": "X-Merchant-ID header is required for this endpoint."}` |
 | `401` | `ERR_AUTH_001` | `X-Merchant-ID` is not one of your active sub-merchants | `{"authentication": "Invalid X-Merchant-ID provided."}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_002` | Your merchant account is not active | `{"authentication": "Merchant account is inactive."}` |
-| `403` | — | S2S payments are not enabled on your account | `{"detail": "You do not have permission to perform this action."}` |
+| `403` | — | S2S order and S2S payments are not enabled on your account | `{"detail": "You do not have permission to perform this action."}` |
 | `403` | `ERR_AUTH_005` | Your account's setup does not permit this collection mode | e.g. `{"collection_mode": "HOSTED_CHECKOUT is not enabled for this account."}` |
 | `403` | `ERR_SERVICE_ERROR_000` | Your account is not configured to collect this way | e.g. `{"payment_gateway": "Payment gateway not configured"}` |
 | `403` | `ERR_MERCHANT_ACCOUNT_003` | Your merchant account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}` |

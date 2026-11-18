@@ -482,9 +482,11 @@ An entry's `message` is still the document's label; `rejection_reason` is what w
   **A send-back can list nothing.** A reviewer can return a verification with the whole instruction in their comment and no item marked outstanding. Both lists then arrive as `[]` and `message` carries everything there is to act on:
 
   ```json
-  "message": "The invoice date and the admission letter disagree. Please check with the payer and resubmit.",
-  "action_required_fields": [],
-  "action_required_documents": []
+  {
+    "message": "The invoice date and the admission letter disagree. Please check with the payer and resubmit.",
+    "action_required_fields": [],
+    "action_required_documents": []
+  }
   ```
 
   Empty lists on this event do **not** mean nothing is owed — that signal is [`PAYMENT_UNDER_REVIEW`](/api-reference/v3/webhooks/payment-under-review), a different `event_type`. Route on `event_type` before you read the lists.

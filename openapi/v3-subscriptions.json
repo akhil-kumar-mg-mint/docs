@@ -469,6 +469,26 @@
               }
             }
           },
+          "404": {
+            "description": "`ERR_SUBSCRIPTION_001`: the subscription does not exist or is not yours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SUBSCRIPTION_001",
+                    "message": "Subscription not found",
+                    "details": {
+                      "subscription_id": "Subscription not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Configuration error",
             "content": {
@@ -555,11 +575,39 @@
             }
           },
           "404": {
-            "description": "The subscription does not exist or is not yours, or it has no order yet.",
+            "description": "`ERR_SUBSCRIPTION_001`: the subscription does not exist or is not yours. `ERR_ORDER_001`: the subscription has no order yet.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "subscription_not_found": {
+                    "summary": "Subscription not found",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_SUBSCRIPTION_001",
+                        "message": "Subscription not found",
+                        "details": {
+                          "subscription_id": "Subscription not found"
+                        }
+                      }
+                    }
+                  },
+                  "no_order_yet": {
+                    "summary": "No order yet",
+                    "value": {
+                      "success": false,
+                      "error": {
+                        "code": "ERR_ORDER_001",
+                        "message": "Order not found",
+                        "details": {
+                          "order_id": "Subscription order not found"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -629,6 +677,26 @@
               }
             }
           },
+          "404": {
+            "description": "`ERR_SUBSCRIPTION_001`: the subscription does not exist or is not yours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SUBSCRIPTION_001",
+                    "message": "Subscription not found",
+                    "details": {
+                      "subscription_id": "Subscription not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Configuration / unexpected error",
             "content": {
@@ -642,7 +710,7 @@
                     "code": "ERR_SERVICE_ERROR_000",
                     "message": "Payment gateway error",
                     "details": {
-                      "error": "An unexpected error occurred. Please try again later"
+                      "error": "An unexpected error occurred while fetching mandate status"
                     }
                   }
                 }
@@ -732,6 +800,26 @@
               }
             }
           },
+          "404": {
+            "description": "`ERR_SUBSCRIPTION_001`: the subscription does not exist or is not yours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SUBSCRIPTION_001",
+                    "message": "Subscription not found",
+                    "details": {
+                      "subscription_id": "Subscription not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Configuration / unexpected error",
             "content": {
@@ -745,7 +833,7 @@
                     "code": "ERR_SERVICE_ERROR_000",
                     "message": "Payment gateway error",
                     "details": {
-                      "error": "An unexpected error occurred. Please try again later"
+                      "error": "An unexpected error occurred while cancelling mandate"
                     }
                   }
                 }
@@ -902,6 +990,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`ERR_SUBSCRIPTION_001`: the subscription does not exist or is not yours.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_SUBSCRIPTION_001",
+                    "message": "Subscription not found",
+                    "details": {
+                      "subscription_id": "Subscription not found"
+                    }
+                  }
                 }
               }
             }
