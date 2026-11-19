@@ -31,7 +31,7 @@ All parameters are optional, and you can combine filters.
 | `currency` | string | | ISO 4217 code, e.g. `INR`. |
 | `mop_type` | string | | `upi`, `credit_card`, `debit_card`, `net_banking`, `qr`. |
 | `collection_mode` | string | | `hosted_payment`, `payment_link`, `s2s`. |
-| `status` | string | | `pending`, `captured`, `failed`. |
+| `status` | string | | `pending`, `captured`, `failed`, `invalid`. |
 | `from_created_at` / `to_created_at` | date | | Created within this range, `YYYY-MM-DD` in UTC. Both ends are included. |
 | `from_payment_completed_at` / `to_payment_completed_at` | date | | Completed within this range, `YYYY-MM-DD` in UTC. Both ends are included. |
 
@@ -50,7 +50,7 @@ All parameters are optional, and you can combine filters.
 | `previous` | Full URL of the previous page, or `null` on the first one |
 | `results` | The payments on this page |
 
-Follow `next` until it is `null`. A page past the last one is not returned empty. It is refused with a `500` whose `error.details.error` is `"Invalid page."`.
+Stop paging when `next` is `null`.
 
 ## Payment status
 
@@ -59,6 +59,7 @@ Follow `next` until it is `null`. A page past the last one is not returned empty
 | `pending` | Started, with no final outcome yet. |
 | `captured` | Paid. |
 | `failed` | Declined, abandoned, or expired before it completed. `comment` says why when there is a reason. |
+| `invalid` | Voided when its payment link was closed. |
 
 <Note>
   **Expired payments read differently in the list and in the filter.** A pending payment that passes its expiry is shown as `failed` here, but the `status` filter matches the status as recorded. So `status=pending` can return entries that read `failed`, and `status=failed` will not find them. [Get Payment](/api-reference/v3/payment/get) shows the recorded status, so the same payment reads `pending` there.
@@ -71,7 +72,7 @@ Follow `next` until it is `null`. A page past the last one is not returned empty
 - `mop_type` is the method the buyer paid with, in lowercase (`upi`, `credit_card`). It is `null` when no method was chosen.
 - `comment` says why a payment failed, or what state it is in, when there is something to say; otherwise it is `null`.
 - `order_id` is the order behind the payment (`OD` followed by 10 digits). One order can have several payments, one per attempt.
-- `created_at` is UTC with microseconds, e.g. `2026-10-15T06:44:13.414209Z`.
+- `created_at` is UTC, e.g. `2026-10-15T06:44:13.414209Z`.
 
 <Info>
   The response is the same whatever `X-API-Version` you send. v1, v2 and v3 integrations share this endpoint and its response.

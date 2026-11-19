@@ -9,19 +9,19 @@ Shortened to **VBA** in field names and API responses.
 
 The account sits on EximPe's master account. You do not need a bank account in India, and there is nothing for you to open or maintain.
 
-You get a webhook the moment money lands.
+You get a [Payment Successful](/api-reference/v3/webhooks/payment-successful) webhook the moment money lands.
 
 ## Before you start
 
 - An approved merchant account with virtual accounts enabled
-- Your `X-Client-ID` and `X-Client-Secret`, and `X-API-Version: 3.0.0` on every call
+- Your `X-Client-ID` and `X-Client-Secret`, and optionally `X-API-Version`. Send `3.0.0`; the response echoes it back
 - A webhook URL on your account
 
 PSPs also send `X-Merchant-ID` naming the sub-merchant the account belongs to.
 
 ## Step 1: Create the account
 
-The name, email, and phone come from the merchant account, so the request body can be empty.
+The account name and email come from your merchant account, so the request body can be empty.
 
 ```bash
 curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/' \
@@ -46,7 +46,7 @@ Both are optional and independent. Leave them out and the account accepts anythi
 
 ## Step 2: Give the details to your buyer
 
-The response gives you `vba_account_number` and `vba_ifsc`. Send those two to your buyer. That is all they need.
+The response gives you `data[0].vba_account_number` and `data[0].vba_ifsc`. Send those two to your buyer. That is all they need.
 
 <Note>
   Account numbers follow a fixed pattern, and the IFSC is always the same for your client code. Take both from the response rather than constructing them yourself.
@@ -54,9 +54,9 @@ The response gives you `vba_account_number` and `vba_ifsc`. Send those two to yo
 
 ## Step 3: Handle the money arriving
 
-When a credit lands we record the amount, the sender's account and IFSC, their name, and the UTR. Then we create a payment and send you a webhook.
+When a credit lands we record the amount, the sender's account and IFSC, their name, and the UTR. Then we create a payment and send you [Payment Successful](/api-reference/v3/webhooks/payment-successful), followed by [Verification Needed](/api-reference/v3/webhooks/verification-needed) with what we still need. For LRS payments the second webhook is [LRS Verification Needed](/api-reference/v3/webhooks/lrs-verification-needed).
 
-The payment status is `ACTION_REQUIRED`. We have the money but not the paperwork.
+The payment `status` is `captured` and its `settlement_status` is `action_required`. We have the money but not the paperwork.
 
 <Warning>
   **The sender on the credit does not identify the payment.** You tell us who paid, and what for, in the next step.
@@ -96,16 +96,16 @@ curl -X POST 'https://api-pacb-uat.eximpe.com/pg/vba/simulate-transfer/' \
 
 <Warning>Sandbox only. In production the endpoint answers `403` and nothing is simulated.</Warning>
 
-You get back the payment the credit created — `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
+What comes back depends on how the virtual account is provisioned: an acknowledgement of the transfer, or the payment the credit created. Confirm the credit with [Get VBA Payment by UTR](/api-reference/v3/vba/get-payment-by-utr) or the payment webhook. `captured` with `action_required` is the happy path, meaning the money is in and the compliance details are what's missing.
 
-A credit that breaks a rule on the account (the VBA is inactive, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded rather than rejected — we never drop real money — and comes back `failed` with the reason in `status_message`.
+A credit that breaks a rule on the account (the VBA is inactive, a remitter lock, an amount lock, the 25 lac ceiling) is still recorded rather than rejected — we never drop real money — and the payment reads `failed`, with the reason in `status_message`.
 
 <Note>
   The same rules apply to real credits. Simulating one is the way to see what a locked account does to a transfer before a buyer sends money into it.
 </Note>
 
 <Card title="Simulate VBA Transfer API" icon="code" href="/api-reference/v3/vba/simulate-transfer">
-  Every field, every `status_message`, and the full response shape.
+  Every request field and every error response.
 </Card>
 
 ## Finding payments

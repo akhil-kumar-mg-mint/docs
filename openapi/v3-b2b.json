@@ -17,8 +17,7 @@
   "security": [
     {
       "clientAuth": [],
-      "clientSecretAuth": [],
-      "apiVersionHeader": []
+      "clientSecretAuth": []
     }
   ],
   "paths": {
@@ -27,14 +26,13 @@
         "summary": "Get verification requirements",
         "description": "Returns everything a payment's checklist calls for \u2014 every field and document, which are already satisfied, and which are still outstanding. The checklist is chosen by two facts on the order: its business model and its purpose code. Until both are declared no checklist claims the payment, and this endpoint asks for them instead \u2014 `business_model` and `purpose_code` come back `null`, and the two facts are listed as ordinary outstanding fields.\n\nThe verification webhook lists what a payment is *missing* \u2014 [`LRS_VERIFICATION_NEEDED`](/api-reference/v3/webhooks/lrs-verification-needed) on an LRS payment, [`VERIFICATION_NEEDED`](/api-reference/v3/webhooks/verification-needed) on a B2B-services one. This returns the *whole* set. Both describe the same items in the same shape, from the same read \u2014 an entry here is an entry there plus `satisfied` and `provided`.\n\n**There is no rolled-up `status`.** \"Every box is ticked\" is not \"the payment passed\", and the POST on this same URL returns a `status` of its own. Fold your own roll-up from the items, and read `settlement_status` for where the payment actually stands \u2014 including whether sending anything is still possible.\n\n**Do not hardcode the field list.** The requirements are configuration and are revised as the underlying regulatory matrix is; reading them from here means a revision does not need a release on your side.\n\n**The settling merchant is derived from the payment**, not from the calling credential.",
         "tags": [
-          "LRS"
+          "Payment verification"
         ],
         "security": [
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -47,6 +45,9 @@
             },
             "description": "UID of the payment the details are for.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "responses": {
@@ -73,7 +74,7 @@
                 "examples": {
                   "classified_b2b_services": {
                     "summary": "A classified payment (S0802, B2B services)",
-                    "description": "The complete B2B-services set \u2014 eleven fields and the commercial invoice. Nothing here is optional, conditional or waivable, and there is no identity item and no tax: `remitter_pan` and `amount_to_be_settled` are unknown keys on this flow. `invoice_amount` is asked for and cross-checked against the credit. `buyer_name` came in with the credit.",
+                    "description": "The complete B2B-services set \u2014 thirteen fields and the commercial invoice. Nothing here is optional, conditional or waivable, and there is no identity item and no tax: `remitter_pan` and `amount_to_be_settled` are unknown keys on this flow. `invoice_amount` is asked for and cross-checked against the credit. `buyer_name` came in with the credit.",
                     "value": {
                       "success": true,
                       "message": "Verification requirements",
@@ -81,6 +82,7 @@
                         "payment_id": "PR6938527534",
                         "order_id": "OD3376378679",
                         "settlement_status": "ACTION_REQUIRED",
+                        "linked_primary_payment_id": null,
                         "business_model": "B2B",
                         "purpose_code": "S0802",
                         "fields": [
@@ -149,6 +151,18 @@
                             "message": "The declaration the merchant affirms: the service was received and the invoice is genuine",
                             "satisfied": false,
                             "provided": false
+                          },
+                          {
+                            "code": "buyer_date_of_incorporation",
+                            "message": "Buyer date of incorporation",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "delivery_due_date",
+                            "message": "Due date of delivery of the services",
+                            "satisfied": false,
+                            "provided": false
                           }
                         ],
                         "documents": [
@@ -157,6 +171,151 @@
                             "message": "Commercial invoice",
                             "satisfied": false,
                             "provided": false
+                          }
+                        ],
+                        "review": {
+                          "review_state": "FRESH",
+                          "rejection_reason": "",
+                          "reviewed_at": null,
+                          "documents": []
+                        }
+                      }
+                    }
+                  },
+                  "classified_lrs": {
+                    "summary": "A classified payment (S0305, LRS education)",
+                    "description": "An LRS education payment with nothing supplied yet: the buyer and invoice basics, the remitter's identity, the declaration, the amount to be settled, the student, and the documents `S0305` asks for.",
+                    "value": {
+                      "success": true,
+                      "message": "Verification requirements",
+                      "data": {
+                        "payment_id": "PR6938527534",
+                        "order_id": "OD3376378679",
+                        "settlement_status": "ACTION_REQUIRED",
+                        "linked_primary_payment_id": null,
+                        "business_model": "B2C",
+                        "purpose_code": "S0305",
+                        "fields": [
+                          {
+                            "code": "buyer_name",
+                            "message": "Buyer / remitter name",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_address_line_1",
+                            "message": "Buyer address line 1",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_city",
+                            "message": "Buyer city",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_state",
+                            "message": "Buyer state",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
+                          },
+                          {
+                            "code": "buyer_postal_code",
+                            "message": "Buyer PIN code",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_email",
+                            "message": "Buyer email",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_phone",
+                            "message": "Buyer phone",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_number",
+                            "message": "Invoice number",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "invoice_date",
+                            "message": "Invoice date",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_pan",
+                            "message": "Remitter PAN",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "remitter_dob",
+                            "message": "Remitter date of birth (as per PAN)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "buyer_declaration",
+                            "message": "The LRS declaration the payer affirms: resident in India, within the LRS limit, permitted purpose",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "amount_to_be_settled",
+                            "message": "Amount to be settled for this payment, in INR",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "persons",
+                            "message": "The person this remittance is for",
+                            "satisfied": false,
+                            "provided": false
+                          }
+                        ],
+                        "documents": [
+                          {
+                            "code": "relationship_declaration",
+                            "message": "Self-declaration of the remitter's relationship to the person the remittance is for",
+                            "satisfied": true,
+                            "provided": false,
+                            "condition": "PAYING_FOR_SOMEONE_ELSE"
+                          },
+                          {
+                            "code": "offer_letter",
+                            "message": "Letter of admission from the institution",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "passport",
+                            "message": "Student's passport",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "student_id_or_visa",
+                            "message": "Student visa or university ID card (either)",
+                            "satisfied": false,
+                            "provided": false
+                          },
+                          {
+                            "code": "fee_invoice",
+                            "message": "Fee invoice",
+                            "satisfied": true,
+                            "provided": false,
+                            "optional": true
                           }
                         ],
                         "review": {
@@ -178,6 +337,7 @@
                         "payment_id": "PR4471903288",
                         "order_id": "OD9925177340",
                         "settlement_status": "ACTION_REQUIRED",
+                        "linked_primary_payment_id": null,
                         "business_model": null,
                         "purpose_code": null,
                         "fields": [
@@ -250,16 +410,15 @@
       },
       "post": {
         "summary": "Submit verification details",
-        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**, and they must travel together. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is run through any verification the payment needs \u2014 PAN verification, the sender-to-account-holder match, the TCS recomputation and the LRS counter posting. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in rupees (`outstanding_rupees`). It is absent on every other response, and it arises on LRS payments only.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
+        "description": "Sends verification details for a payment, keyed by the same codes the verification webhook and `GET /pg/payments/{payment_id}/verification/` use. There is nothing to map: every one of those places names an item under `code`.\n\n**JSON only.** `fields` is an object; `documents` is a list of `{code, ref}` naming files uploaded earlier through Upload Document ([LRS](/api-reference/v3/lrs/upload-document) \u00b7 [B2B services](/api-reference/v3/b2b/upload-document)). Files are never posted to this endpoint.\n\n**Partial sends are merged, never replaced.** Send what you have; nothing you sent earlier is wiped by a later call. Once you have filed, sending is closed.\n\n**An unclassified payment accepts only `business_model` and `purpose_code`**; send whichever is missing. Nothing else can be validated until a checklist claims the payment.\n\n**Completion is automatic.** Once nothing is outstanding the set is filed. On an LRS payment the answer is `in_review` or `action_required`. On a B2B services payment it goes to EximPe for review, and the answer is `in_review` or a `400` naming what to fix. `complete` means nothing is outstanding and nothing was filed. Pass `finalize: false` to save without filing.\n\n**The response carries `outstanding`** \u2014 the codes still owed after this write. You do not need a second call to learn what is left.\n\n**A refused filing carries `refusal`.** When a complete set is filed and verification refuses it, `status` is `action_required` and `data` carries a fourth key, `refusal`, naming the verdict (`reason`), what verification still wants (`missing`) and any shortfall in rupees (`outstanding_rupees`). It is absent on every other response. On a B2B services payment a refused filing is a `400` instead.\n\n**Refusals name the flow.** `error.message` reads `Invalid LRS request.` on an LRS payment, `Invalid B2B services request.` on a B2B services payment, and `Invalid verification request.` before the payment is classified. The `400` examples below use the LRS wording; branch on `error.code`.\n\n**The settling merchant is derived from the payment**, not from the calling credential \u2014 the purpose-code allowlist and the settlement terms come from that account.",
         "tags": [
-          "LRS"
+          "Payment verification"
         ],
         "security": [
           {
             "clientAuth": [],
             "clientSecretAuth": [],
-            "merchantAuth": [],
-            "apiVersionHeader": []
+            "merchantAuth": []
           }
         ],
         "parameters": [
@@ -272,6 +431,9 @@
             },
             "description": "UID of the payment the details are for.",
             "example": "PR6938527534"
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
           }
         ],
         "requestBody": {
@@ -296,7 +458,9 @@
                       "invoice_number": "INV-2026-0041",
                       "invoice_date": "2026-08-01",
                       "invoice_amount": "125000.00",
-                      "declaration": true
+                      "declaration": true,
+                      "buyer_date_of_incorporation": "2011-04-18",
+                      "delivery_due_date": "2027-03-31"
                     }
                   },
                   "documents": {
@@ -394,27 +558,84 @@
                   }
                 }
               },
-              "example": {
-                "fields": {
-                  "buyer_name": "Northwind Technologies Pvt Ltd",
-                  "buyer_address_line_1": "7th Floor, Prestige Tower, Residency Road",
-                  "buyer_city": "Bengaluru",
-                  "buyer_state": "Karnataka",
-                  "buyer_postal_code": "560025",
-                  "buyer_email": "ap@northwind.co.in",
-                  "buyer_phone": "+919876543210",
-                  "invoice_number": "INV-2026-0041",
-                  "invoice_date": "2026-08-01",
-                  "invoice_amount": "125000.00",
-                  "declaration": true
-                },
-                "documents": [
-                  {
-                    "code": "invoice",
-                    "ref": "8207383264"
+              "examples": {
+                "b2b_services": {
+                  "summary": "B2B services (S0802), complete set",
+                  "description": "Every field and the commercial invoice in one call, filed for EximPe review. Add `buyer_pan` under `fields` when it is owed.",
+                  "value": {
+                    "fields": {
+                      "buyer_name": "Northwind Technologies Pvt Ltd",
+                      "buyer_address_line_1": "7th Floor, Prestige Tower, Residency Road",
+                      "buyer_city": "Bengaluru",
+                      "buyer_state": "Karnataka",
+                      "buyer_postal_code": "560025",
+                      "buyer_email": "ap@northwind.co.in",
+                      "buyer_phone": "+919876543210",
+                      "invoice_number": "INV-2026-0041",
+                      "invoice_date": "2026-08-01",
+                      "invoice_amount": "125000.00",
+                      "declaration": true,
+                      "buyer_date_of_incorporation": "2011-04-18",
+                      "delivery_due_date": "2027-03-31"
+                    },
+                    "documents": [
+                      {
+                        "code": "invoice",
+                        "ref": "8207383264"
+                      }
+                    ],
+                    "finalize": true
                   }
-                ],
-                "finalize": true
+                },
+                "lrs": {
+                  "summary": "LRS (S0305, education \u2014 study abroad)",
+                  "description": "A complete LRS body: the remitter's identity, the declaration, the amount to be settled, the student as the one person, and the documents `S0305` asks for. `invoice_amount` and `declaration` are not asked for on an LRS payment.",
+                  "value": {
+                    "fields": {
+                      "buyer_name": "Ravi Kumar",
+                      "buyer_address_line_1": "12 Brigade Road",
+                      "buyer_city": "Bengaluru",
+                      "buyer_state": "Karnataka",
+                      "buyer_postal_code": "560001",
+                      "buyer_email": "ravi@example.com",
+                      "buyer_phone": "+919876543210",
+                      "invoice_number": "INV-2026-0041",
+                      "invoice_date": "2026-08-01",
+                      "remitter_pan": "ABCPK1234F",
+                      "remitter_dob": "1985-04-12",
+                      "buyer_declaration": true,
+                      "amount_to_be_settled": "150000.00"
+                    },
+                    "persons": [
+                      {
+                        "is_remitter": false,
+                        "name": "Ananya Kumar",
+                        "relation": "CHILD",
+                        "dob": "2005-09-30",
+                        "passport_number": "Z1234567"
+                      }
+                    ],
+                    "documents": [
+                      {
+                        "code": "offer_letter",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "passport",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "student_id_or_visa",
+                        "ref": "<ref from Upload Document>"
+                      },
+                      {
+                        "code": "relationship_declaration",
+                        "ref": "<ref from Upload Document>"
+                      }
+                    ],
+                    "finalize": true
+                  }
+                }
               }
             }
           }
@@ -456,7 +677,7 @@
                             "in_review",
                             "action_required"
                           ],
-                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed (you passed `finalize: false`, or this checklist is not an LRS one and is not filed for verification). `in_review` \u2014 the set was complete, it was filed, and verification passed. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment.",
+                          "description": "Lower-case, always one of four. `incomplete` \u2014 something is still owed; `outstanding` names it. `complete` \u2014 nothing is outstanding and nothing was filed. `in_review` \u2014 the set was complete and filed, and it is under review. `action_required` \u2014 the set was complete and filed, and verification did not pass the payment. On a B2B services payment a refusal is a `400` instead.",
                           "example": "incomplete"
                         },
                         "outstanding": {
@@ -488,9 +709,10 @@
                                 "PAN_NOT_VERIFIED",
                                 "PAN_NAME_MISMATCH",
                                 "SENDER_NAME_MISMATCH",
+                                "S0306_TRAVEL_TYPE_NOT_CONFIGURED",
                                 null
                               ],
-                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `null` \u2014 no headline verdict; `missing` and `outstanding_rupees` are the whole story.",
+                              "description": "The headline verdict, upper-case. `PURPOSE_CODE_NOT_ALLOWED` \u2014 the purpose code is not one the account this payment settles to is allow-listed for. `PURPOSE_CODE_NOT_IN_REGISTRY` \u2014 it is not an LRS purpose code at all. `PAN_NOT_VERIFIED` \u2014 the remitter's PAN is unverified and could not be verified now. `PAN_NAME_MISMATCH` and `SENDER_NAME_MISMATCH` \u2014 the buyer name on the order is not the name the PAN is registered to. Both mean the buyer name and the PAN name disagree; correct whichever is wrong and send again. `S0306_TRAVEL_TYPE_NOT_CONFIGURED` \u2014 the payment is `S0306` and your account's travel type is not set; `missing` is `[\"purpose_code\"]`. Contact EximPe. `null` \u2014 no headline verdict; `missing` and `outstanding_rupees` are the whole story.",
                               "example": "PURPOSE_CODE_NOT_ALLOWED"
                             },
                             "missing": {
@@ -534,7 +756,7 @@
                   },
                   "in_review": {
                     "summary": "in_review \u2014 the payment is with us",
-                    "description": "Everything the checklist asks for was sent, the set was filed, and verification passed. Nothing further to send.",
+                    "description": "Everything the checklist asks for was sent, and the set was filed and is under review. Nothing further to send.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -567,7 +789,7 @@
                   },
                   "complete": {
                     "summary": "complete \u2014 saved, not filed",
-                    "description": "The checklist is satisfied but nothing was filed: either you passed `finalize: false`, or this payment's checklist is not an LRS one.",
+                    "description": "Nothing is outstanding and nothing was filed, for example because you passed `finalize: false`.",
                     "value": {
                       "success": true,
                       "message": "Verification details received",
@@ -682,8 +904,38 @@
               }
             }
           },
+          "429": {
+            "description": "Too many requests. Can come from EximPe's rate limit or the payment network; retry after the `Retry-After` header when it is present, otherwise back off and retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Unexpected processing failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The payment network did not answer; retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A check could not run. Your details are saved; retry the same call.",
             "content": {
               "application/json": {
                 "schema": {
@@ -706,20 +958,34 @@
         ],
         "properties": {
           "code": {
-            "type": "string",
-            "description": "Error code (e.g., ERR_ORDER_002)"
+            "oneOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Error code: a number such as `40359`, or a string such as `ERR_IMPORT_VERIFICATION_001`."
           },
           "message": {
             "type": "string",
             "description": "Error message"
           },
           "details": {
-            "type": "object",
-            "description": "Detailed validation error information with field-specific errors",
-            "additionalProperties": {
-              "type": "string",
-              "description": "Error message for the specific field"
-            }
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "description": "Error message for the specific field"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Field-specific errors keyed by field or code, or a plain string for refusals that name no field."
           }
         }
       },
@@ -777,9 +1043,11 @@
             "enum": [
               "PAYING_FOR_SOMEONE_ELSE",
               "PASSENGER_DETAILS_LEVEL",
-              "GOODS_PURPOSE_CODE"
+              "GOODS_PURPOSE_CODE",
+              "ADVANCE_GOODS_PURPOSE_CODE",
+              "SERVICES_PURPOSE_CODE"
             ],
-            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 your account collects traveller details on travel payments. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code.",
+            "description": "Present on items owed only in a named case. `PAYING_FOR_SOMEONE_ELSE` \u2014 a person other than the remitter is on the remittance. `PASSENGER_DETAILS_LEVEL` \u2014 your account collects traveller details on travel payments. `GOODS_PURPOSE_CODE` \u2014 the order's purpose code is a goods code. `ADVANCE_GOODS_PURPOSE_CODE` \u2014 the order's purpose code is `S0101`, an advance payment for goods. `SERVICES_PURPOSE_CODE` \u2014 the order's purpose code is a services or digital-goods code.",
             "example": "PAYING_FOR_SOMEONE_ELSE"
           },
           "waivable": {
@@ -796,7 +1064,7 @@
       },
       "v3_VerificationState": {
         "type": "object",
-        "description": "What a payment needs and what it already has \u2014 the whole checklist, unlike the LRS_VERIFICATION_NEEDED webhook, which lists only what is outstanding. There is deliberately no rolled-up completion field: each item carries its own `satisfied`, and `settlement_status` reports where the payment itself stands.",
+        "description": "What a payment needs and what it already has \u2014 the whole checklist, unlike the VERIFICATION_NEEDED and LRS_VERIFICATION_NEEDED webhooks, which list only what is outstanding. There is deliberately no rolled-up completion field: each item carries its own `satisfied`, and `settlement_status` reports where the payment itself stands.",
         "required": [
           "payment_id",
           "order_id",
@@ -879,14 +1147,17 @@
               "review_state": {
                 "type": "string",
                 "enum": [
+                  "DRAFT",
                   "FRESH",
                   "UNDER_REVIEW",
                   "CHANGES_REQUESTED",
                   "APPROVED",
-                  "REJECTED"
+                  "REJECTED",
+                  null
                 ],
-                "description": "`FRESH` \u2014 nothing filed. `UNDER_REVIEW` \u2014 filed, waiting for EximPe review. `CHANGES_REQUESTED` \u2014 EximPe sent it back. `APPROVED` \u2014 EximPe approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal.",
-                "example": "UNDER_REVIEW"
+                "description": "`DRAFT` \u2014 details were saved from the EximPe dashboard but not yet submitted. `FRESH` \u2014 nothing filed. `UNDER_REVIEW` \u2014 filed, waiting for EximPe review. `CHANGES_REQUESTED` \u2014 EximPe sent it back. `APPROVED` \u2014 EximPe approved it; `settlement_status` stays `UNDER_REVIEW` until the payment settles. `REJECTED` \u2014 terminal. `null` \u2014 no review applies to this payment.",
+                "example": "UNDER_REVIEW",
+                "nullable": true
               },
               "rejection_reason": {
                 "type": "string",
@@ -949,14 +1220,22 @@
         "description": "**Merchant Identifier** - The unique ID for the merchant account. This is required for PSP (Payment Service Provider) merchants who manage multiple merchant accounts. You can find merchant IDs in the Merchant Management section of the dashboard.",
         "x-displayName": "Merchant ID",
         "x-example": "your-merchant-id"
-      },
-      "apiVersionHeader": {
-        "type": "apiKey",
+      }
+    },
+    "parameters": {
+      "ApiVersion": {
         "name": "X-API-Version",
         "in": "header",
-        "description": "**API Version** - Optional, and not a credential. Send `3.0.0` for v3. If you omit it, the call still succeeds and the response echoes your account's default version in an `X-API-Version` header.",
-        "x-displayName": "API Version",
-        "x-example": "3.0.0"
+        "required": false,
+        "description": "Optional. Send `3.0.0`. It is not a credential. The response's `X-API-Version` header echoes the value you sent, or your account's default version if you send none.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "3.0.0"
+          ],
+          "default": "3.0.0"
+        },
+        "example": "3.0.0"
       }
     }
   }

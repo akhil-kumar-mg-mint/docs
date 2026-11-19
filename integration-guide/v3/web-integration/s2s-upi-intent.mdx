@@ -12,15 +12,15 @@ The Server-to-Server (S2S) UPI Intent integration eliminates redirection hops by
     Initiate transactions directly from your server — the buyer stays on your page
   </Card>
   <Card title="Flexible Intent Invocation" icon="phone" href="#step-3-invoke-upi-intent">
-    Call the Initiate Payment API when the user selects an app (Mobile) or scans a QR code (Desktop)
+    Call Create Order when the user selects an app (Mobile) or scans a QR code (Desktop)
   </Card>
-  <Card title="Robust Server Callbacks" icon="server" href="#step-4-eximpe-sends-webhook-response">
+  <Card title="Robust Server Callbacks" icon="server" href="#step-5-eximpe-sends-webhook-response">
     Receive asynchronous status updates via server-to-server callbacks
   </Card>
 </CardGroup>
 
 <Info>
-  **Collection is only half the flow.** A successful UPI payment is collected in India but not yet cleared to settle abroad — it is created in **Action Required**, and you must still assert the compliance details its purpose code requires. See [Step 5](#step-5-assert-compliance) below.
+  **Collection is only half the flow.** When a payment is captured it goes to **Under Review** if the order already has every detail its purpose code needs. Otherwise it goes to **Action Required** until you send what is missing. See [Step 6](#step-6-assert-compliance) below.
 </Info>
 
 <Tip>
@@ -38,7 +38,6 @@ Before you begin, ensure you have:
 - **Credentials**: Your Client ID and Client Secret
 - **Domain Whitelist**: Whitelisted your website domain for integration
 - **Webhook URL**: A secure endpoint to receive payment status updates
-- **Callback URL**: A publicly accessible URL configured in your EximPe dashboard for server-to-server callbacks.
 - **cURL or HTTP Client**: Capability to make HTTPS `POST` and `GET` requests from your server.
 - **UPI Knowledge**: Familiarity with UPI intent URL parameters and encoding.
 
@@ -46,7 +45,7 @@ Steps:
 
 1. **User selects UPI App (Mobile) or QR Code (Desktop)** on your frontend.
 2. **Frontend calls your Backend** to initiate the payment.
-3. **Backend calls EximPe Initiate Payment API** to get the `intent_uri`.
+3. **Backend calls [Create Order](/api-reference/v3/order/create)** (`POST /pg/orders/` with `collection_mode: s2s`) to get the `intent_uri`.
 4. **Backend returns `intent_uri`** to the Frontend.
 5. **Frontend invokes the UPI Intent** on the buyer’s device.
 6. **Check UPI transaction status** via API or Webhook.
@@ -67,7 +66,7 @@ For mobile devices, design a list of popular UPI apps (like Google Pay, PhonePe,
 
 ## Step 2: Initiate Payment
 
-When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or selects "Show QR" on desktop, your backend should call this API to generate the `intent_uri`.
+When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or selects "Show QR" on desktop, your backend calls [Create Order](/api-reference/v3/order/create) (`POST /pg/orders/`) to generate the `intent_uri`.
 
 #### Sample UPI Intent Request Body
 
@@ -88,7 +87,7 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
       "line_2": "Apt 4B",
       "city": "City",
       "state": "State",
-      "postal_code": "123456"
+      "postal_code": "110001"
     },
     "ip_address": "192.168.1.100",
     "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -96,7 +95,7 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
   "product": {
     "name": "Sample Product",
     "description": "This is a sample product description",
-    "hs_code": "98051000",
+    "hs_code": "84713010",
     "hs_code_description": "Portable automatic data processing machines",
     "type_of_goods": "physical_goods"
   },
@@ -108,7 +107,7 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
 ```
 
 <Note>
-  For the S2S UPI Intent request, include these parameters alongside `amount`, `currency`, `reference_id`, `return_url`, `buyer`, `product`, and `invoice`:
+  For the S2S UPI Intent request, include these parameters alongside `amount`, `currency`, `reference_id`, `buyer`, `product`, and `invoice`:
 
   - `collection_mode`: must be set to `"s2s"`
   - `upi_flow_type`: must be set to `"intent"`
@@ -127,7 +126,7 @@ When the user clicks on a specific UPI app icon (e.g., Google Pay) on mobile or 
   "data": {
     "intent_uri": "pa=collect.sandbox@examplebank&pn=&tr=403993715534292371&tid=TXN403993715534292371080725205418&am=1000.00&cu=INR&tn=UPIIntent",
     "order_id": "OD2000992103",
-    "expires_at": "2025-07-08T10:35:00.156967Z"
+    "expires_at": "2026-09-21T10:35:00.156967Z"
   }
 }
 ```
@@ -142,7 +141,7 @@ For S2S UPI Intent mode, the response includes:
 <Tip>
   **Testing in sandbox:** the sandbox response includes an additional `test_simulator_url`. Open it in a browser to simulate the payment flow and complete the transaction without needing a real UPI app or a mobile device — useful when developing the desktop QR path or testing on a machine with no UPI app installed.
 
-  The outcome is driven by the test VPA you use in the simulator: `testsuccess@gocash` completes as **Success**, `testfailure@gocash` as **Failure**. On mobile, selecting any UPI app in the simulator triggers the corresponding flow for the test VPA.
+  Open `test_simulator_url` and choose the outcome there. Where the page asks for a VPA, `testsuccess@gocash` succeeds and `testfailure@gocash` fails.
 
   This field is **not returned in production**.
 </Tip>
@@ -167,14 +166,16 @@ The method for invoking a UPI payment depends on the buyer's device and operatin
 
 On desktop browsers, use the `intent_uri` to generate a **QR Code**. The user can then scan this code with their mobile UPI app to complete the payment.
 
+`intent_uri` is either a full URI (`upi://pay?pa=...`) or only its query string (`pa=...`). For the QR and the generic intent, use it as is if it starts with `upi://`; otherwise prefix `upi://pay?`. For the Android `intent://pay?<query>` and iOS `<scheme_prefix><query>` formats, use the query string only: strip a leading `upi://pay?` first.
+
 **Implementation:**
-1. Prefix the `intent_uri` with `upi://pay?`
+1. If the `intent_uri` does not start with `upi://`, prefix it with `upi://pay?`
 2. Use a QR code generation library or API to convert the full URI into a QR code image.
 3. Display the QR code prominently with instructions like "Scan to Pay".
 
 ***PC Specific App Format***:
 ```text
-upi://pay?<intent_uri>
+upi://pay?<query>
 ```
 
 
@@ -209,7 +210,7 @@ To target a specific app, use the following schemes:
 
 **Android Specific App Format:**
 ```
-intent://pay?<intent_uri>#Intent;scheme=upi;package=<package_name>;end;
+intent://pay?<query>#Intent;scheme=upi;package=<package_name>;end;
 ```
 
 **Examples:**
@@ -234,7 +235,7 @@ intent://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123#Intent;scheme
 
 **iOS Specific App Format:**
 ```
-<scheme_prefix><intent_uri>
+<scheme_prefix><query>
 ```
 
 **Examples:**
@@ -282,7 +283,7 @@ upi://pay?pa=merchant@bank&pn=Merchant&am=1.00&cu=INR&tr=TXN123
   **Pro Tip:** Detect the buyer's device type. Show a QR code on Desktop and a list of UPI apps (or a "Pay via UPI" button) on Mobile.
 </Note>
 
-### Step 3: Check UPI Transaction Status
+## Step 4: Check UPI Transaction Status
 
 Invoke the **Order Status API** to retrieve the status of the UPI transaction:
 
@@ -294,21 +295,26 @@ curl -X GET https://api-pacb.eximpe.com/pg/orders/{order_id}/status/ \
 ```
 
 <Note>
-  For detailed parameters and response formats, see the [Get Order API](/api-reference/v3/order/get)
+  For detailed parameters and response formats, see the [Get Order Status API](/api-reference/v3/order/get-status)
 </Note>
 
-### Step 4: EximPe sends webhook response
+## Step 5: EximPe sends webhook response
 
 EximPe can also send a webhook response whenever the transaction status gets updated.
 
 For more information, see the [Payment Successful response](/api-reference/v3/webhooks/payment-successful)
 
-### Step 5: Assert compliance
+## Step 6: Assert compliance
 
-A collected UPI payment sits in **Action Required** until you supply the compliance details its purpose code requires. Only then does it move to **Under Review** and become eligible for settlement abroad.
+When a payment is captured it goes to **Under Review** if the order already has every detail its purpose code needs. Otherwise it goes to **Action Required** until you send what is missing.
 
-<Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
-  What a payment needs, and how to send it.
-</Card>
+<CardGroup cols={2}>
+  <Card title="LRS Verification" icon="shield-check" href="/integration-guide/v3/web-integration/lrs-verification">
+    What an LRS payment needs, and how to send it.
+  </Card>
+  <Card title="B2B Services Verification" icon="briefcase" href="/integration-guide/v3/web-integration/b2b-services-verification">
+    What a B2B services payment needs, and how to send it.
+  </Card>
+</CardGroup>
 
 ---

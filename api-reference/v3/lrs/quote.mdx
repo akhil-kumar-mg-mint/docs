@@ -1,7 +1,7 @@
 ---
 title: 'Quote LRS Amount'
 description: 'Quote the TCS due and the all-in total a buyer pays for a proposed LRS remittance. Requires a verified PAN.'
-openapi: 'POST /pg/lrs/quote/'
+openapi: '/openapi/v3/openapi.json POST /pg/lrs/quote/'
 ---
 
 ## Errors
@@ -30,6 +30,8 @@ Every refusal uses the standard envelope and carries `40359` `Invalid LRS reques
   }
 }
 ```
+
+A principal above ₹25,00,000 is not an error. It answers `200` with `refusal_reason: "lrs_remittance_cap_exceeded"` and the seven figures `remittance_inr`, `taxable_inr`, `tcs_rate`, `tcs_inr`, `total_payable_inr`, `tcs_reason` and `tcs_category` set to `null`. Check `refusal_reason` before you read the figures.
 
 <Note>
   **Branch on the `details` key, not on `code`.** `code` is `40359` for every refusal; the key names the field to fix.

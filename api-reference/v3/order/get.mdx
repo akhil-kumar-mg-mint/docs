@@ -1,9 +1,19 @@
 ---
 title: 'Get Order Details'
 description: 'Retrieve order details by order ID.'
-openapi: 'GET /pg/orders/{order_id}/'
+openapi: '/openapi/v3-orders.json GET /pg/orders/{order_id}/'
 ---
 
 ## Overview
 
 The Get Order endpoint allows you to retrieve complete order information including buyer details, product information, payment status, and timestamps. This is useful for order tracking and status updates.
+
+## Response Fields
+
+- `buyer` is `null` when the order holds no buyer name.
+- `buyer.address` is `null` when the order has no `line_1`, even if other address fields were sent.
+- `invoice` is `null` when the order has no invoice number, date, delivery due date or file.
+- `opted_mop_type` and `payments[].mop_type` are lowercase, e.g. `upi` or `credit_card`, and `null` when no method was chosen.
+- `payments[].status` is `pending`, `captured`, `failed` or `invalid`. `invalid` means the attempt was voided when its order failed.
+- `payments[].settlement.status` is lowercase, e.g. `action_required`, `under_review`, `ready_for_settlement` or `settled`.
+- `payments[].settlement.linked_primary_payment_id` is set on a top-up counted toward an earlier payment: it names that payment, and `settlement.status` and `settlement.message` are read from it. Otherwise it is `null`.

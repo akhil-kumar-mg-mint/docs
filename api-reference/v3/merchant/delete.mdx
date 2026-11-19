@@ -44,7 +44,7 @@ A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Mercha
   "error": {
     "code": "ERR_MERCHANT_004",
     "message": "Sub-Merchant can only be deleted while Pending or Rejected",
-    "details": {}
+    "details": "Sub-Merchant can only be deleted while Pending or Rejected"
   }
 }
 ```
@@ -56,7 +56,9 @@ A `CHANGES_REQUESTED` sub-merchant cannot be deleted; fix it with [Update Mercha
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account, or the sub-merchant, is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
 | `404` | `ERR_MERCHANT_016` | No sub-merchant with this ID belongs to you, or it is already deleted | `{}`. Check the ID |
-| `409` | `ERR_MERCHANT_004` | The sub-merchant is `IN_REVIEW`, `CHANGES_REQUESTED` or `APPROVED` | `{}`. It cannot be deleted in this status |
+| `409` | `ERR_MERCHANT_004` | The sub-merchant is `IN_REVIEW`, `CHANGES_REQUESTED` or `APPROVED` | The reason as a string, `"Sub-Merchant can only be deleted while Pending or Rejected"`. It cannot be deleted in this status |
