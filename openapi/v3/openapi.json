@@ -2981,6 +2981,160 @@
         ]
       }
     },
+    "/pg/pan/consent/": {
+      "post": {
+        "summary": "Verify a PAN and record consent",
+        "description": "Verify a buyer's PAN and record their consent before you create the order. When the PAN passes, create the order on [Create Order](/api-reference/v3/order/create#skip-the-pan-page) with the same PAN in `buyer.pan_number` within 24 hours, and the buyer skips the PAN page in Hosted Checkout. The PAN passes when it is valid, belongs to an individual, is active and is linked to Aadhaar.\n\nSend `buyer_pan_consent: true` only after the buyer has agreed to the statement Hosted Checkout shows on the PAN page:\n\n- LRS payments: \"By continuing, I confirm that the PAN I entered belongs to the person paying for this purchase, that I have permission to share it, and that this payment is within their LRS limit for this financial year, and I agree to the Terms & Conditions and Privacy Policy.\"\n- Other consumer payments: \"By continuing, I confirm that the PAN I entered belongs to the person paying for this purchase, that I have permission to share it, and I agree to the Terms & Conditions and Privacy Policy.\"\n\nThe consent lasts 24 hours. A PAN that fails returns `verified: false` and a `reason`, and no consent is recorded.",
+        "tags": [
+          "LRS"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": [],
+            "merchantAuth": [],
+            "apiVersionHeader": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pan",
+                  "buyer_pan_consent"
+                ],
+                "properties": {
+                  "pan": {
+                    "type": "string",
+                    "description": "Buyer PAN (AAAAA9999A format). Spaces around it are trimmed and letters are upper-cased.",
+                    "example": "ABCPK1234F"
+                  },
+                  "buyer_pan_consent": {
+                    "type": "boolean",
+                    "description": "`true` when the buyer has agreed to the consent statement above. Any other value is refused.",
+                    "example": true
+                  }
+                }
+              },
+              "example": {
+                "pan": "ABCPK1234F",
+                "buyer_pan_consent": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PAN checked. Read `verified`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "PAN verified."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "verified": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "reason": {
+                          "type": "string",
+                          "nullable": true,
+                          "enum": [
+                            "INVALID_PAN",
+                            "NON_INDIVIDUAL_PAN",
+                            "INOPERATIVE_PAN",
+                            "AADHAAR_NOT_LINKED"
+                          ],
+                          "description": "Why the PAN did not pass. `null` when it passed.",
+                          "example": null
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "verified": {
+                    "summary": "Verified",
+                    "value": {
+                      "success": true,
+                      "message": "PAN verified.",
+                      "data": {
+                        "verified": true,
+                        "reason": null
+                      }
+                    }
+                  },
+                  "not_verified": {
+                    "summary": "Not linked to Aadhaar",
+                    "value": {
+                      "success": true,
+                      "message": "PAN could not be verified.",
+                      "data": {
+                        "verified": false,
+                        "reason": "AADHAAR_NOT_LINKED"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request: `buyer_pan_consent` missing or not `true`, or a missing or badly formed PAN. Error code `40357`; `details` is keyed by the field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PAN verification is temporarily unavailable, so no consent was recorded. Retry after the number of seconds in the `Retry-After` header (60). Error code `40356`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer",
+                  "example": 60
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error. No consent was recorded. Error code `40356`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_post_pg_pan_consent_"
+      }
+    },
     "/pg/lrs/quote/": {
       "post": {
         "summary": "Quote TCS and all-in total for a remittance",
