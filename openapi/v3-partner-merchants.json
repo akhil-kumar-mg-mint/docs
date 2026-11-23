@@ -616,7 +616,7 @@
     "/partners/merchants/hs-codes/": {
       "get": {
         "summary": "Search HS Codes",
-        "description": "Find the HS codes a goods sub-merchant can declare, by code or description.",
+        "description": "Find the HS codes EximPe recognises, by code or description.",
         "tags": [
           "Merchants"
         ],
@@ -712,7 +712,7 @@
             }
           },
           "403": {
-            "description": "Your account is not a PSP (`ERR_AUTH_003`), is a PSP not set up for import collections (`ERR_MERCHANT_017`), is inactive (`ERR_MERCHANT_ACCOUNT_002`), or is suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
+            "description": "Your account is neither a direct merchant nor a PSP (`ERR_AUTH_003`), is a PSP not set up for import collections (`ERR_MERCHANT_017`), is inactive (`ERR_MERCHANT_ACCOUNT_002`), or is suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
             "content": {
               "application/json": {
                 "schema": {
