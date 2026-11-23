@@ -1,14 +1,19 @@
 ---
 title: 'Search HS Codes'
-description: 'Find the HS codes a goods sub-merchant can declare, by code or description.'
+description: 'Find the HS codes EximPe recognises, by code or description.'
 openapi: '/openapi/v3-partner-merchants.json GET /partners/merchants/hs-codes/'
 ---
 
 ## Overview
 
-A sub-merchant with a goods category must declare at least one HS code in `global_company.hs_codes`, and each code must be one EximPe recognises. This endpoint searches that list by code or by description.
+Every HS code you send must be one EximPe recognises. This endpoint searches that list by code or by description. Send the `value` of the code you pick:
 
-Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-reference/v3/merchant/create) or [Update Merchant](/api-reference/v3/merchant/update).
+- **Direct merchants:** in `hs_code` on [Create Order](/api-reference/v3/order/create).
+- **PSPs:** in `global_company.hs_codes` on [Create Merchant](/api-reference/v3/merchant/create) or [Update Merchant](/api-reference/v3/merchant/update). A sub-merchant with a goods category must declare at least one.
+
+<Note>
+  **Who can call this.** Direct merchants and PSPs set up for import collections. Any other account gets a `403`.
+</Note>
 
 ## Query Parameters
 
@@ -66,7 +71,7 @@ Send the `value` of each code you pick in `hs_codes` on [Create Merchant](/api-r
 | Status | `error.code` | When | `details` |
 |---|---|---|---|
 | `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
-| `403` | `ERR_AUTH_003` | Your account is not a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}`. Only PSPs can manage sub-merchants |
+| `403` | `ERR_AUTH_003` | Your account is neither a direct merchant nor a PSP | `{"authentication": "This endpoint is only accessible to PSP merchants."}` |
 | `403` | `ERR_MERCHANT_017` | Your account is a PSP, but not set up for import collections | `{}`. Contact EximPe |
 | `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
 | `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
