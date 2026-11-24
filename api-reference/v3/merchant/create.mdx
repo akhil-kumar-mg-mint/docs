@@ -24,7 +24,7 @@ The status a new sub-merchant starts in depends on the environment:
 </Note>
 
 <Tip>
-  Dropdown fields take the values EximPe lists. Fetch them with [Get Merchant Options](/api-reference/v3/merchant/options), and look up HS codes with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Countries, nationalities, organisation types, volume bands and business categories are matched case-insensitively; a listed value is always stored and returned in its listed spelling.
+  Dropdown fields take the values EximPe lists. Fetch them with [Get Merchant Options](/api-reference/v3/merchant/options), and look up HS codes with [Search HS Codes](/api-reference/v3/reference-data/hs-codes). Countries, nationalities, organisation types, volume bands and business categories are matched case-insensitively; a listed value is always stored and returned in its listed spelling.
 </Tip>
 
 ## Request Parameters
@@ -55,7 +55,7 @@ All fields sit inside `global_company`.
 | website | string | Yes | Company website. | 12–508 characters, starting with `https://` and including a domain, e.g. `https://example.com`. `http://` is refused |
 | monthly_avg_transaction_volume | string | Yes | Expected monthly transaction volume. | One of the [volume bands](/api-reference/v3/merchant/options#monthly-volume-bands) |
 | business_category | string | Yes | What the sub-merchant sells, as category slugs. | One or more slugs from your approved categories, comma-separated, e.g. `GOODS` or `GOODS,SOFTWARE_CONSULTING`. Matched case-insensitively; returned in upper case. See [Business categories](/api-reference/v3/merchant/options#business-categories) |
-| hs_codes | string[] | When a goods category is selected | HS codes for the goods traded. | Each code must exist; find them with [Search HS Codes](/api-reference/v3/merchant/hs-codes). Refused when no goods category is selected |
+| hs_codes | string[] | When a goods category is selected | HS codes for the goods traded. | Each code must exist; find them with [Search HS Codes](/api-reference/v3/reference-data/hs-codes). Refused when no goods category is selected |
 | mcc | string | Yes | Merchant Category Codes. | Comma-separated 4-digit codes, e.g. `5734` or `5411,5812`. Up to 100 characters |
 | description_of_products_and_services | string | Yes | What the sub-merchant sells. | 20–300 characters. Same characters as `registered_address` |
 | agreement_details | string | Yes | The agreement you hold with the sub-merchant. | 20–300 characters: letters, digits, spaces and `. , - # / ( ) & '` |
@@ -433,7 +433,7 @@ Every error uses the standard envelope: `{ "success": false, "error": { "code", 
 | `400` | `ERR_MERCHANT_001` | A field is missing, too short or long, in the wrong format, or not one of the listed values | Keyed by field, each with a list of reasons, e.g. `{"global_company": {"registered_country": ["Country is not in the supported country list"]}}`. Fix them and send the request again |
 | `400` | `ERR_MERCHANT_001` | `business_category` is not a known category slug, is a purpose code, or includes a slug outside your approved categories | `{"global_company": {"business_category": [...]}}`, naming the refused slugs and, for unapproved ones, the slugs you can use. Send slugs from [Get Merchant Options](/api-reference/v3/merchant/options) |
 | `400` | `ERR_MERCHANT_001` | A goods category is selected without `hs_codes`, or `hs_codes` is sent without a goods category | `{"global_company": {"non_field_errors": ["Add at least one HSN code for a goods business category."]}}` or `{"global_company": {"non_field_errors": ["HSN codes apply only to a goods business category."]}}` |
-| `400` | `ERR_MERCHANT_001` | An HS code EximPe does not recognise | `{"global_company": {"hs_codes": [...]}}`, listing the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/merchant/hs-codes) |
+| `400` | `ERR_MERCHANT_001` | An HS code EximPe does not recognise | `{"global_company": {"hs_codes": [...]}}`, listing the unknown codes. Find valid ones with [Search HS Codes](/api-reference/v3/reference-data/hs-codes) |
 | `400` | `ERR_MERCHANT_001` | Owners sent on a partner-licence account, or owners totalling over 100% | e.g. `{"beneficial_owners": ["Beneficial owners are only supported for EXIMPE CB sub-merchants"]}`. See [Which licence applies to you](#beneficial-owners) |
 | `400` | `ERR_MERCHANT_001` | A beneficial owner's name is too short or long, has characters that are not allowed, or a field its `type` needs is missing | One entry per owner. A person's `first_name`, `last_name` and `email` problems are keyed by field, e.g. `{"beneficial_owners": [{"first_name": ["This field is required for Individual UBOs."]}]}`. A company owner's name, and any other field its `type` needs, are reported under `non_field_errors`, e.g. `{"beneficial_owners": [{"non_field_errors": ["authorized_user_name must be 2-50 characters"]}]}` |
 | `400` | `ERR_MERCHANT_001` | A value filled from `bank_swift_code` fails its field rule, e.g. a `bank_address` under 20 characters | `{"settlement_details": {"bank_address": [...]}}`, naming the field. Send that field yourself |

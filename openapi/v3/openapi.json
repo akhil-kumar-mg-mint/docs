@@ -5167,6 +5167,128 @@
           }
         }
       }
+    },
+    "/pg/hs-codes/": {
+      "get": {
+        "summary": "Search HS Codes",
+        "description": "Find HS codes by code or description. Available to direct merchants and PSPs.",
+        "tags": [
+          "Reference Data"
+        ],
+        "security": [
+          {
+            "clientAuth": [],
+            "clientSecretAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Text to match against the code and its description.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number. Default `1`.",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "description": "Results per page. Default `250`, maximum `1000`.",
+            "schema": {
+              "type": "integer",
+              "default": 250,
+              "maximum": 1000
+            }
+          },
+          {
+            "$ref": "#/components/parameters/ApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of HS codes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_HSCodeSearchResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "HS codes retrieved successfully",
+                  "data": {
+                    "count": 1,
+                    "page": 1,
+                    "page_size": 250,
+                    "next": null,
+                    "previous": null,
+                    "results": [
+                      {
+                        "id": 10421,
+                        "value": "84713010",
+                        "description": "Personal computer, portable, laptop",
+                        "policy": "Free"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_AUTH_000",
+                    "message": "Missing credentials",
+                    "details": {
+                      "authentication": "Missing credentials."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your key is a travel-partner key (`ERR_TRAVEL_003`), your sub-merchant account is not approved yet (`SUB_MERCHANT_NOT_APPROVED`), or the account is inactive (`ERR_MERCHANT_ACCOUNT_002`) or suspended or closed (`ERR_MERCHANT_ACCOUNT_003`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v3_ErrorResponse"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "ERR_TRAVEL_003",
+                    "message": "This call is not allowed for this key.",
+                    "details": {
+                      "authentication": "This call is not allowed for this key."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "v3_searchHsCodes"
+      }
     }
   },
   "components": {
@@ -8986,6 +9108,70 @@
             "$ref": "#/components/schemas/v3_SettlementReconData"
           }
         }
+      },
+      "v3_HSCode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string",
+            "description": "The HS code. Send this in `hs_codes`."
+          },
+          "description": {
+            "type": "string",
+            "description": "What the code covers."
+          },
+          "policy": {
+            "type": "string",
+            "description": "The import policy that applies to the code. Empty when none is recorded."
+          }
+        }
+      },
+      "v3_HSCodeSearchResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "page_size": {
+                "type": "integer"
+              },
+              "next": {
+                "type": "string",
+                "nullable": true
+              },
+              "previous": {
+                "type": "string",
+                "nullable": true
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/v3_HSCode"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -9063,6 +9249,10 @@
     {
       "name": "B2B Verification",
       "description": "Verification and post-settlement compliance for B2B payments."
+    },
+    {
+      "name": "Reference Data",
+      "description": "Look up reference values used in other requests."
     }
   ]
 }
