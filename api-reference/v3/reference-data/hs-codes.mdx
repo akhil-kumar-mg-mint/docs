@@ -1,0 +1,83 @@
+---
+title: 'Search HS Codes'
+description: 'Find the HS codes EximPe recognises, by code or description.'
+openapi: '/openapi/v3/openapi.json GET /pg/hs-codes/'
+---
+
+## Overview
+
+Search the HS codes EximPe recognises, by code or by description. Use it to find a valid code wherever a request takes one, for example `hs_code` on an order, or `global_company.hs_codes` on [Create Merchant](/api-reference/v3/merchant/create) and [Update Merchant](/api-reference/v3/merchant/update).
+
+This endpoint is available to direct merchants and PSPs, including sub-merchants that call with their own credentials. Results are the same for every caller. PSPs do not need to send `X-Merchant-ID`.
+
+## Query Parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| search | string | No | Text to match against the code and its description, e.g. `8471` or `laptop`. Leave it out to page through every code. |
+| page | integer | No | Page number. Default `1`. |
+| page_size | integer | No | Results per page. Default `250`, maximum `1000`. |
+
+## Response
+
+`data` is one page of results, ordered by code:
+
+| Name | Type | Description |
+|---|---|---|
+| count | integer | Total number of matching codes. |
+| page | integer | The page returned. |
+| page_size | integer | Results per page. |
+| next | string \| null | URL of the next page, or `null` on the last page. |
+| previous | string \| null | URL of the previous page, or `null` on the first page. |
+| results | array | The HS codes on this page. |
+
+Each result is one HS code:
+
+| Name | Type | Description |
+|---|---|---|
+| id | integer | EximPe's ID for the code. |
+| value | string | The HS code. Send this wherever a request asks for an HS code. |
+| description | string | What the code covers. |
+| policy | string | The import policy that applies to the code. Empty when none is recorded. |
+
+<CodeGroup>
+
+```json 200 OK
+{
+  "success": true,
+  "message": "HS codes retrieved successfully",
+  "data": {
+    "count": 2,
+    "page": 1,
+    "page_size": 250,
+    "next": null,
+    "previous": null,
+    "results": [
+      {
+        "id": 10421,
+        "value": "84713010",
+        "description": "Personal computer, portable, laptop",
+        "policy": "Free"
+      },
+      {
+        "id": 10422,
+        "value": "84713090",
+        "description": "Other portable automatic data processing machines",
+        "policy": "Free"
+      }
+    ]
+  }
+}
+```
+
+</CodeGroup>
+
+## Errors
+
+| Status | `error.code` | When | `details` |
+|---|---|---|---|
+| `401` | `ERR_AUTH_000`, `ERR_AUTH_001` | `X-Client-ID` or `X-Client-Secret` is missing or wrong | `{"authentication": "Missing credentials."}` or `{"authentication": "Invalid credentials."}` |
+| `403` | `ERR_TRAVEL_003` | You called with a travel-partner key | `{"authentication": "This call is not allowed for this key."}` |
+| `403` | `SUB_MERCHANT_NOT_APPROVED` | You are a sub-merchant calling with your own credentials, and EximPe has not approved your account yet | `{"merchant_account": "Sub-merchant is not approved yet."}` |
+| `403` | `ERR_MERCHANT_ACCOUNT_002` | Your account is inactive | `{"authentication": "Merchant account is inactive."}`. Contact EximPe |
+| `403` | `ERR_MERCHANT_ACCOUNT_003` | Your account, or the sub-merchant named in `X-Merchant-ID`, is suspended or closed | `{"merchant_account": "Merchant account is suspended."}` or `{"merchant_account": "Merchant account is closed."}`. Contact EximPe |
